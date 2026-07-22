@@ -111,7 +111,7 @@ function QuestionCard({
 }) {
   const [ideOpen, setIdeOpen] = useState(false)
   if (!q) return null
-  const tfOptions = ['সত্য (True)', 'মিথ্যা (False)']
+  const tfOptions = ['সত্য', 'মিথ্যা']
   const displayOptions = q.type === 'truefalse' ? tfOptions : (q.options ?? [])
 
   return (
@@ -132,7 +132,7 @@ function QuestionCard({
               className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded"
               style={{ backgroundColor: 'rgba(101,209,178,0.08)', color: S.muted }}
             >
-              {q.type === 'mcq' ? 'MCQ' : q.type === 'truefalse' ? 'True/False' : q.type === 'code-output' ? 'Code Output' : 'Coding'}
+              {q.type === 'mcq' ? 'এমসিকিউ' : q.type === 'truefalse' ? 'সত্য/মিথ্যা' : q.type === 'code-output' ? 'কোড আউটপুট' : 'কোডিং'}
             </span>
             <span className="text-[10px] font-bold" style={{ color: S.muted }}>{q.points} pts</span>
           </div>
@@ -180,12 +180,12 @@ function QuestionCard({
       {/* Code output — text input */}
       {q.type === 'code-output' && (
         <div>
-          <p className="text-xs font-bold mb-2" style={{ color: S.muted }}>কোডটি রান করলে কী output আসবে?</p>
+          <p className="text-xs font-bold mb-2" style={{ color: S.muted }}>কোডটি রান করলে কী আউটপুট আসবে?</p>
           <input
             type="text"
             value={answer || ''}
             onChange={e => onAnswer(e.target.value)}
-            placeholder="Output এখানে লিখুন..."
+            placeholder="আউটপুট এখানে লিখুন..."
             className="w-full px-4 py-3 rounded-xl text-sm font-mono outline-none"
             style={{
               backgroundColor: 'rgba(101,209,178,0.05)',
@@ -201,7 +201,7 @@ function QuestionCard({
         <div className="flex flex-col gap-3">
           {q.starterCode && (
             <div>
-              <p className="text-xs font-bold mb-2" style={{ color: S.muted }}>শুরুর কোড (Starter Code):</p>
+              <p className="text-xs font-bold mb-2" style={{ color: S.muted }}>শুরুর কোড:</p>
               <pre
                 className="p-4 rounded-xl text-sm font-mono overflow-x-auto"
                 style={{ backgroundColor: 'rgba(4,52,44,0.8)', color: S.accent, border: '1px solid rgba(101,209,178,0.12)' }}
@@ -361,7 +361,7 @@ function ResultScreen({
           </div>
 
           <p className="text-xs font-bold" style={{ color: S.muted }}>
-            পাসের নম্বর: {result.passingScore}% · +{result.xpAwarded} XP অর্জিত
+            পাসের নম্বর: {result.passingScore}% · +{result.xpAwarded} স্কোর অর্জিত
           </p>
         </div>
 

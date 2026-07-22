@@ -25,13 +25,13 @@ export function DashboardTopHeader({ studentName, onOpenSidebar, level, totalXP 
             {level && (
               <span className="inline-flex items-center gap-1.5 text-sm font-bold rounded-full px-3 py-1"
                 style={{ backgroundColor: '#FEF3C7', color: '#D97706' }}>
-                Level {level}
+                লেভেল {level}
               </span>
             )}
             {totalXP !== undefined && (
               <span className="inline-flex items-center gap-1.5 text-sm font-bold rounded-full px-3 py-1"
                 style={{ backgroundColor: '#D1FAE5', color: '#16A34A' }}>
-                {totalXP.toLocaleString()} Score
+                {totalXP.toLocaleString()} স্কোর
               </span>
             )}
           </div>

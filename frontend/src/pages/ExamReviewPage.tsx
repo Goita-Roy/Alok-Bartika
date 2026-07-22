@@ -65,7 +65,7 @@ interface ReviewData {
   bestScore: number
 }
 
-const tfOptions = ['সত্য (True)', 'মিথ্যা (False)']
+const tfOptions = ['সত্য', 'মিথ্যা']
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60)
@@ -339,7 +339,7 @@ export function ExamReviewPage() {
                         className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
                         style={{ backgroundColor: 'rgba(101,209,178,0.06)', color: S.muted }}
                       >
-                        {r.type === 'mcq' ? 'MCQ' : r.type === 'truefalse' ? 'True/False' : r.type === 'code-output' ? 'Code Output' : 'Coding'}
+                        {r.type === 'mcq' ? 'এমসিকিউ' : r.type === 'truefalse' ? 'সত্য/মিথ্যা' : r.type === 'code-output' ? 'কোড আউটপুট' : 'কোডিং'}
                       </span>
                       <span className="text-[10px] font-bold" style={{ color: S.muted }}>{r.points} pts</span>
                     </div>

@@ -547,7 +547,7 @@ export function CourseListPage() {
           { label: 'শিক্ষানবিশ',  key: 'beginner' as Level,     done: completedLevels.includes('beginner'),     unlocked: true },
           { label: 'মধ্যবর্তী',   key: 'intermediate' as Level, done: completedLevels.includes('intermediate'), unlocked: isIntermediateUnlocked },
           { label: 'উন্নত',       key: 'advanced' as Level,     done: completedLevels.includes('advanced'),     unlocked: isAdvancedUnlocked },
-          { label: 'IDE',         key: null,                    done: false,                                    unlocked: true },
+          { label: 'প্র্যাকটিস',         key: null,                    done: false,                                    unlocked: true },
         ].map((step, i, arr) => {
           const isActive = step.key !== null && activeTab === step.key
           const isClickable = step.key !== null && step.unlocked

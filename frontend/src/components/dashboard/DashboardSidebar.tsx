@@ -55,7 +55,7 @@ function SidebarContent({ items, activeItemId, student, xp, badgesCount }: Omit<
         {xp && (
           <div className="mt-3 pt-3" style={{ borderTop: '1.5px solid #B8D8CB' }}>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold" style={{ color: '#065F46', fontFamily: "'Hind Siliguri', sans-serif" }}>মোট Score</span>
+              <span className="text-xs font-semibold" style={{ color: '#065F46', fontFamily: "'Hind Siliguri', sans-serif" }}>মোট স্কোর</span>
               <span className="text-sm font-black" style={{ color: '#0F766E' }}>{xp.totalXP.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between mb-2">

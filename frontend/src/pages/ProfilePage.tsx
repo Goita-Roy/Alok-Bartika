@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { API_BASE_URL } from '../config/api'
 import { ArrowLeft, Award, BookOpen, CheckCircle, RefreshCw, User, Zap } from 'lucide-react'
@@ -54,6 +54,7 @@ function display(val: any, fallback = 'যোগ করা হয়নি'): st
 }
 
 export function ProfilePage() {
+  const navigate = useNavigate()
   const { token } = useAuth()
   const [data, setData] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -127,13 +128,13 @@ export function ProfilePage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-12">
-      <Link to="/dashboard"
-        className="inline-flex items-center gap-2 text-sm font-semibold transition-colors"
+      <button onClick={() => navigate('/dashboard')}
+        className="inline-flex items-center gap-2 text-sm font-semibold transition-colors cursor-pointer"
         style={{ color: 'var(--color-text-muted)' }}
         onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'var(--color-accent)'}
         onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'var(--color-text-muted)'}>
-        <ArrowLeft size={16} /> ড্যাশবোর্ডে ফিরুন
-      </Link>
+        <ArrowLeft size={16} /> ড্যাশবোর্ডে ফিরে যান
+      </button>
 
       {/* Header Card */}
       <div className="rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-5"

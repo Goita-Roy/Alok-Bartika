@@ -9,9 +9,9 @@ type MyCoursesSectionProps = {
 }
 
 const LEVEL_CONFIG: Record<string, { label: string; color: string; bgColor: string; borderColor: string }> = {
-  beginner:     { label: 'শিক্ষার্থী (Beginner)',      color: '#059669', bgColor: '#D1FAE5', borderColor: '#A7F3D0' },
-  intermediate: { label: 'অগ্রগামী (Intermediate)',    color: '#D97706', bgColor: '#FEF3C7', borderColor: '#FDE68A' },
-  advanced:     { label: 'দক্ষ (Advanced)',             color: '#7C3AED', bgColor: '#EDE9FE', borderColor: '#DDD6FE' },
+  beginner:     { label: 'শিক্ষার্থী (শিক্ষানবিশ)',      color: '#059669', bgColor: '#D1FAE5', borderColor: '#A7F3D0' },
+  intermediate: { label: 'অগ্রগামী (মধ্যবর্তী)',    color: '#D97706', bgColor: '#FEF3C7', borderColor: '#FDE68A' },
+  advanced:     { label: 'দক্ষ (উন্নত)',             color: '#7C3AED', bgColor: '#EDE9FE', borderColor: '#DDD6FE' },
 }
 
 export function MyCoursesSection({ courses }: MyCoursesSectionProps) {

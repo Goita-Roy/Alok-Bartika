@@ -40,7 +40,7 @@ export function BadgesSection({ badges }: { badges: BadgeItem[] }) {
               ব্যাজ
             </h3>
             <p className="text-xs font-medium mt-0.5 truncate" style={{ color: '#2d5a48' }}>
-              {earned.length} of {badges.length} earned
+              {earned.length}/{badges.length} অর্জিত
             </p>
           </div>
         </div>
