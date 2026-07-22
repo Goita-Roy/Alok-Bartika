@@ -224,27 +224,27 @@ export default function App() {
       <Routes>
         {/* Admin routes - standalone, no student Layout wrapper */}
         <Route path="/admin/login" element={<AdminLoginPage />} />
-        <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-        <Route path="/admin/students" element={<AdminStudentsPage />} />
-        <Route path="/admin/courses" element={<AdminCoursesPage />} />
-        <Route path="/admin/lessons" element={<AdminLessonsPage />} />
-        <Route path="/admin/questions" element={<AdminQuestionsPage />} />
-        <Route path="/admin/support" element={<AdminSupportPage />} />
-        <Route path="/admin/notices" element={<AdminNoticesPage />} />
-        <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
-        <Route path="/admin/settings" element={<AdminSettingsPage />} />
+        <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminDashboardPage /></ProtectedRoute>} />
+        <Route path="/admin/students" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminStudentsPage /></ProtectedRoute>} />
+        <Route path="/admin/courses" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminCoursesPage /></ProtectedRoute>} />
+        <Route path="/admin/lessons" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminLessonsPage /></ProtectedRoute>} />
+        <Route path="/admin/questions" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminQuestionsPage /></ProtectedRoute>} />
+        <Route path="/admin/support" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminSupportPage /></ProtectedRoute>} />
+        <Route path="/admin/notices" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminNoticesPage /></ProtectedRoute>} />
+        <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminAnalyticsPage /></ProtectedRoute>} />
+        <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminSettingsPage /></ProtectedRoute>} />
 
         {/* Super admin routes - standalone, no student/admin Layout wrapper */}
         <Route path="/super-admin/login" element={<SuperAdminLoginPage />} />
-        <Route path="/super-admin/dashboard" element={<SuperAdminDashboardPage />} />
-        <Route path="/super-admin/admins" element={<SuperAdminAdminsPage />} />
-        <Route path="/super-admin/users" element={<SuperAdminUsersPage />} />
-        <Route path="/super-admin/roles" element={<SuperAdminRolesPage />} />
-        <Route path="/super-admin/platform" element={<SuperAdminPlatformPage />} />
-        <Route path="/super-admin/security" element={<SuperAdminSecurityPage />} />
-        <Route path="/super-admin/analytics" element={<SuperAdminAnalyticsPage />} />
-        <Route path="/super-admin/backup" element={<SuperAdminBackupPage />} />
-        <Route path="/super-admin/profile" element={<SuperAdminProfilePage />} />
+        <Route path="/super-admin/dashboard" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminDashboardPage /></ProtectedRoute>} />
+        <Route path="/super-admin/admins" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminAdminsPage /></ProtectedRoute>} />
+        <Route path="/super-admin/users" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminUsersPage /></ProtectedRoute>} />
+        <Route path="/super-admin/roles" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminRolesPage /></ProtectedRoute>} />
+        <Route path="/super-admin/platform" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminPlatformPage /></ProtectedRoute>} />
+        <Route path="/super-admin/security" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminSecurityPage /></ProtectedRoute>} />
+        <Route path="/super-admin/analytics" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminAnalyticsPage /></ProtectedRoute>} />
+        <Route path="/super-admin/backup" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminBackupPage /></ProtectedRoute>} />
+        <Route path="/super-admin/profile" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminProfilePage /></ProtectedRoute>} />
 
         {/* Everything else - wrapped in student Layout */}
         <Route path="/*" element={<Layout><StudentRoutes /></Layout>} />
