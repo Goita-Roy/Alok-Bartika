@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const {
-  checkAvailability, registerUser, loginUser, getMe,
+  checkAvailability, registerUser, loginUser, adminLogin, getMe,
   forgotPassword, verifyOtp, resetPassword, googleLogin,
   sendSignupOtp, resendSignupOtp, verifySignupOtp,
 } = require('../controllers/authController')
@@ -10,6 +10,7 @@ const { protect } = require('../middleware/auth')
 router.post('/check-availability', checkAvailability)
 router.post('/register', registerUser)
 router.post('/login', loginUser)
+router.post('/admin-login', adminLogin)
 router.post('/google', googleLogin)
 router.post('/send-otp', sendSignupOtp)
 router.post('/resend-otp', resendSignupOtp)
