@@ -10,6 +10,14 @@ import { DashboardPage } from './pages/DashboardPage'
 import { AdminPage } from './pages/AdminPage'
 import { AdminLoginPage } from './pages/admin/AdminLoginPage'
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage'
+import { AdminStudentsPage } from './pages/admin/AdminStudentsPage'
+import { AdminCoursesPage } from './pages/admin/AdminCoursesPage'
+import { AdminLessonsPage } from './pages/admin/AdminLessonsPage'
+import { AdminQuestionsPage } from './pages/admin/AdminQuestionsPage'
+import { AdminSupportPage } from './pages/admin/AdminSupportPage'
+import { AdminNoticesPage } from './pages/admin/AdminNoticesPage'
+import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage'
+import { AdminSettingsPage } from './pages/admin/AdminSettingsPage'
 import { CourseListPage } from './pages/CourseListPage'
 import { LessonViewPage } from './pages/LessonViewPage'
 import { TestPage } from './pages/TestPage'
@@ -207,6 +215,14 @@ export default function App() {
         {/* Admin routes - standalone, no student Layout wrapper */}
         <Route path="/admin/login" element={<AdminLoginPage />} />
         <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+        <Route path="/admin/students" element={<AdminStudentsPage />} />
+        <Route path="/admin/courses" element={<AdminCoursesPage />} />
+        <Route path="/admin/lessons" element={<AdminLessonsPage />} />
+        <Route path="/admin/questions" element={<AdminQuestionsPage />} />
+        <Route path="/admin/support" element={<AdminSupportPage />} />
+        <Route path="/admin/notices" element={<AdminNoticesPage />} />
+        <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+        <Route path="/admin/settings" element={<AdminSettingsPage />} />
 
         {/* Everything else - wrapped in student Layout */}
         <Route path="/*" element={<Layout><StudentRoutes /></Layout>} />
