@@ -18,6 +18,8 @@ import { AdminSupportPage } from './pages/admin/AdminSupportPage'
 import { AdminNoticesPage } from './pages/admin/AdminNoticesPage'
 import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage'
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage'
+import { SuperAdminLoginPage } from './pages/super-admin/SuperAdminLoginPage'
+import { SuperAdminDashboardPage } from './pages/super-admin/SuperAdminDashboardPage'
 import { CourseListPage } from './pages/CourseListPage'
 import { LessonViewPage } from './pages/LessonViewPage'
 import { TestPage } from './pages/TestPage'
@@ -223,6 +225,10 @@ export default function App() {
         <Route path="/admin/notices" element={<AdminNoticesPage />} />
         <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
         <Route path="/admin/settings" element={<AdminSettingsPage />} />
+
+        {/* Super admin routes - standalone, no student/admin Layout wrapper */}
+        <Route path="/super-admin/login" element={<SuperAdminLoginPage />} />
+        <Route path="/super-admin/dashboard" element={<SuperAdminDashboardPage />} />
 
         {/* Everything else - wrapped in student Layout */}
         <Route path="/*" element={<Layout><StudentRoutes /></Layout>} />
