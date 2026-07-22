@@ -19,12 +19,12 @@ const generateUniqueUsername = async (base) => {
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret'
 
-const generateToken = (id) => {
-  return jwt.sign({ id }, JWT_SECRET, { expiresIn: '30d' })
+const generateToken = (user) => {
+  return jwt.sign({ id: user._id, userId: user._id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '30d' })
 }
 
 const userResponse = (user) => ({
-  token: generateToken(user._id),
+  token: generateToken(user),
   user: {
     id: user._id,
     fullName: user.fullName,
