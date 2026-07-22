@@ -59,149 +59,158 @@ function HealthPage() {
   )
 }
 
+function StudentRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/health" element={<HealthPage />} />
+      {/* Aliases: support conventional auth URLs */}
+      <Route path="/login/*" element={<SignInPage />} />
+      <Route path="/signup/*" element={<SignUpPage />} />
+      <Route path="/forgot-password/*" element={<ForgotPasswordPage />} />
+      <Route path="/verify-otp" element={<VerifyOtpPage />} />
+      <Route path="/verify-signup-otp" element={<SignupOtpPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      {/* Backwards-compatible routes */}
+      <Route path="/sign-in/*" element={<SignInPage />} />
+      <Route path="/sign-up/*" element={<SignUpPage />} />
+      <Route path="/post-auth" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/onboarding" element={<Navigate to="/dashboard" replace />} />
+      <Route
+        path="/courses"
+        element={
+          <ProtectedRoute allowedRoles={['student', 'admin']}>
+            <CourseListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/courses/intermediate"
+        element={
+          <ProtectedRoute allowedRoles={['student', 'admin']}>
+            <IntermediateCoursePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/courses/advanced"
+        element={
+          <ProtectedRoute allowedRoles={['student', 'admin']}>
+            <AdvancedCoursePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/courses/:courseId"
+        element={
+          <ProtectedRoute allowedRoles={['student', 'admin']}>
+            <LessonViewPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/contact" element={<ContactPage />} />
+      <Route path="/tests/:testId" element={<TestPage />} />
+      <Route
+        path="/exam/:level"
+        element={
+          <ProtectedRoute allowedRoles={['student', 'admin']}>
+            <ExamPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/exam/:level/review"
+        element={
+          <ProtectedRoute allowedRoles={['student', 'admin']}>
+            <ExamReviewPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/courses/beginner"
+        element={
+          <ProtectedRoute allowedRoles={['student', 'admin']}>
+            <BeginnerCoursePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/courses/beginner/:classId"
+        element={
+          <ProtectedRoute allowedRoles={['student', 'admin']}>
+            <BeginnerCoursePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/*"
+        element={
+          <ProtectedRoute allowedRoles={['student', 'admin']}>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/development"
+        element={
+          <DevelopmentPage />
+        }
+      />
+      <Route
+        path="/practice"
+        element={
+          <PracticePage />
+        }
+      />
+      <Route
+        path="/ai-buddy"
+        element={
+          <ProtectedRoute allowedRoles={['student', 'admin']}>
+            <AIBuddyPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute allowedRoles={['student', 'admin']}>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute allowedRoles={['student', 'admin']}>
+            <SettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
+}
+
 export default function App() {
   return (
     <ProgressProvider>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-        <Route path="/health" element={<HealthPage />} />
-        {/* Aliases: support conventional auth URLs */}
-        <Route path="/login/*" element={<SignInPage />} />
-        <Route path="/signup/*" element={<SignUpPage />} />
-        <Route path="/forgot-password/*" element={<ForgotPasswordPage />} />
-        <Route path="/verify-otp" element={<VerifyOtpPage />} />
-        <Route path="/verify-signup-otp" element={<SignupOtpPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        {/* Backwards-compatible routes */}
-        <Route path="/sign-in/*" element={<SignInPage />} />
-        <Route path="/sign-up/*" element={<SignUpPage />} />
-        <Route path="/post-auth" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/onboarding" element={<Navigate to="/dashboard" replace />} />
-        <Route
-          path="/courses"
-          element={
-            <ProtectedRoute allowedRoles={['student', 'admin']}>
-              <CourseListPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/courses/intermediate"
-          element={
-            <ProtectedRoute allowedRoles={['student', 'admin']}>
-              <IntermediateCoursePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/courses/advanced"
-          element={
-            <ProtectedRoute allowedRoles={['student', 'admin']}>
-              <AdvancedCoursePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/courses/:courseId"
-          element={
-            <ProtectedRoute allowedRoles={['student', 'admin']}>
-              <LessonViewPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/tests/:testId" element={<TestPage />} />
-        <Route
-          path="/exam/:level"
-          element={
-            <ProtectedRoute allowedRoles={['student', 'admin']}>
-              <ExamPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/exam/:level/review"
-          element={
-            <ProtectedRoute allowedRoles={['student', 'admin']}>
-              <ExamReviewPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/courses/beginner"
-          element={
-            <ProtectedRoute allowedRoles={['student', 'admin']}>
-              <BeginnerCoursePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/courses/beginner/:classId"
-          element={
-            <ProtectedRoute allowedRoles={['student', 'admin']}>
-              <BeginnerCoursePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/*"
-          element={
-            <ProtectedRoute allowedRoles={['student', 'admin']}>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/development"
-          element={
-            <DevelopmentPage />
-          }
-        />
-        <Route
-          path="/practice"
-          element={
-            <PracticePage />
-          }
-        />
-        <Route
-          path="/ai-buddy"
-          element={
-            <ProtectedRoute allowedRoles={['student', 'admin']}>
-              <AIBuddyPage />
-            </ProtectedRoute>
-          }
-        />
+      <Routes>
+        {/* Admin routes - standalone, no student Layout wrapper */}
         <Route path="/admin/login" element={<AdminLoginPage />} />
         <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <AdminPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute allowedRoles={['student', 'admin']}>
-              <ProfilePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute allowedRoles={['student', 'admin']}>
-              <SettingsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Layout>
+
+        {/* Everything else - wrapped in student Layout */}
+        <Route path="/*" element={<Layout><StudentRoutes /></Layout>} />
+      </Routes>
     </ProgressProvider>
   )
 }
