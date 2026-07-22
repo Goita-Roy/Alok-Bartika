@@ -8,6 +8,8 @@ import { SignupOtpPage } from './pages/SignupOtpPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { AdminPage } from './pages/AdminPage'
+import { AdminLoginPage } from './pages/admin/AdminLoginPage'
+import { AdminDashboardPage } from './pages/admin/AdminDashboardPage'
 import { CourseListPage } from './pages/CourseListPage'
 import { LessonViewPage } from './pages/LessonViewPage'
 import { TestPage } from './pages/TestPage'
@@ -171,6 +173,8 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
         <Route
           path="/admin"
           element={
