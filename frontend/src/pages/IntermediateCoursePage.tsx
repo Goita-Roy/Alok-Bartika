@@ -783,7 +783,7 @@ export function IntermediateCoursePage() {
   })
 
   const {
-    completedClassIds, isLessonUnlocked, markClassComplete, completeLevel, getLevelProgress, continueLearning, saveLastVisited, apiLoaded,
+    completedClassIds, isLessonUnlocked, markClassComplete, completeLevel, getLevelProgress, continueLearning, saveLastVisited, apiLoaded, completedLevels,
   } = useCourseProgress(classesByLevel, lessonIds)
 
   // Resume the learner into their in-progress lesson when they open
@@ -1175,7 +1175,16 @@ export function IntermediateCoursePage() {
 
                       {/* Next / Final Exam */}
                       {isLastLesson ? (
-                        isIntermediateCompleted ? (
+                        completedLevels?.includes('intermediate') ? (
+                          <Link
+                            to="/exam-review/intermediate"
+                            className="flex flex-col items-end gap-1 px-5 py-3 rounded-xl font-bold text-sm transition-all duration-200 hover:scale-105"
+                            style={{ backgroundColor: 'rgba(101,209,178,0.10)', color: S.accent, border: `1px solid ${S.accent}` }}
+                          >
+                            <span>✅ পরীক্ষায় পাস করেছে</span>
+                            <span className="text-xs underline">পর্যালোচনা</span>
+                          </Link>
+                        ) : isIntermediateCompleted ? (
                           <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}

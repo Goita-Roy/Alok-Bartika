@@ -560,20 +560,15 @@ export function ExamPage() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
-        // Surface a locked-exam signal (HTTP 403) to the UI so it can show a
-        // friendly message and redirect to the previous level.
         if (res.status === 403) {
-          let requiredLevel = null
-          try {
-            const body = await res.json()
-            requiredLevel = body.requiredLevel || null
-          } catch { /* ignore parse errors */ }
-          const err = new Error('পরীক্ষা লক করা') as Error & { code?: string; requiredLevel?: string | null }
-          err.code = 'EXAM_LOCKED'
-          err.requiredLevel = requiredLevel
+          let body: any = {}
+          try { body = await res.json() } catch { /* ignore parse errors */ }
+          const err = new Error(body.code === 'EXAM_ALREADY_PASSED' ? 'আপনি ইতিমধ্যেই এই পরীক্ষায় পাস করেছেন' : 'পরীক্ষা লক করা') as Error & { code?: string; requiredLevel?: string | null }
+          err.code = body.code || 'EXAM_LOCKED'
+          err.requiredLevel = body.requiredLevel || null
           throw err
         }
-          throw new Error('পরীক্ষা পাওয়া যায়নি')
+        throw new Error('পরীক্ষা পাওয়া যায়নি')
 
       }
       return res.json()
@@ -702,7 +697,38 @@ export function ExamPage() {
     // Distinguish a progression-locked exam (HTTP 403) from a genuine error.
     const lockedErr = error as (Error & { code?: string; requiredLevel?: string | null }) | null
     const isLocked = lockedErr?.code === 'EXAM_LOCKED'
+    const alreadyPassed = lockedErr?.code === 'EXAM_ALREADY_PASSED'
     const prevLevel = lockedErr?.requiredLevel
+
+    if (alreadyPassed) {
+      return (
+        <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: S.bg }}>
+          <div className="text-center space-y-5 max-w-md">
+            <div className="text-5xl">✅</div>
+            <p className="font-black text-lg" style={{ color: S.text }}>আপনি ইতিমধ্যেই এই চূড়ান্ত পরীক্ষায় পাস করেছেন</p>
+            <p className="text-sm font-semibold" style={{ color: S.muted }}>
+              আপনি ইতিমধ্যে এই লেভেলের চূড়ান্ত পরীক্ষায় উত্তীর্ণ হয়েছেন। আপনি পরবর্তী লেভেলে যেতে পারেন বা আপনার ফলাফল পর্যালোচনা করতে পারেন।
+            </p>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <Link
+                to={`/exam-review/${level}`}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl font-black text-sm"
+                style={{ backgroundColor: S.accent, color: '#04342C' }}
+              >
+                ফলাফল পর্যালোচনা করুন
+              </Link>
+              <Link
+                to="/courses"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm"
+                style={{ color: S.accent, border: `1px solid ${S.accent}` }}
+              >
+                কোর্সে ফিরে যান
+              </Link>
+            </div>
+          </div>
+        </div>
+      )
+    }
 
     if (isLocked) {
       const prevHref = prevLevel ? `/exam/${prevLevel}` : '/courses'

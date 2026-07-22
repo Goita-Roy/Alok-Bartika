@@ -99,7 +99,7 @@ export function ExamReviewPage() {
         setError(null)
 
         // First get the exam by level to get exam ID
-        const examRes = await fetch(`${API_BASE_URL}/exams/level/${level}`, {
+        const examRes = await fetch(`${API_BASE_URL}/exams/level/${level}?review=true`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (!examRes.ok) {

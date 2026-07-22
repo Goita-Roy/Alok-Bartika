@@ -216,7 +216,7 @@ function LessonContent({
   handlePresetClick, handleDragStart, activePreset,
   completeLessonMutation, lessonStates,
   showCompleteToast, setShowCompleteToast, markClassComplete, completedClassIds,
-  lessonIds: _lessonIds, courseId: _courseId, token, isAllLessonsCompleted, onLockedClick,
+  lessonIds: _lessonIds, courseId: _courseId, token, isAllLessonsCompleted, onLockedClick, completedLevels,
 }: {
   course: CourseWithLessons
   activeLessonId: string | null
@@ -245,6 +245,7 @@ function LessonContent({
   token: string | null
   isAllLessonsCompleted: boolean
   onLockedClick: () => void
+  completedLevels: string[]
 }) {
   const activeLesson = course.lessons.find((l: any) => l.slug === activeLessonId) || course.lessons[0]
 
@@ -633,7 +634,16 @@ function LessonContent({
 
                       {/* Next Lesson Button or Exam Lock/Unlock */}
                       {isLastLesson ? (
-                        isAllLessonsCompleted ? (
+                        completedLevels?.includes(course.level as string) ? (
+                          <Link
+                            to={`/exam-review/${course.level}`}
+                            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm transition-all duration-200 hover:scale-105"
+                            style={{ backgroundColor: 'rgba(101,209,178,0.10)', color: S.accent, border: `1px solid ${S.accent}` }}
+                          >
+                            <span>✅ পরীক্ষায় পাস করেছে</span>
+                            <span className="hidden sm:inline text-xs underline">পর্যালোচনা</span>
+                          </Link>
+                        ) : isAllLessonsCompleted ? (
                           <Link
                             to={`/exam/${course.level}`}
                             className="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm transition-all duration-200 hover:scale-105"
@@ -996,7 +1006,7 @@ export function LessonViewPage() {
   // reconciliation needed.
   const orderedLessonIds = safeCourse?.lessons?.map((l: any) => l.slug) || []
 
-  const { markClassComplete, completeLevel, isLessonUnlocked, completedClassIds, lastVisitedLessonId, unlockedLessonIds, isLessonComplete } = useCourseProgress(
+  const { markClassComplete, completeLevel, isLessonUnlocked, completedClassIds, lastVisitedLessonId, unlockedLessonIds, isLessonComplete, completedLevels } = useCourseProgress(
     { beginner: [], intermediate: [], advanced: [] },
     orderedLessonIds
   )
@@ -1154,6 +1164,7 @@ export function LessonViewPage() {
       token={token}
       isAllLessonsCompleted={isAllLessonsCompleted}
       onLockedClick={() => setShowLockedToast(true)}
+      completedLevels={completedLevels}
     />
     </>
   )
