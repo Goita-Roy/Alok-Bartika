@@ -4,15 +4,21 @@ import { useTheme } from '../../context/ThemeContext'
 import { useAuth } from '../../context/AuthContext'
 import type { ReactNode } from 'react'
 import {
-  LayoutDashboard, Shield, Users, Settings, ClipboardList,
+  LayoutDashboard, Shield, Users, Key, Settings, ClipboardList,
+  BarChart3, Database, UserCog,
   LogOut, Menu, X, Moon, Sun, ChevronDown,
 } from 'lucide-react'
 
 const navItems = [
-  { to: '/super-admin/dashboard', label: 'Dashboard',             icon: LayoutDashboard },
-  { to: '/super-admin/admins',    label: 'Admin Management',      icon: Users },
-  { to: '/super-admin/system',    label: 'System Settings',       icon: Settings },
-  { to: '/super-admin/audit',     label: 'Audit Logs',            icon: ClipboardList },
+  { to: '/super-admin/dashboard', label: 'Dashboard',                icon: LayoutDashboard },
+  { to: '/super-admin/admins',    label: 'Admin Management',         icon: Shield },
+  { to: '/super-admin/users',     label: 'User Management',          icon: Users },
+  { to: '/super-admin/roles',     label: 'Role & Permissions',       icon: Key },
+  { to: '/super-admin/platform',  label: 'Platform Settings',        icon: Settings },
+  { to: '/super-admin/security',  label: 'Security & Audit Logs',    icon: ClipboardList },
+  { to: '/super-admin/analytics', label: 'System Analytics',          icon: BarChart3 },
+  { to: '/super-admin/backup',    label: 'Backup & Restore',         icon: Database },
+  { to: '/super-admin/profile',   label: 'Profile & Settings',       icon: UserCog },
 ]
 
 interface SuperAdminLayoutProps {
