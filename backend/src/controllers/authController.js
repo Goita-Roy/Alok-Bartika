@@ -234,6 +234,37 @@ const adminLogin = async (req, res) => {
   }
 }
 
+// @desc    Super Admin login — email+password with role check
+// @route   POST /api/auth/super-admin-login
+const superAdminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body
+
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' })
+    }
+
+    const identifier = String(email).trim().toLowerCase()
+    const user = await User.findOne({ email: identifier })
+
+    if (!user) {
+      return res.status(401).json({ message: 'No account found with this email' })
+    }
+
+    if (!(await user.comparePassword(password))) {
+      return res.status(401).json({ message: 'Incorrect password' })
+    }
+
+    if (user.role !== 'super-admin') {
+      return res.status(403).json({ code: 'NOT_SUPER_ADMIN', message: 'Access denied. Super Admin privileges required.' })
+    }
+
+    res.json(userResponse(user))
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
 // @desc    Get user profile
 // @route   GET /api/auth/me
 const getMe = async (req, res) => {
@@ -583,6 +614,7 @@ module.exports = {
   registerUser,
   loginUser,
   adminLogin,
+  superAdminLogin,
   getMe,
   forgotPassword,
   verifyOtp,
