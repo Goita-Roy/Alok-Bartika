@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Python Calculator — পাইথন ক্যালকুলেটর | কোডিং অ্যাডভেঞ্চার</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Hind+Siliguri:wght@400;600;700&family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#04060f;
+    --bg2:#0a0f24;
+    --plus:#7CFFB2;
+    --minus:#ff6b9d;
+    --gold:#ffd86b;
+    --neon:#5ddcff;
+    --neon2:#b388ff;
+    --lcd:#9eff7a;
+    --text:#eaf4ff;
+    --muted:#8aa3c7;
+    --card:rgba(255,255,255,0.04);
+    --border:rgba(125,220,255,0.18);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{overflow-x:hidden}
+  body{
+    font-family:'Hind Siliguri',sans-serif;
+    background:radial-gradient(ellipse at top,#0b1d3a 0%,var(--bg) 65%);
+    color:var(--text);
+    line-height:1.7;
+    min-height:100vh;
+    position:relative;
+  }
+  /* Grid backdrop */
+  .grid-bg{position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:
+      linear-gradient(rgba(93,220,255,0.06) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(93,220,255,0.06) 1px,transparent 1px);
+    background-size:50px 50px;
+    mask-image:radial-gradient(ellipse at center,#000 30%,transparent 80%);
+  }
+  /* Floating math symbols */
+  .math-bg{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+  .math-bg span{position:absolute;font-family:'Orbitron',sans-serif;font-weight:800;
+    color:rgba(125,220,255,0.08);font-size:80px;animation:floaty 18s ease-in-out infinite}
+  @keyframes floaty{
+    0%,100%{transform:translateY(0) rotate(0)}
+    50%{transform:translateY(-30px) rotate(8deg)}
+  }
+  @keyframes drift{from{background-position:0 0}to{background-position:500px 500px}}
+
+  .container{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:40px 24px 80px}
+
+  /* HUD */
+  .hud{display:flex;justify-content:space-between;align-items:center;
+    border:1px solid var(--border);border-radius:14px;padding:10px 18px;
+    background:linear-gradient(180deg,rgba(93,220,255,0.08),transparent);
+    backdrop-filter:blur(8px);font-family:'JetBrains Mono',monospace;font-size:12px;
+    color:var(--neon);box-shadow:0 0 24px rgba(93,220,255,0.15) inset}
+  .hud .dot{display:inline-block;width:8px;height:8px;border-radius:50%;
+    background:var(--plus);box-shadow:0 0 10px var(--plus);margin-right:8px;
+    animation:blink 1.4s infinite}
+  @keyframes blink{50%{opacity:.3}}
+
+  /* HERO */
+  .hero{text-align:center;padding:60px 10px 40px;position:relative}
+  .hero h1{font-family:'Orbitron',sans-serif;font-weight:800;
+    font-size:clamp(40px,7vw,84px);letter-spacing:4px;line-height:1;
+    background:linear-gradient(135deg,var(--neon),var(--plus) 50%,var(--gold));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 0 40px rgba(125,220,255,0.3);
+    margin-bottom:18px}
+  .hero .bn{font-size:clamp(22px,4vw,38px);font-weight:700;color:var(--text);
+    margin-bottom:14px}
+  .hero .tag{color:var(--muted);font-size:16px;max-width:640px;margin:0 auto}
+  .hero .pixel{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--gold);
+    letter-spacing:3px;margin-bottom:14px;display:inline-block;
+    padding:6px 14px;border:1px dashed var(--gold);border-radius:6px}
+
+  /* Calculator scene */
+  .calc-scene{display:flex;justify-content:center;align-items:center;margin:30px 0 10px;
+    perspective:900px}
+  .calculator{width:260px;background:linear-gradient(160deg,#1a2440,#0c1428);
+    border-radius:24px;padding:18px;border:2px solid rgba(125,220,255,0.25);
+    box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 60px rgba(93,220,255,0.15),
+      inset 0 1px 0 rgba(255,255,255,.1);
+    transform:rotateY(-8deg) rotateX(8deg);
+    animation:hover 4s ease-in-out infinite}
+  @keyframes hover{50%{transform:rotateY(-8deg) rotateX(8deg) translateY(-10px)}}
+  .lcd{background:#0a1a0a;border-radius:10px;padding:16px;text-align:right;
+    font-family:'Orbitron',monospace;font-size:32px;color:var(--lcd);
+    text-shadow:0 0 10px var(--lcd);min-height:64px;
+    border:1px solid rgba(158,255,122,.3);overflow:hidden}
+  .lcd .small{font-size:12px;color:rgba(158,255,122,.5);display:block;margin-bottom:4px}
+  .lcd .num{display:inline-block;animation:typeCalc 6s steps(1) infinite}
+  @keyframes typeCalc{
+    0%,15%{content:"45 + 15"}
+    20%,40%{content:"60"}
+    45%,65%{content:"100 - 35"}
+    70%,100%{content:"65"}
+  }
+  .lcd .num::before{content:"45 + 15";animation:typeCalc 6s steps(1) infinite}
+  .keys{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+  .key{aspect-ratio:1;border-radius:8px;background:linear-gradient(180deg,#2a3658,#1a2240);
+    color:#cfe3ff;font-family:'JetBrains Mono',monospace;font-weight:700;
+    display:flex;align-items:center;justify-content:center;font-size:14px;
+    border:1px solid rgba(255,255,255,.06);box-shadow:0 2px 0 rgba(0,0,0,.4)}
+  .key.op{background:linear-gradient(180deg,#ffb84d,#e88a1c);color:#1a0f00;
+    box-shadow:0 0 14px rgba(255,184,77,.4)}
+  .key.plus{background:linear-gradient(180deg,#7CFFB2,#3fb37c);color:#06270f;
+    box-shadow:0 0 16px rgba(124,255,178,.45);animation:pulseKey 2.2s infinite}
+  .key.minus{background:linear-gradient(180deg,#ff6b9d,#c83972);color:#2a0010;
+    box-shadow:0 0 16px rgba(255,107,157,.45);animation:pulseKey 2.2s .8s infinite}
+  @keyframes pulseKey{50%{transform:scale(1.08)}}
+
+  /* Sections */
+  section{margin-top:60px;opacity:0;transform:translateY(30px);
+    transition:opacity .8s ease,transform .8s ease}
+  section.in{opacity:1;transform:none}
+  .section-label{font-family:'Press Start 2P',monospace;font-size:11px;
+    color:var(--neon);letter-spacing:3px;margin-bottom:14px;display:inline-block;
+    padding:6px 12px;background:rgba(93,220,255,.08);border-radius:6px;
+    border:1px solid var(--border)}
+  h2{font-family:'Orbitron',sans-serif;font-size:clamp(26px,4vw,40px);
+    margin-bottom:18px;color:var(--text)}
+  h2 .accent{background:linear-gradient(135deg,var(--plus),var(--neon));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;
+    padding:28px;backdrop-filter:blur(10px);
+    box-shadow:0 10px 40px rgba(0,0,0,.3)}
+
+  .intro p{font-size:17px;color:#d4e4f7;margin-bottom:14px}
+  .intro p strong{color:var(--gold)}
+
+  /* Mission cards */
+  .missions{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:18px}
+  .mission{background:linear-gradient(180deg,rgba(93,220,255,.06),transparent);
+    border:1px solid var(--border);border-radius:16px;padding:22px;position:relative;
+    overflow:hidden;transition:transform .3s,box-shadow .3s}
+  .mission:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(93,220,255,.18)}
+  .mission .ico{width:54px;height:54px;border-radius:12px;display:flex;
+    align-items:center;justify-content:center;font-size:28px;margin-bottom:12px;
+    background:linear-gradient(135deg,rgba(124,255,178,.2),rgba(93,220,255,.15));
+    border:1px solid var(--border)}
+  .mission.add .ico{background:linear-gradient(135deg,#7CFFB2,#3fb37c);color:#06270f}
+  .mission.sub .ico{background:linear-gradient(135deg,#ff6b9d,#c83972);color:#2a0010}
+  .mission h3{font-family:'Orbitron',sans-serif;font-size:18px;margin-bottom:6px;color:var(--text)}
+  .mission p{color:var(--muted);font-size:14px}
+
+  .robot-badge{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;
+    background:rgba(179,136,255,.1);border:1px solid rgba(179,136,255,.3);
+    border-radius:30px;font-size:14px;color:var(--neon2);margin-bottom:14px}
+  .robot-badge .face{width:24px;height:24px;border-radius:6px;
+    background:linear-gradient(135deg,var(--neon2),var(--neon));
+    display:flex;align-items:center;justify-content:center;font-size:14px}
+
+  /* Code block */
+  .terminal{background:#05090f;border-radius:14px;border:1px solid var(--border);
+    overflow:hidden;margin-top:18px;font-family:'JetBrains Mono',monospace;
+    box-shadow:0 0 30px rgba(93,220,255,.1)}
+  .term-bar{display:flex;align-items:center;gap:6px;padding:10px 14px;
+    background:#0c1322;border-bottom:1px solid var(--border)}
+  .term-bar .b{width:11px;height:11px;border-radius:50%}
+  .term-bar .b1{background:#ff5f57}
+  .term-bar .b2{background:#febc2e}
+  .term-bar .b3{background:#28c840}
+  .term-bar .title{margin-left:10px;color:var(--muted);font-size:12px}
+  .term-body{padding:18px;font-size:14px;line-height:1.8;color:#cfe3ff;
+    overflow-x:auto;white-space:pre}
+  .term-body .cmt{color:#6c7a99}
+  .term-body .kw{color:#ff7eb6}
+  .term-body .fn{color:var(--gold)}
+  .term-body .str{color:var(--plus)}
+  .term-body .num{color:var(--neon)}
+  .term-body .op{color:#ffb84d}
+  .term-body .out{color:var(--lcd)}
+
+  /* Accordion */
+  .acc-item{background:var(--card);border:1px solid var(--border);
+    border-radius:14px;margin-bottom:12px;overflow:hidden;transition:border-color .3s}
+  .acc-item:hover{border-color:rgba(125,220,255,.4)}
+  .acc-head{padding:18px 22px;cursor:pointer;display:flex;justify-content:space-between;
+    align-items:center;font-weight:700;font-size:16px;color:var(--text)}
+  .acc-head .left{display:flex;align-items:center;gap:12px}
+  .acc-head .ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;
+    justify-content:center;background:linear-gradient(135deg,var(--neon),var(--neon2));
+    color:#02061a;font-size:18px}
+  .acc-head .chev{transition:transform .3s;color:var(--muted)}
+  .acc-item.open .acc-head .chev{transform:rotate(180deg)}
+  .acc-body{max-height:0;overflow:hidden;transition:max-height .5s ease;
+    padding:0 22px}
+  .acc-item.open .acc-body{max-height:1500px;padding:0 22px 22px}
+  .acc-body ul{padding-left:20px;color:#d4e4f7}
+  .acc-body li{margin-bottom:8px}
+  .acc-body li strong{color:var(--plus)}
+
+  .video-ph{aspect-ratio:16/9;background:
+    linear-gradient(135deg,#0c1322,#1a2440);border-radius:12px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--border);gap:10px}
+  .video-ph .play{width:70px;height:70px;border-radius:50%;
+    background:linear-gradient(135deg,var(--plus),var(--neon));
+    display:flex;align-items:center;justify-content:center;font-size:28px;
+    color:#02061a;box-shadow:0 0 30px rgba(124,255,178,.4);cursor:pointer;
+    transition:transform .3s}
+  .video-ph .play:hover{transform:scale(1.1)}
+  .video-ph p{color:var(--muted);font-size:14px}
+
+  .ai-box{display:flex;gap:14px;align-items:center;padding:14px;
+    background:rgba(179,136,255,.06);border-radius:12px;border:1px solid rgba(179,136,255,.2)}
+  .ai-box .avatar{width:50px;height:50px;border-radius:14px;
+    background:linear-gradient(135deg,var(--neon2),var(--neon));
+    display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+  .ai-box p{color:var(--muted);font-size:14px;margin:0}
+  .ai-box p strong{color:var(--neon2)}
+
+  /* Particles */
+  .particle{position:fixed;pointer-events:none;z-index:1;font-family:'Orbitron',sans-serif;
+    font-weight:800;opacity:.4;animation:rise linear infinite}
+  @keyframes rise{
+    from{transform:translateY(100vh) rotate(0)}
+    to{transform:translateY(-20vh) rotate(360deg)}
+  }
+
+  @media (max-width:600px){
+    .container{padding:20px 16px 60px}
+    .calculator{transform:none;width:230px}
+    .calculator{animation:none}
+    .term-body{font-size:12px}
+  }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="math-bg" id="mathBg"></div>
+
+<div class="container">
+  <!-- HUD -->
+  <div class="hud">
+    <span><span class="dot"></span>CALC_OS v1.0 // READY</span>
+    <span>মিশন: পাইথন ক্যালকুলেটর</span>
+  </div>
+
+  <!-- HERO -->
+  <header class="hero">
+    <span class="pixel">▸ LEVEL 02 · FUNCTIONS ◂</span>
+    <div class="calc-scene">
+      <div class="calculator" aria-hidden="true">
+        <div class="lcd">
+          <span class="small">CALC.PY ›</span>
+          <span class="num"></span>
+        </div>
+        <div class="keys">
+          <div class="key">7</div><div class="key">8</div><div class="key">9</div><div class="key op">×</div>
+          <div class="key">4</div><div class="key">5</div><div class="key">6</div><div class="key minus">−</div>
+          <div class="key">1</div><div class="key">2</div><div class="key">3</div><div class="key plus">+</div>
+          <div class="key">0</div><div class="key">.</div><div class="key">=</div><div class="key op">C</div>
+        </div>
+      </div>
+    </div>
+    <h1>CALCULATOR</h1>
+    <div class="bn">🧮 পাইথন ক্যালকুলেটর</div>
+    <p class="tag">দুটি জাদুকরী ফাংশন বানিয়ে যোগ-বিয়োগ করো এক পলকেই!</p>
+  </header>
+
+  <!-- INTRO -->
+  <section>
+    <span class="section-label">▸ INTRO</span>
+    <h2>Calculator <span class="accent">কী?</span></h2>
+    <div class="card intro">
+      <p>সহজ কথায়, <strong>"যে যন্ত্রের সাহায্যে আমরা খুব দ্রুত যোগ, বিয়োগ, গুণ, ভাগের মতো গণিতের নানা হিসাব করে ফেলতে পারি, তাকেই Calculator বলে।"</strong></p>
+      <p>তোমাদের জ্যামিতি বক্সে বা আব্বু-আম্মুর স্মার্টফোনে তোমরা অবশ্যই ক্যালকুলেটর দেখেছ। আজ আমরা কোনো সাধারণ ক্যালকুলেটর নয়, বরং পাইথনের ফাংশন দিয়ে আমাদের নিজেদের একটি স্মার্ট ডিজিটাল ক্যালকুলেটর তৈরি করব!</p>
+    </div>
+  </section>
+
+  <!-- INSTRUCTION -->
+  <section>
+    <span class="section-label">▸ MISSION BRIEF</span>
+    <h2><span class="accent">নির্দেশনা</span> — তোমার মিশন</h2>
+    <div class="card">
+      <div class="robot-badge"><span class="face">🤖</span> মিশন কন্ট্রোল থেকে বার্তা</div>
+      <p style="color:#d4e4f7;margin-bottom:8px">মনে করো, গণিত ক্লাসে স্যার তোমাকে অনেক বড় বড় দুটি সংখ্যার যোগ এবং বিয়োগ করতে দিয়েছেন। তুমি বুদ্ধি করে বাড়ি এসে পাইথনে দুটি জাদুকরী ফাংশন বা রোবট বানিয়ে রাখলে—একটি যোগ করার জন্য, আরেকটি বিয়োগ করার জন্য।</p>
+      <p style="color:#d4e4f7">তুমি যখনই যেকোনো দুটি সংখ্যা ওই ফাংশনে দেবে, সে পলকের মধ্যে তোমাকে সঠিক উত্তরটি বের করে দেবে! চলো, কোডটি লিখে ফেলা যাক।</p>
+
+      <div class="missions">
+        <div class="mission add">
+          <div class="ico">➕</div>
+          <h3>যোগ ফাংশন</h3>
+          <p>দুটি সংখ্যা দাও — যোগফল ফেরত পাও</p>
+        </div>
+        <div class="mission sub">
+          <div class="ico">➖</div>
+          <h3>বিয়োগ ফাংশন</h3>
+          <p>দুটি সংখ্যা দাও — বিয়োগফল ফেরত পাও</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HELP / ACCORDION -->
+  <section>
+    <span class="section-label">▸ HELP CENTER</span>
+    <h2><span class="accent">সাহায্য</span> দরকার?</h2>
+
+    <div class="acc-item">
+      <div class="acc-head" onclick="toggleAcc(this)">
+        <div class="left"><span class="ico">💡</span> হিন্টস (Hints)</div>
+        <span class="chev">▼</span>
+      </div>
+      <div class="acc-body">
+        <ul>
+          <li><strong>যোগের ফাংশন:</strong> দুটি সংখ্যা যোগ করার জন্য একটি ফাংশন তৈরি করো: <code>def যোগ_করো(a, b):</code> এবং ভেতরে <code>return a + b</code> লিখে দাও।</li>
+          <li><strong>বিয়োগের ফাংশন:</strong> বিয়োগ করার জন্য আরেকটি ফাংশন তৈরি করো: <code>def বিয়োগ_করো(a, b):</code> এবং ভেতরে <code>return a - b</code> লিখে দাও।</li>
+          <li><strong>প্যারামিটার ব্যবহার:</strong> ফাংশন ডাকার সময় ব্র্যাকেটের ভেতর সংখ্যা দুটি পাঠিয়ে দিতে হবে।</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="acc-item">
+      <div class="acc-head" onclick="toggleAcc(this)">
+        <div class="left"><span class="ico">🎬</span> Walkthrough Video</div>
+        <span class="chev">▼</span>
+      </div>
+      <div class="acc-body">
+        <div class="video-ph">
+          <div class="play">▶</div>
+          <p>ভিডিও টিউটোরিয়াল শীঘ্রই আসছে…</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="acc-item open">
+      <div class="acc-head" onclick="toggleAcc(this)">
+        <div class="left"><span class="ico">✅</span> সমাধান ও সম্পূর্ণ কোড (Solution)</div>
+        <span class="chev">▼</span>
+      </div>
+      <div class="acc-body">
+        <p style="color:var(--muted);margin-bottom:10px">কোনো জটিলতা ছাড়া খুব সহজ এই কোডটি লক্ষ্য করো:</p>
+        <div class="terminal">
+          <div class="term-bar">
+            <span class="b b1"></span><span class="b b2"></span><span class="b b3"></span>
+            <span class="title">calculator.py — Python 3</span>
+          </div>
+<div class="term-body"><span class="cmt"># ১. যোগ করার জন্য ফাংশন তৈরি (মান ফেরত দেবে)</span>
+<span class="kw">def</span> <span class="fn">jog_koro</span>(a, b):
+    <span class="kw">return</span> a <span class="op">+</span> b
+
+<span class="cmt"># ২. বিয়োগ করার জন্য ফাংশন তৈরি (মান ফেরত দেবে)</span>
+<span class="kw">def</span> <span class="fn">biyoj_koro</span>(a, b):
+    <span class="kw">return</span> a <span class="op">-</span> b
+
+
+<span class="fn">print</span>(<span class="str">"--- 🧮 আমার পাইথন ক্যালকুলেটর ---"</span>)
+
+<span class="cmt"># ৩. ফাংশন কল করে হিসাব বের করা</span>
+jog_fol <span class="op">=</span> <span class="fn">jog_koro</span>(<span class="num">45</span>, <span class="num">15</span>)
+<span class="fn">print</span>(<span class="str">"➕ সংখ্যা দুটির যোগফল:"</span>, jog_fol)
+
+biyoj_fol <span class="op">=</span> <span class="fn">biyoj_koro</span>(<span class="num">100</span>, <span class="num">35</span>)
+<span class="fn">print</span>(<span class="str">"➖ সংখ্যা দুটির বিয়োগফল:"</span>, biyoj_fol)
+
+<span class="out">>>> --- 🧮 আমার পাইথন ক্যালকুলেটর ---
+>>> ➕ সংখ্যা দুটির যোগফল: 60
+>>> ➖ সংখ্যা দুটির বিয়োগফল: 65</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="acc-item">
+      <div class="acc-head" onclick="toggleAcc(this)">
+        <div class="left"><span class="ico">🤖</span> AI Coding Companion</div>
+        <span class="chev">▼</span>
+      </div>
+
+      <!-- Practice in Python IDE -->
+      <div class="acc-item">
+        <div class="acc-head">
+          <div class="left"><span class="ico">💻</span><span>Practice in Python IDE</span></div>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="acc-body">
+          <div class="ai-box">
+            <div class="avatar">💻</div>
+            <p><strong>IDE প্রস্তুত:</strong> এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p>
+            <a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;box-shadow:0 0 16px rgba(101,209,178,0.2);margin-top:8px">🚀 Open Python IDE</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="acc-body">
+        <div class="ai-box">
+          <div class="avatar">🤖</div>
+          <p><strong>AI সঙ্গী:</strong> কোডে আটকে গেছ? আমাকে জিজ্ঞেস করো — আমি তোমাকে ধাপে ধাপে বুঝিয়ে দেবো কীভাবে ফাংশন কাজ করে এবং কোথায় ভুল হচ্ছে।</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  // Floating math symbols
+  const symbols=['+','−','×','÷','=','%','π','∑','√','∞'];
+  const mb=document.getElementById('mathBg');
+  for(let i=0;i<14;i++){
+    const s=document.createElement('span');
+    s.textContent=symbols[Math.floor(Math.random()*symbols.length)];
+    s.style.left=Math.random()*100+'%';
+    s.style.top=Math.random()*100+'%';
+    s.style.fontSize=(40+Math.random()*80)+'px';
+    s.style.animationDelay=(-Math.random()*18)+'s';
+    s.style.animationDuration=(14+Math.random()*12)+'s';
+    mb.appendChild(s);
+  }
+
+  // Floating digit particles
+  const colors=['#7CFFB2','#5ddcff','#ffd86b','#b388ff','#ff6b9d'];
+  for(let i=0;i<22;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    p.textContent=Math.floor(Math.random()*10);
+    p.style.left=Math.random()*100+'vw';
+    p.style.fontSize=(14+Math.random()*22)+'px';
+    p.style.color=colors[i%colors.length];
+    p.style.textShadow='0 0 10px '+colors[i%colors.length];
+    p.style.animationDuration=(10+Math.random()*15)+'s';
+    p.style.animationDelay=(-Math.random()*15)+'s';
+    document.body.appendChild(p);
+  }
+
+  // LCD typing cycle
+  const lcdNum=document.querySelector('.lcd .num');
+  const seq=['45 + 15','= 60','100 - 35','= 65'];
+  let idx=0;
+  setInterval(()=>{lcdNum.textContent=seq[idx];idx=(idx+1)%seq.length;},1600);
+  lcdNum.textContent=seq[0];
+
+  // Accordion
+  function toggleAcc(el){el.parentElement.classList.toggle('open');}
+
+  // Reveal on scroll
+  const io=new IntersectionObserver(es=>es.forEach(e=>{
+    if(e.isIntersecting)e.target.classList.add('in');
+  }),{threshold:.12});
+  document.querySelectorAll('section').forEach(s=>io.observe(s));
+</script>
+</body>
+</html>

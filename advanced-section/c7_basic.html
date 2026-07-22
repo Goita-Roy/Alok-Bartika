@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>🎮 Class ও Object — গেম ডেভেলপার মিশন</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Press+Start+2P&family=Hind+Siliguri:wght@400;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06070d;
+  --bg2:#0b0f1f;
+  --mars:#e2613a;
+  --neon:#7df9ff;
+  --gold:#ffcc66;
+  --neon2:#b388ff;
+  --green:#7CFFB2;
+  --pink:#ff5ec4;
+  --panel:rgba(15,18,35,.78);
+  --border:rgba(125,249,255,.22);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{overflow-x:hidden}
+body{
+  font-family:'Hind Siliguri', system-ui, sans-serif;
+  background:radial-gradient(ellipse at top,#13183a 0%,var(--bg) 60%,#000 100%);
+  color:#e7ecff;
+  min-height:100vh;
+  line-height:1.7;
+  position:relative;
+}
+
+/* ---------- background fx ---------- */
+.stars,.stars2,.stars3{position:fixed;inset:0;pointer-events:none;z-index:0}
+.stars{background-image:radial-gradient(1px 1px at 20px 30px,#fff,transparent),radial-gradient(1px 1px at 70px 120px,#bcd,transparent),radial-gradient(2px 2px at 200px 80px,#fff,transparent),radial-gradient(1px 1px at 300px 250px,#a0c,transparent),radial-gradient(1px 1px at 450px 60px,#fff,transparent);background-size:500px 400px;animation:drift 80s linear infinite;opacity:.55}
+.stars2{background-image:radial-gradient(1px 1px at 120px 90px,#7df9ff,transparent),radial-gradient(1px 1px at 380px 220px,#fff,transparent),radial-gradient(1px 1px at 250px 350px,#b388ff,transparent);background-size:600px 500px;animation:drift 140s linear infinite reverse;opacity:.45}
+.stars3{background-image:radial-gradient(1px 1px at 60px 200px,#ffcc66,transparent),radial-gradient(1px 1px at 420px 140px,#fff,transparent);background-size:700px 600px;animation:drift 200s linear infinite;opacity:.35}
+@keyframes drift{from{transform:translate3d(0,0,0)}to{transform:translate3d(-500px,-400px,0)}}
+
+.grid-floor{position:fixed;left:0;right:0;bottom:0;height:42vh;pointer-events:none;z-index:0;
+  background:
+    linear-gradient(to top, rgba(125,249,255,.18), transparent 70%),
+    repeating-linear-gradient(90deg, rgba(125,249,255,.16) 0 1px, transparent 1px 60px),
+    repeating-linear-gradient(0deg, rgba(125,249,255,.16) 0 1px, transparent 1px 60px);
+  transform:perspective(500px) rotateX(60deg);
+  transform-origin:bottom;
+  mask-image:linear-gradient(to top,#000 30%, transparent);
+}
+
+.particles{position:fixed;inset:0;pointer-events:none;z-index:1}
+.particle{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--neon);box-shadow:0 0 10px var(--neon);animation:floatP 14s linear infinite;opacity:.6}
+
+@keyframes floatP{0%{transform:translateY(110vh) translateX(0)}100%{transform:translateY(-10vh) translateX(80px)}}
+
+.float-glyphs{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+.glyph{position:absolute;font-family:'Press Start 2P',monospace;color:rgba(125,249,255,.18);font-size:14px;animation:rise 18s linear infinite;text-shadow:0 0 8px rgba(125,249,255,.4)}
+@keyframes rise{0%{transform:translateY(110vh) rotate(0)}100%{transform:translateY(-15vh) rotate(360deg)}}
+
+/* ---------- layout ---------- */
+.wrap{position:relative;z-index:5;max-width:1100px;margin:0 auto;padding:40px 22px 80px}
+
+/* HUD */
+.hud{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;
+  border:1px solid var(--border);border-radius:14px;
+  background:linear-gradient(180deg, rgba(13,17,40,.85), rgba(8,10,22,.85));
+  padding:12px 18px;backdrop-filter:blur(6px);
+  font-family:'Press Start 2P',monospace;font-size:10px;letter-spacing:1px;color:var(--neon);
+  box-shadow:0 0 30px rgba(125,249,255,.08), inset 0 0 30px rgba(125,249,255,.05);
+}
+.hud .dot{display:inline-block;width:8px;height:8px;background:var(--green);border-radius:50%;box-shadow:0 0 8px var(--green);margin-right:6px;animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.3}}
+
+/* HERO */
+.hero{margin-top:34px;text-align:center;position:relative}
+.tag{display:inline-block;padding:6px 14px;border:1px solid var(--border);border-radius:999px;
+  font-family:'Press Start 2P',monospace;font-size:9px;color:var(--gold);letter-spacing:2px;
+  background:rgba(255,204,102,.06);text-shadow:0 0 8px rgba(255,204,102,.5)}
+
+.title{
+  margin-top:18px;
+  font-family:'Press Start 2P', monospace;
+  font-size:clamp(28px,6vw,64px);
+  line-height:1.15;
+  background:linear-gradient(90deg,var(--neon),var(--neon2) 50%,var(--pink));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 0 40px rgba(125,249,255,.25);
+  letter-spacing:2px;
+}
+.subtitle{margin-top:18px;color:#cdd6ff;max-width:760px;margin-inline:auto;font-size:18px}
+
+/* battle scene */
+.scene{
+  margin:46px auto 0;max-width:880px;
+  border:1px solid var(--border);border-radius:22px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(125,249,255,.12), transparent 50%),
+    radial-gradient(circle at 70% 70%, rgba(255,94,196,.12), transparent 50%),
+    linear-gradient(180deg, rgba(10,12,28,.9), rgba(5,6,15,.95));
+  padding:34px 24px;position:relative;overflow:hidden;
+  box-shadow:0 30px 80px rgba(0,0,0,.6), inset 0 0 50px rgba(125,249,255,.06);
+}
+.scene::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(transparent 0 3px, rgba(255,255,255,.02) 3px 4px);pointer-events:none}
+
+.battle{display:flex;justify-content:space-around;align-items:flex-end;flex-wrap:wrap;gap:30px;position:relative;z-index:2}
+.player{
+  width:200px;text-align:center;position:relative;
+  animation:bob 3.5s ease-in-out infinite;
+}
+.player:nth-child(2){animation-delay:.7s}
+@keyframes bob{50%{transform:translateY(-10px)}}
+.avatar{
+  width:120px;height:120px;margin:0 auto;border-radius:18px;
+  background:linear-gradient(160deg,#1f2548,#0d1130);
+  border:2px solid var(--neon);
+  display:flex;align-items:center;justify-content:center;font-size:64px;
+  box-shadow:0 0 30px rgba(125,249,255,.4), inset 0 0 20px rgba(125,249,255,.15);
+  position:relative;
+}
+.player.p2 .avatar{border-color:var(--pink);box-shadow:0 0 30px rgba(255,94,196,.4), inset 0 0 20px rgba(255,94,196,.15)}
+.avatar::after{content:"";position:absolute;inset:-2px;border-radius:18px;border:1px dashed rgba(255,255,255,.18);animation:spin 20s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.nameplate{margin-top:14px;font-family:'Press Start 2P',monospace;font-size:11px;color:var(--neon);letter-spacing:1px}
+.player.p2 .nameplate{color:var(--pink)}
+.stats{margin-top:8px;font-family:'Fira Code',monospace;font-size:13px;color:#9fb1d6}
+.lvl{color:var(--gold);font-weight:700}
+
+.vs{
+  font-family:'Press Start 2P',monospace;font-size:34px;
+  background:linear-gradient(180deg,var(--gold),#ff8800);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 0 22px rgba(255,136,0,.5);
+  animation:pulseVs 1.4s ease-in-out infinite;
+  align-self:center;
+}
+@keyframes pulseVs{50%{transform:scale(1.15)}}
+
+.blueprint{
+  margin:34px auto 0;max-width:520px;border:2px dashed var(--neon);border-radius:14px;padding:18px;
+  background:repeating-linear-gradient(45deg, rgba(125,249,255,.04) 0 12px, transparent 12px 24px);
+  font-family:'Fira Code',monospace;color:var(--neon);text-align:left;font-size:14px;position:relative;
+}
+.blueprint::before{content:"📐 CLASS BLUEPRINT";position:absolute;top:-12px;left:18px;background:var(--bg);padding:2px 10px;font-family:'Press Start 2P',monospace;font-size:9px;color:var(--gold);letter-spacing:1px}
+.blueprint b{color:var(--gold)}
+
+/* section */
+.section{margin-top:80px}
+.section h2{
+  font-family:'Press Start 2P',monospace;font-size:clamp(18px,3vw,26px);
+  color:var(--gold);text-align:center;letter-spacing:1.5px;
+  text-shadow:0 0 14px rgba(255,204,102,.4)
+}
+.section .sub{text-align:center;color:#a8b3d4;margin-top:8px;font-size:15px}
+
+.card{
+  margin-top:28px;border:1px solid var(--border);border-radius:18px;
+  background:linear-gradient(180deg, rgba(15,18,35,.85), rgba(8,10,22,.9));
+  padding:28px;backdrop-filter:blur(6px);
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+}
+.card p{font-size:16.5px;color:#d6def5}
+.card strong{color:var(--neon)}
+.formula{
+  margin:18px 0 0;display:flex;flex-direction:column;gap:10px;
+  font-family:'Fira Code',monospace;font-size:15px
+}
+.formula span{padding:10px 14px;border-left:3px solid var(--neon);background:rgba(125,249,255,.06);border-radius:6px}
+.formula span:nth-child(2){border-left-color:var(--pink);background:rgba(255,94,196,.06)}
+
+/* mission steps */
+.steps{display:grid;gap:18px;margin-top:28px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.step{
+  position:relative;border:1px solid var(--border);border-radius:16px;padding:22px 20px;
+  background:linear-gradient(180deg, rgba(20,24,48,.85), rgba(10,12,28,.9));
+  transition:transform .3s ease, box-shadow .3s ease;
+}
+.step:hover{transform:translateY(-6px);box-shadow:0 22px 50px rgba(125,249,255,.18);border-color:var(--neon)}
+.step .num{
+  position:absolute;top:-14px;left:18px;
+  font-family:'Press Start 2P',monospace;font-size:10px;letter-spacing:1px;
+  background:linear-gradient(135deg,var(--neon),var(--neon2));color:#06070d;
+  padding:6px 10px;border-radius:8px;box-shadow:0 6px 18px rgba(125,249,255,.4)
+}
+.step .icon{font-size:34px;margin-bottom:8px}
+.step h3{font-family:'Press Start 2P',monospace;font-size:11px;color:var(--gold);letter-spacing:1px;margin-bottom:10px}
+.step p{font-size:15px;color:#cfd7f3}
+.step code{font-family:'Fira Code',monospace;color:var(--green);background:rgba(124,255,178,.08);padding:1px 6px;border-radius:4px}
+
+/* terminal */
+.terminal{
+  margin-top:30px;border-radius:14px;overflow:hidden;border:1px solid var(--border);
+  box-shadow:0 25px 60px rgba(0,0,0,.6), 0 0 40px rgba(125,249,255,.1);
+  background:#05060f
+}
+.tbar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#0c1024;border-bottom:1px solid var(--border)}
+.tbar .b{width:12px;height:12px;border-radius:50%}
+.b.r{background:#ff5f56}.b.y{background:#ffbd2e}.b.g{background:#27c93f}
+.tbar .name{margin-left:10px;font-family:'Fira Code',monospace;font-size:13px;color:#9fb1d6}
+.tcode{padding:20px 22px;font-family:'Fira Code',monospace;font-size:14.5px;line-height:1.85;color:#e7ecff;white-space:pre;overflow-x:auto}
+.kw{color:#ff79c6}.fn{color:var(--neon)}.str{color:var(--gold)}.num{color:var(--green)}.cm{color:#6b7392;font-style:italic}.obj{color:var(--neon2)}.dot{color:var(--pink)}
+.tout{padding:14px 22px 22px;font-family:'Fira Code',monospace;font-size:14px;color:var(--green);background:#03040a;border-top:1px dashed rgba(125,249,255,.18)}
+.tout .arrow{color:var(--gold);margin-right:8px}
+.cursor{display:inline-block;width:9px;height:18px;background:var(--green);vertical-align:middle;animation:blink 1s steps(1) infinite;margin-left:4px}
+
+/* accordion */
+.accordion{margin-top:28px;display:flex;flex-direction:column;gap:14px}
+details{
+  border:1px solid var(--border);border-radius:14px;
+  background:linear-gradient(180deg, rgba(15,18,35,.85), rgba(8,10,22,.9));
+  padding:16px 20px;transition:border-color .25s ease;
+}
+details[open]{border-color:var(--neon);box-shadow:0 14px 40px rgba(125,249,255,.12)}
+summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:12px;font-family:'Press Start 2P',monospace;font-size:11px;color:var(--gold);letter-spacing:1px}
+summary::-webkit-details-marker{display:none}
+summary .chev{margin-left:auto;transition:transform .3s ease;color:var(--neon)}
+details[open] summary .chev{transform:rotate(90deg)}
+details .body{margin-top:14px;color:#d2dbf3;font-size:15.5px}
+details .body code{font-family:'Fira Code',monospace;background:rgba(125,249,255,.08);padding:1px 6px;border-radius:4px;color:var(--neon)}
+details .body pre{margin-top:10px;padding:14px;background:#05060f;border:1px solid var(--border);border-radius:10px;font-family:'Fira Code',monospace;font-size:13.5px;overflow-x:auto;color:#e7ecff}
+
+.video-box{
+  margin-top:10px;border:1px dashed var(--neon);border-radius:14px;
+  aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;
+  background:radial-gradient(circle at center, rgba(125,249,255,.1), transparent 70%);
+  color:var(--neon);font-family:'Press Start 2P',monospace;font-size:12px;letter-spacing:1px
+}
+.video-box .play{font-size:54px}
+
+.ai-bot{display:flex;gap:14px;align-items:center;margin-top:6px}
+.ai-bot .face{
+  width:60px;height:60px;border-radius:14px;
+  background:linear-gradient(135deg,var(--neon),var(--neon2));
+  display:flex;align-items:center;justify-content:center;font-size:32px;
+  box-shadow:0 0 20px rgba(179,136,255,.5)
+}
+.ai-bot p{flex:1}
+
+/* footer */
+.footer{margin-top:60px;text-align:center;color:#7a86ad;font-family:'Press Start 2P',monospace;font-size:9px;letter-spacing:1.5px}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .8s ease, transform .8s ease}
+.reveal.show{opacity:1;transform:none}
+
+@media (max-width:600px){
+  .wrap{padding:24px 14px 60px}
+  .battle{flex-direction:column;align-items:center}
+  .vs{margin:6px 0}
+  .tcode{font-size:13px}
+}
+</style>
+</head>
+<body>
+
+<div class="stars"></div><div class="stars2"></div><div class="stars3"></div>
+<div class="grid-floor"></div>
+<div class="particles" id="particles"></div>
+<div class="float-glyphs" id="glyphs"></div>
+
+<div class="wrap">
+
+  <!-- HUD -->
+  <div class="hud">
+    <div><span class="dot"></span>GAME ENGINE :: ONLINE</div>
+    <div>MISSION 03 // CLASS &amp; OBJECT</div>
+    <div>XP +250</div>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <span class="tag">► GAME DEV ACADEMY</span>
+    <h1 class="title">CLASS &amp; OBJECT</h1>
+    <p class="subtitle">বন্ধুরা, মনে করো তুমি ফ্রি ফায়ার (Free Fire) বা পাবজি (PUBG)-এর মতো একটা দারুণ গেম বানাচ্ছ। গেমে যতগুলো ক্যারেক্টার বা প্লেয়ার থাকবে, সবারই একটা সাধারণ মিল আছে — সবার একটা নাম (Name), লেভেল (Level), আর পাওয়ার (Power) থাকবে।</p>
+
+    <div class="scene reveal">
+      <div class="battle">
+        <div class="player p1">
+          <div class="avatar">🥷</div>
+          <div class="nameplate">PLAYER_01</div>
+          <div class="stats">Name: <b>Alok</b><br>Level: <span class="lvl">★ 5</span></div>
+        </div>
+        <div class="vs">VS</div>
+        <div class="player p2">
+          <div class="avatar">🤖</div>
+          <div class="nameplate">PLAYER_02</div>
+          <div class="stats">Name: <b>Riya</b><br>Level: <span class="lvl">★ 8</span></div>
+        </div>
+      </div>
+
+      <div class="blueprint">
+        <b>class Player:</b><br>
+        &nbsp;&nbsp;name = ?<br>
+        &nbsp;&nbsp;level = ?<br>
+        &nbsp;&nbsp;power = ?
+      </div>
+    </div>
+  </section>
+
+  <!-- INTRO -->
+  <section class="section reveal">
+    <h2>🧠 সহজ ধারণা</h2>
+    <p class="sub">১০০ জন প্লেয়ারের জন্য ১০০ বার আলাদা কোড লিখব না — একটাই নকশা বানাব!</p>
+    <div class="card">
+      <p>এখন গেমের ১০০টি প্লেয়ারের জন্য কি তুমি ১০০ বার আলাদা আলাদা কোড লিখবে? একদমই না! তুমি বুদ্ধি করে প্রথমে প্লেয়ারের একটা কমন <strong>নকশা বা ডিজাইন</strong> বানিয়ে নেবে। প্রোগ্রামিংয়ের ভাষায় এই নকশাকেই বলে <strong>Class (ক্লাস)</strong>। আর এই নকশা দেখে দেখে যখন তুমি আসল এক একজন প্লেয়ার তৈরি করবে, তখন তাদের বলা হবে <strong>Object (অবজেক্ট)</strong>।</p>
+      <div class="formula">
+        <span><b>Class</b> = Design (নকশা বা ব্লুপ্রিন্ট) 📐</span>
+        <span><b>Object</b> = Real Player (আসল প্লেয়ার) 🎮</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ASSIGNMENT -->
+  <section class="section reveal">
+    <h2>🎯 নির্দেশনা (Assignment)</h2>
+    <p class="sub">চল এডিটর খুলে একটি নতুন <code style="font-family:'Fira Code',monospace;color:var(--green)">game.py</code> প্রোগ্রাম তৈরি করি।</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="num">STEP 01</div>
+        <div class="icon">📐</div>
+        <h3>ডিজাইনের ছাঁচ</h3>
+        <p>প্রথমে <code>class</code> কিওয়ার্ড ব্যবহার করে <code>Player</code> নামের একটি খালি ক্লাস বা নকশা তৈরি করো। ভেতরে কোনো কোড না থাকলে <code>pass</code> লিখে দেবে।</p>
+      </div>
+      <div class="step">
+        <div class="num">STEP 02</div>
+        <div class="icon">🧬</div>
+        <h3>প্রথম প্লেয়ার তৈরি</h3>
+        <p>ক্লাসের বাইরে এসে <code>player1 = Player()</code> লিখে তোমার গেমের প্রথম আসল প্লেয়ার বা অবজেক্টটি তৈরি করো।</p>
+      </div>
+      <div class="step">
+        <div class="num">STEP 03</div>
+        <div class="icon">🎮</div>
+        <h3>তথ্য যোগ ও প্রিন্ট</h3>
+        <p>ডট (.) চিহ্নের সাহায্যে প্রথম প্লেয়ারের নাম দাও <code>"Alok"</code> এবং লেভেল দাও <code>5</code>। সবশেষে <code>print()</code> ব্যবহার করে প্লেয়ারের নাম আর লেভেল স্ক্রিনে দেখাও।</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HINTS / ACCORDION -->
+  <section class="section reveal">
+    <h2>💡 সাহায্য, ভিডিও &amp; সমাধান</h2>
+
+    <div class="accordion">
+
+      <details>
+        <summary>💡 হিন্টস (Hints)<span class="chev">▶</span></summary>
+        <div class="body">
+          <p><b style="color:var(--neon)">হিন্ট ১:</b> পাইথনে ক্লাস তৈরি করার নিয়ম হলো:</p>
+<pre><span class="kw">class</span> <span class="fn">Player</span>:
+    <span class="kw">pass</span></pre>
+          <p style="margin-top:14px"><b style="color:var(--neon)">হিন্ট ২ (ডট ম্যাজিক):</b> অবজেক্টের নামের পাশে ডট (.) দিয়ে সরাসরি ভ্যারিয়েবল বানিয়ে তথ্য বসিয়ে দেওয়া যায়! যেমন: <code>player1.name = "Alok"</code></p>
+          <p style="margin-top:10px"><b style="color:var(--neon)">হিন্ট ৩:</b> স্ক্রিনে প্রিন্ট করার সময় কমা (,) ব্যবহার করে অবজেক্টের ভেতরের তথ্যগুলো দেখাতে পারো, যেমন: <code>print(player1.name)</code></p>
+        </div>
+      </details>
+
+      <details>
+        <summary>📹 Walkthrough Video<span class="chev">▶</span></summary>
+        <div class="body">
+          <div class="video-box">
+            <div class="play">▶</div>
+            <div>PLAY MISSION VIDEO</div>
+          </div>
+        </div>
+      </details>
+
+      <details open>
+        <summary>🛠️ সমাধান ও সম্পূর্ণ কোড (Solution)<span class="chev">▶</span></summary>
+        <div class="body">
+          <p>তোমার নতুন তৈরি করা <code>game.py</code> ফাইলের কোডটি হবে এরকম সহজ ও গোছানো:</p>
+
+          <div class="terminal">
+            <div class="tbar">
+              <span class="b r"></span><span class="b y"></span><span class="b g"></span>
+              <span class="name">game.py</span>
+            </div>
+<div class="tcode"><span class="cm"># ১. প্লেয়ারের একটি খালি নকশা বা ক্লাস তৈরি করলাম</span>
+<span class="kw">class</span> <span class="fn">Player</span>:
+    <span class="kw">pass</span>
+
+<span class="cm"># ২. প্রথম প্লেয়ারের অবজেক্ট (Real Player) তৈরি করলাম</span>
+<span class="obj">player1</span> = <span class="fn">Player</span>()
+
+<span class="cm"># ৩. ডট (.) ব্যবহার করে প্লেয়ারের তথ্যগুলো বক্সে ভরে দিলাম</span>
+<span class="obj">player1</span><span class="dot">.</span>name  = <span class="str">"Alok"</span>
+<span class="obj">player1</span><span class="dot">.</span>level = <span class="num">5</span>
+
+<span class="fn">print</span>(<span class="str">"--- 🎮 গেমের প্লেয়ার প্রোফাইল ---"</span>)
+
+<span class="cm"># ৪. এবার অবজেক্টের ভেতরের তথ্য স্ক্রিনে প্রিন্ট করার পালা</span>
+<span class="fn">print</span>(<span class="str">"👤 প্লেয়ারের নাম:"</span>, <span class="obj">player1</span><span class="dot">.</span>name)
+<span class="fn">print</span>(<span class="str">"⭐ প্লেয়ারের লেভেল:"</span>, <span class="obj">player1</span><span class="dot">.</span>level)<span class="cursor"></span></div>
+            <div class="tout">
+              <div><span class="arrow">▶</span>--- 🎮 গেমের প্লেয়ার প্রোফাইল ---</div>
+              <div><span class="arrow">▶</span>👤 প্লেয়ারের নাম: Alok</div>
+              <div><span class="arrow">▶</span>⭐ প্লেয়ারের লেভেল: 5</div>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details>
+        <summary>🤖 AI Coding Companion<span class="chev">▶</span></summary>
+        <div class="body">
+          <div class="ai-bot">
+            <div class="face">🤖</div>
+            <p>আটকে গেছ? AI Coding Companion-কে জিজ্ঞেস করো — সে তোমাকে ধাপে ধাপে গাইড করবে, কোডের ভুল ধরিয়ে দেবে আর নতুন আইডিয়া দেবে। মনে রেখো — ক্লাস হলো নকশা, অবজেক্ট হলো সেই নকশা থেকে বানানো আসল প্লেয়ার!</p>
+          </div>
+        </div>
+      </details>
+
+    </div>
+  </section>
+
+  <div class="footer">— MISSION COMPLETE • POWERED BY PYTHON 🐍 —</div>
+
+</div>
+
+
+  <details class="accordion">
+    <summary><span class="ico" style="background:rgba(101,209,178,.15);color:var(--cyan)">💻</span><span style="color:var(--cyan)">Practice in Python IDE</span></summary>
+    <div class="body"><p style="margin:0;color:#d1d5db">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p><a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;margin-top:8px">🚀 Open Python IDE</a></div>
+  </details>
+
+<script>
+// particles
+const p = document.getElementById('particles');
+const colors=['#7df9ff','#b388ff','#ffcc66','#ff5ec4','#7CFFB2'];
+for(let i=0;i<28;i++){
+  const d=document.createElement('div');d.className='particle';
+  d.style.left=Math.random()*100+'%';
+  d.style.animationDuration=(8+Math.random()*14)+'s';
+  d.style.animationDelay=(-Math.random()*14)+'s';
+  const c=colors[i%colors.length];
+  d.style.background=c;d.style.boxShadow='0 0 12px '+c;
+  d.style.width=d.style.height=(3+Math.random()*6)+'px';
+  p.appendChild(d);
+}
+
+// floating code glyphs
+const g=document.getElementById('glyphs');
+const tokens=['class','Player','def','self','object','{ }','( )','.name','.level','pass','print','★','◆','▲'];
+for(let i=0;i<22;i++){
+  const s=document.createElement('div');s.className='glyph';
+  s.textContent=tokens[i%tokens.length];
+  s.style.left=Math.random()*100+'%';
+  s.style.fontSize=(10+Math.random()*16)+'px';
+  s.style.animationDuration=(14+Math.random()*16)+'s';
+  s.style.animationDelay=(-Math.random()*20)+'s';
+  g.appendChild(s);
+}
+
+// reveal
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('show')}),{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

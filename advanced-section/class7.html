@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏛️ Chapter 7: OOP - Chapter Dashboard</title>
+    <link rel="stylesheet" href="Begineer.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🏛️ অধ্যায় ৭ — ক্লাস ও অবজেক্ট</h1>
+            <p>অবজেক্ট ওরিয়েন্টেড প্রোগ্রামিং (OOP)! বাস্তব জীবনকে কোডের ব্লুপ্রিন্ট ও ক্লাসের মাধ্যমে রূপান্তর করা শিখুন।</p>
+        </header>
+
+        <!-- CHAPTER PROGRESS BAR -->
+        <div class="progress-bar-sticky">
+            <div class="progress-header">
+                <span>🔄 অধ্যায় অগ্রগতি (Chapter Progress)</span>
+                <span id="chapter-7-percent" style="font-weight: 800; color: var(--primary);">0% Completed</span>
+            </div>
+            <div class="progress-track">
+                <div id="chapter-7-fill" class="progress-fill"></div>
+            </div>
+        </div>
+
+        <!-- SUBCLASSES GRID -->
+        <div class="grid">
+            <!-- Basic Card -->
+            <a href="c7_basic.html" class="subclass-card" data-subclass-id="c7_basic">
+                <div>
+                    <h3>🔰 Basic</h3>
+                    <p>এই অধ্যায়ের বেসিক কনসেপ্ট এবং নিয়মাবলী জানুন।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+            
+            <!-- Restaurants Card -->
+            <a href="c7_restuarent.html" class="subclass-card" data-subclass-id="c7_restaurants">
+                <div>
+                    <h3>🍽️ Restaurants</h3>
+                    <p>একটি রেস্টুরেন্টের কাস্টম মেনু, টেবিল বুকিং ও কাস্টমার রিভিউ ক্লাস তৈরি করুন।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+
+            <!-- Favorite Cities Card -->
+            <a href="c7_favorite_city.html" class="subclass-card" data-subclass-id="c7_favorite_cities">
+                <div>
+                    <h3>🌇 Favorite Cities</h3>
+                    <p>আপনার প্রিয় শহরগুলোর নাম, জনসংখ্যা ও আকর্ষণীয় দিকগুলোর তথ্য সংবলিত সিটি ক্লাস ডিজাইন করুন।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+
+            <!-- Bank Accounts Card -->
+            <a href="c7_bank_account.html" class="subclass-card" data-subclass-id="c7_bank_accounts">
+                <div>
+                    <h3>💰 Bank Accounts</h3>
+                    <p>টাকা জমা, উত্তোলন ও ব্যালেন্স চেক করার রিয়েল ওয়ার্ল্ড ব্যাংক অ্যাকাউন্ট ক্লাস মডেলিং।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+        </div>
+
+        <!-- NAV FOOTER -->
+        <div class="nav-footer">
+            <button class="btn btn-secondary" onclick="window.location.href='class6.html'">
+                ⬅️ পূর্ববর্তী অধ্যায়
+            </button>
+            <button class="btn btn-primary" onclick="window.location.href='class8.html'">
+                পরবর্তী অধ্যায় ➡️
+            </button>
+        </div>
+    </div>
+
+    <!-- CONTROL PANEL -->
+    <div class="controls-panel">
+        <button class="control-btn" id="theme-btn">🌙</button>
+        <button class="control-btn" id="voice-bot-btn">🤖</button>
+    </div>
+
+    <script src="Begineer.js"></script>
+</body>
+</html>

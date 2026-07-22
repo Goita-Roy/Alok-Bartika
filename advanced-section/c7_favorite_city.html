@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Class ও Object — Favorite Cities অ্যাডভেঞ্চার 🗺️</title>
+<meta name="description" content="Favorite Cities উদাহরণ দিয়ে Python Class এবং Object শেখার মজার অ্যাডভেঞ্চার!" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f1a35; --fg:#ecf3ff; --muted:#9fb3d9;
+    --card:#16244a; --border:rgba(120,160,220,.35);
+    --neon:#5ee9ff; --neon-pink:#ff8ad1; --neon-yellow:#ffd95e; --neon-green:#7cffb0;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;border-color:var(--border);}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Hind Siliguri',sans-serif; color:var(--fg);
+    background:#0a1226;
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(94,233,255,.18), transparent 45%),
+      radial-gradient(circle at 85% 85%, rgba(255,138,209,.18), transparent 45%),
+      radial-gradient(circle at 50% 50%, rgba(124,255,176,.08), transparent 60%);
+    background-attachment:fixed; min-height:100vh; overflow-x:hidden;
+  }
+  code,pre{font-family:'JetBrains Mono',monospace;}
+  .font-pixel{font-family:'Press Start 2P',cursive;}
+  .text-neon{color:var(--neon);text-shadow:0 0 12px var(--neon);}
+  .text-neon-pink{color:var(--neon-pink);text-shadow:0 0 12px var(--neon-pink);}
+  .text-neon-yellow{color:var(--neon-yellow);text-shadow:0 0 10px var(--neon-yellow);}
+  .text-neon-green{color:var(--neon-green);text-shadow:0 0 10px var(--neon-green);}
+  .muted{color:var(--muted);}
+  .container{max-width:1100px;margin:0 auto;padding:0 24px;position:relative;z-index:10;}
+  .grid-bg{
+    position:fixed;inset:0;z-index:0;opacity:.3;pointer-events:none;
+    background-image:
+      linear-gradient(rgba(94,233,255,.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(94,233,255,.08) 1px, transparent 1px);
+    background-size:40px 40px;
+  }
+  /* Star sky */
+  .stars{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+  .star{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;animation:twinkle 3s ease-in-out infinite;}
+  @keyframes twinkle{0%,100%{opacity:.3;}50%{opacity:1;box-shadow:0 0 6px #fff;}}
+  /* Floating icons */
+  .particles{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+  .particle{position:absolute;font-family:'JetBrains Mono',monospace;opacity:.4;animation:float-up linear infinite;}
+  @keyframes float-up{
+    0%{transform:translateY(100vh) translateX(0);opacity:0;}
+    10%{opacity:1;} 90%{opacity:1;}
+    100%{transform:translateY(-10vh) translateX(20px);opacity:0;}
+  }
+  @keyframes pulse-glow{
+    0%,100%{box-shadow:0 0 20px rgba(94,233,255,.3);}
+    50%{box-shadow:0 0 40px rgba(94,233,255,.6),0 0 60px rgba(255,138,209,.3);}
+  }
+  @keyframes bobbing{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+  @keyframes spin-slow{to{transform:rotate(360deg);}}
+  @keyframes sparkle{0%,100%{opacity:0;transform:scale(0);}50%{opacity:1;transform:scale(1);}}
+  @keyframes wiggle{0%,100%{transform:rotate(-3deg);}50%{transform:rotate(3deg);}}
+  @keyframes blink{50%{opacity:0;}}
+  @keyframes shimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
+  @keyframes plane-fly{
+    0%{transform:translateX(-30px) translateY(0) rotate(15deg);}
+    50%{transform:translateX(30px) translateY(-10px) rotate(15deg);}
+    100%{transform:translateX(-30px) translateY(0) rotate(15deg);}
+  }
+  .bob{animation:bobbing 3s ease-in-out infinite;}
+  .spin-slow{display:inline-block;animation:spin-slow 20s linear infinite;}
+  .pulse-glow{animation:pulse-glow 3s ease-in-out infinite;}
+  .wiggle{display:inline-block;animation:wiggle 2s ease-in-out infinite;}
+  .plane-fly{display:inline-block;animation:plane-fly 6s ease-in-out infinite;}
+  .blink-cursor::after{content:'▊';color:var(--neon-green);animation:blink 1s steps(2) infinite;margin-left:4px;}
+  .shimmer-text{
+    background:linear-gradient(90deg,var(--neon) 0%,var(--neon-pink) 25%,var(--neon-yellow) 50%,var(--neon-green) 75%,var(--neon) 100%);
+    background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:shimmer 4s linear infinite;
+  }
+  .card{background:linear-gradient(135deg,rgba(22,36,74,.85),rgba(30,20,70,.65));border-radius:var(--radius);border:1px solid var(--border);}
+  .glow-border{border:1px solid rgba(94,233,255,.4);box-shadow:inset 0 0 20px rgba(94,233,255,.1),0 0 20px rgba(94,233,255,.2);}
+  .chip{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;border:1px solid var(--neon);background:rgba(94,233,255,.1);color:var(--neon);font-size:11px;}
+  .reveal{opacity:0;transform:translateY(40px);transition:all .8s cubic-bezier(.2,.8,.2,1);}
+  .reveal.visible{opacity:1;transform:translateY(0);}
+  h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.15;margin:18px 0;font-weight:700;}
+  h2{font-size:1.85rem;font-weight:700;margin:0;}
+  section{padding:40px 0;}
+  .hero{display:flex;gap:40px;align-items:center;flex-wrap:wrap;padding-top:60px;}
+  .hero-left{flex:1;min-width:280px;}
+  .hero-mascot{width:260px;position:relative;}
+  .hero-mascot .glow{position:absolute;inset:0;border-radius:50%;background:rgba(94,233,255,.2);filter:blur(40px);}
+  .quote-bar{border-left:4px solid var(--neon-pink);padding-left:16px;color:var(--muted);font-size:1.05rem;line-height:1.7;margin-top:20px;}
+  .concept{padding:32px;position:relative;overflow:hidden;}
+  .dots{position:absolute;top:16px;right:16px;display:flex;gap:6px;}
+  .dot{width:10px;height:10px;border-radius:50%;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px;}
+  @media (max-width:640px){.grid2{grid-template-columns:1fr;}}
+  .mini{padding:18px;border-radius:12px;background:rgba(10,18,38,.5);border:2px dashed var(--neon);}
+  .mini.pink{border-color:var(--neon-pink);}
+  .mini .emoji{font-size:2rem;}
+  .city-card{position:relative;padding:24px;border-radius:14px;border:2px solid var(--neon);overflow:hidden;animation:pulse-glow 3s ease-in-out infinite;background:linear-gradient(135deg,rgba(22,36,74,.9),rgba(30,20,70,.7));}
+  .city-card.pink{border-color:var(--neon-pink);}
+  .city-card .bg-emoji{position:absolute;top:-20px;right:-20px;font-size:5rem;opacity:.15;transform:rotate(12deg);}
+  .step-list{counter-reset:step;list-style:none;padding:0;margin:18px 0 0;display:flex;flex-direction:column;gap:10px;}
+  .step-list li{counter-increment:step;display:flex;gap:14px;align-items:flex-start;padding:14px;background:rgba(10,18,38,.5);border-radius:10px;border:1px solid var(--border);}
+  .step-list li::before{content:counter(step);min-width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--neon),var(--neon-pink));color:#0a1226;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:'Press Start 2P',cursive;font-size:.75rem;}
+  .accordion{display:flex;flex-direction:column;gap:14px;}
+  .acc-item{border:2px solid rgba(255,217,94,.4);border-radius:14px;overflow:hidden;background:linear-gradient(135deg,rgba(22,36,74,.85),rgba(30,20,70,.65));}
+  .acc-item.pink{border-color:rgba(255,138,209,.4);}
+  .acc-item.green{border-color:rgba(124,255,176,.4);}
+  .acc-item.cyan{border-color:rgba(94,233,255,.4);}
+  .acc-trigger{width:100%;padding:18px 24px;background:transparent;color:var(--fg);border:0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font:inherit;font-size:1.05rem;font-weight:700;list-style:none;}
+  .acc-trigger::-webkit-details-marker{display:none;}
+  .acc-trigger .left{display:flex;align-items:center;gap:12px;}
+  .acc-trigger .chev{transition:transform .3s;}
+  .acc-item[open] .chev{transform:rotate(180deg);}
+  .acc-body{padding:0 24px 24px;display:flex;flex-direction:column;gap:14px;}
+  .hint{display:flex;gap:12px;padding:14px;background:rgba(10,18,38,.5);border-radius:10px;border:1px solid var(--border);}
+  .hint .e{font-size:1.5rem;}
+  .ic{padding:4px 8px;border-radius:6px;background:#0a0f1e;color:var(--neon-green);font-size:.9em;}
+  .terminal{border-radius:14px;overflow:hidden;border:2px solid var(--neon-green);box-shadow:0 0 30px rgba(124,255,176,.3);background:rgba(0,0,0,.7);}
+  .terminal .bar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(0,0,0,.6);border-bottom:1px solid rgba(124,255,176,.3);}
+  .terminal .bar .lbl{margin-left:10px;font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--neon-green);}
+  .terminal-body{padding:24px;font-family:'JetBrains Mono',monospace;color:var(--neon-green);min-height:160px;}
+  .code-box{border-radius:12px;overflow:hidden;border:1px solid rgba(124,255,176,.4);background:#0a0f1e;}
+  .code-box .bar{background:rgba(0,0,0,.4);}
+  .code-box pre{margin:0;padding:18px;overflow-x:auto;font-size:.9rem;line-height:1.7;}
+  .ln{display:flex;}
+  .ln .num{user-select:none;color:rgba(255,255,255,.25);width:32px;text-align:right;padding-right:12px;}
+  .kw{color:var(--neon-pink);font-weight:700;}
+  .fn{color:var(--neon-yellow);}
+  .cls{color:var(--neon);}
+  .var{color:var(--neon-green);}
+  .attr{color:var(--neon-yellow);}
+  .str{color:#ffb37a;}
+  .cm{color:var(--muted);font-style:italic;}
+  .badge{display:inline-flex;align-items:center;gap:12px;padding:14px 24px;border-radius:16px;border:2px solid var(--neon-yellow);background:linear-gradient(135deg,rgba(22,36,74,.85),rgba(30,20,70,.65));animation:pulse-glow 3s ease-in-out infinite;}
+  .video-ph{aspect-ratio:16/9;border-radius:12px;border:2px dashed rgba(255,138,209,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(10,18,38,.5);color:var(--muted);}
+  .play-btn{width:64px;height:64px;border-radius:50%;background:rgba(255,138,209,.15);display:flex;align-items:center;justify-content:center;color:var(--neon-pink);font-size:2rem;animation:pulse-glow 3s ease-in-out infinite;}
+  footer{padding:30px 0;text-align:center;font-size:.7rem;color:var(--muted);border-top:1px solid var(--border);margin-top:40px;}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="stars" id="stars"></div>
+<div class="particles" id="particles"></div>
+
+<div class="container">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-left">
+      <div class="reveal"><span class="chip font-pixel">🏆 LEVEL 8 · CITY QUEST</span></div>
+      <div class="reveal">
+        <h1>
+          <span class="shimmer-text">Favorite Cities</span><br/>
+          ভ্রমণ অ্যাডভেঞ্চার <span class="plane-fly">✈️</span>
+        </h1>
+      </div>
+      <div class="reveal">
+        <p class="quote-bar">"পৃথিবীর যেসব শহর আমাদের খুব ভালো লাগে, যে শহরগুলোতে আমরা বেড়াতে যেতে চাই বা যেখানকার সুন্দর জায়গাগুলো আমাদের পছন্দ—তাদের তালিকাকেই Favorite Cities বলে।"</p>
+      </div>
+    </div>
+    <div class="hero-mascot bob">
+      <div class="glow pulse-glow"></div>
+      <svg viewBox="0 0 220 200" style="position:relative;width:100%;">
+        <!-- moon -->
+        <circle cx="180" cy="35" r="14" fill="#ffe066" opacity=".9"/>
+        <circle cx="186" cy="32" r="12" fill="#0a1226"/>
+        <!-- city skyline -->
+        <rect x="10" y="110" width="30" height="70" fill="#3a4f8a" stroke="#5ee9ff" stroke-width="1.5"/>
+        <rect x="44" y="80" width="36" height="100" fill="#4a3f8a" stroke="#ff8ad1" stroke-width="1.5"/>
+        <polygon points="62,60 50,80 74,80" fill="#4a3f8a" stroke="#ff8ad1" stroke-width="1.5"/>
+        <rect x="84" y="95" width="28" height="85" fill="#3a4f8a" stroke="#5ee9ff" stroke-width="1.5"/>
+        <!-- eiffel-ish tower -->
+        <polygon points="135,40 125,180 145,180" fill="#2a3f7a" stroke="#ffd95e" stroke-width="1.5"/>
+        <rect x="128" y="80" width="14" height="2" fill="#ffd95e"/>
+        <rect x="126" y="120" width="18" height="2" fill="#ffd95e"/>
+        <!-- right building -->
+        <rect x="155" y="100" width="28" height="80" fill="#4a3f8a" stroke="#7cffb0" stroke-width="1.5"/>
+        <rect x="187" y="120" width="24" height="60" fill="#3a4f8a" stroke="#5ee9ff" stroke-width="1.5"/>
+        <!-- windows -->
+        <g fill="#ffd95e">
+          <rect x="16" y="120" width="4" height="4"/><rect x="26" y="120" width="4" height="4"/>
+          <rect x="16" y="135" width="4" height="4"/><rect x="26" y="135" width="4" height="4"/>
+          <rect x="50" y="95" width="4" height="4"/><rect x="60" y="95" width="4" height="4"/><rect x="70" y="95" width="4" height="4"/>
+          <rect x="50" y="115" width="4" height="4"/><rect x="60" y="115" width="4" height="4"/><rect x="70" y="115" width="4" height="4"/>
+          <rect x="90" y="110" width="4" height="4"/><rect x="100" y="110" width="4" height="4"/>
+          <rect x="90" y="130" width="4" height="4"/><rect x="100" y="130" width="4" height="4"/>
+          <rect x="160" y="115" width="4" height="4"/><rect x="170" y="115" width="4" height="4"/>
+          <rect x="160" y="135" width="4" height="4"/><rect x="170" y="135" width="4" height="4"/>
+          <rect x="192" y="130" width="4" height="4"/><rect x="202" y="130" width="4" height="4"/>
+          <rect x="192" y="150" width="4" height="4"/><rect x="202" y="150" width="4" height="4"/>
+        </g>
+        <!-- ground -->
+        <rect x="0" y="180" width="220" height="4" fill="#5ee9ff" opacity=".5"/>
+      </svg>
+      <span class="spin-slow" style="position:absolute;top:-8px;right:-8px;font-size:1.8rem;">✨</span>
+    </div>
+  </section>
+
+  <!-- CONCEPT -->
+  <section>
+    <div class="reveal card concept glow-border">
+      <div class="dots"><span class="dot" style="background:#f87171"></span><span class="dot" style="background:#fbbf24"></span><span class="dot" style="background:#34d399"></span></div>
+      <p style="font-size:1.05rem;line-height:1.8;margin:0;">
+        পৃথিবীতে যত শহরই থাকুক না কেন, সবারই একটা সাধারণ মিল বা নকশা আছে। যেমন—সব শহরেরই একটা নির্দিষ্ট <span class="text-neon" style="font-weight:600;">নাম (name)</span> থাকে আর সেখানে বেড়ানোর মতো একটা দারুণ জায়গা বা <span class="text-neon-pink" style="font-weight:600;">আকর্ষণ (attraction)</span> থাকে। পাইথনে এই সাধারণ নকশাটিই হলো আমাদের <span class="text-neon-yellow" style="font-weight:700;">Class</span>। আর এই নকশা ব্যবহার করে তৈরি করা আসল একেকটি পছন্দের শহর (যেমন: <span class="text-neon-green">ঢাকা</span> বা <span class="text-neon-green">প্যারিস</span>) হলো এক একটি <span class="text-neon-yellow" style="font-weight:700;">Object</span>!
+      </p>
+      <div class="grid2">
+        <div class="mini">
+          <div class="emoji">🗺️</div>
+          <p class="font-pixel text-neon" style="font-size:11px;margin:6px 0;">CLASS = নকশা</p>
+          <p class="muted" style="margin:0;font-size:.9rem;">সব শহরের কমন ব্লুপ্রিন্ট।</p>
+        </div>
+        <div class="mini pink">
+          <div class="emoji">🏙️</div>
+          <p class="font-pixel text-neon-pink" style="font-size:11px;margin:6px 0;">OBJECT = আসল শহর</p>
+          <p class="muted" style="margin:0;font-size:.9rem;">নকশা থেকে বানানো শহর।</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSTRUCTION -->
+  <section>
+    <div class="reveal" style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <span style="font-size:2rem;" class="wiggle">🎯</span>
+      <h2 class="text-neon-yellow">নির্দেশনা</h2>
+    </div>
+    <div class="reveal card" style="padding:28px;border-color:rgba(255,217,94,.4);box-shadow:0 0 30px rgba(255,138,209,.2);">
+      <p style="font-size:1.05rem;line-height:1.8;margin:0;">
+        মনে করো, তুমি ডায়েরিতে তোমার খুব পছন্দের ২টি শহরের নাম আর সেখানকার বিখ্যাত জায়গার নাম লিখে রাখতে চাও। আমরা কোনো জটিল কোড না লিখে একদম সহজে পাইথনের সাহায্যে এই শহরের তালিকাটি তৈরি করব।
+      </p>
+      <ol class="step-list">
+        <li><div>একটি <span class="text-neon" style="font-weight:700;">City</span> ক্লাস তৈরি করো।</div></li>
+        <li><div>২টি আলাদা <span class="text-neon-pink" style="font-weight:700;">শহরের অবজেক্ট</span> তৈরি করো।</div></li>
+        <li><div>ডট <span class="text-neon-yellow" style="font-weight:700;">(.)</span> চিহ্নের সাহায্যে শহর দুটির নাম আর বিখ্যাত জায়গার নাম সেট করে স্ক্রিনে প্রিন্ট করো।</div></li>
+      </ol>
+      <div class="grid2" style="margin-top:24px;">
+        <div class="city-card">
+          <div class="bg-emoji">🏰</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:2rem;">🏙️</span>
+            <div>
+              <p class="font-pixel muted" style="font-size:10px;margin:0;">CITY · 01</p>
+              <h3 class="text-neon" style="margin:4px 0 0;font-size:1.25rem;">Dhaka</h3>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:.85rem;">
+            <span class="text-neon-yellow">.place</span><span class="muted">=</span><span class="text-neon-green">"Ahsan Manzil"</span>
+          </div>
+          <div style="margin-top:8px;font-size:1.6rem;">🏰</div>
+        </div>
+        <div class="city-card pink">
+          <div class="bg-emoji">🗼</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:2rem;">🏙️</span>
+            <div>
+              <p class="font-pixel muted" style="font-size:10px;margin:0;">CITY · 02</p>
+              <h3 class="text-neon-pink" style="margin:4px 0 0;font-size:1.25rem;">Paris</h3>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:.85rem;">
+            <span class="text-neon-yellow">.place</span><span class="muted">=</span><span class="text-neon-green">"Eiffel Tower"</span>
+          </div>
+          <div style="margin-top:8px;font-size:1.6rem;">🗼</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HELP -->
+  <section>
+    <div class="reveal" style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <span style="font-size:2rem;">💡</span>
+      <h2 class="text-neon">সাহায্য</h2>
+    </div>
+
+    <div class="accordion reveal">
+      <details class="acc-item" open>
+        <summary class="acc-trigger"><span class="left"><span style="font-size:1.3rem;">💡</span><span class="text-neon-yellow">হিন্টস (Hints)</span></span><span class="chev">▾</span></summary>
+        <div class="acc-body">
+          <div class="hint"><span class="e">📦</span><p style="margin:0;"><span class="text-neon" style="font-weight:700;">সহজ ছাঁচ (Class):</span> প্রথমে একটি খালি ক্লাস তৈরি করো: <code class="ic">class City: pass</code> (pass লিখলে ভেতরে কোনো কোড না থাকলেও ক্লাসটি তৈরি হয়ে যায়)।</p></div>
+          <div class="hint"><span class="e">🏙️</span><p style="margin:0;"><span class="text-neon-pink" style="font-weight:700;">আসল শহর (Object):</span> এরপর <code class="ic">city1 = City()</code> লিখে তোমার প্রথম শহরের অবজেক্ট তৈরি করো।</p></div>
+          <div class="hint"><span class="e">🔗</span><p style="margin:0;"><span class="text-neon-yellow" style="font-weight:700;">ডট দিয়ে তথ্য বসানো:</span> অবজেক্টের নামের পাশে ডট (.) দিয়ে সরাসরি নাম আর বিখ্যাত জায়গা লিখে দেওয়া যায়! যেমন: <code class="ic">city1.name = "Dhaka"</code> এবং <code class="ic">city1.place = "Ahsan Manzil"</code>।</p></div>
+        </div>
+      </details>
+
+      <details class="acc-item pink">
+        <summary class="acc-trigger"><span class="left"><span style="font-size:1.3rem;">📹</span><span class="text-neon-pink">Walkthrough Video</span></span><span class="chev">▾</span></summary>
+        <div class="acc-body">
+          <div class="video-ph">
+            <div class="play-btn">▶</div>
+            <p class="font-pixel" style="font-size:10px;margin:0;">▶ ভিডিও শীঘ্রই আসছে</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="acc-item green">
+        <summary class="acc-trigger"><span class="left"><span style="font-size:1.3rem;">🛠️</span><span class="text-neon-green">সমাধান ও সম্পূর্ণ কোড (Solution)</span></span><span class="chev">▾</span></summary>
+        <div class="acc-body">
+          <p class="muted" style="margin:0 0 6px;">একদম সহজ উপায়ে লেখা পাইথন কোডটি নিচে দেখো:</p>
+          <div class="code-box">
+            <div class="bar">
+              <span class="dot" style="background:#f87171"></span><span class="dot" style="background:#fbbf24"></span><span class="dot" style="background:#34d399"></span>
+              <span class="lbl" style="margin-left:auto;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.75rem;">favorite_cities.py 🐍</span>
+            </div>
+            <pre id="codeblock"></pre>
+          </div>
+        </div>
+      </details>
+
+      <details class="acc-item cyan">
+        <summary class="acc-trigger"><span class="left"><span style="font-size:1.3rem;" class="bob">🤖</span><span class="text-neon">AI Coding Companion</span></span><span class="chev">▾</span></summary>
+        <div class="acc-body">
+          <div class="hint"><span class="e bob">🤖</span><div><p class="font-pixel text-neon" style="font-size:10px;margin:0 0 6px;">HELPER · ONLINE</p><p style="margin:0;">তোমার ছোট্ট কোডিং বন্ধু যেকোনো সময় তোমাকে সাহায্য করতে প্রস্তুত!</p></div></div>
+        </div>
+      </details>
+    </div>
+  </section>
+
+
+  <details class="accordion">
+    <summary><span class="ico" style="background:rgba(101,209,178,.15);color:var(--cyan)">💻</span><span style="color:var(--cyan)">Practice in Python IDE</span></summary>
+    <div class="body"><p style="margin:0;color:#d1d5db">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p><a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;margin-top:8px">🚀 Open Python IDE</a></div>
+  </details>
+
+  <!-- TERMINAL -->
+  <section>
+    <div class="reveal" style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <span style="font-size:2rem;">🖥️</span>
+      <h2 class="text-neon-green">Output Terminal</h2>
+    </div>
+    <div class="reveal terminal">
+      <div class="bar">
+        <span class="dot" style="background:#f87171"></span><span class="dot" style="background:#fbbf24"></span><span class="dot" style="background:#34d399"></span>
+        <span class="lbl">~ / python favorite_cities.py</span>
+      </div>
+      <div class="terminal-body">
+        <div><span class="muted">$ </span><span id="tw0"></span></div>
+        <div style="margin-top:8px;"><span class="muted">$ </span><span id="tw1"></span></div>
+        <div style="margin-top:8px;"><span class="muted">$ </span><span id="tw2"></span></div>
+      </div>
+    </div>
+    <div class="reveal" style="margin-top:32px;text-align:center;">
+      <div class="badge">
+        <span class="spin-slow text-neon-yellow">✦</span>
+        <span class="font-pixel text-neon-yellow" style="font-size:.8rem;">+50 XP · QUEST COMPLETE!</span>
+        <span class="spin-slow text-neon-yellow">✦</span>
+      </div>
+    </div>
+  </section>
+
+  <footer class="font-pixel">🗺️ Coding Adventure · Level Complete ✈️</footer>
+</div>
+
+<script>
+  // Stars
+  const stars=document.getElementById('stars');
+  for(let i=0;i<60;i++){
+    const s=document.createElement('span');
+    s.className='star';
+    s.style.left=Math.random()*100+'%';
+    s.style.top=Math.random()*100+'%';
+    s.style.animationDelay=(Math.random()*3)+'s';
+    stars.appendChild(s);
+  }
+  // Particles
+  const symbols=["✈","🗺","🏙","🏰","🗼","★","✦","◆","◇","○"];
+  const colors=["text-neon","text-neon-pink","text-neon-yellow","text-neon-green"];
+  const p=document.getElementById('particles');
+  for(let i=0;i<25;i++){
+    const s=document.createElement('span');
+    s.className='particle '+colors[i%colors.length];
+    s.textContent=symbols[i%symbols.length];
+    s.style.left=Math.random()*100+'%';
+    s.style.fontSize=(12+Math.random()*16)+'px';
+    s.style.animationDelay=(Math.random()*15)+'s';
+    s.style.animationDuration=(14+Math.random()*18)+'s';
+    p.appendChild(s);
+  }
+
+  // Reveal on scroll
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');io.unobserve(e.target);}}),{threshold:.15});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  // Code
+  const code=`# ১. শহরের একটি খালি নকশা বা ক্লাস তৈরি করলাম
+class City:
+    pass
+
+
+# ২. প্রথম শহরের অবজেক্ট তৈরি এবং তথ্য যোগ করা
+city1 = City()
+city1.name = "Dhaka"
+city1.place = "Ahsan Manzil"
+
+
+# ৩. দ্বিতীয় শহরের অবজেক্ট তৈরি এবং তথ্য যোগ করা
+city2 = City()
+city2.name = "Paris"
+city2.place = "Eiffel Tower"
+
+
+print("--- 🗺️ আমার পছন্দের শহরের তালিকা ---")
+
+
+# ৪. এবার সরাসরি ডট (.) ব্যবহার করে স্ক্রিনে প্রিন্ট করার পালা
+print("🏙️ শহর:", city1.name, "-> 🏰 বিখ্যাত জায়গা:", city1.place)
+print("🏙️ শহর:", city2.name, "-> 🗼 বিখ্যাত জায়গা:", city2.place)`;
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function hl(line){
+    if(line.trim().startsWith('#')) return '<span class="cm">'+esc(line)+'</span>';
+    let h=esc(line);
+    h=h.replace(/"([^"]*)"/g,'<span class="str">"$1"</span>');
+    h=h.replace(/\b(class|pass)\b/g,'<span class="kw">$1</span>');
+    h=h.replace(/\b(print)\b/g,'<span class="fn">$1</span>');
+    h=h.replace(/\b(City)\b/g,'<span class="cls">$1</span>');
+    h=h.replace(/\b(city\d)\b/g,'<span class="var">$1</span>');
+    h=h.replace(/(\.name|\.place)/g,'<span class="attr">$1</span>');
+    return h;
+  }
+  document.getElementById('codeblock').innerHTML=code.split('\n').map((l,i)=>
+    '<div class="ln"><span class="num">'+(i+1)+'</span><span style="flex:1;">'+(hl(l)||'&nbsp;')+'</span></div>'
+  ).join('');
+
+  // Typewriter
+  function typewriter(el,text,delay=0){
+    return new Promise(res=>{
+      let i=0;
+      setTimeout(()=>{
+        el.classList.add('blink-cursor');
+        const id=setInterval(()=>{
+          i++;el.textContent=text.slice(0,i);
+          if(i>=text.length){clearInterval(id);el.classList.remove('blink-cursor');res();}
+        },35);
+      },delay);
+    });
+  }
+  const t0=document.getElementById('tw0');
+  const t1=document.getElementById('tw1');
+  const t2=document.getElementById('tw2');
+  const tio=new IntersectionObserver(async es=>{
+    for(const e of es){
+      if(e.isIntersecting){
+        tio.disconnect();
+        await typewriter(t0,"--- 🗺️ আমার পছন্দের শহরের তালিকা ---");
+        await typewriter(t1,"🏙️ শহর: Dhaka -> 🏰 বিখ্যাত জায়গা: Ahsan Manzil",300);
+        await typewriter(t2,"🏙️ শহর: Paris -> 🗼 বিখ্যাত জায়গা: Eiffel Tower",300);
+        t2.classList.add('blink-cursor');
+      }
+    }
+  },{threshold:.5});
+  tio.observe(t0);
+</script>
+</body>
+</html>

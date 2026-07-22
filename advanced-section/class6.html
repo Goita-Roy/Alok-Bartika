@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛠️ Chapter 6: Functions - Chapter Dashboard</title>
+    <link rel="stylesheet" href="Begineer.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🛠️ অধ্যায় ৬ — ফাংশনস (Functions)</h1>
+            <p>পুনর্ব্যবহারযোগ্য কোড ব্লক! কোডকে অর্গানাইজড ও মডুলার রাখার মূল হাতিয়ার পাইথন ফাংশন আবিষ্কার করুন।</p>
+        </header>
+
+        <!-- CHAPTER PROGRESS BAR -->
+        <div class="progress-bar-sticky">
+            <div class="progress-header">
+                <span>🔄 অধ্যায় অগ্রগতি (Chapter Progress)</span>
+                <span id="chapter-6-percent" style="font-weight: 800; color: var(--primary);">0% Completed</span>
+            </div>
+            <div class="progress-track">
+                <div id="chapter-6-fill" class="progress-fill"></div>
+            </div>
+        </div>
+
+        <!-- SUBCLASSES GRID -->
+        <div class="grid">
+            <!-- Basic Card -->
+            <a href="c6_basic.html" class="subclass-card" data-subclass-id="c6_basic">
+                <div>
+                    <h3>🔰 Basic</h3>
+                    <p>এই অধ্যায়ের বেসিক কনসেপ্ট এবং নিয়মাবলী জানুন।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+            
+            <!-- D.R.Y. Card -->
+            <a href="c6_dry.html" class="subclass-card" data-subclass-id="c6_dry">
+                <div>
+                    <h3>🧩 D.R.Y. Concept</h3>
+                    <p>"Don't Repeat Yourself" নীতি অনুসরণ করে কোড অপ্টিমাইজ করার গোপন কৌশল!</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+
+            <!-- Mars Orbiter Card -->
+            <a href="c6_mars_orbiter.html" class="subclass-card" data-subclass-id="c6_mars_orbiter">
+                <div>
+                    <h3>🚀 Mars Orbiter</h3>
+                    <p>মঙ্গলগ্রহে পাঠানো অরবিটারের জ্বালানি ও মহাকাশ দূরত্ব গণনার প্রোগ্রাম তৈরি করুন!</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+
+            <!-- Calculator Card -->
+            <a href="c6_calculator.html" class="subclass-card" data-subclass-id="c6_calculator">
+                <div>
+                    <h3>🧮 Calculator</h3>
+                    <p>যোগ, বিয়োগ, গুন, ভাগ হ্যান্ডেল করার জন্য কাস্টম ম্যাথ ফাংশন ক্যালকুলেটর।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+        </div>
+
+        <!-- NAV FOOTER -->
+        <div class="nav-footer">
+            <button class="btn btn-secondary" onclick="window.location.href='class5.html'">
+                ⬅️ পূর্ববর্তী অধ্যায়
+            </button>
+            <button class="btn btn-primary" onclick="window.location.href='class7.html'">
+                পরবর্তী অধ্যায় ➡️
+            </button>
+        </div>
+    </div>
+
+    <!-- CONTROL PANEL -->
+    <div class="controls-panel">
+        <button class="control-btn" id="theme-btn">🌙</button>
+        <button class="control-btn" id="voice-bot-btn">🤖</button>
+    </div>
+
+    <script src="Begineer.js"></script>
+</body>
+</html>

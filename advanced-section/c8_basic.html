@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>🎰 পাইথন মডিউল অ্যাডভেঞ্চার — স্লট মেশিন গেম</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Hind+Siliguri:wght@400;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a1f;
+    --bg2:#11112e;
+    --neon:#00ffe1;
+    --neon2:#ff2bd6;
+    --neon3:#ffd166;
+    --green:#39ff14;
+    --card:#15163a;
+    --border:#2a2b62;
+    --text:#e8ecff;
+    --muted:#9aa3d4;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{overflow-x:hidden}
+  body{
+    font-family:'Hind Siliguri',sans-serif;
+    background:radial-gradient(1200px 700px at 10% -10%, #1a0a3a 0%, transparent 60%),
+               radial-gradient(900px 600px at 100% 10%, #06243a 0%, transparent 55%),
+               linear-gradient(180deg,#05061a, #0a0a1f 50%, #07071c);
+    color:var(--text);
+    line-height:1.75;
+    min-height:100vh;
+    position:relative;
+  }
+  /* Retro grid floor */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:
+      linear-gradient(transparent 95%, rgba(0,255,225,0.12) 95%),
+      linear-gradient(90deg, transparent 95%, rgba(255,43,214,0.10) 95%);
+    background-size:40px 40px;
+    mask-image:linear-gradient(180deg, transparent 0%, black 30%, black 70%, transparent 100%);
+  }
+  /* Floating particles */
+  .particles{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+  .particle{
+    position:absolute;font-size:18px;opacity:.55;
+    animation:floatUp linear infinite;
+    filter:drop-shadow(0 0 6px var(--neon));
+  }
+  @keyframes floatUp{
+    0%{transform:translateY(110vh) rotate(0)}
+    100%{transform:translateY(-15vh) rotate(360deg)}
+  }
+
+  .wrap{position:relative;z-index:2;max-width:980px;margin:0 auto;padding:40px 22px 80px}
+
+  /* HERO */
+  .hero{
+    text-align:center;padding:50px 24px 40px;border-radius:24px;
+    background:linear-gradient(135deg, rgba(255,43,214,.12), rgba(0,255,225,.10));
+    border:2px solid rgba(0,255,225,.35);
+    box-shadow:0 0 40px rgba(0,255,225,.15), inset 0 0 30px rgba(255,43,214,.08);
+    position:relative;overflow:hidden;
+  }
+  .hero h1{
+    font-family:'Press Start 2P',cursive;
+    font-size:clamp(18px,3.4vw,28px);
+    color:var(--neon);
+    text-shadow:0 0 12px var(--neon), 0 0 22px rgba(0,255,225,.5);
+    margin-bottom:18px;line-height:1.5;
+  }
+  .hero .sub{color:var(--muted);font-size:17px}
+  .mascot{
+    font-size:64px;display:inline-block;
+    animation:bounce 2.2s ease-in-out infinite;
+    filter:drop-shadow(0 0 14px var(--neon3));
+  }
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px) rotate(-4deg)}}
+
+  .badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+  .badge{
+    font-family:'Press Start 2P',cursive;font-size:9px;
+    padding:8px 12px;border-radius:8px;
+    background:#0d0e2a;border:1px solid var(--border);color:var(--neon);
+    box-shadow:0 0 10px rgba(0,255,225,.2);
+  }
+  .badge.pink{color:var(--neon2);box-shadow:0 0 10px rgba(255,43,214,.25)}
+  .badge.yellow{color:var(--neon3);box-shadow:0 0 10px rgba(255,209,102,.25)}
+
+  /* SECTIONS */
+  section{
+    margin-top:40px;padding:30px 26px;border-radius:20px;
+    background:linear-gradient(180deg, rgba(21,22,58,.85), rgba(13,14,42,.85));
+    border:1px solid var(--border);
+    backdrop-filter:blur(6px);
+    opacity:0;transform:translateY(40px);
+    transition:opacity .8s ease, transform .8s ease;
+    position:relative;overflow:hidden;
+  }
+  section.in{opacity:1;transform:none}
+  section h2{
+    font-family:'Press Start 2P',cursive;font-size:14px;line-height:1.7;
+    color:var(--neon3);margin-bottom:18px;
+    text-shadow:0 0 8px rgba(255,209,102,.55);
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  }
+  section p{margin-bottom:14px;font-size:17px}
+  section p strong{color:var(--neon)}
+
+  .scene{
+    display:flex;justify-content:center;gap:22px;flex-wrap:wrap;
+    margin:18px 0 22px;font-size:46px;
+  }
+  .scene span{
+    display:inline-block;padding:14px;border-radius:14px;
+    background:#0c0d2a;border:1px solid var(--border);
+    box-shadow:0 0 14px rgba(0,255,225,.18);
+    animation:float 3.4s ease-in-out infinite;
+  }
+  .scene span:nth-child(2){animation-delay:.4s}
+  .scene span:nth-child(3){animation-delay:.8s}
+  .scene span:nth-child(4){animation-delay:1.2s}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+
+  /* SLOT MACHINE */
+  .slot-card{
+    text-align:center;
+    background:linear-gradient(160deg,#1a0d3a,#0b0a26);
+    border:2px solid var(--neon2);
+    box-shadow:0 0 28px rgba(255,43,214,.25), inset 0 0 22px rgba(0,255,225,.08);
+  }
+  .slot-card h2{color:var(--neon2);text-shadow:0 0 10px rgba(255,43,214,.6)}
+  .machine{
+    margin:18px auto;max-width:480px;padding:22px;border-radius:18px;
+    background:linear-gradient(180deg,#2a0a4a,#120426);
+    border:3px solid var(--neon3);
+    box-shadow:0 0 30px rgba(255,209,102,.35), inset 0 6px 0 rgba(255,255,255,.06);
+  }
+  .reels{display:flex;gap:14px;justify-content:center;margin-bottom:18px}
+  .reel{
+    width:90px;height:110px;border-radius:12px;
+    background:#06061c;border:2px solid var(--neon);
+    display:flex;align-items:center;justify-content:center;
+    font-size:54px;overflow:hidden;position:relative;
+    box-shadow:inset 0 0 16px rgba(0,255,225,.25);
+  }
+  .reel .roll{
+    position:absolute;display:flex;flex-direction:column;
+    transition:transform 1.4s cubic-bezier(.2,.8,.2,1);
+  }
+  .reel .roll span{height:110px;display:flex;align-items:center;justify-content:center;font-size:54px}
+  .spin-btn{
+    font-family:'Press Start 2P',cursive;font-size:11px;
+    padding:14px 22px;border-radius:10px;border:none;cursor:pointer;
+    background:linear-gradient(135deg,var(--neon2),#7a0fb8);
+    color:#fff;letter-spacing:1px;
+    box-shadow:0 6px 0 #4a087a, 0 0 18px rgba(255,43,214,.5);
+    transition:transform .1s;
+  }
+  .spin-btn:active{transform:translateY(3px);box-shadow:0 3px 0 #4a087a}
+  .result{margin-top:12px;font-family:'Press Start 2P',cursive;font-size:10px;color:var(--neon3);min-height:18px}
+
+  /* CODE BLOCK / TERMINAL */
+  .terminal{
+    background:#05061a;border:1px solid var(--neon);border-radius:14px;
+    box-shadow:0 0 22px rgba(0,255,225,.2);
+    overflow:hidden;margin:18px 0;
+  }
+  .term-bar{
+    background:#0d0e2a;padding:10px 14px;display:flex;align-items:center;gap:8px;
+    border-bottom:1px solid var(--border);
+  }
+  .dot{width:12px;height:12px;border-radius:50%}
+  .dot.r{background:#ff5f56}.dot.y{background:#ffbd2e}.dot.g{background:#27c93f}
+  .term-title{margin-left:10px;font-family:'Fira Code',monospace;font-size:12px;color:var(--muted)}
+  pre.code{
+    margin:0;padding:18px 20px;font-family:'Fira Code',monospace;font-size:14px;
+    color:#d6f5ff;white-space:pre-wrap;word-break:break-word;line-height:1.7;
+  }
+  .code .c{color:#6b7bb8;font-style:italic}      /* comment */
+  .code .k{color:#ff79c6}                          /* keyword */
+  .code .s{color:#ffd166}                          /* string */
+  .code .f{color:#00ffe1}                          /* function */
+  .code .n{color:#bd93f9}                          /* number/var */
+  .cursor::after{content:"▍";color:var(--green);animation:blink 1s steps(1) infinite;margin-left:2px}
+  @keyframes blink{50%{opacity:0}}
+
+  /* HINTS LIST */
+  .hints{list-style:none;display:grid;gap:14px}
+  .hints li{
+    padding:14px 16px;border-radius:12px;
+    background:#0e1030;border:1px solid var(--border);
+    border-left:4px solid var(--neon);
+    transition:transform .25s, box-shadow .25s;
+  }
+  .hints li:hover{transform:translateX(6px);box-shadow:0 0 18px rgba(0,255,225,.25)}
+  .hints li b{color:var(--neon3)}
+
+  /* ACCORDIONS */
+  .acc{display:grid;gap:14px;margin-top:10px}
+  .acc-item{
+    border:1px solid var(--border);border-radius:14px;overflow:hidden;
+    background:#0d0e2a;transition:box-shadow .3s;
+  }
+  .acc-item.open{box-shadow:0 0 22px rgba(0,255,225,.25)}
+  .acc-head{
+    width:100%;text-align:left;padding:16px 18px;cursor:pointer;
+    background:linear-gradient(90deg,#141546,#0d0e2a);
+    border:none;color:var(--text);font-family:'Hind Siliguri',sans-serif;
+    font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  }
+  .acc-head .ico{font-size:22px;filter:drop-shadow(0 0 6px var(--neon3))}
+  .acc-head .chev{transition:transform .3s;color:var(--neon)}
+  .acc-item.open .chev{transform:rotate(180deg)}
+  .acc-body{
+    max-height:0;overflow:hidden;transition:max-height .5s ease, padding .3s;
+    padding:0 18px;
+  }
+  .acc-item.open .acc-body{max-height:2200px;padding:14px 18px 20px}
+
+  /* Decorative floating symbols around sections */
+  .deco{position:absolute;opacity:.18;font-size:42px;pointer-events:none}
+  .deco.tl{top:10px;left:14px;animation:spin 14s linear infinite}
+  .deco.br{bottom:10px;right:14px;animation:spin 18s linear infinite reverse}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* Achievement popup */
+  .toast{
+    position:fixed;right:20px;bottom:20px;z-index:9;
+    background:linear-gradient(135deg,var(--neon3),#ff8c42);
+    color:#1a0a00;font-family:'Press Start 2P',cursive;font-size:10px;
+    padding:14px 16px;border-radius:12px;
+    box-shadow:0 8px 24px rgba(0,0,0,.4), 0 0 18px rgba(255,209,102,.6);
+    transform:translateY(120%);transition:transform .5s cubic-bezier(.2,.8,.2,1);
+  }
+  .toast.show{transform:translateY(0)}
+
+  /* Footer mascot */
+  .footer{
+    text-align:center;margin-top:50px;color:var(--muted);font-size:14px;
+  }
+  .robot{font-size:42px;display:inline-block;animation:wiggle 2s ease-in-out infinite}
+  @keyframes wiggle{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+
+  @media (max-width:520px){
+    .reel{width:72px;height:92px;font-size:42px}
+    .reel .roll span{height:92px;font-size:42px}
+  }
+</style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="mascot">🐍</div>
+    <h1>পাইথন মডিউল অ্যাডভেঞ্চার</h1>
+    <p class="sub">🎰 চলো বানাই আমাদের নিজের ডিজিটাল স্লট মেশিন গেম!</p>
+    <div class="badges">
+      <span class="badge">LEVEL · MODULE</span>
+      <span class="badge pink">XP · +100</span>
+      <span class="badge yellow">★ RANDOM POWER</span>
+    </div>
+  </header>
+
+  <!-- STORY: LEGO -->
+  <section>
+    <span class="deco tl">⚙️</span><span class="deco br">🔩</span>
+    <h2>🧱 গল্পের শুরু — লেগো বাক্সের জাদু</h2>
+    <div class="scene">
+      <span>🤖</span><span>🧱</span><span>⚙️</span><span>🔧</span>
+    </div>
+    <p>বন্ধুরা, মনে করো তুমি একটি রোবট বা বড় একটি লেগো (Lego) সেট বানাচ্ছ। এখন লেগোর চাকা, গিয়ার বা স্ক্রুগুলো কি তুমি নিজে লোহা গলিয়ে কারখানায় তৈরি করবে? একদমই না! তুমি বাজার থেকে একটি রেডিমেড পার্টসের বাক্স (Ready-made Parts Box) কিনে এনে শুধু তোমার রোবটে ফিট করে দেবে।</p>
+    <p>পাইথনে এই রেডিমেড পার্টসের বাক্স বা টুলবক্সের নামই হলো <strong>Module (মডিউল)</strong>। মডিউল হলো আসলে একটি পাইথন ফাইল, যেখানে অনেক দরকারী কোড, ফাংশন আর ভ্যারিয়েবল আগে থেকেই কে বা কারা সুন্দর করে লিখে গুছিয়ে রেখেছে। আমাদের যখনই কোনো কঠিন কাজ করার দরকার হয়, আমরা নিজেরা কষ্ট করে কোড না লিখে পাইথনের ওই জাদুকরী বাক্স থেকে রেডিমেড কোড বের করে ব্যবহার করি!</p>
+  </section>
+
+  <!-- MISSION: SLOT MACHINE -->
+  <section class="slot-card">
+    <span class="deco tl">🎰</span><span class="deco br">🎲</span>
+    <h2>🎯 আজকের মিশন — লাকি ড্র স্লট মেশিন</h2>
+    <p>মনে করো, তুমি গেম জোনের জন্য একটি ডিজিটাল স্লট মেশিন বানাচ্ছ। মেশিনের স্ক্রিনে ৩টি স্লট বা ঘর আছে। গেমার যখনই স্পিন বাটন চাপবে, পাইথনের লটারির বাক্স (<strong>random মডিউল</strong>) থেকে ৩টি ঘরে হঠাৎ করে ৩টি ফলের ইমোজি বসে যাবে। চলো, এই দারুণ মজার লাকি ড্র গেমটি কোড লিখে বানিয়ে ফেলি!</p>
+
+    <div class="machine" aria-hidden="false">
+      <div class="reels">
+        <div class="reel"><div class="roll" id="r1"></div></div>
+        <div class="reel"><div class="roll" id="r2"></div></div>
+        <div class="reel"><div class="roll" id="r3"></div></div>
+      </div>
+      <button class="spin-btn" id="spinBtn">▶ SPIN</button>
+      <div class="result" id="result">স্পিন বাটনে চাপ দাও!</div>
+    </div>
+  </section>
+
+  <!-- HELP -->
+  <section>
+    <span class="deco tl">💡</span><span class="deco br">📘</span>
+    <h2>🆘 সাহায্য</h2>
+
+    <div class="acc">
+      <!-- Hint -->
+      <div class="acc-item">
+        <button class="acc-head"><span><span class="ico">💡</span> হিন্টস (Hints)</span><span class="chev">▼</span></button>
+        <div class="acc-body">
+          <ul class="hints">
+            <li><b>মডিউল আনা:</b> লটারির ম্যাজিক দেখানোর জন্য কোডের শুরুতেই <code>import random</code> লিখে নাও।</li>
+            <li><b>ফলের ঝুড়ি (List):</b> লটারি করার জন্য ৩-৪টি ফলের একটি লিস্ট তৈরি করো: <code>fruits = ["🍎", "💎", "🍒", "🌟"]</code>।</li>
+            <li><b>লটারির জাদুকর:</b> লিস্ট থেকে হঠাৎ যেকোনো একটি ফল টেনে বের করতে <code>random.choice(fruits)</code> কোডটি ব্যবহার করো। এভাবে ৩টি স্লটের জন্য ৩ বার লটারি করো!</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Walkthrough Video -->
+      <div class="acc-item">
+        <button class="acc-head"><span><span class="ico">📹</span> Walkthrough Video</span><span class="chev">▼</span></button>
+        <div class="acc-body">
+          <div style="aspect-ratio:16/9;border-radius:12px;background:repeating-linear-gradient(45deg,#0a0b22,#0a0b22 10px,#11123a 10px,#11123a 20px);display:flex;align-items:center;justify-content:center;border:1px dashed var(--neon);">
+            <div style="text-align:center">
+              <div style="font-size:48px">▶️</div>
+              <div style="font-family:'Press Start 2P',cursive;font-size:10px;color:var(--neon);margin-top:8px">VIDEO COMING SOON</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Solution -->
+      <div class="acc-item">
+        <button class="acc-head"><span><span class="ico">🛠️</span> সমাধান ও সম্পূর্ণ কোড (Solution)</span><span class="chev">▼</span></button>
+        <div class="acc-body">
+          <p>মডিউল ব্যবহার করে তৈরি করা স্লট মেশিনের একদম সহজ পাইথন কোডটি নিচে দেওয়া হলো:</p>
+          <div class="terminal">
+            <div class="term-bar">
+              <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+              <span class="term-title">slot_machine.py — Python</span>
+            </div>
+<pre class="code"><span class="c"># ১. পাইথনের লটারির জাদুকরী বাক্স (Module) ইমপোর্ট করলাম</span>
+<span class="k">import</span> random
+
+<span class="c"># ২. আমাদের স্লট মেশিনের ফলের ঝুড়ি বা লিস্ট তৈরি করলাম</span>
+items = [<span class="s">"🍎"</span>, <span class="s">"💎"</span>, <span class="s">"🍒"</span>, <span class="s">"🌟"</span>]
+
+<span class="f">print</span>(<span class="s">"--- 🎰 আমার পাইথন স্লট মেশিন গেম 🎰 ---"</span>)
+<span class="f">print</span>(<span class="s">"চাকা ঘুরছে... স্পিন হচ্ছে... 🌀"</span>)
+
+<span class="c"># ৩. random.choice ব্যবহার করে ঝুড়ি থেকে ৩টি ঘরে ৩টি প্রতীক লটারি করে নিলাম</span>
+slot1 = random.<span class="f">choice</span>(items)
+slot2 = random.<span class="f">choice</span>(items)
+slot3 = random.<span class="f">choice</span>(items)
+
+<span class="c"># ৪. এবার স্ক্রিনে লটারির ফল বা রেজাল্ট দেখানোর পালা</span>
+<span class="f">print</span>(<span class="s">"--------------------"</span>)
+<span class="f">print</span>(<span class="s">f"|  {slot1}  |  {slot2}  |  {slot3}  |"</span>)
+<span class="f">print</span>(<span class="s">"--------------------"</span>)
+
+<span class="c"># ৫. বোনাস ট্রিক: যদি ৩টি ঘরই মিলে যায়, তবে গেমার জিতে যাবে!</span>
+<span class="k">if</span> slot1 == slot2 == slot3:
+    <span class="f">print</span>(<span class="s">"🎉 জ্যাকপট!!! তুমি গেমটিতে জিতে গেছ! 👑"</span>)
+<span class="k">else</span>:
+    <span class="f">print</span>(<span class="s">"😢 ইশ! মিলল না। আবার চেষ্টা করো বন্ধু! 👍"</span>)<span class="cursor"></span></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Coding Companion -->
+      <div class="acc-item">
+        <button class="acc-head"><span><span class="ico">🤖</span> AI Coding Companion</span><span class="chev">▼</span></button>
+        <div class="acc-body">
+          <div style="display:flex;gap:14px;align-items:center;padding:14px;border-radius:12px;background:#0a0b22;border:1px solid var(--border)">
+            <div style="font-size:46px;animation:bounce 2s ease-in-out infinite">🤖</div>
+            <div>
+              <div style="font-family:'Press Start 2P',cursive;font-size:10px;color:var(--neon)">PYBOT ONLINE</div>
+              <div style="color:var(--muted);font-size:14px;margin-top:6px">তোমার পাশে থাকা ছোট্ট হেল্পার রোবট — যেকোনো ধাপে আটকে গেলে হিন্টস বা সমাধান খুলে দেখো!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+      <!-- Practice in Python IDE -->
+      <div class="acc-item">
+        <button class="acc-head"><span><span class="ico">💻</span> Practice in Python IDE</span><span class="chev">▼</span></button>
+        <div class="acc-body">
+          <div style="display:flex;gap:14px;align-items:center;padding:14px;border-radius:12px;background:#0a0b22;border:1px solid var(--border)">
+            <div style="font-size:46px;animation:bounce 2s ease-in-out infinite">💻</div>
+            <div>
+              <div style="font-family:'Press Start 2P',cursive;font-size:10px;color:#65D1B2">IDE OPEN</div>
+              <div style="color:var(--muted);font-size:14px;margin-top:6px">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</div>
+              <a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;margin-top:8px">🚀 Open Python IDE</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+  <div class="footer">
+    <div class="robot">🤖</div>
+    <p>🌟 হ্যাপি কোডিং, লিটল হ্যাকার! 🌟</p>
+  </div>
+</div>
+
+<div class="toast" id="toast">🏆 ACHIEVEMENT: FIRST SPIN!</div>
+
+<script>
+  // Particles
+  (function(){
+    const symbols = ['🍎','💎','🍒','🌟','🐍','⚙️','✨','🎰','{ }','</>','★','◆'];
+    const root = document.getElementById('particles');
+    for(let i=0;i<28;i++){
+      const s=document.createElement('span');
+      s.className='particle';
+      s.textContent=symbols[Math.floor(Math.random()*symbols.length)];
+      s.style.left=Math.random()*100+'vw';
+      s.style.animationDuration=(10+Math.random()*18)+'s';
+      s.style.animationDelay=(-Math.random()*20)+'s';
+      s.style.fontSize=(12+Math.random()*22)+'px';
+      s.style.opacity=(.25+Math.random()*.5).toFixed(2);
+      root.appendChild(s);
+    }
+  })();
+
+  // Scroll reveal
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:.12});
+  document.querySelectorAll('section').forEach(s=>io.observe(s));
+
+  // Accordions
+  document.querySelectorAll('.acc-head').forEach(b=>{
+    b.addEventListener('click',()=>b.parentElement.classList.toggle('open'));
+  });
+
+  // Slot machine
+  const items=["🍎","💎","🍒","🌟"];
+  const reels=[document.getElementById('r1'),document.getElementById('r2'),document.getElementById('r3')];
+  const ITEM_H=110;
+
+  function buildReel(r,finalIdx,loops){
+    r.innerHTML='';
+    const total=loops*items.length + finalIdx + 1;
+    for(let i=0;i<total;i++){
+      const sp=document.createElement('span');
+      sp.textContent=items[i%items.length];
+      r.appendChild(sp);
+    }
+    r.style.transition='none';
+    r.style.transform='translateY(0)';
+    // force reflow
+    void r.offsetHeight;
+    r.style.transition='transform 1.6s cubic-bezier(.15,.85,.2,1)';
+    r.style.transform=`translateY(-${(total-1)*ITEM_H}px)`;
+  }
+
+  // initial fill
+  reels.forEach((r,i)=>{
+    r.innerHTML='';
+    const sp=document.createElement('span');
+    sp.textContent=items[i%items.length];
+    r.appendChild(sp);
+  });
+
+  let firstSpin=true;
+  const btn=document.getElementById('spinBtn');
+  const result=document.getElementById('result');
+  const toast=document.getElementById('toast');
+
+  btn.addEventListener('click',()=>{
+    btn.disabled=true;
+    result.textContent='🌀 চাকা ঘুরছে...';
+    const picks=reels.map(()=>Math.floor(Math.random()*items.length));
+    reels.forEach((r,i)=>buildReel(r,picks[i],6+i*2));
+    setTimeout(()=>{
+      const s1=items[picks[0]],s2=items[picks[1]],s3=items[picks[2]];
+      if(s1===s2 && s2===s3){
+        result.innerHTML='🎉 জ্যাকপট! 👑';
+        showToast('🏆 JACKPOT! +500 XP');
+      } else {
+        result.textContent='😢 মিলল না! আবার চেষ্টা করো';
+      }
+      if(firstSpin){showToast('🏆 ACHIEVEMENT: FIRST SPIN!');firstSpin=false;}
+      btn.disabled=false;
+    },1750);
+  });
+
+  let toastTimer;
+  function showToast(msg){
+    toast.textContent=msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(()=>toast.classList.remove('show'),2600);
+  }
+</script>
+</body>
+</html>

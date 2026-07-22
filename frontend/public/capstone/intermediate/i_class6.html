@@ -1,0 +1,159 @@
+<style>
+    .type-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+    .type-card {
+        background: #f8fafc;
+        padding: 15px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .type-card h3 { margin: 5px 0; font-size: 18px; }
+    .type-card code { background: #e2e8f0; padding: 2px 5px; border-radius: 4px; display: block; margin-top: 10px; }
+    
+    .rules-container { display: flex; flex-direction: column; gap: 15px; margin-top: 15px; }
+    .rule-item { 
+        display: flex; gap: 15px; align-items: flex-start; 
+        background: white; padding: 15px; border-radius: 10px;
+        border: 1px solid #fde68a;
+    }
+    .rule-check { font-size: 20px; }
+    .code-ok { color: #059669; font-weight: bold; font-family: monospace; }
+    .code-wrong { color: #dc2626; font-weight: bold; font-family: monospace; text-decoration: line-through; }
+    data-item { background: white; padding: 10px; border: 2px solid #d946ef; border-radius: 8px; cursor: grab; font-weight: bold; }
+</style>
+<div class="container">
+    <div class="header" style="background: linear-gradient(135deg, #a855f7, #d946ef);">
+        <h1>📦 অধ্যায় ৩: ভেরিয়েবল — কম্পিউটারের মেমোরি বক্স!</h1>
+        <p>কম্পিউটার কীভাবে তথ্য মনে রাখে, চলো জানি!</p>
+    </div>
+
+    <div class="section" style="display: flex; align-items: center; gap: 20px; background: #fdf4ff;">
+        <div class="byte-mascot" style="font-size: 40px;">🤖</div>
+        <blockquote style="margin: 0; font-style: italic; color: #701a75;">
+            "বাইট বলছে: আমার মেমোরি কি খুব শার্প? আসলে না, আমি শুধু অনেকগুলো বাক্সে তথ্য লিখে রাখি। সেই বাক্সগুলোই হলো <b>ভেরিয়েবল</b>!"
+        </blockquote>
+    </div>
+
+    <div class="section">
+        <h2>🗄️ ড্রয়ারের গল্প</h2>
+        <p>ভাবো তো, তোমার পড়ার টেবিলে অনেকগুলো ড্রয়ার আছে। একটাতে তুমি শুধু বই রাখো, একটাতে কলম, আর একটাতে তোমার প্রিয় খেলনা। কম্পিউটারও ঠিক তোমার মতোই! সে তার বিশাল মেমোরিতে ছোট ছোট ড্রয়ার বানিয়ে নেয়। এই ড্রয়ারগুলোর নামই হলো <b>Variables</b>।</p>
+        
+        <div class="drawer-visual" style="text-align: center; margin: 20px 0;">
+            <div style="background: #e2e8f0; border: 3px solid #64748b; padding: 20px; border-radius: 10px; display: inline-block;">
+                <div style="border: 2px solid #94a3b8; padding: 10px; margin-bottom: 5px; background: white;">Label: <b>x</b></div>
+                <div style="border: 4px solid #475569; padding: 20px; background: #cbd5e1; font-size: 24px; font-weight: bold;">10</div>
+            </div>
+            <p style="font-size: 14px; margin-top: 10px;">তুমি যখন বলো <code>x = 10</code>, কম্পিউটার আসলে 'x' নামের ড্রয়ারে '১০' সংখ্যাটি তালা মেরে রেখে দেয়!</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🎨 ডেটা টাইপ (Data Types)</h2>
+        <p>সব ড্রয়ারে কি সব কিছু রাখা যায়? না! তথ্যের ধরণ অনুযায়ী ৩টি প্রধান টাইপ আছে:</p>
+        
+        <div class="type-grid">
+            <div class="type-card" style="border-top: 5px solid #3b82f6;">
+                <h3>🔢 Number</h3>
+                <p>সংখ্যা মনে রাখে।</p>
+                <code>age = 15</code>
+            </div>
+            <div class="type-card" style="border-top: 5px solid #10b981;">
+                <h3>✍️ String</h3>
+                <p>লেখা বা নাম মনে রাখে।</p>
+                <code>name = "Byte"</code>
+            </div>
+            <div class="type-card" style="border-top: 5px solid #f59e0b;">
+                <h3>🔘 Boolean</h3>
+                <p>হ্যাঁ বা না মনে রাখে।</p>
+                <code>isHungry = True</code>
+            </div>
+        </div>
+    </div>
+
+    <div class="section" style="background: #fffbeb;">
+        <h2>📏 ভেরিয়েবল নামকরণের "গোল্ডেন রুলস"</h2>
+        <p>কম্পিউটারকে কনফিউজ করা যাবে না! নাম রাখার সময় এই ৩টি নিয়ম মানতে হবে:</p>
+        
+        <div class="rules-container">
+            <div class="rule-item">
+                <span class="rule-check">✅</span>
+                <div>
+                    <strong>নামের শুরুতে অক্ষর দাও:</strong>
+                    <br><span class="code-ok">myName</span> (ঠিক), <span class="code-wrong">1name</span> (ভুল!)
+                </div>
+            </div>
+            <div class="rule-item">
+                <span class="rule-check">✅</span>
+                <div>
+                    <strong>স্পেস দেওয়া নিষেধ:</strong>
+                    <br><span class="code-ok">my_name</span> বা <span class="code-ok">myName</span> ব্যবহার করো।
+                </div>
+            </div>
+            <div class="rule-item">
+                <span class="rule-check">✅</span>
+                <div>
+                    <strong>সিম্বল ব্যবহার করো না:</strong>
+                    <br>শুধু আন্ডারস্কোর (_) ছাড়া অন্য চিহ্ন (যেমন: !, @, #) দেওয়া যাবে না।
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="section" style="text-align: center; background: #fdf4ff; border: 2px solid #d946ef; border-radius: 20px; padding: 25px;">
+    <h2>📦 ভেরিয়েবল জার (Variable Jar)</h2>
+    <p>নিচের তথ্যগুলো ড্র্যাগ করে বয়ামে ফেলো:</p>
+
+    <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 20px;">
+        <div class="data-item" draggable="true" ondragstart="dragData(event)" data-val="15" data-type="Number">15 (বয়স)</div>
+        <div class="data-item" draggable="true" ondragstart="dragData(event)" data-val="'Byte'" data-type="String">'Byte' (নাম)</div>
+        <div class="data-item" draggable="true" ondragstart="dragData(event)" data-val="True" data-type="Boolean">True (হ্যাঁ)</div>
+    </div>
+
+    <div id="variable-jar" ondragover="allowDrop(event)" ondrop="dropData(event)" style="width: 150px; height: 180px; border: 4px solid #701a75; border-radius: 20px 20px 10px 10px; margin: 0 auto; position: relative; background: rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; flex-direction: column;">
+        <div id="jar-label" style="font-size: 12px; color: #701a75; font-weight: bold; margin-bottom: 5px;">খালি বয়াম</div>
+        <div id="jar-value" style="font-size: 20px; font-weight: bold; color: #d946ef;">?</div>
+    </div>
+    <p id="jar-type" style="margin-top: 10px; font-size: 14px; color: #666;"></p>
+</div>
+<div class="section" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <div style="background: #f1f5f9; padding: 20px; border-radius: 15px;">
+        <h3>📝 ইনপুট দাও (Variables)</h3>
+        <input type="text" id="user-name" placeholder="তোমার নাম লেখো" oninput="updateID()" style="width: 90%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ccc;">
+        <input type="number" id="user-age" placeholder="তোমার বয়স" oninput="updateID()" style="width: 90%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+    </div>
+    
+    <div id="id-card" style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; padding: 20px; border-radius: 15px; text-align: center;">
+        <div style="width: 60px; height: 60px; background: white; border-radius: 50%; margin: 0 auto 10px;">👤</div>
+        <h4 id="display-name" style="margin: 5px 0;">নাম: ________</h4>
+        <p id="display-age" style="margin: 0;">বয়স: __</p>
+    </div>
+</div>
+<script>
+function dragData(ev) {
+    ev.dataTransfer.setData("val", ev.target.getAttribute('data-val'));
+    ev.dataTransfer.setData("type", ev.target.getAttribute('data-type'));
+}
+function allowDrop(ev) { ev.preventDefault(); }
+function dropData(ev) {
+    ev.preventDefault();
+    const val = ev.dataTransfer.getData("val");
+    const type = ev.dataTransfer.getData("type");
+    document.getElementById('jar-value').innerText = val;
+    document.getElementById('jar-label').innerText = "বয়ামের নাম: myData";
+    document.getElementById('jar-type').innerText = "এটি একটি " + type + " টাইপ ডেটা!";
+    byteSay("দারুণ! তুমি ভেরিয়েবলে একটি " + type + " জমা রাখলে।");
+}
+function checkType(type, status) {
+    if(status === 'correct') {
+        byteSay("সাবাস! তুমি একদম সঠিক ধরেছো। এটি একটি " + type + "!");
+    } else {
+        byteSay("উমম... একটু ভুল হয়ে গেল। আবার ভেবে দেখো তো!");
+    }
+}
+</script>
+ 

@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Print — Python Lesson</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Hind+Siliguri:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:#080c18;--navy2:#0e1628;--navy3:#141e35;--card:#111827;--card2:#192236;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --cyan:#00e5ff;--green:#39ff7e;--yellow:#ffe234;--orange:#ff7c3a;--pink:#ff4f9a;--purple:#c084fc;
+  --glow-c:0 0 18px rgba(0,229,255,0.35);--glow-g:0 0 18px rgba(57,255,126,0.35);--glow-y:0 0 18px rgba(255,226,52,0.35);
+  --pixel:'Press Start 2P',monospace;--body:'Hind Siliguri',sans-serif;--mono:'Fira Code',monospace;
+  --r:14px;--r-sm:8px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--body);background:var(--navy);color:#d8e3f8;min-height:100vh;overflow-x:hidden;line-height:1.75}
+#sparkle-layer{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.spark{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--cyan);animation:drift linear infinite;opacity:0}
+@keyframes drift{0%{opacity:0;transform:translateY(0) scale(.5)}20%{opacity:.7}80%{opacity:.4}100%{opacity:0;transform:translateY(-100vh) scale(1.5)}}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.08) 3px,rgba(0,0,0,.08) 4px);pointer-events:none;z-index:1000}
+.topbar{position:sticky;top:0;z-index:200;background:rgba(8,12,24,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:12px 32px;display:flex;align-items:center;justify-content:space-between}
+.topbar-title{font-family:var(--pixel);font-size:.55rem;color:var(--cyan);text-shadow:var(--glow-c);letter-spacing:2px}
+.topbar-right{display:flex;align-items:center;gap:14px}
+.xp-pill{font-family:var(--pixel);font-size:.45rem;background:var(--card2);border:1px solid var(--border2);color:var(--yellow);padding:6px 14px;border-radius:50px;text-shadow:var(--glow-y)}
+.progress-wrap{display:flex;align-items:center;gap:10px}
+.progress-bar-outer{width:120px;height:8px;background:rgba(255,255,255,.06);border-radius:50px;overflow:hidden;border:1px solid var(--border)}
+.progress-bar-fill{height:100%;border-radius:50px;background:linear-gradient(90deg,var(--green),var(--cyan));width:15%;transition:width 1s ease;box-shadow:var(--glow-c)}
+.page-wrap{max-width:860px;margin:0 auto;padding:48px 24px 80px;position:relative;z-index:1}
+.pixel-header{display:flex;align-items:center;gap:16px;margin-bottom:36px}
+.pixel-badge{font-family:var(--pixel);font-size:.5rem;background:var(--navy3);border:2px solid var(--cyan);color:var(--cyan);padding:8px 14px;border-radius:var(--r-sm);box-shadow:var(--glow-c),inset 0 0 20px rgba(0,229,255,.05);white-space:nowrap;text-shadow:var(--glow-c)}
+.pixel-badge.yellow{border-color:var(--yellow);color:var(--yellow);box-shadow:var(--glow-y);text-shadow:var(--glow-y)}
+.pixel-badge.green{border-color:var(--green);color:var(--green);box-shadow:var(--glow-g);text-shadow:var(--glow-g)}
+.pixel-badge.pink{border-color:var(--pink);color:var(--pink);box-shadow:0 0 18px rgba(255,79,154,.35);text-shadow:0 0 10px rgba(255,79,154,.7)}
+.section-title-text{font-family:var(--pixel);font-size:.7rem;color:#f0f4ff;letter-spacing:1px;line-height:1.8}
+.lesson-card{background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:32px 36px;margin-bottom:24px;position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s}
+.lesson-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.lesson-card.c-cyan::before{background:linear-gradient(90deg,var(--cyan),transparent)}
+.lesson-card.c-green::before{background:linear-gradient(90deg,var(--green),transparent)}
+.lesson-card.c-yellow::before{background:linear-gradient(90deg,var(--yellow),transparent)}
+.lesson-card.c-pink::before{background:linear-gradient(90deg,var(--pink),transparent)}
+.lesson-card:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.card-body{font-size:1.05rem;color:#c8d6ee;line-height:1.85}
+.card-body p{margin-bottom:16px}
+.card-body p:last-child{margin-bottom:0}
+.kw{font-family:var(--mono);background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.2);color:var(--cyan);padding:1px 8px;border-radius:5px;font-size:.92em}
+.kw.y{background:rgba(255,226,52,.1);border-color:rgba(255,226,52,.2);color:var(--yellow)}
+.kw.g{background:rgba(57,255,126,.08);border-color:rgba(57,255,126,.2);color:var(--green)}
+.mascot-wrap{display:flex;align-items:flex-start;gap:20px;margin-bottom:24px}
+.mascot-pixel{flex-shrink:0;image-rendering:pixelated}
+.mascot-bubble{background:var(--navy3);border:1px solid var(--border2);border-radius:0 var(--r) var(--r) var(--r);padding:16px 20px;font-size:.92rem;color:#b0c4de;position:relative;flex:1}
+.mascot-bubble::before{content:'';position:absolute;left:-8px;top:12px;border:8px solid transparent;border-right-color:var(--border2)}
+.terminal-wrap{background:#070b14;border:1px solid rgba(0,229,255,.25);border-radius:var(--r);overflow:hidden;box-shadow:var(--glow-c),0 20px 60px rgba(0,0,0,.6);margin:24px 0}
+.terminal-bar{background:#0d1526;border-bottom:1px solid rgba(255,255,255,.05);padding:11px 18px;display:flex;align-items:center;justify-content:space-between}
+.t-dots{display:flex;gap:7px}
+.dot{width:11px;height:11px;border-radius:50%}
+.dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
+.t-filename{font-family:var(--mono);font-size:.75rem;color:#4d6080;display:flex;align-items:center;gap:6px}
+.t-actions{display:flex;gap:10px}
+.copy-btn,.run-btn-sm{font-family:var(--pixel);font-size:.35rem;padding:5px 12px;border-radius:5px;border:none;cursor:pointer;transition:all .2s}
+.copy-btn{background:rgba(255,255,255,.06);color:#8899bb;border:1px solid var(--border2)}
+.copy-btn:hover{background:rgba(255,255,255,.1);color:#d8e3f8}
+.run-btn-sm{background:rgba(57,255,126,.1);color:var(--green);border:1px solid rgba(57,255,126,.3);box-shadow:var(--glow-g);animation:glow-pulse 2s ease-in-out infinite}
+.run-btn-sm:hover{background:rgba(57,255,126,.2);transform:scale(1.05)}
+@keyframes glow-pulse{0%,100%{box-shadow:0 0 8px rgba(57,255,126,.3)}50%{box-shadow:0 0 18px rgba(57,255,126,.6)}}
+.code-body{padding:22px 28px;font-family:var(--mono);font-size:1rem;line-height:1.9}
+.ln-num{color:#2a3a55;user-select:none;margin-right:18px}
+.syn-fn{color:#39ff7e}.syn-str{color:#ffe234}.syn-punct{color:#00e5ff}
+.output-wrap{background:#050810;border:1px solid rgba(57,255,126,.2);border-radius:var(--r);overflow:hidden;margin:24px 0}
+.output-bar{background:#0a0f1c;border-bottom:1px solid rgba(255,255,255,.04);padding:9px 18px;font-family:var(--pixel);font-size:.38rem;color:#2a4a2a;letter-spacing:2px}
+.output-body{padding:18px 28px;font-family:var(--mono);font-size:1.05rem;color:var(--green);text-shadow:var(--glow-g);min-height:56px}
+.output-prompt{color:#2a4a2a;font-size:.82rem;margin-bottom:6px}
+.cursor{display:inline-block;width:2px;height:1em;background:var(--green);vertical-align:-1px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.instr-box{background:rgba(255,226,52,.05);border:1px solid rgba(255,226,52,.2);border-left:3px solid var(--yellow);border-radius:0 var(--r) var(--r) 0;padding:24px 28px;margin:24px 0}
+.instr-label{font-family:var(--pixel);font-size:.45rem;color:var(--yellow);text-shadow:var(--glow-y);letter-spacing:2px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.instr-body{font-size:1rem;color:#d0ddf5;line-height:1.85}
+.file-tag{font-family:var(--mono);background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.2);color:var(--cyan);padding:2px 10px;border-radius:5px;font-size:.9em}
+.instr-quest{margin-top:16px;padding:14px 20px;background:rgba(255,255,255,.04);border-radius:var(--r-sm);font-weight:600;color:var(--cyan);font-size:1rem;border:1px solid rgba(0,229,255,.15)}
+.str-tag{font-family:var(--mono);background:rgba(255,226,52,.1);border:1px solid rgba(255,226,52,.2);color:var(--yellow);padding:1px 8px;border-radius:5px;font-size:.9em}
+.accordion{display:flex;flex-direction:column;gap:10px}
+.acc-item{background:var(--card);border:1px solid var(--border2);border-radius:var(--r);overflow:hidden;transition:box-shadow .25s}
+.acc-item:hover{box-shadow:0 4px 24px rgba(0,0,0,.4)}
+.acc-trigger{width:100%;background:none;border:none;padding:18px 24px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:background .2s}
+.acc-trigger:hover{background:rgba(255,255,255,.03)}
+.acc-trigger-left{display:flex;align-items:center;gap:14px}
+.acc-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.acc-icon.cyan-bg{background:rgba(0,229,255,.12);border:1px solid rgba(0,229,255,.2)}
+.acc-icon.green-bg{background:rgba(57,255,126,.1);border:1px solid rgba(57,255,126,.2)}
+.acc-icon.yellow-bg{background:rgba(255,226,52,.1);border:1px solid rgba(255,226,52,.2)}
+.acc-icon.pink-bg{background:rgba(255,79,154,.12);border:1px solid rgba(255,79,154,.2)}
+.acc-title{font-family:var(--pixel);font-size:.48rem;color:#d0ddf5;letter-spacing:1px;line-height:1.6}
+.acc-sub{font-size:.8rem;color:#5a7099;margin-top:2px}
+.acc-chevron{color:#3a5080;font-size:1rem;transition:transform .3s;flex-shrink:0}
+.acc-item.open .acc-chevron{transform:rotate(180deg)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.16,1,.3,1)}
+.acc-item.open .acc-body{max-height:500px;border-top:1px solid var(--border)}
+.acc-content{padding:20px 24px 24px}
+.acc-content-inner{font-size:.96rem;color:#9bb0cc;line-height:1.85}
+.next-btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--pixel);font-size:.45rem;background:linear-gradient(135deg,var(--cyan),#0070c8);color:#030810;padding:14px 28px;border-radius:50px;border:none;cursor:pointer;letter-spacing:1px;box-shadow:var(--glow-c),0 8px 24px rgba(0,0,0,.4);transition:all .2s;text-decoration:none;margin-top:8px}
+.next-btn:hover{transform:translateY(-2px) scale(1.04)}
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .65s ease,transform .65s cubic-bezier(.16,1,.3,1)}
+.reveal.in{opacity:1;transform:translateY(0)}
+.rev-d1{transition-delay:.08s}.rev-d2{transition-delay:.16s}.rev-d3{transition-delay:.24s}
+.pixel-divider{text-align:center;margin:44px 0;font-family:var(--pixel);font-size:.4rem;color:#1e2e4a;letter-spacing:4px}
+.footer{text-align:center;padding:40px 24px;border-top:1px solid var(--border);color:#2a3a55;font-family:var(--pixel);font-size:.38rem;letter-spacing:2px;position:relative;z-index:1}
+@media(max-width:600px){.topbar{padding:10px 16px}.progress-wrap{display:none}.page-wrap{padding:28px 14px 60px}.lesson-card{padding:22px 18px}.code-body{padding:16px;font-size:.9rem}.instr-box{padding:18px 16px}.acc-trigger{padding:14px 16px}.acc-content{padding:16px}.section-title-text{font-size:.55rem}.topbar-title{font-size:.42rem}}
+</style>
+</head>
+<body>
+<div id="sparkle-layer"></div>
+<header class="topbar">
+  <div class="topbar-title">🐍&nbsp;&nbsp;Python Adventure</div>
+  <div class="topbar-right">
+    <div class="xp-pill">⚡&nbsp;XP: 10</div>
+    <div class="progress-wrap">
+      <span style="font-family:var(--pixel);font-size:.38rem;color:#3a5080">Lesson 1</span>
+      <div class="progress-bar-outer"><div class="progress-bar-fill" id="prog-fill" style="width:15%"></div></div>
+    </div>
+  </div>
+</header>
+<main class="page-wrap">
+  <div class="pixel-header reveal in">
+    <div class="pixel-badge">&lt;Print&gt;</div>
+    <div class="section-title-text"></div>
+  </div>
+  <div class="mascot-wrap reveal in rev-d1">
+    <div class="mascot-pixel">
+      <svg width="64" height="72" viewBox="0 0 8 9" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated">
+        <rect x="2" y="0" width="4" height="1" fill="#00e5ff"/>
+        <rect x="3" y="1" width="2" height="1" fill="#00e5ff"/>
+        <rect x="1" y="2" width="6" height="5" fill="#141e35"/>
+        <rect x="1" y="2" width="6" height="5" fill="none" stroke="#00e5ff" stroke-width="0.2"/>
+        <rect x="2" y="3" width="1" height="1" fill="#39ff7e"/>
+        <rect x="5" y="3" width="1" height="1" fill="#39ff7e"/>
+        <rect x="2" y="5" width="4" height="1" fill="#00e5ff" rx="0.3"/>
+        <rect x="0" y="4" width="1" height="2" fill="#0e1628"/>
+        <rect x="7" y="4" width="1" height="2" fill="#0e1628"/>
+        <rect x="2" y="7" width="1" height="2" fill="#0e1628"/>
+        <rect x="5" y="7" width="1" height="2" fill="#0e1628"/>
+      </svg>
+    </div>
+    <div class="mascot-bubble">Python-এ <span class="kw">print()</span> ফাংশন ব্যবহার করা হয় কম্পিউটারকে <strong style="color:#d8e3f8">"কথা বলানোর"</strong> জন্য।</div>
+  </div>
+  <div class="lesson-card c-cyan reveal in rev-d2">
+    <div class="card-body">
+      <p>অর্থাৎ, আমরা যখন কোনো লেখা বা তথ্য স্ক্রিনে দেখাতে চাই, তখন <span class="kw">print()</span> ব্যবহার করি।</p>
+      <p>আমরা যে মেসেজটি দেখাতে চাই, সেটি <span class="kw">print()</span> এর <span class="kw y">parentheses ()</span> এর ভিতরে এবং <span class="kw">quotation marks</span> এর মধ্যে লিখতে হয়।</p>
+      <p>Quotation marks হিসেবে double quotes <span class="kw y">"&nbsp;"</span> অথবা single quotes <span class="kw y">'&nbsp;'</span> — দুটোই ব্যবহার করা যায়। তবে শুরু ও শেষের quotation একই হতে হবে।</p>
+    </div>
+  </div>
+  <div class="pixel-header reveal in" style="margin-top:36px;margin-bottom:16px">
+    <div class="pixel-badge green" style="font-size:.42rem">উদাহরণ</div>
+    <div style="font-family:var(--mono);font-size:.88rem;color:#5a7099">এটি একটি print() ফাংশনের উদাহরণ:</div>
+  </div>
+  <div class="terminal-wrap reveal in rev-d1">
+    <div class="terminal-bar">
+      <div class="t-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+      <div class="t-filename">📄&nbsp;example.py</div>
+      <div class="t-actions">
+        <button class="copy-btn" onclick="copyCode(this,&quot;print('👋 Howdy')&quot;)">⎘ Copy</button>
+        <button class="run-btn-sm" onclick="showOutput()">▶ Run</button>
+      </div>
+    </div>
+    <div class="code-body">
+      <span class="ln-num">1</span><span class="syn-fn">print</span><span class="syn-punct">(</span><span class="syn-str">'👋 Howdy'</span><span class="syn-punct">)</span>
+    </div>
+  </div>
+  <div class="lesson-card c-green reveal in rev-d2">
+    <div class="card-body">
+      <p>উপরের উদাহরণে আমরা প্রোগ্রামকে একটি মেসেজ প্রিন্ট করতে বলেছি।</p>
+      <p>স্ক্রিনে যে লেখা দেখা যায়, সেটিকে বলা হয় <span class="kw g">output</span>।</p>
+      <p>এই প্রোগ্রামের output হবে:</p>
+    </div>
+  </div>
+  <div class="output-wrap reveal in" id="output-box">
+    <div class="output-bar">OUTPUT</div>
+    <div class="output-body">
+      <div class="output-prompt">$ python example.py</div>
+      <span id="out-text" style="opacity:1;">Howdy<span class="cursor"></span></span>
+    </div>
+  </div>
+  <div class="pixel-divider">· · · · · · · · · · · · · · · · · ·</div>
+  <div class="pixel-header reveal in">
+    <div class="pixel-badge yellow">নির্দেশনা</div>
+  </div>
+  <div class="instr-box reveal in rev-d1">
+    <div class="instr-label">📋&nbsp;নির্দেশনা</div>
+    <div class="instr-body">
+      <p>চল এবার editor ব্যবহার করে একটি নতুন <span class="file-tag">hello_world.py</span> প্রোগ্রাম তৈরি করি।</p>
+      <p style="margin-top:14px">নতুন লাইনে <span class="kw">print()</span> ব্যবহার করে নিচের মেসেজটি দেখাও:</p>
+      <div style="margin:16px 0">
+        <div class="terminal-wrap" style="margin:0">
+          <div class="terminal-bar">
+            <div class="t-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+            <div class="t-filename">📄&nbsp;hello_world.py</div>
+            <div class="t-actions"><button class="copy-btn" onclick="copyCode(this,'print(&quot;Hello World!&quot;)')">⎘ Copy</button></div>
+          </div>
+          <div class="code-body"><span class="ln-num">1</span><span class="syn-fn">print</span><span class="syn-punct">(</span><span class="syn-str">"Hello World!"</span><span class="syn-punct">)</span></div>
+        </div>
+      </div>
+      <p>তারপর প্রোগ্রামটি রান করো।</p>
+      <div class="instr-quest">💬 তুমি কি Terminal-এ <span class="str-tag">"Hello World!"</span> দেখতে পেরেছ?</div>
+    </div>
+  </div>
+  <div class="pixel-divider">· · · · · · · · · · · · · · · · · ·</div>
+  
+  <div class="pixel-header reveal in"><div class="pixel-badge pink">সাহায্য</div></div>
+  <div class="accordion reveal in rev-d1">
+    
+    <!-- Accordion 1: Hint -->
+    <div class="acc-item">
+      <button class="acc-trigger" onclick="toggleAccordion(this)">
+        <div class="acc-trigger-left">
+          <div class="acc-icon yellow-bg">💡</div>
+          <div style="text-align:left">
+            <div class="acc-title">হিন্টস</div>
+            <div class="acc-sub">ইমোজি কিভাবে আনবো?</div>
+          </div>
+        </div>
+        <div class="acc-chevron">▼</div>
+      </button>
+      <div class="acc-body">
+        <div class="acc-content">
+          <div class="acc-content-inner">
+            <p>Emoji picker খুলতে পারো এভাবে:</p>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li>Mac: ⌃ control + ⌘ command + space</li>
+                <li>Windows: ⊞ + .</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Accordion 2: Walkthrough Video -->
+    <div class="acc-item">
+      <button class="acc-trigger" onclick="toggleAccordion(this)">
+        <div class="acc-trigger-left">
+          <div class="acc-icon pink-bg">🎥</div>
+          <div style="text-align:left">
+            <div class="acc-title">Walkthrough Video</div>
+            <div class="acc-sub">ভিডিও সমাধান দেখুন</div>
+          </div>
+        </div>
+        <div class="acc-chevron">▼</div>
+      </button>
+      <div class="acc-body">
+        <div class="acc-content">
+          <div class="acc-content-inner">
+            <p>নিচের ভিডিওটি দেখে সমাধানটি মিলিয়ে নিতে পারেন:</p>
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border2); padding: 20px; text-align: center; border-radius: 8px; margin-top: 10px;">
+                <span style="font-size: 2rem;">▶️</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Accordion 3: Solution -->
+    <div class="acc-item">
+      <button class="acc-trigger" onclick="toggleAccordion(this)">
+        <div class="acc-trigger-left">
+          <div class="acc-icon green-bg">✅</div>
+          <div style="text-align:left">
+            <div class="acc-title">Solution</div>
+            <div class="acc-sub">সঠিক কোডটি দেখুন</div>
+          </div>
+        </div>
+        <div class="acc-chevron">▼</div>
+      </button>
+      <div class="acc-body">
+        <div class="acc-content">
+          <div class="acc-content-inner">
+            <div class="terminal-wrap" style="margin:0">
+              <div class="terminal-bar">
+                <div class="t-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+                <div class="t-filename">📄&nbsp;solution.py</div>
+              </div>
+              <div class="code-body"><span class="ln-num">1</span><span class="syn-fn">print</span><span class="syn-punct">(</span><span class="syn-str">"Hello World!"</span><span class="syn-punct">)</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Accordion 4: AI Companion -->
+    <div class="acc-item">
+      <button class="acc-trigger" onclick="toggleAccordion(this)">
+        <div class="acc-trigger-left">
+          <div class="acc-icon cyan-bg">🤖</div>
+          <div style="text-align:left">
+            <div class="acc-title">AI Coding Companion</div>
+            <div class="acc-sub">এআই এর সাহায্য নিন</div>
+          </div>
+        </div>
+        <div class="acc-chevron">▼</div>
+      </button>
+      <div class="acc-body">
+        <div class="acc-content">
+          <div class="acc-content-inner">
+            <p>আপনার যদি এই টপিক বুঝতে কোনো অসুবিধা হয়, তবে আমাদের এআই অ্যাসিস্ট্যান্টকে প্রশ্ন করতে পারেন!</p>
+            <div style="background: rgba(0,229,255,0.05); border: 1px dashed var(--cyan); padding: 15px; text-align: center; border-radius: 8px; margin-top: 10px; color: var(--cyan);">
+                <em>Chat Input Coming Soon...</em>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Practice in Python IDE -->
+    <div class="acc-item">
+      <button class="acc-trigger" onclick="toggleAccordion(this)">
+        <div class="acc-trigger-left">
+          <div class="acc-icon" style="background:rgba(101,209,178,0.15);color:#65D1B2">💻</div>
+          <div style="text-align:left">
+            <div class="acc-title">Practice in Python IDE</div>
+            <div class="acc-sub">আলোকবর্তিকা IDE-তে অনুশীলন করুন</div>
+          </div>
+        </div>
+        <div class="acc-chevron">▼</div>
+      </button>
+      <div class="acc-body">
+        <div class="acc-content">
+          <div class="acc-content-inner">
+            <p>এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p>
+            <a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;box-shadow:0 0 16px rgba(101,209,178,0.2)">🚀 Open Python IDE</a>
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
+
+
+  <div class="pixel-divider">· · · · · · · · · · · · · · · · · ·</div>
+  
+  <div class="card success reveal in" style="background: var(--card); border: 1px solid var(--green); border-radius: var(--r); padding: 24px; margin-top: 30px;">
+      <h3 style="color: var(--green); margin-bottom: 15px; font-family: var(--pixel); font-size: 0.6rem;">🎯 আজকের চ্যালেঞ্জ:</h3>
+      <div style="margin: 15px 0; display: flex; flex-direction: column; gap: 12px;">
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #d0ddf5;">
+              <input type="checkbox" id="task_basic" style="width: 18px; height: 18px;" onchange="checkTasks()">
+              <span>আমি এই অধ্যায়ের বেসিক নিয়মগুলো পড়েছি এবং বুঝতে পেরেছি।</span>
+          </label>
+      </div>
+      
+      <button id="complete-btn" class="next-btn" style="width: 100%; justify-content: center; opacity: 0.6; cursor: not-allowed; background: linear-gradient(135deg, #555, #333); color: #fff;" disabled>
+          🔒 চ্যালেঞ্জ পূর্ণ করুন
+      </button>
+  </div>
+
+  <div class="footer">
+      <button class="next-btn" style="background: rgba(255,255,255,0.1); box-shadow: none; color: #fff;" onclick="window.location.href='class1.html'">
+          ⬅️ অধ্যায় ড্যাশবোর্ড
+      </button>
+  </div>
+</main>
+
+<script src="Begineer.js"></script>
+<script>
+    // Accordion Toggle Logic
+    function toggleAccordion(btn) {
+        const item = btn.parentElement;
+        item.classList.toggle('open');
+    }
+
+    // Copy to Clipboard (Visual)
+    function copyCode(btn, code) {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "✅ Copied";
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+        }, 2000);
+    }
+    
+    // Output Show (Visual)
+    function showOutput() {
+        const out = document.getElementById("out-text");
+        if(out) out.style.opacity = 1;
+    }
+
+    // Sparkles Effect
+    const layer = document.getElementById('sparkle-layer');
+    for(let i=0; i<30; i++) {
+        const spark = document.createElement('div');
+        spark.className = 'spark';
+        spark.style.left = Math.random() * 100 + 'vw';
+        spark.style.top = Math.random() * 100 + 'vh';
+        spark.style.animationDuration = (Math.random() * 3 + 2) + 's';
+        spark.style.animationDelay = (Math.random() * 2) + 's';
+        layer.appendChild(spark);
+    }
+
+    function checkTasks() {
+        const t1 = document.getElementById('task_basic').checked;
+        const btn = document.getElementById('complete-btn');
+
+        if (t1) {
+            btn.style.opacity = "1";
+            btn.style.cursor = "pointer";
+            btn.disabled = false;
+            btn.innerHTML = "🎉 বেসিক সম্পন্ন করুন!";
+            btn.style.background = "linear-gradient(135deg, var(--green), #00b09b)";
+            btn.style.color = "#030810";
+            
+            btn.onclick = () => {
+                if(window.PortalSystem && typeof PortalSystem.updateProgress === 'function') {
+                    PortalSystem.updateProgress('c1_basic', 'completed');
+                }
+                btn.innerHTML = "✅ Completed!";
+                btn.disabled = true;
+                btn.style.opacity = "0.7";
+                
+                setTimeout(() => {
+                    window.location.href = 'class1.html';
+                }, 1500);
+            };
+        } else {
+            btn.style.opacity = "0.6";
+            btn.style.cursor = "not-allowed";
+            btn.disabled = true;
+            btn.innerHTML = "🔒 চ্যালেঞ্জ পূর্ণ করুন";
+            btn.style.background = "linear-gradient(135deg, #555, #333)";
+            btn.style.color = "#fff";
+        }
+    }
+</script>
+</body>
+</html>

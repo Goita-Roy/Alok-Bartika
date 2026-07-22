@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Mars Orbiter — মার্স অরবিটার | কোডিং অ্যাডভেঞ্চার</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Hind+Siliguri:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#05030f;
+    --bg2:#0b0820;
+    --mars:#e2613a;
+    --mars-deep:#9b2f17;
+    --gold:#ffcc66;
+    --neon:#7df9ff;
+    --neon2:#b388ff;
+    --green:#7CFFB2;
+    --text:#f3eefc;
+    --muted:#a99fcf;
+    --card:rgba(255,255,255,0.04);
+    --border:rgba(255,255,255,0.1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{overflow-x:hidden}
+  body{
+    font-family:'Hind Siliguri',sans-serif;
+    background:radial-gradient(ellipse at top,#1a0b3a 0%,var(--bg) 60%);
+    color:var(--text);
+    line-height:1.7;
+    min-height:100vh;
+    position:relative;
+  }
+  /* Starfield */
+  .stars,.stars2,.stars3{position:fixed;inset:0;pointer-events:none;z-index:0}
+  .stars{background-image:
+    radial-gradient(1px 1px at 20px 30px,#fff,transparent),
+    radial-gradient(1px 1px at 40px 70px,#fff,transparent),
+    radial-gradient(1px 1px at 90px 40px,#fff,transparent),
+    radial-gradient(2px 2px at 130px 80px,#fff,transparent),
+    radial-gradient(1px 1px at 160px 120px,#fff,transparent),
+    radial-gradient(1px 1px at 200px 50px,#fff,transparent);
+    background-repeat:repeat;background-size:250px 200px;
+    animation:drift 120s linear infinite;opacity:.6;
+  }
+  .stars2{background-image:
+    radial-gradient(2px 2px at 50px 100px,#7df9ff,transparent),
+    radial-gradient(1px 1px at 150px 150px,#fff,transparent),
+    radial-gradient(2px 2px at 250px 30px,#b388ff,transparent);
+    background-size:400px 300px;animation:drift 200s linear infinite;opacity:.5}
+  .stars3{background-image:radial-gradient(1.5px 1.5px at 80px 60px,#ffcc66,transparent);background-size:300px 250px;animation:twinkle 4s ease-in-out infinite alternate;opacity:.7}
+  @keyframes drift{from{transform:translateY(0)}to{transform:translateY(-1000px)}}
+  @keyframes twinkle{from{opacity:.3}to{opacity:1}}
+
+  /* Floating particles */
+  .particle{position:fixed;width:4px;height:4px;background:var(--neon);border-radius:50%;box-shadow:0 0 10px var(--neon);pointer-events:none;z-index:1;animation:float 8s linear infinite}
+  @keyframes float{
+    0%{transform:translateY(100vh) translateX(0);opacity:0}
+    10%{opacity:1}
+    90%{opacity:1}
+    100%{transform:translateY(-10vh) translateX(50px);opacity:0}
+  }
+
+  .container{max-width:1100px;margin:0 auto;padding:0 24px;position:relative;z-index:2}
+
+  /* HERO */
+  .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;padding:80px 24px}
+  .hud{position:absolute;top:20px;left:0;right:0;display:flex;justify-content:space-between;padding:0 30px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--neon);opacity:.8}
+  .hud span{display:inline-block;padding:6px 12px;border:1px solid var(--neon);border-radius:4px;background:rgba(125,249,255,.05)}
+  .hud .dot{display:inline-block;width:8px;height:8px;background:var(--green);border-radius:50%;margin-right:6px;box-shadow:0 0 8px var(--green);animation:pulse 1.5s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  .hero-title{
+    font-family:'Press Start 2P',monospace;
+    font-size:clamp(28px,6vw,64px);
+    background:linear-gradient(135deg,var(--mars),var(--gold),var(--mars));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    letter-spacing:2px;line-height:1.3;
+    text-shadow:0 0 40px rgba(226,97,58,.3);
+    margin-bottom:20px;
+    animation:glow 3s ease-in-out infinite alternate;
+  }
+  @keyframes glow{from{filter:drop-shadow(0 0 10px rgba(226,97,58,.4))}to{filter:drop-shadow(0 0 30px rgba(255,204,102,.6))}}
+  .hero-sub{font-size:clamp(18px,3vw,28px);color:var(--text);margin-bottom:16px;font-weight:600}
+  .hero-tag{color:var(--muted);max-width:600px;margin:0 auto 50px;font-size:15px}
+
+  /* Mars + Orbiter scene */
+  .scene{position:relative;width:340px;height:340px;margin:30px auto}
+  .mars{
+    position:absolute;inset:60px;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%,#ff8a5c 0%,var(--mars) 30%,var(--mars-deep) 70%,#4a0f02 100%);
+    box-shadow:inset -20px -30px 60px rgba(0,0,0,.5),0 0 80px rgba(226,97,58,.4);
+    animation:rotate-mars 30s linear infinite;
+  }
+  .mars::before,.mars::after{content:'';position:absolute;border-radius:50%;background:rgba(0,0,0,.15)}
+  .mars::before{width:50px;height:30px;top:40px;left:60px}
+  .mars::after{width:35px;height:35px;bottom:50px;right:40px;background:rgba(0,0,0,.2)}
+  @keyframes rotate-mars{to{transform:rotate(360deg)}}
+  .orbit{position:absolute;inset:0;border:1px dashed rgba(125,249,255,.3);border-radius:50%;animation:rotate-orbit 12s linear infinite}
+  @keyframes rotate-orbit{to{transform:rotate(360deg)}}
+  .orbiter{
+    position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+    width:50px;height:24px;
+  }
+  .orbiter::before{
+    content:'🛰️';font-size:32px;display:block;filter:drop-shadow(0 0 10px var(--neon));
+    animation:wobble 2s ease-in-out infinite;
+  }
+  @keyframes wobble{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(10deg)}}
+
+  .scroll-hint{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);color:var(--muted);font-size:12px;font-family:'JetBrains Mono',monospace;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,10px)}}
+
+  /* SECTIONS */
+  section.block{padding:80px 0;position:relative}
+  .reveal{opacity:0;transform:translateY(40px);transition:all .8s cubic-bezier(.2,.8,.2,1)}
+  .reveal.in{opacity:1;transform:translateY(0)}
+
+  .section-label{
+    display:inline-flex;align-items:center;gap:10px;
+    font-family:'Press Start 2P',monospace;font-size:11px;
+    color:var(--neon);padding:8px 14px;border:1px solid var(--neon);border-radius:6px;
+    background:rgba(125,249,255,.05);margin-bottom:20px;letter-spacing:1px;
+  }
+  h2{
+    font-family:'Press Start 2P',monospace;
+    font-size:clamp(20px,3.5vw,32px);
+    line-height:1.5;margin-bottom:24px;
+    color:var(--gold);
+    text-shadow:0 2px 20px rgba(255,204,102,.3);
+  }
+  h3{font-size:22px;color:var(--text);margin:16px 0 12px;font-weight:700}
+  p{color:var(--text);font-size:17px;margin-bottom:16px}
+
+  .card{
+    background:linear-gradient(135deg,rgba(179,136,255,.08),rgba(125,249,255,.04));
+    border:1px solid var(--border);
+    border-radius:16px;padding:32px;
+    backdrop-filter:blur(10px);
+    position:relative;overflow:hidden;
+  }
+  .card::before{
+    content:'';position:absolute;top:0;left:-100%;width:100%;height:2px;
+    background:linear-gradient(90deg,transparent,var(--neon),transparent);
+    animation:scan 4s linear infinite;
+  }
+  @keyframes scan{to{left:100%}}
+
+  /* Mission cards */
+  .missions{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:30px 0}
+  .mission{
+    background:rgba(255,255,255,.03);border:1px solid var(--border);
+    border-radius:14px;padding:24px;text-align:center;
+    transition:all .3s;cursor:default;position:relative;overflow:hidden;
+  }
+  .mission:hover{transform:translateY(-6px) scale(1.02);border-color:var(--gold);box-shadow:0 20px 40px rgba(255,204,102,.15)}
+  .mission .emoji{font-size:54px;display:block;margin-bottom:14px;filter:drop-shadow(0 0 15px currentColor);animation:floaty 3s ease-in-out infinite}
+  .mission:nth-child(2) .emoji{animation-delay:.5s}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  .mission h4{font-family:'Press Start 2P',monospace;font-size:13px;color:var(--neon);margin-bottom:10px;letter-spacing:1px}
+  .mission p{font-size:15px;color:var(--muted);margin:0}
+
+  /* Instruction badge */
+  .robot-badge{
+    display:flex;align-items:center;gap:16px;padding:18px 24px;
+    background:linear-gradient(135deg,rgba(255,204,102,.1),rgba(226,97,58,.1));
+    border:1px solid rgba(255,204,102,.3);border-radius:12px;margin:20px 0;
+  }
+  .robot-badge .ico{font-size:40px;animation:wave 2s ease-in-out infinite}
+  @keyframes wave{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+
+  /* HELP accordion */
+  .accordion{margin-top:20px;display:flex;flex-direction:column;gap:12px}
+  .acc-item{
+    border:1px solid var(--border);border-radius:12px;overflow:hidden;
+    background:rgba(255,255,255,.03);transition:all .3s;
+  }
+  .acc-item:hover{border-color:var(--neon2)}
+  .acc-head{
+    padding:18px 22px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;
+    user-select:none;font-weight:700;font-size:17px;
+  }
+  .acc-head .left{display:flex;align-items:center;gap:14px}
+  .acc-head .ico{font-size:24px}
+  .acc-head .arrow{transition:transform .3s;color:var(--neon)}
+  .acc-item.open .arrow{transform:rotate(180deg)}
+  .acc-body{max-height:0;overflow:hidden;transition:max-height .5s ease;padding:0 22px}
+  .acc-item.open .acc-body{max-height:2000px;padding:0 22px 22px}
+  .acc-body code{background:rgba(125,249,255,.1);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;color:var(--neon);font-size:14px}
+
+  .video-placeholder{
+    aspect-ratio:16/9;border-radius:10px;
+    background:linear-gradient(135deg,#1a0b3a,#0b0820);
+    border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;
+    color:var(--muted);
+  }
+  .play-btn{width:70px;height:70px;border-radius:50%;background:var(--mars);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 0 30px rgba(226,97,58,.6);animation:pulse-btn 2s infinite}
+  @keyframes pulse-btn{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+
+  /* TERMINAL */
+  .terminal{
+    background:#0a0612;border:1px solid var(--border);border-radius:12px;
+    overflow:hidden;margin:24px 0;box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  .term-bar{
+    background:linear-gradient(180deg,#1a1230,#0f0820);
+    padding:10px 16px;display:flex;align-items:center;gap:8px;
+    border-bottom:1px solid var(--border);
+  }
+  .term-bar .b{width:12px;height:12px;border-radius:50%}
+  .b.r{background:#ff5f57}.b.y{background:#febc2e}.b.g{background:#28c840}
+  .term-title{margin-left:14px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)}
+  .term-body{
+    padding:24px;font-family:'JetBrains Mono',monospace;font-size:14.5px;
+    color:#e8e3ff;line-height:1.9;white-space:pre;overflow-x:auto;
+  }
+  .tk-com{color:#6c7396;font-style:italic}
+  .tk-def{color:#ff7ab6;font-weight:700}
+  .tk-fn{color:var(--gold)}
+  .tk-str{color:var(--green)}
+  .tk-kw{color:var(--neon2)}
+  .cursor{display:inline-block;width:9px;height:18px;background:var(--neon);vertical-align:middle;animation:blink 1s steps(2) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* OUTPUT */
+  .output{
+    background:#000;border:1px solid var(--green);border-radius:12px;padding:22px;
+    font-family:'JetBrains Mono',monospace;color:var(--green);
+    margin-top:18px;box-shadow:0 0 30px rgba(124,255,178,.15);
+  }
+  .output .line{opacity:0;animation:typeline .4s forwards}
+  .output .line:nth-child(1){animation-delay:.2s}
+  .output .line:nth-child(2){animation-delay:1s}
+  .output .line:nth-child(3){animation-delay:1.8s}
+  @keyframes typeline{to{opacity:1}}
+
+  /* XP popup */
+  .xp{
+    display:inline-block;padding:6px 14px;border-radius:20px;
+    background:linear-gradient(135deg,var(--gold),var(--mars));
+    color:#1a0500;font-weight:700;font-size:13px;
+    font-family:'JetBrains Mono',monospace;
+    box-shadow:0 4px 20px rgba(255,204,102,.4);
+    animation:floaty 2s ease-in-out infinite;
+  }
+
+  /* Footer */
+  footer{padding:60px 24px;text-align:center;color:var(--muted);font-size:14px;border-top:1px solid var(--border);margin-top:60px;position:relative;z-index:2}
+  footer .sparkle{display:inline-block;animation:spin 4s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  @media (max-width:600px){
+    .scene{width:280px;height:280px}
+    .hud{font-size:9px;padding:0 12px}
+    .card{padding:22px}
+    .term-body{font-size:12.5px;padding:18px}
+  }
+</style>
+</head>
+<body>
+
+<div class="stars"></div>
+<div class="stars2"></div>
+<div class="stars3"></div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hud">
+    <span><i class="dot"></i>NASA · MISSION CONTROL ONLINE</span>
+    <span>SECTOR: MARS · ORBIT 0427</span>
+  </div>
+
+  <div class="hero-title">MARS ORBITER</div>
+  <div class="hero-sub">মার্স অরবিটার 🚀</div>
+  <p class="hero-tag">পাইথনের সাথে মহাকাশ অ্যাডভেঞ্চার — মঙ্গল গ্রহকে কোডের মাধ্যমে কন্ট্রোল করো!</p>
+
+  <div class="scene">
+    <div class="orbit"><div class="orbiter"></div></div>
+    <div class="mars"></div>
+  </div>
+
+  <div class="scroll-hint">▼ SCROLL TO START MISSION ▼</div>
+</section>
+
+<!-- INTRO -->
+<section class="block">
+  <div class="container reveal">
+    <div class="section-label">🛰️ LEVEL 01 · BRIEFING</div>
+    <h2>Mars Orbiter (মার্স অরবিটার)</h2>
+
+    <div class="card">
+      <p>সহজ কথায়, <strong style="color:var(--gold)">"মঙ্গল গ্রহের চারপাশ দিয়ে ঘুরে ঘুরে যে মহাকাশযান বা কৃত্রিম উপগ্রহ তথ্য সংগ্রহ করে, তাকেই Mars Orbiter বলে।"</strong></p>
+      <p>যেমন আমাদের বাংলাদেশের 'বঙ্গবন্ধু স্যাটেলাইট-১' পৃথিবীর চারপাশে ঘোরে, ঠিক তেমনি বিজ্ঞানীরা মঙ্গল গ্রহ বা Mars-কে চেনার জন্য সেখানে অরবিটার পাঠান। এটি মঙ্গল গ্রহের মাটিতে না নেমে, দূর থেকে তার চমৎকার সব ছবি তোলে এবং পৃথিবীতে বিজ্ঞানীদের কাছে পাঠিয়ে দেয়।</p>
+    </div>
+  </div>
+</section>
+
+<!-- INSTRUCTION -->
+<section class="block">
+  <div class="container reveal">
+    <div class="section-label">🎯 LEVEL 02 · MISSION</div>
+    <h2>নির্দেশনা</h2>
+
+    <div class="robot-badge">
+      <span class="ico">🧑‍🚀</span>
+      <p style="margin:0">মনে করো, তুমি নাসার (NASA) একজন জুনিয়র কোডার। মঙ্গল গ্রহের চারপাশে ঘুরতে থাকা একটি অরবিটারকে সিগন্যাল পাঠানোর জন্য তোমাকে একটি পাইথন প্রোগ্রাম লিখতে বলা হয়েছে। অরবিটারটির ৩টি প্রধান কাজ আছে:</p>
+    </div>
+
+    <div class="missions">
+      <div class="mission" style="color:#ff8a5c">
+        <span class="emoji">📸</span>
+        <h4>TASK 01</h4>
+        <p>১. মঙ্গল গ্রহের ছবি তোলা (Take Photo) 📸</p>
+      </div>
+      <div class="mission" style="color:#7df9ff">
+        <span class="emoji">🌡️</span>
+        <h4>TASK 02</h4>
+        <p>২. মঙ্গলের তাপমাত্রা মাপা (Check Temp) 🌡️</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <p>বিজ্ঞানীরা যখনই কোডে এই কাজের নাম লিখে কমান্ড পাঠাবেন, অরবিটারটি সেই কাজটি করে আমাদের রেজাল্ট দেখাবে। চলো, ফাংশন ব্যবহার করে এই স্পেস প্রোগ্রামটি বানিয়ে ফেলি! <span class="xp">+50 XP</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- HELP -->
+<section class="block">
+  <div class="container reveal">
+    <div class="section-label">💡 LEVEL 03 · HELP STATION</div>
+    <h2>সাহায্য</h2>
+
+    <div class="accordion">
+
+      <div class="acc-item">
+        <div class="acc-head">
+          <div class="left"><span class="ico">💡</span><span>হিন্টস (Hints)</span></div>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="acc-body">
+          <p style="margin-top:16px"><strong>কাজের জন্য ফাংশন:</strong> ছবি তোলার জন্য একটি ফাংশন বানাও <code>def take_photo():</code> এবং তাপমাত্রা মাপার জন্য আরেকটি ফাংশন বানাও <code>def check_temp():</code>।</p>
+          <p><strong>ফাংশন কল:</strong> ফাংশনগুলো তৈরি করার পর, নিচে তাদের নাম ধরে Call করলেই অরবিটার তার কাজ শুরু করে দেবে!</p>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <div class="acc-head">
+          <div class="left"><span class="ico">🎬</span><span>Walkthrough Video</span></div>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="acc-body">
+          <div class="video-placeholder" style="margin-top:16px">
+            <div class="play-btn">▶</div>
+            <p style="margin:0">Walkthrough Video</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="acc-item open">
+        <div class="acc-head">
+          <div class="left"><span class="ico">✅</span><span>সমাধান ও সম্পূর্ণ কোড (Solution)</span></div>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="acc-body">
+          <p style="margin-top:16px">মহাকাশযানের জন্য তৈরি করা তোমার প্রথম পাইথন কোডটি নিচে দেওয়া হলো:</p>
+
+          <div class="terminal">
+            <div class="term-bar">
+              <span class="b r"></span><span class="b y"></span><span class="b g"></span>
+              <span class="term-title">mars_orbiter.py — NASA Control</span>
+            </div>
+<div class="term-body"><span class="tk-com"># ১. ছবি তোলার জন্য প্রথম ফাংশন (রোবট-১)</span>
+<span class="tk-def">def</span> <span class="tk-fn">take_photo</span>():
+    <span class="tk-kw">print</span>(<span class="tk-str">"📸 অরবিটার: লাল গ্রহ মঙ্গলের একটি সুন্দর ছবি তোলা হয়েছে!"</span>)
+
+
+<span class="tk-com"># ২. তাপমাত্রা মাপার জন্য দ্বিতীয় ফাংশন (রোবট-২)</span>
+<span class="tk-def">def</span> <span class="tk-fn">check_temp</span>():
+    <span class="tk-kw">print</span>(<span class="tk-str">"🌡️ অরবিটার: মঙ্গলের বর্তমান তাপমাত্রা মাপা হয়েছে, এখানে খুব ঠান্ডা!"</span>)
+
+
+<span class="tk-kw">print</span>(<span class="tk-str">"--- 🛰️ মার্স অরবিটার কন্ট্রোল সিস্টেম চালু হচ্ছে ---"</span>)
+
+
+<span class="tk-com"># ৩. এবার বিজ্ঞানীদের দেওয়া আদেশ অনুযায়ী ফাংশন কল করার পালা</span>
+<span class="tk-fn">take_photo</span>()
+<span class="tk-fn">check_temp</span>()<span class="cursor"></span></div>
+          </div>
+
+          <h3 style="margin-top:24px;color:var(--green)">▸ Output</h3>
+          <div class="output">
+            <div class="line">--- 🛰️ মার্স অরবিটার কন্ট্রোল সিস্টেম চালু হচ্ছে ---</div>
+            <div class="line">📸 অরবিটার: লাল গ্রহ মঙ্গলের একটি সুন্দর ছবি তোলা হয়েছে!</div>
+            <div class="line">🌡️ অরবিটার: মঙ্গলের বর্তমান তাপমাত্রা মাপা হয়েছে, এখানে খুব ঠান্ডা!</div>
+          </div>
+
+          <p style="margin-top:20px;text-align:center"><span class="xp">🏆 MISSION COMPLETE · +200 XP</span></p>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <div class="acc-head">
+          <div class="left"><span class="ico">🤖</span><span>AI Coding Companion</span></div>
+          <span class="arrow">▼</span>
+        </div>
+
+      <!-- Practice in Python IDE -->
+      <div class="acc-item">
+        <button class="acc-head"><span><span class="ico">💻</span> Practice in Python IDE</span><span class="chev">▼</span></button>
+        <div class="acc-body">
+          <div style="display:flex;gap:14px;align-items:center;padding:14px;border-radius:12px;background:#0a0b22;border:1px solid var(--border)">
+            <div style="font-size:46px;animation:bounce 2s ease-in-out infinite">💻</div>
+            <div>
+              <div style="font-family:'Press Start 2P',cursive;font-size:10px;color:#65D1B2">IDE OPEN</div>
+              <div style="color:var(--muted);font-size:14px;margin-top:6px">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</div>
+              <a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;margin-top:8px">🚀 Open Python IDE</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+        <div class="acc-body">
+          <p style="margin-top:16px;color:var(--muted)">তোমার AI সঙ্গী এখানে অপেক্ষা করছে — যেকোনো প্রশ্ন করো!</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p><span class="sparkle">✨</span> Mars Orbiter Mission · Powered by Python <span class="sparkle">🛰️</span></p>
+  <p style="margin-top:8px;font-size:12px;opacity:.7">© NASA Junior Coder Academy</p>
+</footer>
+
+<script>
+  // Floating particles
+  for(let i=0;i<25;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    p.style.left=Math.random()*100+'vw';
+    p.style.animationDelay=Math.random()*8+'s';
+    p.style.animationDuration=(6+Math.random()*8)+'s';
+    const colors=['#7df9ff','#b388ff','#ffcc66','#e2613a'];
+    const c=colors[Math.floor(Math.random()*colors.length)];
+    p.style.background=c;p.style.boxShadow=`0 0 10px ${c}`;
+    document.body.appendChild(p);
+  }
+
+  // Reveal on scroll
+  const io=new IntersectionObserver(es=>es.forEach(e=>e.isIntersecting&&e.target.classList.add('in')),{threshold:.15});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  // Accordion
+  document.querySelectorAll('.acc-head').forEach(h=>{
+    h.addEventListener('click',()=>h.parentElement.classList.toggle('open'));
+  });
+</script>
+</body>
+</html>

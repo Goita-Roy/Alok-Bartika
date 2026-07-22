@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>#️⃣ Comment Quest | Python Initials Challenge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: radial-gradient(circle at 20% 30%, #0c0f1a, #020408);
+      font-family: 'Fira Code', monospace;
+      color: #eef5ff;
+      line-height: 1.5;
+      overflow-x: hidden;
+      padding: 2rem 1.2rem;
+    }
+
+    /* retro grid + pixel vibe */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: repeating-linear-gradient(0deg, rgba(35, 255, 200, 0.03) 0px, rgba(35, 255, 200, 0.03) 2px, transparent 2px, transparent 8px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    canvas#particleCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* pixel cards */
+    .pixel-card {
+      background: rgba(8, 18, 28, 0.8);
+      backdrop-filter: blur(6px);
+      border: 2px solid #3effb0;
+      border-radius: 28px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,240,0.1);
+      transition: all 0.2s ease;
+      margin-bottom: 2rem;
+      overflow: hidden;
+    }
+
+    .pixel-card:hover {
+      border-color: #ffcc55;
+      transform: translateY(-3px);
+      box-shadow: 0 18px 30px rgba(62, 255, 176, 0.15);
+    }
+
+    .card-header {
+      padding: 1.3rem 2rem;
+      background: rgba(0, 20, 30, 0.7);
+      border-bottom: 2px dashed #3effb0;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+    }
+
+    .card-content {
+      padding: 2rem;
+    }
+
+    pre, code {
+      font-family: 'Fira Code', monospace;
+      background: #05161e;
+      padding: 0.2rem 0.5rem;
+      border-radius: 16px;
+      font-size: 0.85rem;
+      border-left: 3px solid #ffcc55;
+    }
+
+    pre {
+      padding: 1.2rem;
+      overflow-x: auto;
+      background: #031016;
+      border: 1px solid #3effb0;
+      border-radius: 24px;
+    }
+
+    .output-console {
+      background: #01070c;
+      padding: 1rem;
+      border-radius: 20px;
+      font-family: 'Fira Code', monospace;
+      border: 1px solid #ffcc55;
+      box-shadow: inset 0 0 10px #3effb030;
+      margin-top: 1rem;
+    }
+
+    .badge {
+      background: #ffcc55;
+      color: #0a121f;
+      padding: 4px 12px;
+      border-radius: 30px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      font-family: 'Press Start 2P', monospace;
+      display: inline-block;
+    }
+
+    /* comment bubble animation */
+    .comment-ghost {
+      animation: floatGhost 3s infinite;
+      display: inline-block;
+      font-size: 2rem;
+      filter: drop-shadow(0 0 4px #6effc0);
+    }
+
+    @keyframes floatGhost {
+      0% { transform: translateY(0px) rotate(0deg);}
+      50% { transform: translateY(-6px) rotate(2deg);}
+      100% { transform: translateY(0px) rotate(0deg);}
+    }
+
+    /* accordion */
+    .accordion-item {
+      background: #0a121fcc;
+      border: 1px solid #3effb0;
+      border-radius: 24px;
+      margin-bottom: 1rem;
+      backdrop-filter: blur(4px);
+    }
+    .accordion-header {
+      padding: 1rem 1.5rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #07131e;
+      border-radius: 24px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 1px;
+    }
+    .accordion-header:hover {
+      background: #102a36;
+    }
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 0 1.5rem;
+    }
+    .accordion-item.open .accordion-content {
+      max-height: 800px;
+      padding: 1.5rem;
+      border-top: 1px solid #3effb0;
+    }
+    .accordion-icon {
+      transition: transform 0.3s;
+    }
+    .accordion-item.open .accordion-icon {
+      transform: rotate(180deg);
+    }
+
+    .demo-btn {
+      background: #1e3a3f;
+      border: none;
+      color: #cafff0;
+      padding: 8px 20px;
+      font-family: 'Fira Code', monospace;
+      border-radius: 40px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+      box-shadow: 0 3px 0 #0a4f44;
+    }
+    .demo-btn:active {
+      transform: translateY(2px);
+      box-shadow: none;
+    }
+
+    .blinking-cursor {
+      display: inline-block;
+      width: 10px;
+      height: 1.2rem;
+      background: #3effb0;
+      vertical-align: middle;
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .initials-art {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.9rem;
+      background: #031016;
+      padding: 1rem;
+      border-radius: 20px;
+      white-space: pre;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="particleCanvas"></canvas>
+
+<div class="container">
+  <!-- MASTHEAD: Python comment theme -->
+  <div class="pixel-card" style="text-align: center; background: linear-gradient(135deg, #0c1727, #020b10);">
+    <div class="card-content" style="padding: 1.8rem;">
+      <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; align-items: center;">
+        <span class="comment-ghost">#️⃣🐍</span>
+        <h1 style="font-family: 'Press Start 2P'; font-size: 1.4rem;">COMMENT · IGNORE · INITIALS QUEST</h1>
+        <span class="comment-ghost">💬✨</span>
+      </div>
+      <p style="margin-top: 0.8rem;"># hashtag magic → python ignores → your story matters</p>
+      <div class="blinking-cursor" style="margin-top: 12px;"></div>
+    </div>
+  </div>
+
+  <!-- MAIN LESSON: COMMENTS (exact content) -->
+  <div class="pixel-card">
+    <div class="card-header">
+      📝 Programming-এ comments
+    </div>
+    <div class="card-content">
+      <p>Programming-এ comments খুবই গুরুত্বপূর্ণ কারণ এগুলো কোড কী কাজ করছে তা ব্যাখ্যা করতে সাহায্য করে।</p>
+      <p>এছাড়াও program-এর কিছু অংশ সাময়িকভাবে বন্ধ রাখতেও comments ব্যবহার করা হয়।</p>
+      <p>Program রান হলে comments উপেক্ষা করা হয়।</p>
+      <p>Python-এ # hashtag symbol ব্যবহার করে comment লেখা হয়:</p>
+      <pre># Printing out a message
+print('Hi')</pre>
+      <p>প্রথম লাইনে একটি comment লেখা হয়েছে।<br>তাই # এর ডান পাশে যা আছে তা Python ignore করবে।<br>Program পরের লাইনে যাবে এবং output হবে:</p>
+      <div class="output-console">Hi</div>
+      <p style="margin-top: 1rem;">Python শুধুমাত্র একই লাইনে # এর পরের অংশ ignore করে।<br>যেমন:</p>
+      <pre>print('Hi')   # I'm a comment, too!</pre>
+      <p>এখানে "Hi" এখনও print হবে কারণ comment-এর আগের কোড execute হয়।</p>
+      <div class="output-console" style="margin-top: 0.5rem;">Hi</div>
+      <!-- extra visual: ignored comment animation -->
+      <div style="margin-top: 1rem; display: flex; gap: 12px; align-items: center;">
+        <span class="badge"># ignored</span>
+        <span style="font-size: 1.2rem;">🚫💬</span>
+        <span style="font-size:0.75rem;">Python sees only code → comments are invisible</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHALLENGE: initials.py (exact নির্দেশনা) -->
+  <div class="pixel-card">
+    <div class="card-header">
+      🧩 নির্দেশনা · BUILD YOUR INITIALS
+    </div>
+    <div class="card-content">
+      <p>একটি initials.py প্রোগ্রাম তৈরি করো যা তোমার initials block letters আকারে দেখাবে।<br>প্রথমে একটি comment লিখো যেখানে নিজের সম্পর্কে একটি fun fact থাকবে।<br>তারপর তোমার initials block letters আকারে তৈরি করো।</p>
+      <p>উদাহরণস্বরূপ, যদি তোমার নাম Dua Lipa হয়, তাহলে initials হবে D এবং L:</p>
+      <div class="initials-art" style="background:#010e14;">
+DDDD   L<br>
+D   D  L<br>
+D   D  L<br>
+D   D  L<br>
+D   D  L<br>
+D   D  L<br>
+DDDD   LLLLL
+      </div>
+      <p style="margin-top: 1rem;">🔥 তোমার পালা! 🔥</p>
+    </div>
+  </div>
+
+  <!-- HELP SECTION (সাহায্য) with exact hint, walkthrough video, solution -->
+  <div style="margin-top: 1rem;">
+    <div style="display: flex; gap: 10px; margin-bottom: 1rem; align-items: baseline;">
+      <span class="badge" style="background:#fea82f;">🆘 সাহায্য</span>
+      <span style="font-size: 0.7rem;">🔓 expand cards for guidance</span>
+    </div>
+
+    <!-- HINT (exact text) -->
+    <div class="accordion-item" id="hintAccordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>💡 হিন্টস</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <p style="font-size: 1rem; margin-bottom: 0.5rem;">সম্ভবত এখানে সাতটি print() ফাংশন লাগবে — প্রতিটি লাইনের জন্য একটি করে।</p>
+        <div style="margin-top: 12px;"><span class="badge">📌 tip</span> 7 lines → 7 print statements → block letters!</div>
+      </div>
+    </div>
+
+    <!-- WALKTHROUGH VIDEO (animated demo showing row-by-row for solution initials) -->
+    <div class="accordion-item" id="videoAccordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>🎥 Walkthrough Video</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <div style="background:#03161e; border-radius: 24px; padding: 1rem;">
+          <p style="margin-bottom: 12px;">✨ animated build: initials block letters (R I pattern) ✨</p>
+          <div id="walkthroughCanvas" style="background:#01070f; padding: 1rem; border-radius: 20px; font-family:'Fira Code'; min-height: 220px;">
+            <pre id="walkthroughDisplay" style="background:transparent; border:none; text-align: left; margin:0;">▶ Press PLAY to see each print() line</pre>
+          </div>
+          <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
+            <button class="demo-btn" id="playWalkBtn">▶ PLAY (row by row)</button>
+            <button class="demo-btn" id="resetWalkBtn">⟳ RESET</button>
+          </div>
+          <p class="glow-text" style="font-size:0.7rem; margin-top: 12px;">🐍 each print() adds one row to the terminal art</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SOLUTION (exact code + fun fact comment & prints) -->
+    <div class="accordion-item" id="solutionAccordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>✅ Solution · initials.py</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <pre style="margin-bottom: 1rem;"># Fun Fact: আমি Python শিখতে ভালোবাসি এবং ভবিষ্যতে একজন গেম ডেভেলপার হতে চাই! 
+
+# My initials: R I (Rahim Islam এর জন্য)
+
+print("RRRR   IIIII")
+print("R   R    I")
+print("R   R    I")
+print("RRRR     I")
+print("R R      I")
+print("R  R     I")
+print("R   R  IIIII")</pre>
+        <p>⭐ OUTPUT (block letters):</p>
+        <div class="output-console" id="solutionOutputPreview" style="white-space: pre; font-family: monospace;">
+RRRR   IIIII
+R   R    I
+R   R    I
+RRRR     I
+R R      I
+R  R     I
+R   R  IIIII
+        </div>
+        <div style="margin-top: 1rem;">
+          <button id="runSolutionBtn" class="demo-btn">🚀 RUN initials.py (interactive)</button>
+        </div>
+        <div id="liveRunOutput" class="output-console" style="margin-top: 0.8rem; background:#010b10;">
+          <span style="color:#9effcf;">>_ click RUN to see the magic</span>
+      </div>
+    </div>
+  
+    <!-- Practice in Python IDE -->
+    <div class="accordion-item">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>💻 Practice in Python IDE</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <p style="margin:0;font-size:14px;line-height:1.6;color:#B8C5C1">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p>
+        <a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;align-self:flex-start;box-shadow:0 0 16px rgba(101,209,178,0.2);margin-top:8px">🚀 Open Python IDE</a>
+      </div>
+    </div>
+</div>
+
+  <!-- extra pixel decoration -->
+  <div style="text-align: center; margin-top: 2.5rem; opacity: 0.6; font-size: 0.7rem;">
+    <span>#️⃣ comments are invisible, but your creativity shines ✨🐍</span>
+  </div>
+</div>
+
+<script>
+  // particle background 
+  const canvas = document.getElementById('particleCanvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  class Particle {
+    constructor() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.size = Math.random() * 2.5 + 1;
+      this.speedX = (Math.random() - 0.5) * 0.3;
+      this.speedY = (Math.random() - 0.5) * 0.2;
+      this.color = `rgba(100, 255, 200, ${Math.random() * 0.3 + 0.1})`;
+    }
+    update() {
+      this.x += this.speedX;
+      this.y += this.speedY;
+      if (this.x < 0) this.x = canvas.width;
+      if (this.x > canvas.width) this.x = 0;
+      if (this.y < 0) this.y = canvas.height;
+      if (this.y > canvas.height) this.y = 0;
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.fill();
+    }
+  }
+  function initParticles(cnt) {
+    for (let i = 0; i < cnt; i++) particles.push(new Particle());
+  }
+  function animateParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let p of particles) {
+      p.update();
+      p.draw();
+    }
+    requestAnimationFrame(animateParticles);
+  }
+  initParticles(70);
+  animateParticles();
+
+  // accordion toggle
+  function toggleAccordion(header) {
+    const item = header.closest('.accordion-item');
+    if (item) item.classList.toggle('open');
+  }
+
+  // WALKTHROUGH: 7 prints for R I pattern
+  const solutionRows = [
+    "RRRR   IIIII",
+    "R   R    I",
+    "R   R    I",
+    "RRRR     I",
+    "R R      I",
+    "R  R     I",
+    "R   R  IIIII"
+  ];
+  let walkthroughStep = 0;
+  let walkInterval = null;
+  const walkDisplay = document.getElementById('walkthroughDisplay');
+  function updateWalkDisplay(step) {
+    if (!walkDisplay) return;
+    if (step === 0) {
+      walkDisplay.innerText = "⏳ Press PLAY to build the initials...\n(7 print statements)";
+      return;
+    }
+    let built = "";
+    for (let i = 0; i < step; i++) {
+      built += solutionRows[i] + "\n";
+    }
+    walkDisplay.innerText = built || "✨ building...";
+  }
+  function startWalkthrough() {
+    if (walkInterval) clearInterval(walkInterval);
+    walkthroughStep = 0;
+    updateWalkDisplay(0);
+    walkInterval = setInterval(() => {
+      if (walkthroughStep < solutionRows.length) {
+        walkthroughStep++;
+        updateWalkDisplay(walkthroughStep);
+      } else {
+        clearInterval(walkInterval);
+        walkInterval = null;
+      }
+    }, 700);
+  }
+  function resetWalkthrough() {
+    if (walkInterval) { clearInterval(walkInterval); walkInterval = null; }
+    walkthroughStep = 0;
+    updateWalkDisplay(0);
+  }
+  const playWalk = document.getElementById('playWalkBtn');
+  const resetWalk = document.getElementById('resetWalkBtn');
+  if (playWalk) playWalk.addEventListener('click', startWalkthrough);
+  if (resetWalk) resetWalk.addEventListener('click', resetWalkthrough);
+  updateWalkDisplay(0);
+
+  // run solution interactive 
+  function runSolution() {
+    const outputLines = [
+      "RRRR   IIIII",
+      "R   R    I",
+      "R   R    I",
+      "RRRR     I",
+      "R R      I",
+      "R  R     I",
+      "R   R  IIIII"
+    ];
+    const liveDiv = document.getElementById('liveRunOutput');
+    if (liveDiv) {
+      liveDiv.innerHTML = `<span style="color:#b3ffcf;">⚡ Executing initials.py ...</span><br>${outputLines.join('<br>')}<br><span style="color:#ffdd88;">✓ block letters printed! 🎉</span>`;
+    }
+    // mini achievement pop
+    const achiev = document.createElement('div');
+    achiev.innerText = '🏆 +20 XP · initials mastered! 🏆';
+    achiev.style.position = 'fixed';
+    achiev.style.bottom = '25px';
+    achiev.style.right = '25px';
+    achiev.style.background = '#ffcc55';
+    achiev.style.color = '#0a1f1a';
+    achiev.style.padding = '8px 18px';
+    achiev.style.borderRadius = '40px';
+    achiev.style.fontFamily = "'Press Start 2P', monospace";
+    achiev.style.fontSize = '0.7rem';
+    achiev.style.fontWeight = 'bold';
+    achiev.style.zIndex = 999;
+    achiev.style.boxShadow = '0 0 10px #3effb0';
+    document.body.appendChild(achiev);
+    setTimeout(() => { achiev.style.opacity = '0'; setTimeout(() => achiev.remove(), 1000); }, 1800);
+  }
+  const runBtn = document.getElementById('runSolutionBtn');
+  if (runBtn) runBtn.addEventListener('click', runSolution);
+
+  // Additional floating # comment symbols
+  function createFloatingHash() {
+    const span = document.createElement('div');
+    span.innerText = '#️⃣';
+    span.style.position = 'fixed';
+    span.style.fontSize = (Math.random() * 20 + 14) + 'px';
+    span.style.left = Math.random() * 90 + '%';
+    span.style.top = Math.random() * 100 + '%';
+    span.style.opacity = 0.15;
+    span.style.pointerEvents = 'none';
+    span.style.zIndex = 0;
+    span.style.animation = 'floatGhost 12s infinite linear';
+    document.body.appendChild(span);
+  }
+  for (let i = 0; i < 16; i++) createFloatingHash();
+
+  // optional: interactive comment demo (live show comment ignore)
+  // add small interactive snippet in Comments section? without changing content, just extra design.
+  const commentDemoDiv = document.createElement('div');
+  // but not altering text, so ensure no extra paragraph text.
+  // just an animated shell: keep original untouched.
+
+  // ensure all original content is displayed exactly
+  console.log("comment & initials challenge — full original content preserved");
+</script>
+</body>
+</html>

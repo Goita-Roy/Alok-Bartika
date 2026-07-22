@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>📜 Zen of Python — পাইথন মডিউল অ্যাডভেঞ্চার</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fira+Code:wght@400;600&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --neon:#00ffe1; --pink:#ff2bd6; --yellow:#ffd166; --green:#39ff14;
+    --bg:#05060f; --panel:#0b0f1f; --gold:#ffcf5c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Hind Siliguri','Fira Code',monospace;
+    background:
+      radial-gradient(ellipse at top, rgba(0,255,225,0.08), transparent 60%),
+      radial-gradient(ellipse at bottom right, rgba(255,43,214,0.07), transparent 50%),
+      linear-gradient(135deg,#04050d,#0a0f24,#04050d);
+    color:#e6f7ff; min-height:100vh; overflow-x:hidden; position:relative;
+  }
+  .particles{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+  .particles span{position:absolute;bottom:-60px;animation:float-up linear infinite;opacity:0.3}
+  @keyframes float-up{
+    0%{transform:translateY(0) rotate(0)}
+    100%{transform:translateY(-115vh) rotate(360deg)}
+  }
+  .container{max-width:960px;margin:0 auto;padding:32px 20px 80px;position:relative;z-index:1}
+  .badge{
+    display:inline-block;padding:8px 14px;border:1px solid rgba(0,255,225,0.35);
+    background:rgba(0,255,225,0.08);border-radius:999px;
+    font-family:'Press Start 2P',monospace;font-size:9px;color:var(--neon);
+    letter-spacing:1px;margin-bottom:18px;animation:pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse{50%{box-shadow:0 0 24px rgba(0,255,225,0.35)}}
+  h1{
+    font-family:'Press Start 2P',monospace; font-size:22px; line-height:1.6;
+    background:linear-gradient(90deg,var(--neon),var(--gold),var(--pink));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    margin-bottom:14px;
+  }
+  .subtitle{color:#9fb3c8;font-size:15px;margin-bottom:32px;max-width:700px}
+  .quote{
+    border-left:4px solid var(--gold); padding:18px 22px;
+    background:linear-gradient(90deg,rgba(255,207,92,0.08),transparent);
+    border-radius:8px; margin:24px 0; font-size:16px; color:#ffe7a8;
+    box-shadow:0 0 30px rgba(255,207,92,0.08);
+  }
+  .section-title{
+    font-family:'Press Start 2P',monospace;font-size:13px;
+    color:var(--neon);margin:36px 0 14px;letter-spacing:1px;
+  }
+  p{margin:10px 0;line-height:1.85;color:#cbd5e1}
+  strong{color:var(--yellow)}
+  /* Scroll reveal */
+  .scroll-card{
+    position:relative;background:linear-gradient(180deg,#1a0f05,#2b1908);
+    border:2px solid #6b4a1b;border-radius:14px;padding:28px;margin:22px 0;
+    box-shadow:0 20px 60px rgba(0,0,0,0.55),inset 0 0 60px rgba(255,207,92,0.08);
+  }
+  .scroll-card::before,.scroll-card::after{
+    content:"";position:absolute;left:0;right:0;height:18px;
+    background:repeating-linear-gradient(90deg,#6b4a1b 0 8px,#3a2810 8px 16px);
+  }
+  .scroll-card::before{top:0;border-radius:14px 14px 0 0}
+  .scroll-card::after{bottom:0;border-radius:0 0 14px 14px}
+  .scroll-card h3{
+    font-family:'Press Start 2P',monospace;font-size:12px;color:var(--gold);
+    text-align:center;margin:6px 0 18px;letter-spacing:1px;
+  }
+  .reveal-btn{
+    display:block;margin:14px auto 6px;padding:12px 24px;
+    background:linear-gradient(90deg,var(--gold),#d18b1f);
+    color:#1a0a00;font-weight:700;border:none;border-radius:999px;
+    font-family:'Press Start 2P',monospace;font-size:10px;cursor:pointer;
+    letter-spacing:1px;box-shadow:0 0 20px rgba(255,207,92,0.4);
+    transition:transform .15s ease;
+  }
+  .reveal-btn:hover{transform:scale(1.05)}
+  .reveal-btn:disabled{opacity:.5;cursor:not-allowed}
+  .aphorism-list{margin-top:12px;list-style:none;counter-reset:zen}
+  .aphorism-list li{
+    counter-increment:zen;padding:10px 12px 10px 44px;position:relative;
+    border-bottom:1px dashed rgba(255,207,92,0.18);color:#ffeac0;
+    font-size:14px;opacity:0;transform:translateY(8px);
+    transition:all .4s ease;
+  }
+  .aphorism-list li.show{opacity:1;transform:translateY(0)}
+  .aphorism-list li::before{
+    content:counter(zen,decimal-leading-zero);
+    position:absolute;left:8px;top:10px;
+    font-family:'Press Start 2P',monospace;font-size:10px;color:var(--neon);
+  }
+  .counter{
+    text-align:center;font-family:'Press Start 2P',monospace;font-size:10px;
+    color:var(--neon);margin-top:14px;
+  }
+  /* Terminal */
+  .terminal{
+    background:#04060e;border:1px solid rgba(0,255,225,0.25);border-radius:12px;
+    margin:20px 0;overflow:hidden;box-shadow:0 0 30px rgba(0,255,225,0.08);
+  }
+  .term-bar{background:#0b1224;padding:10px 14px;display:flex;gap:6px;align-items:center;border-bottom:1px solid rgba(0,255,225,0.15)}
+  .dot{width:10px;height:10px;border-radius:50%}
+  .dot.r{background:#ff5f56}.dot.y{background:#ffbd2e}.dot.g{background:#27c93f}
+  .term-title{margin-left:10px;font-family:'Fira Code',monospace;font-size:11px;color:#7aa2b8}
+  .term-body{padding:18px;font-family:'Fira Code',monospace;font-size:14px;line-height:1.7;white-space:pre-wrap}
+  .c-comment{color:#6b7c93;font-style:italic}
+  .c-keyword{color:var(--pink)}
+  .c-string{color:var(--green)}
+  .c-func{color:var(--neon)}
+  /* Accordion */
+  .acc{border:1px solid rgba(0,255,225,0.18);border-radius:12px;margin:12px 0;overflow:hidden;background:rgba(11,15,31,0.6);backdrop-filter:blur(4px)}
+  .acc summary{
+    cursor:pointer;list-style:none;padding:16px 18px;
+    font-family:'Press Start 2P',monospace;font-size:11px;color:var(--yellow);
+    display:flex;justify-content:space-between;align-items:center;
+    background:linear-gradient(90deg,rgba(255,209,102,0.06),transparent);
+  }
+  .acc summary::-webkit-details-marker{display:none}
+  .acc summary::after{content:"▼";color:var(--neon);font-size:10px;transition:transform .25s}
+  .acc[open] summary::after{transform:rotate(180deg)}
+  .acc-body{padding:6px 20px 20px;color:#cbd5e1;font-size:14px;line-height:1.8}
+  .acc-body ul{padding-left:18px;margin:8px 0}
+  .acc-body li{margin:6px 0}
+  /* Toast */
+  .toast{
+    position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);
+    background:linear-gradient(90deg,var(--gold),var(--pink));
+    color:#0a0a0a;padding:14px 22px;border-radius:999px;
+    font-family:'Press Start 2P',monospace;font-size:10px;letter-spacing:1px;
+    box-shadow:0 0 30px rgba(255,207,92,0.45);opacity:0;pointer-events:none;
+    transition:all .4s ease;z-index:50;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .footer-tip{
+    margin-top:32px;text-align:center;font-size:13px;color:#7aa2b8;
+    border-top:1px dashed rgba(0,255,225,0.15);padding-top:18px;
+  }
+  @media(max-width:600px){
+    h1{font-size:16px}
+    .term-body{font-size:12px}
+    .scroll-card{padding:22px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<div class="container">
+  <div class="badge">📜 LESSON 03 • ZEN OF PYTHON</div>
+  <h1>পাইথনের জাদুকরী কবিতা</h1>
+  <p class="subtitle">এক লুকানো মডিউল, ১৯টি সোনালী নিয়ম — পাইথনের নিজস্ব কাব্য!</p>
+
+  <div class="quote">
+    "Zen of Python হলো ১৯টি সোনালী নিয়মের একটি সুন্দর কবিতা বা নির্দেশিকা, যা আমাদের শেখায় কীভাবে একজন ভালো প্রোগ্রামার হওয়া যায় এবং কীভাবে সহজ ও সুন্দর কোড লিখতে হয়।"
+  </div>
+
+  <p>পাইথনের জনক <strong>গুইডো ভ্যান রোসাম</strong> এবং তাঁর বন্ধু <strong>টিম পিটার্স</strong> মিলে এই নিয়মগুলো তৈরি করেছিলেন। তারা বিশ্বাস করতেন, কোড শুধু কম্পিউটারের বোঝার জন্য নয়, <strong>মানুষের পড়ার জন্যও সুন্দর</strong> হওয়া উচিত!</p>
+
+  <h2 class="section-title">🥚 মডিউলের জাদুকরী ইস্টার এগ</h2>
+  <p>সবচেয়ে মজার ব্যাপার হলো, এই কবিতাটি পড়ার জন্য আমাদের গুগলে খুঁজতে হবে না বা নিজে টাইপ করতে হবে না। শুধু একটি লাইন লিখলেই পাইথন নিজে থেকে কবিতাটি স্ক্রিনে ফুটিয়ে তুলবে!</p>
+
+  <h2 class="section-title">📜 প্রাচীন স্ক্রল খোলো</h2>
+  <div class="scroll-card">
+    <h3>~ THE ZEN OF PYTHON ~</h3>
+    <p style="text-align:center;color:#d1b07a;font-size:13px;margin-bottom:6px">by Tim Peters</p>
+    <button class="reveal-btn" id="revealBtn">📜 পরবর্তী নিয়ম প্রকাশ করো</button>
+    <div class="counter" id="counter">0 / 19 প্রকাশিত</div>
+    <ol class="aphorism-list" id="aphList"></ol>
+  </div>
+
+  <h2 class="section-title">💻 কোড টার্মিনাল</h2>
+  <div class="terminal">
+    <div class="term-bar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="term-title">zen.py</span>
+    </div>
+    <div class="term-body"><span class="c-comment"># ১. পাইথনের নিজস্ব লুকানো জাদুকরী মডিউল 'this' ইমপোর্ট করলাম</span>
+<span class="c-keyword">import</span> <span class="c-func">this</span>
+
+<span class="c-comment"># ব্যস! print() লাগে না — মডিউলটি নিজে থেকেই কবিতা ছাপিয়ে দেয়! ✨</span></div>
+  </div>
+
+  <h2 class="section-title">🎯 শিক্ষার্থী কর্নার</h2>
+
+  <details class="acc" open>
+    <summary>💡 ইঙ্গিত (Hints)</summary>
+    <div class="acc-body">
+      <ul>
+        <li><strong>লুকানো মডিউল:</strong> পাইথনে এই জাদুকরী কবিতাটি দেখতে হলে <code style="color:var(--neon)">this</code> নামের মডিউলটি নিয়ে আসতে হবে।</li>
+        <li><strong>আমদানি করার নিয়ম:</strong> কোডের শুরুতে শুধু <code style="color:var(--neon)">import this</code> লিখতে হবে।</li>
+        <li>এর জন্য আলাদা করে কোনো <code style="color:var(--pink)">print</code> ফাংশনও লেখা লাগে না — মডিউলটি ইমপোর্ট হওয়ামাত্রই নিজে থেকে স্ক্রিনে কবিতাটি ফুটিয়ে তোলে!</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="acc">
+    <summary>📹 Walkthrough Video</summary>
+    <div class="acc-body">শীঘ্রই আসছে... 🎬 ভিডিও দিয়ে দেখাবো কিভাবে <code>import this</code> চালালেই কবিতা ফুটে ওঠে।</div>
+  </details>
+
+  <details class="acc">
+    <summary>🛠️ সমাধান ও সম্পূর্ণ কোড</summary>
+    <div class="acc-body">
+      একদম সহজ উপায়ে লেখা পাইথন কোড:
+      <div class="terminal" style="margin-top:10px">
+        <div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="term-title">solution.py</span></div>
+        <div class="term-body"><span class="c-comment"># ১. পাইথনের নিজস্ব লুকানো জাদুকরী মডিউল 'this' ইমপোর্ট করলাম</span>
+<span class="c-keyword">import</span> <span class="c-func">this</span></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="acc">
+    <summary>🤖 AI Coding Companion</summary>
+    <div class="acc-body">আটকে গেছ? AI সঙ্গীকে জিজ্ঞেস করো — "Zen of Python এর কোন নিয়মটা সবচেয়ে গুরুত্বপূর্ণ?" 🐍</div>
+  </details>
+
+  <div class="footer-tip">🏆 ১৯টি নিয়মই প্রকাশ করে Zen Master ব্যাজ আনলক করো!</div>
+</div>
+
+<div class="toast" id="toast">🏆 ZEN MASTER ব্যাজ আনলকড!</div>
+
+
+  <details class="accordion">
+    <summary><span class="ico" style="background:rgba(101,209,178,.15);color:var(--cyan)">💻</span><span style="color:var(--cyan)">Practice in Python IDE</span></summary>
+    <div class="body"><p style="margin:0;color:#d1d5db">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p><a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;margin-top:8px">🚀 Open Python IDE</a></div>
+  </details>
+
+<script>
+  // Particles
+  const emojis=['📜','✨','🐍','💡','⭐','🔮','📖','🪶'];
+  const p=document.getElementById('particles');
+  for(let i=0;i<28;i++){
+    const s=document.createElement('span');
+    s.textContent=emojis[i%emojis.length];
+    s.style.left=(Math.random()*100)+'%';
+    s.style.fontSize=(14+Math.random()*22)+'px';
+    s.style.animationDuration=(14+Math.random()*16)+'s';
+    s.style.animationDelay=(-Math.random()*20)+'s';
+    s.style.opacity=(0.15+Math.random()*0.3);
+    p.appendChild(s);
+  }
+
+  // Aphorisms
+  const aphorisms=[
+    "Beautiful is better than ugly. (সুন্দর কুৎসিতের চেয়ে শ্রেয়।)",
+    "Explicit is better than implicit. (স্পষ্ট অস্পষ্টের চেয়ে শ্রেয়।)",
+    "Simple is better than complex. (সরল জটিলের চেয়ে শ্রেয়।)",
+    "Complex is better than complicated. (জটিল প্যাঁচানোর চেয়ে শ্রেয়।)",
+    "Flat is better than nested. (সমতল ভাঁজের চেয়ে শ্রেয়।)",
+    "Sparse is better than dense. (পাতলা ঘনের চেয়ে শ্রেয়।)",
+    "Readability counts. (পঠনযোগ্যতা গুরুত্বপূর্ণ।)",
+    "Special cases aren't special enough to break the rules.",
+    "Although practicality beats purity.",
+    "Errors should never pass silently.",
+    "Unless explicitly silenced.",
+    "In the face of ambiguity, refuse the temptation to guess.",
+    "There should be one-- and preferably only one --obvious way to do it.",
+    "Although that way may not be obvious at first unless you're Dutch.",
+    "Now is better than never.",
+    "Although never is often better than *right* now.",
+    "If the implementation is hard to explain, it's a bad idea.",
+    "If the implementation is easy to explain, it may be a good idea.",
+    "Namespaces are one honking great idea -- let's do more of those!"
+  ];
+
+  const list=document.getElementById('aphList');
+  const btn=document.getElementById('revealBtn');
+  const counter=document.getElementById('counter');
+  aphorisms.forEach(a=>{const li=document.createElement('li');li.textContent=a;list.appendChild(li);});
+  let idx=0;
+  btn.addEventListener('click',()=>{
+    if(idx>=aphorisms.length)return;
+    list.children[idx].classList.add('show');
+    idx++;
+    counter.textContent=`${idx} / 19 প্রকাশিত`;
+    if(idx===aphorisms.length){
+      btn.disabled=true;
+      btn.textContent='✨ সব নিয়ম প্রকাশিত!';
+      showToast();
+    }
+  });
+
+  function showToast(){
+    const t=document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),2800);
+  }
+</script>
+</body>
+</html>

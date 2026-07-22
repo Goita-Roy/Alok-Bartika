@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+.content-protected {
+  position: relative;
+}
+
+.content-protected .protected-content {
+  position: relative;
+  z-index: 1;
+}

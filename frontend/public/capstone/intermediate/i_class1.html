@@ -1,0 +1,352 @@
+ <!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algorithm Learning Pro</title>
+    
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #008080;
+            --secondary: #00bfa5;
+            --bg: #f4f7f6;
+            --card-bg: #ffffff;
+            --text: #333;
+        }
+
+        .dark-mode {
+            --bg: #1a202c;
+            --card-bg: #2d3748;
+            --text: #f1f5f9;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            transition: 0.3s;
+        }
+
+        /* Sticky Progress Bar */
+        .progress-container {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            width: 100%;
+            background: #ddd;
+            height: 10px;
+        }
+        #myProgress {
+            width: 0%;
+            height: 100%;
+            background: var(--secondary);
+            transition: 0.5s;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 30px 15px;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: 20px auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 5px solid var(--primary);
+        }
+
+        button {
+            padding: 10px 18px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        button:hover { filter: brightness(1.1); }
+
+        .dropzone {
+            min-height: 80px;
+            background: #e0f7f4;
+            border: 2px dashed var(--primary);
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .item {
+            padding: 10px;
+            background: white;
+            color: #333;
+            border: 1px solid #ddd;
+            margin: 5px 0;
+            cursor: grab;
+            border-radius: 5px;
+        }
+
+        #codePreview {
+            background: #272822;
+            color: #a6e22e;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', Courier, monospace;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .robot-area {
+            background: #e2e8f0;
+            height: 60px;
+            border-radius: 10px;
+            position: relative;
+            margin: 15px 0;
+        }
+
+        #robot {
+            font-size: 30px;
+            position: absolute;
+            left: 0;
+            transition: 0.5s;
+        }
+
+        .mode-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+            border: none;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+<div class="progress-container">
+    <div id="myProgress"></div>
+</div>
+
+<button class="mode-toggle" onclick="toggleDarkMode()">🌓</button>
+
+<div class="header">
+    <h1>🤖 Algorithm Learning Pro</h1>
+    <p>মজায় মজায় প্রোগ্রামিং শিখি</p>
+</div>
+
+<div class="container">
+    
+    <!-- NEW: Video Section Added Back -->
+    <div class="card">
+        <h3>🎬 গল্প দিয়ে শিখি</h3>
+        <p>অ্যালগরিদম বোঝার জন্য এই ভিডিওটি প্লে করো:</p>
+        <video width="100%" controls style="border-radius: 10px; border: 1px solid #ddd;">
+            <source src="your-video.mp4" type="video/mp4">
+            আপনার ব্রাউজারে ভিডিওটি সাপোর্ট করছে না।
+        </video>
+    </div>
+
+    <!-- Section 2: Timer Challenge -->
+    <div class="card" style="text-align: center; border-left: 5px solid #ff9800;">
+        <h3>⏱️ চ্যালেঞ্জ টাইমার</h3>
+        <p>সময় বাকি: <span id="time-display" style="color: red; font-size: 20px; font-weight: bold;">৩০</span> সেকেন্ড</p>
+        <button id="start-btn" onclick="startChallenge()">চ্যালেঞ্জ শুরু করো!</button>
+    </div>
+
+    <!-- Section 3: Explanation -->
+    <div class="card">
+        <h3>🧠 Algorithm কী?</h3>
+        <p>অ্যালগরিদম হলো ধাপে ধাপে কাজ শেষ করার নিয়ম।</p>
+        <button onclick="speak('অ্যালগরিদম মানে কোনো কাজ করার জন্য ধাপে ধাপে নির্দেশনা।')">🔊 শুনুন</button>
+    </div>
+
+    <!-- Section 4: Drag & Drop with Live Preview -->
+    <div class="card">
+        <h3>🎮 সঠিক ক্রম সাজাও</h3>
+        <div id="pool" ondrop="drop(event)" ondragover="allowDrop(event)" style="padding: 10px; background: #f9f9f9; border-radius: 10px;">
+            <div class="item" draggable="true" id="d1" ondragstart="drag(event)">৩. স্কুলে যাওয়া</div>
+            <div class="item" draggable="true" id="d2" ondragstart="drag(event)">১. ঘুম থেকে ওঠা</div>
+            <div class="item" draggable="true" id="d3" ondragstart="drag(event)">২. ব্রাশ করা</div>
+        </div>
+        
+        <p>🎯 <strong>অ্যালগরিদম বক্স:</strong></p>
+        <div class="dropzone" id="mainzone" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        
+        <button onclick="checkOrder()">Check Answer</button>
+
+        <p>📄 <strong>Live Code Preview:</strong></p>
+        <div id="codePreview">// এখানে কোড দেখা যাবে...</div>
+    </div>
+
+    <!-- Section 5: Quiz -->
+    <div class="card">
+        <h3>✔ কুইজ টেস্ট</h3>
+        <p>চা বানানোর সঠিক ধাপ কোনটি?</p>
+        <button onclick="mcq(true)">চুলা জ্বালানো → পানি গরম → চা পাতা</button>
+        <button onclick="mcq(false)">কাপে ঢালা → পানি গরম</button>
+        <p id="mcqRes"></p>
+    </div>
+
+    <!-- Section 6: Robot -->
+    <div class="card">
+        <h3>🤖 রোবট মুভমেন্ট</h3>
+        <div class="robot-area">
+            <div id="robot">🤖</div>
+        </div>
+        <button onclick="moveRobot()">Move Right ➡️</button>
+        <button onclick="resetRobot()">Reset</button>
+    </div>
+
+</div>
+
+<script>
+    // --- Dark Mode ---
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+    }
+
+    // --- Audio Feedback ---
+    const successSound = new Audio('https://actions.google.com/sounds/v1/water/clink_water_glass.ogg');
+    const errorSound = new Audio('https://actions.google.com/sounds/v1/emergency/beep_short.ogg');
+
+    function playFeedback(isCorrect) {
+        if (isCorrect) successSound.play();
+        else errorSound.play();
+    }
+
+    // --- Progress Bar ---
+    let tasksCompleted = 0;
+    const totalTasks = 4;
+    function updateProgress() {
+        tasksCompleted++;
+        let percent = (tasksCompleted / totalTasks) * 100;
+        document.getElementById('myProgress').style.width = percent + "%";
+    }
+
+    // --- Timer Challenge ---
+    let timeLeft = 30;
+    let timerInterval;
+    function startChallenge() {
+        timeLeft = 30;
+        document.getElementById('start-btn').disabled = true;
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('time-display').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                playFeedback(false);
+                alert("সময় শেষ! আবার চেষ্টা করো। ⌛");
+                document.getElementById('start-btn').disabled = false;
+            }
+        }, 1000);
+    }
+
+    // --- Voice ---
+    function speak(txt) {
+        let msg = new SpeechSynthesisUtterance(txt);
+        msg.lang = "bn-BD";
+        window.speechSynthesis.speak(msg);
+    }
+
+    // --- Drag and Drop ---
+    function allowDrop(e) { e.preventDefault(); }
+    function drag(e) { e.dataTransfer.setData("text", e.target.id); }
+    
+    function drop(e) {
+        e.preventDefault();
+        let data = e.dataTransfer.getData("text");
+        let draggedItem = document.getElementById(data);
+        
+        if (e.target.classList.contains('dropzone') || e.target.id === 'pool') {
+            e.target.appendChild(draggedItem);
+        }
+        updateLivePreview();
+    }
+
+    function updateLivePreview() {
+        let zone = document.getElementById('mainzone');
+        let items = zone.getElementsByClassName('item');
+        let code = "// Computer Logic:<br>";
+        for (let i = 0; i < items.length; i++) {
+            code += `step_${i+1} = "${items[i].innerText}";<br>`;
+        }
+        document.getElementById('codePreview').innerHTML = code;
+    }
+
+    function checkOrder() {
+        let zone = document.getElementById('mainzone');
+        let items = zone.getElementsByClassName('item');
+        if(items.length < 3) {
+            alert("সবগুলো ধাপ সাজাও!");
+            return;
+        }
+        
+        if(items[0].id === "d2" && items[1].id === "d3" && items[2].id === "d1") {
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            playFeedback(true);
+            clearInterval(timerInterval);
+            alert("সাবাস! একদম সঠিক হয়েছে। 🎉");
+            updateProgress();
+        } else {
+            playFeedback(false);
+            alert("ভুল হয়েছে! আবার চেষ্টা করো। ❌");
+        }
+    }
+
+    // --- MCQ ---
+    function mcq(correct) {
+        let res = document.getElementById('mcqRes');
+        if (correct) {
+            res.innerText = "সঠিক! 🎉";
+            res.style.color = "green";
+            playFeedback(true);
+            updateProgress();
+        } else {
+            res.innerText = "ভুল! 😢";
+            res.style.color = "red";
+            playFeedback(false);
+        }
+    }
+
+    // --- Robot ---
+    let robotPos = 0;
+    function moveRobot() {
+        if(robotPos < 85) {
+            robotPos += 15;
+            document.getElementById('robot').style.left = robotPos + "%";
+            if(robotPos >= 75) updateProgress();
+        }
+    }
+    function resetRobot() {
+        robotPos = 0;
+        document.getElementById('robot').style.left = "0%";
+    }
+</script>
+
+</body>
+</html>

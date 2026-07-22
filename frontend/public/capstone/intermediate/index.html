@@ -1,0 +1,506 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programming Course</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f0f8ff;
+    text-align: center;
+    margin: 0;
+    padding: 20px;
+  }
+
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  h1 { color: #005f73; }
+
+  /* Tab Button Styling */
+  .tab-container {
+    margin-bottom: 30px;
+  }
+
+  .tab-btn {
+    padding: 15px 30px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    margin: 5px;
+    transition: 0.3s;
+    background: #94d2bd;
+    color: #005f73;
+  }
+
+  .tab-btn.active {
+    background: #0a9396;
+    color: white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  }
+
+  /* Content Section */
+  .course-section {
+    display: none; 
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 20px;
+  }
+
+  .course-section.active {
+    display: grid; 
+  }
+
+  .card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    transition: 0.3s;
+    text-align: left; /* লেখা বাম দিক থেকে শুরু হবে */
+  }
+
+  .card:hover { transform: translateY(-5px); }
+
+  .card h3 { margin: 0 0 10px 0; color: #333; }
+
+  .card p { font-size: 14px; color: #666; margin-bottom: 15px; height: 40px; }
+
+  a {
+    text-decoration: none;
+    color: white;
+    background: #0a9396;
+    padding: 10px 20px;
+    border-radius: 8px;
+    display: inline-block;
+    font-weight: bold;
+    text-align: center;
+    width: 80%;
+  }
+
+  a:hover { background: #005f73; }
+
+  /* My Course Additions */
+  .course-thumbnail {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    background: #e0e0e0;
+  }
+
+  .progress-container {
+    background: #e0e0e0;
+    border-radius: 8px;
+    height: 10px;
+    margin-bottom: 5px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    background: #ff9800;
+    height: 100%;
+    width: 0%;
+    transition: width 0.5s ease-in-out;
+  }
+
+  .progress-text {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 15px;
+    font-weight: bold;
+    display: block;
+  }
+
+  .card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+  }
+
+  .card-actions a, .card-actions button {
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    display: inline-block;
+    font-weight: bold;
+    color: white;
+    transition: 0.3s;
+    text-decoration: none;
+    font-family: Arial, sans-serif;
+  }
+
+  .btn-start {
+    background: #0a9396;
+  }
+  .btn-start:hover {
+    background: #005f73;
+  }
+
+  .btn-complete {
+    background: #4caf50;
+  }
+  .btn-complete:hover {
+    background: #388e3c;
+  }
+
+  .btn-locked {
+    background: #ccc !important;
+    cursor: not-allowed !important;
+    color: #666 !important;
+  }
+
+  .badge-completed {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #4caf50;
+    color: white;
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 10;
+  }
+
+  .card {
+    position: relative;
+  }
+
+  .overall-progress-box {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+    text-align: left;
+  }
+
+  .overall-progress-box h3 {
+    margin-top: 0;
+    color: #005f73;
+  }
+</style>
+
+</head>
+<body>
+
+<div class="container">
+  <h1>🎓 Programming Learning Portal</h1>
+  <p>আপনার পছন্দের লেভেলটি সিলেক্ট করুন</p>
+
+  <div class="tab-container">
+    <button class="tab-btn active" onclick="openLevel(event, 'beginner')">Beginner Level</button>
+    <button class="tab-btn" onclick="openLevel(event, 'intermediate')">Intermediate Level</button>
+    <button class="tab-btn" onclick="openLevel(event, 'my-course-tab')">My Course</button>
+  </div>
+
+  <div id="beginner" class="course-section active">
+    <div class="card">
+      <h3>Class 01</h3>
+      <p>Computer Introduction</p>
+      <a href="class1.html">Start</a> 
+    </div>
+    <div class="card">
+      <h3>Class 02</h3>
+      <p>Hardware & Software</p>
+      <a href="class2.html">Start</a>
+    </div>
+    <div class="card">
+      <h3>Class 03</h3>
+      <p>Input & Output</p>
+      <a href="class3.html">Start</a>
+    </div>
+    <div class="card">
+      <h3>Class 04</h3>
+      <p>Inside the CPU</p>
+      <a href="class4.html">Start</a>
+    </div>
+    <div class="card">
+      <h3>Class 05</h3>
+      <p>Memory & Storage</p>
+      <a href="class5.html">Start</a>
+    </div>
+    <div class="card">
+      <h3>Class 06</h3>
+      <p>Operating System</p>
+      <a href="class6.html">Start</a>
+    </div>
+    <div class="card">
+      <h3>Class 07</h3>
+      <p>Internet Basics</p>
+      <a href="class7.html">Start</a>
+    </div>
+    <div class="card">
+      <h3>Class 08</h3>
+      <p>Cyber Safety</p>
+      <a href="class8.html">Start</a>
+    </div>
+  </div>
+
+  <div id="intermediate" class="course-section">
+    <div class="card" style="border-left: 5px solid #ff9800;">
+      <h3>Class 01</h3>
+      <p>Algorithm (অ্যালগরিদম)</p>
+      <a href="i_class1.html">Start</a>
+    </div>
+    <div class="card" style="border-left: 5px solid #ff9800;">
+      <h3>Class 02</h3>
+      <p>Flowchart (ফ্লোচার্ট)</p>
+      <a href="i_class2.html">Start</a>
+    </div>
+    <div class="card" style="border-left: 5px solid #ff9800;">
+      <h3>Class 03</h3>
+      <p>Events (programming Basics)</p>
+      <a href="i_class3.html">Start</a>
+    </div>
+    <div class="card" style="border-left: 5px solid #ff9800;">
+      <h3>Class 04</h3>
+      <p>Programming Basics</p>
+      <a href="i_class4.html">Start</a>
+    </div>
+    <div class="card" style="border-left: 5px solid #ff9800;">
+      <h3>Class 05</h3>
+      <p>Loops (লুপ)</p>
+      <a href="i_class5.html">Start</a>
+    </div>
+    <div class="card" style="border-left: 5px solid #ff9800;">
+      <h3>Class 06</h3>
+      <p>Variables (ভ্যারিয়েবল)</p>
+      <a href="i_class6.html">Start</a>
+    </div>
+    <div class="card" style="border-left: 5px solid #ff9800;">
+      <h3>Class 07</h3>
+      <p>If-Else (সিদ্ধান্ত গ্রহণ)</p>
+      <a href="i_class7.html">Start</a>
+    </div>
+    <div class="card" style="border-left: 5px solid #ff9800;">
+      <h3>Class 08</h3>
+      <p>Operators (অংক ও তুলনা)</p>
+      <a href="i_class8.html">Start</a>
+    </div>
+    <div class="card" style="border-left: 5px solid #ff9800;">
+      <h3>Class 09</h3>
+      <p>Sensing (অনুভূতি ও টাচ)</p>
+      <a href="i_class9.html">Start</a>
+    </div>
+    <div class="card" style="border-left: 5px solid #ff9800;">
+      <h3>Class 10</h3>
+      <p>Background & Sound</p>
+      <a href="i_class10.html">Start</a>
+    </div>
+    <div class="card" style="border-left: 5px solid #ff9800;">
+      <h3>Class 11</h3>
+      <p>Mini Project (গেম তৈরি)</p>
+      <a href="i_class11.html">Start</a>
+    </div>
+    <div class="card" style="border-left: 5px solid #ff9800;">
+      <h3>Class 12</h3>
+      <p>Transition to Python</p>
+      <a href="i_class12.html">Start</a>
+    </div>
+  </div>
+
+  <div id="my-course-tab" class="course-section" style="display: none; grid-template-columns: 1fr;">
+    <div class="overall-progress-box">
+      <h3>Your Overall Progress</h3>
+      <div class="progress-container">
+        <div class="progress-bar" id="overall-progress-bar" style="width: 0%; background: #0a9396;"></div>
+      </div>
+      <span class="progress-text" id="overall-progress-text">0% Completed</span>
+    </div>
+    
+    <div id="my-course-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+      <!-- Dynamic cards will be injected here -->
+    </div>
+  </div>
+  <div class="container" style="margin-top: 50px;">
+    <h2>🏆 Top Coders (লিডারবোর্ড)</h2>
+    <table style="width: 100%; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+        <tr style="background: #005f73; color: white;">
+            <th style="padding: 15px;">Rank</th>
+            <th>Name</th>
+            <th>Level</th>
+            <th>Score</th>
+        </tr>
+        <tr>
+            <td style="padding: 10px;">🥇 1</td>
+            <td>আরিয়ান আহমেদ</td>
+            <td>Intermediate</td>
+            <td>950</td>
+        </tr>
+        <tr style="background: #f8f9fa;">
+            <td style="padding: 10px;">🥈 2</td>
+            <td>সারা ইসলাম</td>
+            <td>Beginner</td>
+            <td>880</td>
+        </tr>
+    </table>
+</div>
+</div>
+
+<script>
+  function openLevel(evt, levelName) {
+    var i, tabcontent, tablinks;
+    
+    tabcontent = document.getElementsByClassName("course-section");
+    for (i = 0; i < tabcontent.length; i++) {
+      tabcontent[i].style.display = "none";
+      tabcontent[i].classList.remove("active");
+    }
+
+    tablinks = document.getElementsByClassName("tab-btn");
+    for (i = 0; i < tablinks.length; i++) {
+      tablinks[i].classList.remove("active");
+    }
+
+    var selectedTab = document.getElementById(levelName);
+    selectedTab.classList.add("active");
+    if(levelName === 'my-course-tab') {
+      selectedTab.style.display = "block";
+    } else {
+      selectedTab.style.display = "grid";
+    }
+    
+    evt.currentTarget.classList.add("active");
+  }
+
+  // My Course Logic
+  const myCoursesData = [
+    {
+      id: 'c1',
+      title: 'Class 01: Computer Introduction',
+      description: 'Learn the basics of computer.',
+      image: 'https://placehold.co/300x150/94d2bd/005f73?text=Class+01',
+      link: 'class1.html'
+    },
+    {
+      id: 'c2',
+      title: 'Class 02: Hardware & Software',
+      description: 'Understand hardware and software components.',
+      image: 'https://placehold.co/300x150/94d2bd/005f73?text=Class+02',
+      link: 'class2.html'
+    },
+    {
+      id: 'c3',
+      title: 'Class 03: Input & Output',
+      description: 'Learn about various IO devices.',
+      image: 'https://placehold.co/300x150/94d2bd/005f73?text=Class+03',
+      link: 'class3.html'
+    },
+    {
+      id: 'c4',
+      title: 'Intermediate 01: Algorithm',
+      description: 'Introduction to Algorithms (অ্যালগরিদম)',
+      image: 'https://placehold.co/300x150/ff9800/ffffff?text=Inter+01',
+      link: 'i_class1.html'
+    }
+  ];
+
+  function getProgress() {
+    const saved = localStorage.getItem('courseProgress');
+    return saved ? JSON.parse(saved) : {};
+  }
+
+  function saveProgress(progressObj) {
+    localStorage.setItem('courseProgress', JSON.stringify(progressObj));
+  }
+
+  function markComplete(courseId) {
+    const progress = getProgress();
+    progress[courseId] = true;
+    saveProgress(progress);
+    renderMyCourses();
+  }
+
+  function renderMyCourses() {
+    const progress = getProgress();
+    const container = document.getElementById('my-course-cards');
+    container.innerHTML = '';
+
+    let completedCount = 0;
+    let isNextUnlocked = true;
+
+    myCoursesData.forEach((course, index) => {
+      const isCompleted = !!progress[course.id];
+      if (isCompleted) completedCount++;
+
+      const isLocked = !isNextUnlocked;
+      
+      const card = document.createElement('div');
+      card.className = 'card';
+      if (course.id.startsWith('c4')) {
+        card.style.borderLeft = '5px solid #ff9800';
+      }
+
+      let badgeHtml = isCompleted ? '<div class="badge-completed">✓ Completed</div>' : '';
+      let progressPercent = isCompleted ? 100 : 0;
+      
+      let buttonsHtml = '';
+      if (isLocked) {
+        buttonsHtml = `
+          <button class="btn-locked" disabled>Locked 🔒</button>
+        `;
+      } else {
+        buttonsHtml = `
+          <a href="${course.link}" class="btn-start">Start Learning</a>
+          ${!isCompleted ? `<button onclick="markComplete('${course.id}')" class="btn-complete">Mark as Complete ✓</button>` : ''}
+        `;
+      }
+
+      card.innerHTML = `
+        ${badgeHtml}
+        <img src="${course.image}" class="course-thumbnail" alt="${course.title}">
+        <h3>${course.title}</h3>
+        <p>${course.description}</p>
+        <div class="progress-container">
+          <div class="progress-bar" style="width: ${progressPercent}%;"></div>
+        </div>
+        <span class="progress-text">${progressPercent}% Completed</span>
+        <div class="card-actions">
+          ${buttonsHtml}
+        </div>
+      `;
+      container.appendChild(card);
+
+      // If this course is not completed, lock all subsequent courses
+      if (!isCompleted) {
+        isNextUnlocked = false;
+      }
+    });
+
+    // Update overall progress
+    const overallPercent = Math.round((completedCount / myCoursesData.length) * 100);
+    const overallBar = document.getElementById('overall-progress-bar');
+    const overallText = document.getElementById('overall-progress-text');
+    
+    // Small timeout to allow CSS transition to play after render
+    setTimeout(() => {
+      overallBar.style.width = overallPercent + '%';
+      overallText.innerText = overallPercent + '% Overall Completed';
+    }, 50);
+  }
+
+  // Initialize My Courses on load
+  document.addEventListener('DOMContentLoaded', () => {
+    renderMyCourses();
+  });
+</script>
+
+</body>
+</html>

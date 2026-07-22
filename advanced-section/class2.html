@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ Chapter 2: Variables - Chapter Dashboard</title>
+    <link rel="stylesheet" href="Begineer.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>⚡ অধ্যায় ২ — ভ্যারিয়েবলস</h1>
+            <p>ভ্যারিয়েবল এবং ডেটা নিয়ে খেলা! পাইথনে কীভাবে তথ্য জমা রেখে গানিতিক হিসাব করা যায় তা জানুন।</p>
+        </header>
+
+        <!-- CHAPTER PROGRESS BAR -->
+        <div class="progress-bar-sticky">
+            <div class="progress-header">
+                <span>🔄 অধ্যায় অগ্রগতি (Chapter Progress)</span>
+                <span id="chapter-2-percent" style="font-weight: 800; color: var(--primary);">0% Completed</span>
+            </div>
+            <div class="progress-track">
+                <div id="chapter-2-fill" class="progress-fill"></div>
+            </div>
+        </div>
+
+        <!-- SUBCLASSES GRID -->
+        <div class="grid">
+            <!-- Basic Card -->
+            <a href="c2_basic.html" class="subclass-card" data-subclass-id="c2_basic">
+                <div>
+                    <h3>🔰 Basic</h3>
+                    <p>এই অধ্যায়ের বেসিক কনসেপ্ট এবং নিয়মাবলী জানুন।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+            
+            <!-- Data Types Card -->
+            <a href="c2_data_types.html" class="subclass-card" data-subclass-id="c2_data_types">
+                <div>
+                    <h3>📦 Data Types</h3>
+                    <p>স্ট্রিং, ইন্টিজার এবং ফ্লোট ডেটা টাইপের সাথে মজার পরিচয়!</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+
+            <!-- Temperature Card -->
+            <a href="c2_temperature.html" class="subclass-card" data-subclass-id="c2_temperature">
+                <div>
+                    <h3>🌡️ Temperature</h3>
+                    <p>ফারেনহাইট থেকে সেলসিয়াসে তাপমাত্রা রূপান্তর করার চমৎকার ক্যালকুলেটর।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+
+            <!-- BMI Card -->
+            <a href="c2_bmi.html" class="subclass-card" data-subclass-id="c2_bmi">
+                <div>
+                    <h3>⚖️ BMI</h3>
+                    <p>আপনার শরীরের ওজনের সুস্থতা যাচাই করতে বডি মাস ইনডেক্স অ্যাপ বানান।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+
+            <!-- Pythagorean Card -->
+            <a href="c2_pythagorean.html" class="subclass-card" data-subclass-id="c2_pythagorean">
+                <div>
+                    <h3>📐 Pythagorean</h3>
+                    <p>পিথাগোরাসের থিওরেমকে কোডে রূপান্তর করে ত্রিভুজের অতিভুজ বের করুন!</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+
+            <!-- Currency Card -->
+            <a href="c2_currency.html" class="subclass-card" data-subclass-id="c2_currency">
+                <div>
+                    <h3>💱 Currency</h3>
+                    <p>একাধিক দেশের কারেন্সি কনভার্ট করে গ্লোবাল মানি সিস্টেম বুঝুন।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+        </div>
+
+        <!-- NAV FOOTER -->
+        <div class="nav-footer">
+            <button class="btn btn-secondary" onclick="window.location.href='class1.html'">
+                ⬅️ পূর্ববর্তী অধ্যায়
+            </button>
+            <button class="btn btn-primary" onclick="window.location.href='class3.html'">
+                পরবর্তী অধ্যায় ➡️
+            </button>
+        </div>
+    </div>
+
+    <!-- CONTROL PANEL -->
+    <div class="controls-panel">
+        <button class="control-btn" id="theme-btn">🌙</button>
+        <button class="control-btn" id="voice-bot-btn">🤖</button>
+    </div>
+
+    <script src="Begineer.js"></script>
+</body>
+</html>

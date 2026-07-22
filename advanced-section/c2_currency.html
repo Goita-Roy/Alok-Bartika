@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Currency Converter — Python কোডিং অ্যাডভেঞ্চার</title>
+<meta name="description" content="পাইথন input() ও int() ব্যবহার করে ডিজিটাল কারেন্সি কনভার্টার বানাও।" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Hind+Siliguri:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a0e1a;--card:#111827;--border:#1f2937;--muted:#9ca3af;--fg:#e5e7eb;--green:#39ff14;--cyan:#00f0ff;--pink:#ff2bd6;--yellow:#fff200;--gold:#ffd700;}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--fg);font-family:'Hind Siliguri',system-ui,sans-serif;line-height:1.7}
+  body{background:radial-gradient(1200px 600px at 20% 0%,rgba(255,215,0,.08),transparent),radial-gradient(900px 500px at 90% 20%,rgba(0,240,255,.08),transparent),var(--bg);background-attachment:fixed}
+  .container{max-width:1100px;margin:0 auto;padding:0 24px}
+  .pixel{font-family:'Press Start 2P',monospace}
+  .badge{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,215,0,.4);background:rgba(255,215,0,.08);padding:6px 12px;border-radius:999px;color:var(--gold);font-size:11px;font-family:'JetBrains Mono',monospace}
+  header{padding:64px 0 48px;border-bottom:1px solid var(--border);background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:32px 32px;position:relative;overflow:hidden}
+  header::before{content:"$ € ﷼ ¥ £ ₹ ৳";position:absolute;top:10px;right:20px;font-size:60px;opacity:.05;letter-spacing:20px;font-family:'Press Start 2P',monospace}
+  h1.title{font-family:'Press Start 2P',monospace;color:var(--gold);font-size:clamp(26px,4.5vw,44px);text-shadow:0 0 20px rgba(255,215,0,.5);margin:12px 0 4px}
+  .subtitle{font-family:'Press Start 2P',monospace;color:var(--cyan);font-size:15px;margin:0 0 18px}
+  .stats{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+  .stat{border:1px solid var(--border);background:rgba(17,24,39,.6);padding:8px 12px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:12px}
+  .stat .k{color:var(--muted)} .stat .v{color:var(--gold);margin-left:6px}
+  section{padding:56px 0;border-bottom:1px solid var(--border)}
+  section h2{font-family:'Press Start 2P',monospace;color:var(--cyan);font-size:20px;margin:14px 0 24px}
+  .card{border:1px solid var(--border);background:rgba(17,24,39,.7);border-radius:12px;padding:20px}
+  .grid3{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:24px}
+  .coin{position:relative;border:1px solid var(--border);background:var(--card);border-radius:12px;padding:20px;overflow:hidden;text-align:center}
+  .coin .bar{position:absolute;inset:0 0 auto 0;height:3px}
+  .coin .emoji{font-size:42px;display:block;margin:4px 0 8px;filter:drop-shadow(0 0 12px currentColor)}
+  .coin .tag{font-family:'Press Start 2P',monospace;font-size:10px}
+  .coin h3{font-family:'Press Start 2P',monospace;font-size:14px;margin:10px 0 6px;color:#fff}
+  .coin .rate{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gold);margin-top:8px;padding:6px 10px;background:rgba(255,215,0,.08);border-radius:6px;display:inline-block}
+  .steps{display:grid;gap:14px;margin-top:24px}
+  .step{display:flex;gap:16px;align-items:flex-start;padding:18px;border:1px solid var(--border);border-radius:12px;background:var(--card)}
+  .step .num{flex:0 0 44px;height:44px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--pink));color:#000;font-family:'Press Start 2P',monospace;font-size:14px;box-shadow:0 0 18px rgba(255,215,0,.3)}
+  .step h4{margin:0 0 6px;font-family:'Press Start 2P',monospace;font-size:13px;color:var(--cyan)}
+  .step p{margin:0;color:#d1d5db;font-size:15px}
+  .accordion{border:1px solid var(--border);background:var(--card);border-radius:12px;margin-bottom:14px;overflow:hidden}
+  .accordion summary{cursor:pointer;list-style:none;padding:14px 18px;display:flex;align-items:center;gap:12px;font-family:'Press Start 2P',monospace;font-size:13px}
+  .accordion summary::-webkit-details-marker{display:none}
+  .accordion .ico{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:6px}
+  .accordion .body{padding:18px;border-top:1px solid var(--border)}
+  code,pre{font-family:'JetBrains Mono',monospace}
+  code.inl{background:rgba(255,255,255,.06);color:var(--cyan);padding:2px 6px;border-radius:4px;font-size:13px}
+  .terminal{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#0b1020;box-shadow:0 0 40px rgba(255,215,0,.15)}
+  .term-head{display:flex;gap:6px;padding:8px 12px;background:rgba(0,0,0,.4);border-bottom:1px solid var(--border);align-items:center}
+  .term-head .dot{width:10px;height:10px;border-radius:50%}
+  .term-head .r{background:#ff5f56}.term-head .y{background:#ffbd2e}.term-head .g{background:#27c93f}
+  .term-head .name{margin-left:10px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)}
+  pre.code{margin:0;padding:18px;color:#e5e7eb;font-size:14px;overflow:auto;line-height:1.7}
+  .kw{color:var(--pink)} .str{color:var(--green)} .var{color:var(--cyan)} .num{color:var(--gold)} .cm{color:#6b7280;font-style:italic} .fn{color:#fff200}
+  .output{margin-top:14px;border:1px dashed var(--border);border-radius:8px;padding:14px;background:#06090f}
+  .output .line{color:var(--green);font-family:'JetBrains Mono',monospace;font-size:13px}
+  .output .ask{color:var(--cyan)}
+  .output .user{color:var(--gold)}
+  .output .big{color:var(--gold);font-size:16px;font-weight:700}
+  .help-note{display:flex;gap:14px;align-items:flex-start;padding:14px;border:1px solid var(--border);border-radius:10px;background:rgba(0,240,255,.06);margin-top:10px}
+  footer{padding:32px 0;text-align:center;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:12px}
+  .hl-green{color:var(--green);font-weight:700}.hl-pink{color:var(--pink);font-weight:700}.hl-yellow{color:var(--yellow);font-weight:700}.hl-cyan{color:var(--cyan);font-weight:700}.hl-gold{color:var(--gold);font-weight:700}
+</style>
+</head>
+<body>
+
+<header><div class="container">
+  <span class="badge">✦ LEVEL 02 · PYTHON ADVENTURE</span>
+  <h1 class="title">💱 Currency Converter</h1>
+  <p class="subtitle">(ডিজিটাল কারেন্সি কনভার্টার)</p>
+  <p style="max-width:760px;font-size:18px;color:#d1d5db">পাইথনের <span class="hl-cyan">input()</span> আর <span class="hl-pink">int()</span> ব্যবহার করে বিদেশি মুদ্রাকে বাংলাদেশি <span class="hl-gold">টাকায় (BDT)</span> কনভার্ট করার অ্যাপ বানাও — মামার ব্যাগের সব ডলার, ইউরো আর রিয়াল একসাথে হিসাব হবে!</p>
+  <div class="stats">
+    <div class="stat"><span class="k">XP:</span><span class="v">+75</span></div>
+    <div class="stat"><span class="k">Difficulty:</span><span class="v">Easy+</span></div>
+    <div class="stat"><span class="k">Topic:</span><span class="v">input() + int() + Math</span></div>
+  </div>
+</div></header>
+
+<section><div class="container">
+  <span class="badge">STORY · গল্প</span>
+  <h2>রিক্যাপ ও পরিচিতি</h2>
+  <p style="font-size:17px">আমরা আমাদের আগের ক্লাসে শিখেছি কীভাবে <code class="inl">input()</code> ব্যবহার করে ইউজারের কাছ থেকে তথ্য নিতে হয় এবং কীভাবে <code class="inl">int()</code> দিয়ে সেটিকে সংখ্যায় রূপান্তর করে ম্যাথ বা হিসাব করতে হয়।</p>
+  <p style="font-size:17px">বাস্তব জীবনে যখন আমরা এক দেশ থেকে অন্য দেশে ঘুরতে যাই, তখন আমাদের টাকা বা <span class="hl-gold">কারেন্সি এক্সচেঞ্জ</span> করতে হয়। যেমন ধরো, তুমি যদি আমেরিকা ঘুরতে যাও, তবে তোমার বাংলাদেশি টাকাকে ইউএস ডলারে (USD) কনভার্ট করতে হবে।</p>
+  <p style="font-size:17px">চল, আজ আমরা পাইথন দিয়ে এমন একটি <span class="hl-cyan">ডিজিটাল কারেন্সি কনভার্টার অ্যাপ</span> বানাবো, যা ইউজারের কাছ থেকে বিভিন্ন দেশের মুদ্রার পরিমাণ ইনপুট নেবে এবং তা বাংলাদেশি টাকায় (BDT) কনভার্ট করে মোট কত টাকা হলো তা হিসাব করে দেবে!</p>
+</div></section>
+
+<section><div class="container">
+  <span class="badge">🎬 QUEST · নির্দেশনা</span>
+  <h2>Assignment</h2>
+  <p style="font-size:17px">মনে করো, তোমার এক প্রবাসী মামা বিদেশ থেকে ফেরার সময় <span class="hl-yellow">৩টি আলাদা দেশের মুদ্রা</span> নিয়ে এসেছেন। তিনি জানতে চান সব মিলিয়ে বাংলাদেশি টাকায় তাঁর কাছে মোট কত টাকা আছে। চলো, তাঁর জন্য একটি <code class="inl">currency.py</code> প্রোগ্রাম তৈরি করি।</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="num">১</div>
+      <div>
+        <h4>মুদ্রার পরিমাণ ইনপুট নেওয়া</h4>
+        <p><code class="inl">int(input())</code> ব্যবহার করে মামার কাছে থাকা <span class="hl-green">ইউএস ডলার (USD)</span>, <span class="hl-cyan">ইউরো (EUR)</span>, এবং <span class="hl-pink">সৌদি রিয়াল (SAR)</span>-এর পরিমাণ আলাদা ৩টি ভ্যারিয়েবলে ইনপুট নাও।</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">২</div>
+      <div>
+        <h4>কনভার্ট ও হিসাব করা</h4>
+        <p>২০২৬ সালের বর্তমান রেট অনুযায়ী এক্সচেঞ্জ রেটগুলো নিচে দেওয়া হলো। এই রেট দিয়ে গুণ করে মোট বাংলাদেশি টাকা <code class="inl">total_bdt</code> হিসাব করো।</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">৩</div>
+      <div>
+        <h4>আউটপুট</h4>
+        <p>মোট বাংলাদেশি টাকার পরিমাণটি স্ক্রিনে সুন্দর করে প্রিন্ট করে মামাকে চমকে দাও! 💵</p>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:36px;font-family:'Press Start 2P',monospace;font-size:14px;color:var(--gold)">📊 এক্সচেঞ্জ রেট চার্ট (২০২৬)</h3>
+  <div class="grid3">
+    <div class="coin"><div class="bar" style="background:var(--green)"></div><span class="tag" style="color:var(--green)">USD</span><span class="emoji" style="color:var(--green)">💵</span><h3>ইউএস ডলার</h3><div class="rate">$1 USD = ১১৫ BDT</div></div>
+    <div class="coin"><div class="bar" style="background:var(--cyan)"></div><span class="tag" style="color:var(--cyan)">EUR</span><span class="emoji" style="color:var(--cyan)">💶</span><h3>ইউরো</h3><div class="rate">€1 EUR = ১২৫ BDT</div></div>
+    <div class="coin"><div class="bar" style="background:var(--pink)"></div><span class="tag" style="color:var(--pink)">SAR</span><span class="emoji" style="color:var(--pink)">🕋</span><h3>সৌদি রিয়াল</h3><div class="rate">﷼1 SAR = ৩০ BDT</div></div>
+  </div>
+</div></section>
+
+<section><div class="container">
+  <span class="badge">💡 HELP · সাহায্য</span>
+  <h2>Hints & Solution</h2>
+
+  <details class="accordion" open>
+    <summary><span class="ico" style="background:rgba(255,242,0,.15);color:var(--yellow)">💡</span><span style="color:var(--yellow)">হিন্টস (Hints)</span></summary>
+    <div class="body">
+      <div class="help-note"><span style="font-size:22px">①</span><p style="margin:0">প্রথমে ৩টি ইনপুট ভ্যারিয়েবল তৈরি করো: <code class="inl">usd</code>, <code class="inl">eur</code>, এবং <code class="inl">sar</code>।</p></div>
+      <div class="help-note"><span style="font-size:22px">②</span><p style="margin:0">মোট টাকা বের করার গাণিতিক সূত্রটি কোডে এভাবে লিখতে পারো:<br><code class="inl">total_bdt = (usd * 115) + (eur * 125) + (sar * 30)</code></p></div>
+    </div>
+  </details>
+
+  <details class="accordion">
+    <summary><span class="ico" style="background:rgba(255,43,214,.15);color:var(--pink)">📹</span><span style="color:var(--pink)">Walkthrough Video</span></summary>
+    <div class="body"><p style="color:var(--muted);margin:0">ভিডিও ওয়াকথ্রু শীঘ্রই আসছে — ততক্ষণ নিচের সমাধান কোডটি দেখো।</p></div>
+  </details>
+
+  <details class="accordion">
+    <summary><span class="ico" style="background:rgba(57,255,20,.15);color:var(--green)">🛠️</span><span style="color:var(--green)">সমাধান ও সম্পূর্ণ কোড (Solution)</span></summary>
+    <div class="body">
+      <p style="margin:0 0 14px">তোমার নতুন তৈরি করা <code class="inl">currency.py</code> ফাইলের কোডটি হবে একদম এরকম সহজ ও গোছানো:</p>
+      <div class="terminal">
+        <div class="term-head"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">currency.py</span></div>
+<pre class="code"><span class="fn">print</span>(<span class="str">"=== 💱 ডিজিটাল বৈশ্বিক মুদ্রা এক্সচেঞ্জ অ্যাপ ===\n"</span>)
+
+<span class="cm"># ১. ইউজারের কাছ থেকে ৩টি দেশের মুদ্রার পরিমাণ ইনপুট নিলাম</span>
+<span class="var">usd</span> = <span class="kw">int</span>(<span class="fn">input</span>(<span class="str">"💵 ইউএস ডলার (USD)-এর পরিমাণ লেখো: "</span>))
+<span class="var">eur</span> = <span class="kw">int</span>(<span class="fn">input</span>(<span class="str">"💶 ইউরো (EUR)-এর পরিমাণ লেখো: "</span>))
+<span class="var">sar</span> = <span class="kw">int</span>(<span class="fn">input</span>(<span class="str">"🕋 সৌদি রিয়াল (SAR)-এর পরিমাণ লেখো: "</span>))
+
+<span class="cm"># ২. বর্তমান এক্সচেঞ্জ রেট দিয়ে গুণ করে মোট বাংলাদেশি টাকা হিসাব করলাম</span>
+<span class="var">total_bdt</span> = (<span class="var">usd</span> * <span class="num">115</span>) + (<span class="var">eur</span> * <span class="num">125</span>) + (<span class="var">sar</span> * <span class="num">30</span>)
+
+<span class="fn">print</span>(<span class="str">"\n----------------------------------------------"</span>)
+
+<span class="cm"># ৩. জাদুকরী মোট ফলাফল স্ক্রিনে দেখালাম</span>
+<span class="fn">print</span>(<span class="str">"🎉 মামা, আপনার সব মুদ্রা মিলিয়ে মোট আছে:"</span>, <span class="var">total_bdt</span>, <span class="str">"টাকা (BDT)"</span>)</pre>
+      </div>
+
+      <div class="output">
+        <div class="line">=== 💱 ডিজিটাল বৈশ্বিক মুদ্রা এক্সচেঞ্জ অ্যাপ ===</div>
+        <div class="line"><span class="ask">💵 ইউএস ডলার (USD)-এর পরিমাণ লেখো:</span> <span class="user">100</span></div>
+        <div class="line"><span class="ask">💶 ইউরো (EUR)-এর পরিমাণ লেখো:</span> <span class="user">50</span></div>
+        <div class="line"><span class="ask">🕋 সৌদি রিয়াল (SAR)-এর পরিমাণ লেখো:</span> <span class="user">200</span></div>
+        <div class="line">----------------------------------------------</div>
+        <div class="line big">🎉 মামা, আপনার সব মুদ্রা মিলিয়ে মোট আছে: 23750 টাকা (BDT)</div>
+      </div>
+    </div>
+  </details>
+
+  <details class="accordion">
+    <summary><span class="ico" style="background:rgba(0,240,255,.15);color:var(--cyan)">🤖</span><span style="color:var(--cyan)">AI Coding Companion</span></summary>
+    <div class="body"><p style="margin:0;color:#d1d5db">আটকে গেলে AI কম্প্যানিয়নকে জিজ্ঞেস করো — সে তোমাকে ধাপে ধাপে গাইড করবে, পুরো উত্তর দিয়ে দেবে না।</p></div>
+  </details>
+</div></section>
+
+<footer><div class="container">© 2026 · Python কোডিং অ্যাডভেঞ্চার · Level 02 Complete 🏆</div></footer>
+
+  <details class="accordion">
+    <summary><span class="ico" style="background:rgba(101,209,178,.15);color:var(--cyan)">💻</span><span style="color:var(--cyan)">Practice in Python IDE</span></summary>
+    <div class="body"><p style="margin:0;color:#d1d5db">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p><a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;margin-top:8px">🚀 Open Python IDE</a></div>
+  </details>
+
+</body>
+</html>

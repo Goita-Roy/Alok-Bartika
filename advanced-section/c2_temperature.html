@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>🌡️ Python Arithmetic | Temperature Converter — Pixel Coding Adventure</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: radial-gradient(circle at 15% 25%, #0c1422, #02060b);
+      font-family: 'Fira Code', monospace;
+      color: #eef5ff;
+      line-height: 1.5;
+      overflow-x: hidden;
+      padding: 2rem 1rem;
+    }
+
+    /* pixel grid overlay */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: repeating-linear-gradient(0deg, rgba(0, 255, 200, 0.02) 0px, rgba(0, 255, 200, 0.02) 2px, transparent 2px, transparent 8px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    canvas#particleCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .container {
+      max-width: 1350px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* retro card */
+    .pixel-card {
+      background: rgba(8, 20, 30, 0.82);
+      backdrop-filter: blur(8px);
+      border: 2px solid #5effbc;
+      border-radius: 32px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,240,0.1);
+      transition: transform 0.2s, border-color 0.2s;
+      margin-bottom: 2rem;
+      overflow: hidden;
+    }
+
+    .pixel-card:hover {
+      transform: translateY(-3px);
+      border-color: #ffcc6e;
+    }
+
+    .card-header {
+      padding: 1.3rem 2rem;
+      background: rgba(0, 28, 38, 0.7);
+      border-bottom: 2px dashed #5effbc;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+    }
+
+    .card-content {
+      padding: 2rem;
+    }
+
+    pre, code {
+      font-family: 'Fira Code', monospace;
+      background: #031016;
+      padding: 0.2rem 0.5rem;
+      border-radius: 16px;
+      font-size: 0.85rem;
+      border-left: 3px solid #ffcc6e;
+    }
+
+    pre {
+      padding: 1rem;
+      overflow-x: auto;
+      border: 1px solid #5effbc;
+      border-radius: 24px;
+    }
+
+    .operator-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 1rem 0;
+    }
+
+    .op-badge {
+      background: #0c1e2a;
+      border-radius: 60px;
+      padding: 6px 16px;
+      font-weight: bold;
+      font-size: 1rem;
+      border: 1px solid #5effbc;
+      font-family: monospace;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .interactive-thermo {
+      background: #010f16;
+      border-radius: 28px;
+      padding: 1.2rem;
+      margin: 1.2rem 0;
+      border: 1px solid #ffcc6e;
+    }
+
+    .slider-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    input[type="range"] {
+      flex: 2;
+      height: 6px;
+      -webkit-appearance: none;
+      background: #5effbc;
+      border-radius: 10px;
+    }
+
+    .temp-value {
+      background: #030c12;
+      padding: 8px 16px;
+      border-radius: 40px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.75rem;
+    }
+
+    button {
+      background: #1f5a63;
+      border: none;
+      color: white;
+      padding: 8px 20px;
+      border-radius: 60px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.65rem;
+      cursor: pointer;
+      transition: 0.2s;
+      box-shadow: 0 2px 0 #0d3a40;
+    }
+
+    button:active {
+      transform: translateY(2px);
+      box-shadow: none;
+    }
+
+    .terminal {
+      background: #01070c;
+      border-radius: 24px;
+      padding: 1rem;
+      font-family: 'Fira Code', monospace;
+      margin-top: 1rem;
+      border: 1px solid #ffcc6e;
+    }
+
+    /* accordion */
+    .accordion-item {
+      background: #0a121fcc;
+      border: 1px solid #5effbc;
+      border-radius: 28px;
+      margin-bottom: 1rem;
+      backdrop-filter: blur(4px);
+    }
+    .accordion-header {
+      padding: 1rem 1.5rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #071e28;
+      border-radius: 28px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.7rem;
+    }
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 0 1.5rem;
+    }
+    .accordion-item.open .accordion-content {
+      max-height: 800px;
+      padding: 1.5rem;
+      border-top: 1px solid #5effbc;
+    }
+    .accordion-icon {
+      transition: transform 0.3s;
+    }
+    .accordion-item.open .accordion-icon {
+      transform: rotate(180deg);
+    }
+
+    .badge {
+      background: #ffcc6e;
+      color: #0a1f1a;
+      padding: 4px 12px;
+      border-radius: 40px;
+      font-size: 0.65rem;
+      font-family: 'Press Start 2P', monospace;
+      display: inline-block;
+    }
+
+    .blinking-cursor {
+      display: inline-block;
+      width: 10px;
+      height: 1rem;
+      background: #5effbc;
+      vertical-align: middle;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .float-symbol {
+      position: absolute;
+      font-size: 1.8rem;
+      opacity: 0.12;
+      pointer-events: none;
+      animation: floatSymbol 14s infinite linear;
+    }
+    @keyframes floatSymbol {
+      0% { transform: translateY(0px) rotate(0deg); }
+      100% { transform: translateY(-70px) rotate(12deg); }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="particleCanvas"></canvas>
+
+<div class="container">
+  <!-- Hero Header -->
+  <div class="pixel-card" style="text-align: center; background: linear-gradient(135deg, #0c1e2c, #020b12);">
+    <div class="card-content" style="padding: 1.5rem;">
+      <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; align-items: center;">
+        <span style="font-size: 2.8rem;">🧮🌡️</span>
+        <h1 style="font-family: 'Press Start 2P'; font-size: 1.4rem;">ARITHMETIC OPERATORS</h1>
+        <span style="font-size: 2rem;">🐍✨</span>
+      </div>
+      <p style="margin-top: 0.8rem;">+  -  *  /   •   PEMDAS   •   (°F → °C)</p>
+      <div class="blinking-cursor"></div>
+    </div>
+  </div>
+
+  <!-- Operators lesson (exact text) -->
+  <div class="pixel-card">
+    <div class="card-header">📐 গণিতের জাদুকরী চিহ্ন</div>
+    <div class="card-content">
+      <p>কম্পিউটার গণিতের হিসাব করতে অসাধারণ দক্ষ। আমরা আমাদের আগের ক্লাসে ভ্যারিয়েবল (Variables) বাক্স নিয়ে কাজ করা শিখেছি। এবার চলো সেই বাক্সের ভেতর সংখ্যা রেখে পাইথনের জাদুকরী গাণিতিক চিহ্ন বা Arithmetic Operators ব্যবহার করে কিছু হিসাব করে ফেলি! 🔢</p>
+      <p style="margin-top: 1rem;">পাইথনে প্রধান গাণিতিক চিহ্নগুলো হলো:</p>
+      <div class="operator-grid">
+        <span class="op-badge">+ Addition (যোগ)</span>
+        <span class="op-badge">- Subtraction (বিয়োগ)</span>
+        <span class="op-badge">* Multiplication (গুণ)</span>
+        <span class="op-badge">/ Division (ভাগ)</span>
+      </div>
+      <p><strong>📐 হিসাবের সিরিয়াল বা PEMDAS নিয়ম:</strong><br>
+      স্কুলের অংকে আমরা যেমন "সরল অংক" করার সময় বন্ধনী বা ব্র্যাকেটের কাজ আগে করি, পাইথনেও ঠিক তাই! পাইথনে ফার্স্ট ব্র্যাকেট বা Parentheses ()-এর ক্ষমতা (Priority) সবচেয়ে বেশি। ব্র্যাকেটের ভেতরের হিসাব কম্পিউটার সবার আগে করবে।</p>
+    </div>
+  </div>
+
+  <!-- Assignment (exact instructions) -->
+  <div class="pixel-card">
+    <div class="card-header">🎬 নির্দেশনা (Assignment) · temperature.py</div>
+    <div class="card-content">
+      <p>চল এবার এডিটর ব্যবহার করে একটি নতুন temperature.py প্রোগ্রাম তৈরি করি।</p>
+      <p><strong>ধাপ ১ (তাপমাত্রা ভ্যারিয়েবল):</strong> ব্রুকলিন (Brooklyn, NY)-এর বর্তমান গড় তাপমাত্রা প্রায় 64°F (ফারেনহাইট)। তাই প্রথমে <code>fahrenheit = 64</code> নামে একটি ভ্যারিয়েবল তৈরি করো।</p>
+      <p><strong>ধাপ ২ (সূত্র বসানো):</strong> ফারেনহাইট থেকে সেলসিয়াসে নেওয়ার জন্য নিচের গাণিতিক সূত্রটি পাইথন কোডে লেখো এবং ফলাফলটি celsius ভ্যারিয়েবলে জমা রাখো:</p>
+      <pre style="font-size:1rem;">Celsius = (Fahrenheit - 32) / 1.8</pre>
+      <p><strong>ধাপ ৩ (প্রিন্ট):</strong> সবশেষে রূপান্তর হওয়া সেলসিয়াস তাপমাত্রাটি print() ব্যবহার করে স্ক্রিনে দেখাও। 🌡️</p>
+
+      <!-- interactive converter tool (exact Brooklyn 64°F) -->
+      <div class="interactive-thermo">
+        <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 15px;">
+          <i class="fas fa-city" style="font-size: 1.6rem;"></i>
+          <span class="badge">🗽 Brooklyn, NY — বর্তমান গড় তাপমাত্রা</span>
+        </div>
+        <div class="slider-group">
+          <span style="font-weight: bold;">°F:</span>
+          <input type="range" id="tempSlider" min="-20" max="120" value="64" step="1">
+          <span id="fahrenheitDisplay" class="temp-value">64 °F</span>
+        </div>
+        <div class="slider-group">
+          <span style="font-weight: bold;">🌡️ Celsius: </span>
+          <span id="celsiusDisplay" class="temp-value">-- °C</span>
+        </div>
+        <button id="runLiveCodeBtn"><i class="fas fa-play"></i> Run temperature.py (লাইভ)</button>
+        <div id="liveTerminal" class="terminal" style="margin-top: 1rem; background:#01070c;">
+          <span style="color:#aaffdd;">⚡ আউটপুট দেখাবে এখানে ...</span>
+        </div>
+        <p class="badge" style="margin-top: 12px;">⬅️ স্লাইডার ঘোরালেই কোড আপডেট হবে!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- HELP Accordion (Hints, Walkthrough Video, Solution, AI Companion) -->
+  <div style="margin: 0.5rem 0 1.5rem;">
+    <div style="display: flex; gap: 12px; margin-bottom: 0.8rem;">
+      <span class="badge" style="background: #fea82f;">💡 সাহায্য</span>
+      <span class="badge">🔽 expand for guidance</span>
+    </div>
+
+    <!-- Hints (exact) -->
+    <div class="accordion-item" id="hintAccordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>📌 হিন্টস</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <p><strong>হিন্ট ১:</strong> সূত্রে যেহেতু ভাগের আগে বিয়োগের কাজ করতে হবে, তাই ফারেনহাইট থেকে ৩২ বাদ দেওয়ার অংশটুকুকে অবশ্যই ব্র্যাকেটের ভেতর রাখবে, যেমন: <code>(fahrenheit - 32)</code>।</p>
+        <p><strong>হিন্ট ২:</strong> পাইথনে ভাগ করার জন্য স্লাশ বা <code>/</code> চিহ্নটি ব্যবহার করতে হবে। পুরো সূত্রটি কোডে লিখতে পারো এভাবে: <code>celsius = (fahrenheit - 32) / 1.8</code>।</p>
+        <div class="badge">🧠 মনে রাখো: বন্ধনী আগে, তারপর ভাগ!</div>
+      </div>
+    </div>
+
+    <!-- Walkthrough Video (animated demo) -->
+    <div class="accordion-item" id="videoAccordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>🎥 Walkthrough Video</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <div style="background:#03161e; border-radius: 28px; padding: 1rem;">
+          <p style="margin-bottom: 12px;"><strong>📹 ধাপে ধাপে ভিজুয়াল গাইড (ফারেনহাইট → সেলসিয়াস)</strong></p>
+          <div id="walkthroughBox" style="background:#01070f; border-radius: 24px; padding: 1rem; min-height: 180px;">
+            <pre id="walkthroughText" style="background:transparent; border:none; font-family:'Fira Code';">▶️ Play বাটনে ক্লিক করো</pre>
+            <div id="walkthroughVisual" style="margin-top: 12px;"></div>
+          </div>
+          <div style="display: flex; gap: 12px; margin-top: 1rem; justify-content: center;">
+            <button id="playWalkBtn" class="demo-btn"><i class="fas fa-play"></i> Play Animation</button>
+            <button id="resetWalkBtn" class="demo-btn"><i class="fas fa-sync-alt"></i> Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Solution (exact code from problem statement) -->
+    <div class="accordion-item" id="solutionAccordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>🛠️ সমাধান ও সম্পূর্ণ কোড (Solution)</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <p>তোমার নতুন তৈরি করা temperature.py ফাইলের কোডটি হবে একদম এরকম সহজ ও গোছানো:</p>
+        <pre># ১. ব্রুকলিনের ফারেনহাইট তাপমাত্রা একটি ভ্যারিয়েবলে রাখলাম
+fahrenheit = 64
+
+# ২. সূত্র ব্যবহার করে সেলসিয়াসে রূপান্তর করলাম (ব্র্যাকেটের কাজ আগে হবে)
+celsius = (fahrenheit - 32) / 1.8
+
+print("--- 🌡️ তাপমাত্রা রূপান্তরকারী সিস্টেম ---")
+
+# ৩. ফলাফলটি স্ক্রিনে দেখালাম
+print("🇺🇸 ব্রুকলিনের তাপমাত্রা ফারেনহাইটে:", fahrenheit, "°F")
+print("🇧🇩 সেলসিয়াসে কনভার্ট করলে হয়:", celsius, "°C")</pre>
+        <button id="copySolutionBtn" class="demo-btn"><i class="far fa-copy"></i> কোড কপি করো</button>
+      </div>
+    </div>
+
+    <!-- AI Coding Companion -->
+    <div class="accordion-item" id="aiAccordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>🤖 AI Coding Companion</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+
+    <!-- Practice in Python IDE -->
+    <div class="accordion-item">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>💻 Practice in Python IDE</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <p style="margin:0;font-size:14px;line-height:1.6;color:#B8C5C1">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p>
+        <a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;align-self:flex-start;box-shadow:0 0 16px rgba(101,209,178,0.2);margin-top:8px">🚀 Open Python IDE</a>
+      </div>
+    </div>
+
+      <div class="accordion-content">
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-start;">
+          <div style="font-size: 2.8rem;">🧠⚡</div>
+          <div>
+            <p><strong>✨ AI টিপস:</strong> "ব্র্যাকেট ব্যবহার করা জরুরি! (F-32) আগে calculate হবে, তারপর 1.8 দিয়ে ভাগ। ভেরিয়েবলের নাম বুঝিয়ে রাখলে কোড পরিষ্কার হয়। 64°F ঠিক কত °C? প্রায় 17.78°C।"</p>
+            <button id="aiExtraTipBtn" class="demo-btn"><i class="fas fa-lightbulb"></i> আরও টিপ</button>
+            <div id="aiTipArea" style="margin-top: 12px; background:#0a1c24; border-radius: 20px; padding: 8px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer style="text-align: center; font-size: 0.7rem; opacity:0.6; margin-top: 1rem;">
+    🌡️ Operators · Parentheses · Real-world conversion | keep coding like a wizard 🐍✨
+  </footer>
+</div>
+
+<script>
+  // ---- particle background ----
+  const canvas = document.getElementById('particleCanvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  class Particle {
+    constructor() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.size = Math.random() * 2.5 + 1;
+      this.speedX = (Math.random() - 0.5) * 0.3;
+      this.speedY = (Math.random() - 0.5) * 0.2;
+      this.color = `rgba(94, 255, 188, ${Math.random() * 0.3 + 0.1})`;
+    }
+    update() {
+      this.x += this.speedX;
+      this.y += this.speedY;
+      if (this.x < 0) this.x = canvas.width;
+      if (this.x > canvas.width) this.x = 0;
+      if (this.y < 0) this.y = canvas.height;
+      if (this.y > canvas.height) this.y = 0;
+    }
+    draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fillStyle = this.color; ctx.fill(); }
+  }
+  function initParticles(cnt) { for(let i=0;i<cnt;i++) particles.push(new Particle()); }
+  function animateParticles() { ctx.clearRect(0,0,canvas.width,canvas.height); particles.forEach(p=>{p.update();p.draw();}); requestAnimationFrame(animateParticles); }
+  initParticles(70);
+  animateParticles();
+
+  // accordion toggle
+  function toggleAccordion(header) {
+    const item = header.closest('.accordion-item');
+    if(item) item.classList.toggle('open');
+  }
+
+  // ---------- live temperature converter ----------
+  const slider = document.getElementById('tempSlider');
+  const fahrSpan = document.getElementById('fahrenheitDisplay');
+  const celsiusSpan = document.getElementById('celsiusDisplay');
+  const terminalDiv = document.getElementById('liveTerminal');
+
+  function updateTemp() {
+    let f = parseFloat(slider.value);
+    fahrSpan.innerText = f + " °F";
+    let c = (f - 32) / 1.8;
+    celsiusSpan.innerText = c.toFixed(2) + " °C";
+    // also show live python output preview
+    let output = `--- 🌡️ তাপমাত্রা রূপান্তরকারী সিস্টেম ---\n🇺🇸 ব্রুকলিনের তাপমাত্রা ফারেনহাইটে: ${f} °F\n🇧🇩 সেলসিয়াসে কনভার্ট করলে হয়: ${c.toFixed(2)} °C`;
+    terminalDiv.innerHTML = `<span style="color:#b2ffd6;">⚡ Running temperature.py ...</span><br>${output.replace(/\n/g,'<br>')}`;
+  }
+
+  slider.addEventListener('input', updateTemp);
+  document.getElementById('runLiveCodeBtn').addEventListener('click', updateTemp);
+  updateTemp();
+
+  // copy solution code
+  document.getElementById('copySolutionBtn').addEventListener('click', () => {
+    const solutionCode = `# ১. ব্রুকলিনের ফারেনহাইট তাপমাত্রা একটি ভ্যারিয়েবলে রাখলাম
+fahrenheit = 64
+
+# ২. সূত্র ব্যবহার করে সেলসিয়াসে রূপান্তর করলাম (ব্র্যাকেটের কাজ আগে হবে)
+celsius = (fahrenheit - 32) / 1.8
+
+print("--- 🌡️ তাপমাত্রা রূপান্তরকারী সিস্টেম ---")
+
+# ৩. ফলাফলটি স্ক্রিনে দেখালাম
+print("🇺🇸 ব্রুকলিনের তাপমাত্রা ফারেনহাইটে:", fahrenheit, "°F")
+print("🇧🇩 সেলসিয়াসে কনভার্ট করলে হয়:", celsius, "°C")`;
+    navigator.clipboard.writeText(solutionCode);
+    alert("✅ সমাধান কোড কপি হয়েছে! এখন temperature.py তে পেস্ট করো।");
+  });
+
+  // ----- Walkthrough Video animation -----
+  const walkSteps = [
+    { text: "📦 ধাপ 1: ভ্যারিয়েবল তৈরি: fahrenheit = 64", visual: "🌡️ fahrenheit = 64" },
+    { text: "🧮 ধাপ 2: সূত্র লেখো celsius = (fahrenheit - 32) / 1.8", visual: "📐 (64 - 32) = 32 → 32 / 1.8" },
+    { text: "🔢 ধাপ 3: ক্যালকুলেশন: 32 ÷ 1.8 = 17.777...", visual: "✅ celsius ≈ 17.78 °C" },
+    { text: "🖨️ ধাপ 4: print() দিয়ে আউটপুট দেখাও", visual: "🐍 print('ব্রুকলিনের তাপমাত্রা ...')" }
+  ];
+  let walkIndex = -1;
+  let walkInterval = null;
+  const walkTextEl = document.getElementById('walkthroughText');
+  const walkVisEl = document.getElementById('walkthroughVisual');
+
+  function updateWalkDisplay(step) {
+    if(step < 0 || step >= walkSteps.length) {
+      walkTextEl.innerText = "🎉 রূপান্তর সম্পন্ন! এখন নিজে temperature.py লিখো 🎉";
+      walkVisEl.innerHTML = "<span class='badge'>✅ ফারেনহাইট → সেলসিয়াস অভিজ্ঞতা অর্জিত</span>";
+      return;
+    }
+    walkTextEl.innerText = walkSteps[step].text;
+    walkVisEl.innerHTML = `<div style="background:#021016; padding:8px 12px; border-radius:20px;">✨ ${walkSteps[step].visual} ✨</div>`;
+  }
+
+  function startWalkthrough() {
+    if(walkInterval) clearInterval(walkInterval);
+    walkIndex = -1;
+    walkInterval = setInterval(() => {
+      if(walkIndex < walkSteps.length-1) {
+        walkIndex++;
+        updateWalkDisplay(walkIndex);
+      } else {
+        clearInterval(walkInterval);
+        walkInterval = null;
+        updateWalkDisplay(walkIndex);
+      }
+    }, 1500);
+  }
+
+  function resetWalkthrough() {
+    if(walkInterval) { clearInterval(walkInterval); walkInterval = null; }
+    walkIndex = -1;
+    walkTextEl.innerText = "▶️ Play বাটনে ক্লিক করে ধাপে ধাপে দেখো";
+    walkVisEl.innerHTML = "";
+  }
+
+  document.getElementById('playWalkBtn').addEventListener('click', startWalkthrough);
+  document.getElementById('resetWalkBtn').addEventListener('click', resetWalkthrough);
+  resetWalkthrough();
+
+  // AI companion extra tips
+  const extraTips = [
+    "📌 ভুলে যেও না: ভাগ (/) সবসময় float রিটার্ন করে।",
+    "🎯 ব্র্যাকেট ব্যবহার না করলে ভুল উত্তর আসবে: fahrenheit - 32 / 1.8 → ভুল ক্রম!",
+    "🧪 32°F = 0°C এবং 212°F = 100°C -> চেক করার জন্য টেস্ট কেস।",
+    "🐍 f-string ব্যবহার করতে পারো: print(f\"{celsius:.1f}°C\")",
+    "⚡ পাইথনে ভ্যারিয়েবলের মান পরিবর্তন করা খুব সহজ।"
+  ];
+  document.getElementById('aiExtraTipBtn').addEventListener('click', () => {
+    const randomTip = extraTips[Math.floor(Math.random() * extraTips.length)];
+    document.getElementById('aiTipArea').innerHTML = `<i class="fas fa-robot"></i> ${randomTip}`;
+  });
+
+  // floating operator decorations
+  const symbols = ['+', '-', '*', '/', '()', '=', '°F', '°C', '64', '1.8'];
+  for(let i=0; i<35; i++) {
+    let span = document.createElement('div');
+    span.className = 'float-symbol';
+    span.innerText = symbols[Math.floor(Math.random() * symbols.length)];
+    span.style.left = Math.random() * 95 + '%';
+    span.style.top = Math.random() * 100 + '%';
+    span.style.animationDuration = 12 + Math.random() * 12 + 's';
+    span.style.fontSize = 1.3 + Math.random() * 1.5 + 'rem';
+    document.body.appendChild(span);
+  }
+</script>
+</body>
+</html>

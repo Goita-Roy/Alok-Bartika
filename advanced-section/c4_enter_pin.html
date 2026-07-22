@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>🔐 লুপের জাদু | পাসওয়ার্ড ডিজিট শো | Python for Loop</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: radial-gradient(circle at 20% 30%, #0f1225, #010308);
+      font-family: 'Fira Code', monospace;
+      color: #eef5ff;
+      line-height: 1.5;
+      overflow-x: hidden;
+      padding: 2rem 1rem;
+    }
+
+    /* pixel grid & glitch overlay */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: repeating-linear-gradient(0deg, rgba(0, 255, 200, 0.02) 0px, rgba(0, 255, 200, 0.02) 2px, transparent 2px, transparent 8px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    canvas#particleCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* retro glass card */
+    .loop-card {
+      background: rgba(10, 20, 32, 0.85);
+      backdrop-filter: blur(8px);
+      border: 2px solid #3effb0;
+      border-radius: 32px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,240,0.1);
+      transition: transform 0.2s, border-color 0.2s;
+      margin-bottom: 2rem;
+      overflow: hidden;
+    }
+
+    .loop-card:hover {
+      transform: translateY(-3px);
+      border-color: #ffcc66;
+    }
+
+    .card-header {
+      padding: 1.3rem 2rem;
+      background: rgba(0, 28, 38, 0.7);
+      border-bottom: 2px dashed #3effb0;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+    }
+
+    .card-content {
+      padding: 2rem;
+    }
+
+    pre, code {
+      font-family: 'Fira Code', monospace;
+      background: #041016;
+      padding: 0.2rem 0.5rem;
+      border-radius: 16px;
+      font-size: 0.85rem;
+      border-left: 3px solid #ffcc66;
+    }
+
+    pre {
+      padding: 1rem;
+      overflow-x: auto;
+      border: 1px solid #3effb0;
+      border-radius: 24px;
+    }
+
+    .interactive-lock {
+      background: #010f16;
+      border-radius: 28px;
+      padding: 1.2rem;
+      margin: 1.5rem 0;
+      border: 1px solid #ffcc66;
+    }
+
+    .demo-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .demo-row label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.7rem;
+      min-width: 100px;
+    }
+    input {
+      background: #030e14;
+      border: 1px solid #3effb0;
+      padding: 8px 14px;
+      border-radius: 40px;
+      color: #dcfce8;
+      font-family: 'Fira Code', monospace;
+      flex: 1;
+    }
+    button {
+      background: #1f5a63;
+      border: none;
+      color: white;
+      padding: 8px 20px;
+      border-radius: 60px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.65rem;
+      cursor: pointer;
+      transition: 0.2s;
+      box-shadow: 0 2px 0 #0d3a40;
+    }
+    button:active {
+      transform: translateY(2px);
+      box-shadow: none;
+    }
+    .digits-output {
+      background: #01070c;
+      border-radius: 24px;
+      padding: 1rem;
+      font-family: 'Fira Code', monospace;
+      margin-top: 1rem;
+      border: 1px solid #ffcc66;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .digit-box {
+      background: #0e2a32;
+      width: 70px;
+      height: 70px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-family: 'Press Start 2P', monospace;
+      border-radius: 20px;
+      box-shadow: 0 0 8px #3effb0;
+      animation: glowPulse 1s ease;
+    }
+    @keyframes glowPulse {
+      0% { box-shadow: 0 0 0px #3effb0; transform: scale(0.9);}
+      100% { box-shadow: 0 0 12px #3effb0; transform: scale(1);}
+    }
+
+    /* accordion */
+    .accordion-item {
+      background: #0a121fcc;
+      border: 1px solid #3effb0;
+      border-radius: 28px;
+      margin-bottom: 1rem;
+      backdrop-filter: blur(4px);
+    }
+    .accordion-header {
+      padding: 1rem 1.5rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #071e28;
+      border-radius: 28px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.7rem;
+    }
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 0 1.5rem;
+    }
+    .accordion-item.open .accordion-content {
+      max-height: 800px;
+      padding: 1.5rem;
+      border-top: 1px solid #3effb0;
+    }
+    .accordion-icon {
+      transition: transform 0.3s;
+    }
+    .accordion-item.open .accordion-icon {
+      transform: rotate(180deg);
+    }
+
+    .badge {
+      background: #ffcc66;
+      color: #0a1f1a;
+      padding: 4px 12px;
+      border-radius: 40px;
+      font-size: 0.65rem;
+      font-family: 'Press Start 2P', monospace;
+      display: inline-block;
+    }
+
+    .blinking-cursor {
+      display: inline-block;
+      width: 10px;
+      height: 1rem;
+      background: #3effb0;
+      vertical-align: middle;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .float-digit {
+      position: absolute;
+      font-size: 1.8rem;
+      opacity: 0.1;
+      pointer-events: none;
+      animation: floatLoop 14s infinite linear;
+      z-index: 0;
+    }
+    @keyframes floatLoop {
+      0% { transform: translateY(0px) rotate(0deg); }
+      100% { transform: translateY(-80px) rotate(15deg); }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="particleCanvas"></canvas>
+
+<div class="container">
+  <!-- Hero header -->
+  <div class="loop-card" style="text-align: center; background: linear-gradient(135deg, #0e1c2c, #02080f);">
+    <div class="card-content" style="padding: 1.8rem;">
+      <div style="display: flex; justify-content: center; gap: 20px; align-items: center;">
+        <span style="font-size: 3rem;">🔐🔄🐍</span>
+        <h1 style="font-family: 'Press Start 2P'; font-size: 1.3rem;">লুপের জাদু · পাসওয়ার্ড ডিজিট শো</h1>
+      </div>
+      <p style="margin: 0.6rem 0;">for digit in password: print(digit)</p>
+      <div class="blinking-cursor"></div>
+    </div>
+  </div>
+
+  <!-- Main lesson (exact content) -->
+  <div class="loop-card">
+    <div class="card-header"><i class="fas fa-key"></i> আমাদের লক্ষ্য</div>
+    <div class="card-content">
+      <p>আমরা এমন একটা সহজ প্রোগ্রাম তৈরি করব যা একটা পাসওয়ার্ডের (যেমন: 1234) প্রতিটি সংখ্যাকে লুপের সাহায্যে এক এক করে স্ক্রিনে দেখাবে (Show করবে)।</p>
+    </div>
+  </div>
+
+  <!-- Instructions with exact story -->
+  <div class="loop-card">
+    <div class="card-header">🎬 নির্দেশনা · ডিজিটাল লক অ্যাডভেঞ্চার</div>
+    <div class="card-content">
+      <p>মনে করো, তোমার আম্মু তার আলমারির ডিজিটাল লকের পাসওয়ার্ড সেট করেছেন 5678। লকটি যখন চালু হয়, তখন সে লুপ ব্যবহার করে পাসওয়ার্ডের প্রতিটি সংখ্যা স্ক্রিনে একে একে ফুটিয়ে তোলে। চলো, আমরাও পাইথনে ঠিক এই জিনিসটাই তৈরি করি!</p>
+      
+      <!-- interactive live demo: show digits one by one with for loop simulation -->
+      <div class="interactive-lock">
+        <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 15px;">
+          <i class="fas fa-laptop-code" style="font-size: 1.6rem; color: #3effb0;"></i>
+          <span class="badge">⚡ লাইভ ডেমো · পাসওয়ার্ড ডিজিট এক্সপ্লোরার</span>
+        </div>
+        <div class="demo-row">
+          <label><i class="fas fa-lock"></i> পাসওয়ার্ড লিখুন:</label>
+          <input type="text" id="passwordInput" value="5678" maxlength="10" placeholder="যেমন: 5678">
+          <button id="runLoopBtn"><i class="fas fa-play"></i> লুপ চালাও (Run Loop)</button>
+        </div>
+        <div id="digitsContainer" class="digits-output">
+          <!-- digits will appear here -->
+        </div>
+        <p class="badge" style="margin-top: 8px;">🐍 লুপটি প্রতিটি অক্ষর একে একে প্রিন্ট করে — ঠিক পাইথনের মত!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- HELP SECTION (accordion) -->
+  <div style="margin: 1rem 0 2rem;">
+    <div style="display: flex; gap: 12px; margin-bottom: 0.8rem;">
+      <span class="badge" style="background: #fea82f;">🆘 সাহায্য</span>
+      <span class="badge">🔽 বিস্তারিত টিপস</span>
+    </div>
+
+    <!-- Hint (exact) -->
+    <div class="accordion-item" id="hintAccordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>💡 হিন্টস (Hints)</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <p><strong>পাসওয়ার্ড ভ্যারিয়েবল:</strong> প্রথমে একটি ভ্যারিয়েবলে পাসওয়ার্ডটি লিখে রাখো, যেমন: <code>password = "5678"</code> (মনে রাখবে, এটাকে টেক্সট বা String হিসেবে ইনভার্টেড কমার "" ভেতরে রাখতে হবে)।</p>
+        <p><strong>ফর লুপ (For Loop):</strong> পাইথনে কোনো লেখার প্রতিটি অক্ষর বা সংখ্যা আলাদা করে দেখাতে for লুপ ব্যবহার করা সবচেয়ে সহজ।</p>
+        <p><strong>লুপের কাজ:</strong> লুপটি পাসওয়ার্ডের প্রথম সংখ্যা থেকে শুরু করে শেষ সংখ্যা পর্যন্ত একে একে যাবে এবং স্ক্রিনে দেখাবে।</p>
+      </div>
+    </div>
+
+    <!-- Walkthrough Video (animated visual) -->
+    <div class="accordion-item" id="videoAccordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>📹 Walkthrough Video</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <div style="background:#03161e; border-radius: 28px; padding: 1rem;">
+          <p><strong>🎬 স্টেপ বাই স্টেপ অ্যানিমেশন</strong> — ফর লুপ কিভাবে কাজ করে</p>
+          <div id="walkthroughContainer" style="background:#01070f; border-radius: 24px; padding: 1rem; min-height: 200px;">
+            <pre id="walkthroughText" style="background:transparent; border:none;">▶️ Play চাপুন, দেখুন লুপের যাত্রা</pre>
+            <div id="walkthroughVisual" style="margin-top: 12px;"></div>
+          </div>
+          <div style="display: flex; gap: 12px; margin-top: 1rem; justify-content: center;">
+            <button id="playWalkBtn"><i class="fas fa-play"></i> Play Animation</button>
+            <button id="resetWalkBtn"><i class="fas fa-sync-alt"></i> Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Solution (exact code) -->
+    <div class="accordion-item" id="solutionAccordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>🛠️ সমাধান ও সম্পূর্ণ কোড (Solution)</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <pre># ১. প্রথমে পাসওয়ার্ডটি একটি ভ্যারিয়েবলে রাখি
+password = "5678"
+
+# ২. লুপের মাধ্যমে প্রতিটি সংখ্যা (digit) এক এক করে দেখাই
+for digit in password:
+    print(digit)</pre>
+        <p><strong>📤 আউটপুট:</strong></p>
+        <div class="terminal-output" style="background:#01070c;">5<br>6<br>7<br>8</div>
+        <button id="copySolutionBtn" class="demo-btn"><i class="far fa-copy"></i> কোড কপি করো</button>
+      </div>
+    </div>
+
+    <!-- AI Coding Companion -->
+    <div class="accordion-item" id="aiAccordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>🤖 AI Coding Companion</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+
+    <!-- Practice in Python IDE -->
+    <div class="accordion-item">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>💻 Practice in Python IDE</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <p style="margin:0;font-size:14px;line-height:1.6;color:#B8C5C1">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p>
+        <a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;align-self:flex-start;box-shadow:0 0 16px rgba(101,209,178,0.2);margin-top:8px">🚀 Open Python IDE</a>
+      </div>
+    </div>
+
+      <div class="accordion-content">
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-start;">
+          <div style="font-size: 2.8rem;">🧠🔐</div>
+          <div>
+            <p><strong>✨ AI উপদেশ:</strong> "for loop খুবই শক্তিশালী। string-এর প্রতিটি ক্যারেক্টার আলাদা করতে এটি পারফেক্ট। password ভেরিয়েবল string হিসেবে রাখতে ভুলো না। print(digit) প্রতিটি সংখ্যা নতুন লাইনে দেখায়। তুমি চাইলে এক লাইনেও দেখাতে join() ব্যবহার করতে পারো।"</p>
+            <button id="aiTipBtn" class="demo-btn"><i class="fas fa-lightbulb"></i> আরেকটি টিপ</button>
+            <div id="aiTipArea" style="margin-top: 12px; background:#0a1c24; border-radius: 20px; padding: 8px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer style="text-align: center; font-size: 0.65rem; opacity:0.6; margin-top: 1rem;">
+    🔁 লুপের যাদু — প্রতিটি সংখ্যা একে একে | Python for loop mastery ✨
+  </footer>
+</div>
+
+<script>
+  // ---------- particle background ----------
+  const canvas = document.getElementById('particleCanvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  class Particle {
+    constructor() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.size = Math.random() * 2.5 + 1;
+      this.speedX = (Math.random() - 0.5) * 0.3;
+      this.speedY = (Math.random() - 0.5) * 0.2;
+      this.color = `rgba(62, 255, 176, ${Math.random() * 0.3 + 0.1})`;
+    }
+    update() {
+      this.x += this.speedX;
+      this.y += this.speedY;
+      if (this.x < 0) this.x = canvas.width;
+      if (this.x > canvas.width) this.x = 0;
+      if (this.y < 0) this.y = canvas.height;
+      if (this.y > canvas.height) this.y = 0;
+    }
+    draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fillStyle = this.color; ctx.fill(); }
+  }
+  function initParticles(cnt) { for(let i=0;i<cnt;i++) particles.push(new Particle()); }
+  function animateParticles() { ctx.clearRect(0,0,canvas.width,canvas.height); particles.forEach(p=>{p.update();p.draw();}); requestAnimationFrame(animateParticles); }
+  initParticles(85);
+  animateParticles();
+
+  // Accordion toggle
+  function toggleAccordion(header) {
+    const item = header.closest('.accordion-item');
+    if(item) item.classList.toggle('open');
+  }
+
+  // ---------- Live Loop Demo ----------
+  const passwordInput = document.getElementById('passwordInput');
+  const runBtn = document.getElementById('runLoopBtn');
+  const digitsContainer = document.getElementById('digitsContainer');
+
+  function animateDigits(password) {
+    digitsContainer.innerHTML = ''; // clear
+    let delay = 0;
+    for (let i = 0; i < password.length; i++) {
+      const ch = password[i];
+      const box = document.createElement('div');
+      box.className = 'digit-box';
+      box.innerText = ch;
+      box.style.opacity = '0';
+      box.style.transform = 'scale(0.8)';
+      digitsContainer.appendChild(box);
+      setTimeout((el) => {
+        el.style.transition = 'all 0.2s ease';
+        el.style.opacity = '1';
+        el.style.transform = 'scale(1)';
+      }, delay, box);
+      delay += 200;
+    }
+  }
+
+  function runLoop() {
+    let pwd = passwordInput.value;
+    if (pwd.length === 0) {
+      digitsContainer.innerHTML = '<div class="badge">⚠️ পাসওয়ার্ড দিন!</div>';
+      return;
+    }
+    animateDigits(pwd);
+  }
+
+  runBtn.addEventListener('click', runLoop);
+  // initial run with default 5678
+  animateDigits('5678');
+  passwordInput.addEventListener('change', () => runLoop());
+
+  // copy solution code
+  document.getElementById('copySolutionBtn').addEventListener('click', () => {
+    const solutionCode = `# ১. প্রথমে পাসওয়ার্ডটি একটি ভ্যারিয়েবলে রাখি
+password = "5678"
+
+# ২. লুপের মাধ্যমে প্রতিটি সংখ্যা (digit) এক এক করে দেখাই
+for digit in password:
+    print(digit)`;
+    navigator.clipboard.writeText(solutionCode);
+    alert("✅ সমাধান কোড কপি হয়েছে!");
+  });
+
+  // ---------- Walkthrough Animation (for loop steps) ----------
+  const walkSteps = [
+    { text: "📦 Step 1: পাসওয়ার্ড ভ্যারিয়েবল তৈরি: password = '5678'", visual: "🔐 string হিসেবে সংরক্ষণ" },
+    { text: "🔄 Step 2: for digit in password: লুপ শুরু", visual: "লুপটি প্রথম অক্ষর '5' ধরে" },
+    { text: "🖨️ Step 3: print(digit) → '5' আউটপুট", visual: "স্ক্রিনে 5 দেখায়" },
+    { text: "➡️ Step 4: লুপ পরবর্তী অক্ষরে যায় → '6', তারপর '7', '8'", visual: "একে একে সব ডিজিট প্রিন্ট হয়" }
+  ];
+  let stepIdx = -1;
+  let walkInterval = null;
+  const walkText = document.getElementById('walkthroughText');
+  const walkVis = document.getElementById('walkthroughVisual');
+
+  function updateWalk(step) {
+    if(step < 0 || step >= walkSteps.length) {
+      walkText.innerText = "🎉 লুপ বুঝে গেছো! এখন নিজে কোড লিখে দেখো 🎉";
+      walkVis.innerHTML = "<span class='badge'>✅ ফর লুপ মাস্টার!</span>";
+      return;
+    }
+    walkText.innerText = walkSteps[step].text;
+    walkVis.innerHTML = `<div style="background:#021016; padding:8px 14px; border-radius:20px;">🐍 ${walkSteps[step].visual} 🐍</div>`;
+  }
+
+  function startWalk() {
+    if(walkInterval) clearInterval(walkInterval);
+    stepIdx = -1;
+    walkInterval = setInterval(() => {
+      if(stepIdx < walkSteps.length-1) {
+        stepIdx++;
+        updateWalk(stepIdx);
+      } else {
+        clearInterval(walkInterval);
+        walkInterval = null;
+        updateWalk(stepIdx);
+      }
+    }, 1700);
+  }
+  function resetWalk() {
+    if(walkInterval) { clearInterval(walkInterval); walkInterval = null; }
+    stepIdx = -1;
+    walkText.innerText = "▶️ Play চাপুন, দেখুন লুপের যাত্রা";
+    walkVis.innerHTML = "";
+  }
+  document.getElementById('playWalkBtn').addEventListener('click', startWalk);
+  document.getElementById('resetWalkBtn').addEventListener('click', resetWalk);
+  resetWalk();
+
+  // AI tips
+  const loopTips = [
+    "🧠 string কে for loop দিয়ে iterate করলে প্রতিটি ক্যারেক্টার পাওয়া যায়।",
+    "📝 password = '1234' → for p in password: print(p) → আলাদা লাইনে 1,2,3,4",
+    "🐍 join() ব্যবহার করে এক লাইনে দেখাতে পারো: print(' '.join(password))",
+    "💡 পাসওয়ার্ড integer না দিয়ে string হিসেবে রাখা ভালো, কারণ লুপ চালানো সহজ।",
+    "⚡ for loop শুধু string না, list, tuple সব কিছুতেই কাজ করে!"
+  ];
+  document.getElementById('aiTipBtn').addEventListener('click', () => {
+    const tip = loopTips[Math.floor(Math.random() * loopTips.length)];
+    document.getElementById('aiTipArea').innerHTML = `<i class="fas fa-robot"></i> ${tip}`;
+  });
+
+  // floating digits and loop symbols
+  const symbols = ['🔁', 'for', 'digit', '5678', 'print', '🔐', '5','6','7','8'];
+  for(let i=0;i<55;i++) {
+    let div = document.createElement('div');
+    div.className = 'float-digit';
+    div.innerText = symbols[Math.floor(Math.random() * symbols.length)];
+    div.style.left = Math.random() * 95 + '%';
+    div.style.top = Math.random() * 100 + '%';
+    div.style.animationDuration = 12 + Math.random() * 15 + 's';
+    div.style.fontSize = 1.2 + Math.random() * 1.6 + 'rem';
+    document.body.appendChild(div);
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔁 Chapter 4: Loops - Chapter Dashboard</title>
+    <link rel="stylesheet" href="Begineer.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🔁 অধ্যায় ৪ — লুপস (Loops)</h1>
+            <p>পুনরাবৃত্তি দূর করা! একই কাজ বারবার সহজে করার জন্য পাইথনের চমৎকার লুপ কন্ট্রোল জানুন।</p>
+        </header>
+
+        <!-- CHAPTER PROGRESS BAR -->
+        <div class="progress-bar-sticky">
+            <div class="progress-header">
+                <span>🔄 অধ্যায় অগ্রগতি (Chapter Progress)</span>
+                <span id="chapter-4-percent" style="font-weight: 800; color: var(--primary);">0% Completed</span>
+            </div>
+            <div class="progress-track">
+                <div id="chapter-4-fill" class="progress-fill"></div>
+            </div>
+        </div>
+
+        <!-- SUBCLASSES GRID -->
+        <div class="grid">
+            <!-- Basic Card -->
+            <a href="c4_basic.html" class="subclass-card" data-subclass-id="c4_basic">
+                <div>
+                    <h3>🔰 Basic</h3>
+                    <p>এই অধ্যায়ের বেসিক কনসেপ্ট এবং নিয়মাবলী জানুন।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+            
+            <!-- Enter PIN Card -->
+            <a href="c4_enter_pin.html" class="subclass-card" data-subclass-id="c4_enter_pin">
+                <div>
+                    <h3>🔐 Enter PIN</h3>
+                    <p>এটিএম সেফটি বা মোবাইল পাসওয়ার্ড পিন যাচাই করার জন্য কন্ডিশনাল সিকিউর লুপ বানান।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+
+            <!-- Guess Number Card -->
+            <a href="c4_guess_number.html" class="subclass-card" data-subclass-id="c4_guess_number">
+                <div>
+                    <h3>🎮 Guess Number</h3>
+                    <p>কম্পিউটারের র্যান্ডম সংখ্যা অনুমান করার একটি দারুণ ও উত্তেজনাপূর্ণ গেম তৈরি করুন।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+
+            <!-- 99 Bottles Card -->
+            <a href="c4_99_bottles.html" class="subclass-card" data-subclass-id="c4_99_bottles">
+                <div>
+                    <h3>🍾 99 Bottles</h3>
+                    <p>বিখ্যাত ক্লাসিক '99 Bottles of Beer' লিরিক কোড লুপ তৈরি করে গাইতে শিখুন!</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+        </div>
+
+        <!-- NAV FOOTER -->
+        <div class="nav-footer">
+            <button class="btn btn-secondary" onclick="window.location.href='class3.html'">
+                ⬅️ পূর্ববর্তী অধ্যায়
+            </button>
+            <button class="btn btn-primary" onclick="window.location.href='class5.html'">
+                পরবর্তী অধ্যায় ➡️
+            </button>
+        </div>
+    </div>
+
+    <!-- CONTROL PANEL -->
+    <div class="controls-panel">
+        <button class="control-btn" id="theme-btn">🌙</button>
+        <button class="control-btn" id="voice-bot-btn">🤖</button>
+    </div>
+
+    <script src="Begineer.js"></script>
+</body>
+</html>

@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🥚 Grocery List · Python Adventure · Level 03</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+Bengali:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --neon-pink: #ff2e8a;
+      --neon-cyan: #00e5ff;
+      --neon-purple: #bc13fe;
+      --neon-yellow: #ffe74c;
+      --neon-green: #39ff14;
+      --neon-orange: #ff9f1c;
+      --bg: #0a0a1f;
+      --surface: #12122e;
+      --card: #181838;
+      --text: #f0f0ff;
+      --muted: #8892b0;
+      --terminal: #050510;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans Bengali', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    code, pre { font-family: 'JetBrains Mono', monospace; }
+
+    /* ── Particles ── */
+    .particles {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+    }
+    .particle {
+      position: absolute; font-family: 'JetBrains Mono', monospace;
+      font-size: 14px; opacity: .25; bottom: -30px;
+    }
+    @keyframes drift {
+      0% { transform: translateY(0) translateX(0) rotate(0deg); }
+      100% { transform: translateY(-110vh) translateX(30px) rotate(360deg); }
+    }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative; z-index: 1; padding: 80px 20px 40px;
+      text-align: center; overflow: hidden;
+    }
+    .hero-blob {
+      position: absolute; border-radius: 50%;
+      filter: blur(90px); opacity: .35; pointer-events: none;
+    }
+    .badge {
+      display: inline-block; padding: 6px 20px;
+      border: 1px solid rgba(255,46,138,.4);
+      border-radius: 999px; color: var(--neon-pink);
+      font-family: 'Press Start 2P', monospace; font-size: 10px;
+      text-transform: uppercase; letter-spacing: 1px;
+      background: rgba(255,46,138,.08); margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-family: 'Press Start 2P', monospace; font-size: clamp(22px,5vw,40px);
+      line-height: 1.5; margin-bottom: 20px; color: #fff;
+    }
+    .hero .subtitle {
+      color: var(--muted); font-size: 17px; max-width: 640px; margin: 0 auto 30px; line-height: 1.7;
+    }
+    .cta-btn {
+      display: inline-flex; align-items: center; gap: 10px; padding: 14px 34px;
+      border-radius: 14px; border: none; cursor: pointer; font-size: 15px;
+      font-family: 'Noto Sans Bengali', sans-serif; font-weight: 700;
+      color: #fff; position: relative; overflow: hidden;
+      background: linear-gradient(135deg, var(--neon-green), var(--neon-cyan));
+      box-shadow: 0 0 30px rgba(57,255,20,.3), 0 0 60px rgba(0,229,255,.2);
+      transition: transform .2s, box-shadow .3s;
+    }
+    .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(57,255,20,.5); }
+
+    /* ── Main content ── */
+    .container { max-width: 860px; margin: 0 auto; padding: 0 20px 60px; position: relative; z-index: 1; }
+
+    /* ── Instructions ── */
+    .instructions {
+      background: linear-gradient(160deg, rgba(24,24,56,.95), rgba(12,12,46,.85));
+      border: 1px solid rgba(0,229,255,.2); border-radius: 24px; padding: 40px; margin-bottom: 40px;
+      backdrop-filter: blur(10px); box-shadow: 0 20px 60px rgba(0,0,0,.4);
+    }
+    .instructions h2 {
+      font-family: 'Press Start 2P', monospace; font-size: 16px; color: var(--neon-cyan);
+      margin-bottom: 24px; display: flex; align-items: center; gap: 12px;
+    }
+    .story {
+      background: rgba(0,229,255,.06); border-left: 3px solid var(--neon-cyan);
+      border-radius: 0 12px 12px 0; padding: 20px 24px; margin-bottom: 28px;
+      font-size: 16px; line-height: 1.8;
+    }
+    .story strong { color: var(--neon-yellow); }
+
+    /* ── Grocery shelf visual ── */
+    .shelf-scene {
+      display: flex; justify-content: center; gap: 32px; margin: 32px 0 40px; flex-wrap: wrap;
+    }
+    .item-card {
+      text-align: center; padding: 20px 16px;
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 20px; min-width: 120px; animation: bobble 3.2s ease-in-out infinite;
+    }
+    .item-card:nth-child(2) { animation-delay: .4s; }
+    .item-card:nth-child(3) { animation-delay: .8s; }
+    .item-icon { font-size: 52px; margin-bottom: 10px; display: block; }
+    .item-name {
+      font-family: 'JetBrains Mono', monospace; font-size: 14px;
+      color: var(--neon-yellow); padding: 6px 12px;
+      background: rgba(255,231,76,.08); border-radius: 8px; display: inline-block;
+    }
+    .item-pos { font-size: 12px; color: var(--neon-cyan); margin-top: 8px; font-family: 'JetBrains Mono', monospace; }
+    @keyframes bobble {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .shelf-bar {
+      height: 6px; border-radius: 4px; margin: 0 auto 8px;
+      background: linear-gradient(90deg, var(--neon-orange), var(--neon-yellow));
+      box-shadow: 0 0 12px rgba(255,159,28,.4);
+      max-width: 420px;
+    }
+
+    /* ── Terminal ── */
+    .terminal {
+      background: var(--terminal); border: 1px solid rgba(0,229,255,.25);
+      border-radius: 18px; overflow: hidden; margin: 24px 0;
+      box-shadow: 0 0 40px rgba(0,229,255,.08), inset 0 0 60px rgba(0,229,255,.03);
+    }
+    .term-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; background: rgba(0,0,0,.3); border-bottom: 1px solid rgba(0,229,255,.15);
+    }
+    .term-dots { display: flex; gap: 8px; }
+    .term-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-r { background: #ff5f56; }
+    .dot-y { background: #ffbd2e; }
+    .dot-g { background: #27c93f; }
+    .term-title { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); }
+    .copy-btn {
+      background: none; border: none; color: var(--neon-cyan); font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px;
+    }
+    .copy-btn:hover { color: var(--neon-pink); }
+    .term-body {
+      padding: 22px 26px; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.9;
+    }
+    .term-line { display: flex; gap: 12px; }
+    .ln { color: rgba(136,146,176,.4); min-width: 24px; text-align: right; user-select: none; }
+    .kw { color: var(--neon-pink); font-weight: 600; }
+    .str { color: var(--neon-yellow); }
+    .num { color: var(--neon-cyan); }
+    .var { color: var(--neon-green); }
+    .cm { color: var(--muted); font-style: italic; }
+    .bl { animation: blink 1s steps(2) infinite; display: inline-block; width: 10px; height: 18px; background: var(--neon-cyan); vertical-align: middle; margin-left: 4px; }
+    @keyframes blink { 0%,50% { opacity: 1; } 51%,100% { opacity: 0; } }
+    .output {
+      background: rgba(57,255,20,.04); border: 1px solid rgba(57,255,20,.15);
+      border-radius: 14px; padding: 20px 24px; margin-top: 20px;
+    }
+    .output-title {
+      font-family: 'Press Start 2P', monospace; font-size: 10px; color: var(--neon-green);
+      margin-bottom: 14px; letter-spacing: .5px;
+    }
+    .output-line { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #c8f7c5; line-height: 1.8; }
+
+    /* ── Accordion ── */
+    .accordion { display: flex; flex-direction: column; gap: 16px; }
+    .acc-item {
+      background: linear-gradient(160deg, rgba(24,24,56,.9), rgba(12,12,46,.8));
+      border: 1px solid rgba(255,46,138,.2); border-radius: 20px; overflow: hidden;
+      transition: box-shadow .3s; box-shadow: 0 10px 40px rgba(0,0,0,.25);
+    }
+    .acc-item:hover { box-shadow: 0 0 30px rgba(255,46,138,.2); }
+    .acc-header {
+      width: 100%; display: flex; align-items: center; gap: 16px; padding: 20px 24px;
+      background: none; border: none; color: var(--text); cursor: pointer; text-align: left;
+      font-family: 'Noto Sans Bengali', sans-serif; font-size: 16px; font-weight: 700;
+    }
+    .acc-emoji { font-size: 28px; animation: floatSlow 3.5s ease-in-out infinite; }
+    .acc-title { flex: 1; }
+    .acc-chevron {
+      width: 22px; height: 22px; transition: transform .3s;
+      stroke: var(--neon-pink); stroke-width: 2.5; fill: none;
+    }
+    .acc-item.open .acc-chevron { transform: rotate(180deg); }
+    .acc-body {
+      max-height: 0; overflow: hidden; transition: max-height .5s ease, opacity .4s ease;
+      opacity: 0;
+    }
+    .acc-item.open .acc-body { max-height: 800px; opacity: 1; }
+    .acc-inner { padding: 0 24px 24px; border-top: 1px solid rgba(255,255,255,.06); }
+    .hint-card {
+      background: rgba(188,19,254,.06); border: 1px solid rgba(188,19,254,.2);
+      border-radius: 14px; padding: 18px 20px; margin-top: 14px;
+    }
+    .hint-card .tag { color: var(--neon-purple); font-family: 'Press Start 2P', monospace; font-size: 9px; margin-bottom: 10px; display: block; }
+    .hint-card p { font-size: 15px; line-height: 1.8; }
+    .hint-card code {
+      display: inline-block; padding: 4px 10px; margin: 6px 0;
+      background: rgba(0,0,0,.35); border-radius: 6px; color: var(--neon-cyan);
+      font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    }
+
+    @keyframes floatSlow {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    /* ── Footer ── */
+    footer { text-align: center; padding: 50px 20px 30px; color: var(--muted); font-size: 13px; position: relative; z-index: 1; }
+    .heart { color: var(--neon-pink); animation: pulseGlow 2s infinite; }
+    @keyframes pulseGlow {
+      0%,100% { opacity: .7; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.15); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating particles -->
+  <div class="particles" id="particles"></div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-blob" style="width:500px;height:500px;background:#bc13fe;top:-160px;left:-100px;"></div>
+    <div class="hero-blob" style="width:400px;height:400px;background:#00e5ff;bottom:-80px;right:-80px;"></div>
+    <div class="badge">Level 03 · Python List</div>
+    <h1>🥚 বাজারের ফর্দ তৈরি!</h1>
+    <p class="subtitle">পাইথন <strong style="color:var(--neon-cyan)">List (লিস্ট)</strong> ব্যবহার করে বাস্তব জীবনের বাজারের ফর্দ তৈরি করো — মাত্র ২ লাইনে!</p>
+    <a href="#instructions" class="cta-btn">🚀 শুরু করো</a>
+  </section>
+
+  <main class="container">
+
+    <!-- INSTRUCTIONS -->
+    <section class="instructions" id="instructions">
+      <h2>📜 নির্দেশনা</h2>
+      <div class="story">
+        মনে করো, আম্মু তোমাকে বাজারে যাওয়ার সময় একটি কাগজে <strong>৩টি জিনিস</strong> লিখে দিলেন:
+        <strong>"Egg" (ডিম)</strong>, <strong>"Milk" (দুধ)</strong>, আর <strong>"Bread" (পাউরুটি)</strong>।
+        তুমি বাজারে গিয়ে পকেট থেকে কাগজটি বের করে এক এক করে দেখে জিনিসগুলো কিনছ।
+        চলো, এই সহজ ফর্দটি পাইথনে তৈরি করি!
+      </div>
+
+      <h2 style="font-family:'Press Start 2P',monospace;font-size:14px;color:var(--neon-green);margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+        🛒 বাজারের তাক (Grocery Shelf)
+      </h2>
+      <div class="shelf-bar"></div>
+      <div class="shelf-scene">
+        <div class="item-card">
+          <span class="item-icon">🥚</span>
+          <div class="item-name">"Egg"</div>
+          <div class="item-pos">index 0</div>
+        </div>
+        <div class="item-card">
+          <span class="item-icon">🥛</span>
+          <div class="item-name">"Milk"</div>
+          <div class="item-pos">index 1</div>
+        </div>
+        <div class="item-card">
+          <span class="item-icon">🍞</span>
+          <div class="item-name">"Bread"</div>
+          <div class="item-pos">index 2</div>
+        </div>
+      </div>
+      <div class="shelf-bar"></div>
+
+      <div class="terminal">
+        <div class="term-header">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="term-dots"><span class="term-dot dot-r"></span><span class="term-dot dot-y"></span><span class="term-dot dot-g"></span></div>
+            <span class="term-title">grocery_list.py</span>
+          </div>
+          <button class="copy-btn" onclick="copyCode()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span id="cpy">Copy</span>
+          </button>
+        </div>
+        <div class="term-body">
+          <div class="term-line"><span class="ln">1</span><span class="cm"># ১. আম্মুর দেওয়া ৩টি জিনিসের লিস্ট</span></div>
+          <div class="term-line"><span class="ln">2</span><span class="var">grocery</span> = [<span class="str">"Egg"</span>, <span class="str">"Milk"</span>, <span class="str">"Bread"</span>]</div>
+          <div class="term-line"><span class="ln">3</span></div>
+          <div class="term-line"><span class="ln">4</span><span class="cm"># ২. লুপ ব্যবহার করে বাজারের ফর্দের সব জিনিস এক এক করে প্রিন্ট করা</span></div>
+          <div class="term-line"><span class="ln">5</span><span class="kw">for</span> <span class="var">item</span> <span class="kw">in</span> <span class="var">grocery</span>:</div>
+          <div class="term-line"><span class="ln">6</span>    <span class="var">print</span>(<span class="str">"বাজারে কিনতে হবে:"</span>, <span class="var">item</span>)<span class="bl"></span></div>
+        </div>
+        <div class="output">
+          <div class="output-title">📤 আউটপুট (Output)</div>
+          <div class="output-line">বাজারে কিনতে হবে: Egg</div>
+          <div class="output-line">বাজারে কিনতে হবে: Milk</div>
+          <div class="output-line">বাজারে কিনতে হবে: Bread</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HELP ACCORDION -->
+    <section>
+      <h2 style="font-family:'Press Start 2P',monospace;font-size:14px;color:var(--neon-yellow);margin-bottom:24px;text-align:center;">💡 সাহায্য</h2>
+      <div class="accordion">
+
+        <!-- Hints -->
+        <div class="acc-item open">
+          <button class="acc-header" onclick="toggle(this)">
+            <span class="acc-emoji">💡</span>
+            <span class="acc-title" style="color:var(--neon-yellow)">হিন্টস (Hints)</span>
+            <svg class="acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="acc-body">
+            <div class="acc-inner">
+              <div class="hint-card">
+                <span class="tag">List তৈরি</span>
+                <p>৩টি জিনিসের নাম দিয়ে একটি সহজ লিস্ট বানাও:</p>
+                <code>grocery = ["Egg", "Milk", "Bread"]</code>
+              </div>
+              <div class="hint-card">
+                <span class="tag" style="color:var(--neon-green)">for লুপ</span>
+                <p>যেহেতু নতুন কিছু যোগ করতে হবে না, তাই আমরা সরাসরি <code>for</code> লুপ ব্যবহার করে ফর্দের জিনিসগুলো স্ক্রিনে ফুটিয়ে তুলব।</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Walkthrough Video -->
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggle(this)">
+            <span class="acc-emoji">🎬</span>
+            <span class="acc-title" style="color:var(--neon-pink)">Walkthrough Video</span>
+            <svg class="acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="acc-body">
+            <div class="acc-inner" style="text-align:center;padding:30px;">
+              <div style="width:80px;height:80px;border-radius:50%;border:3px solid var(--neon-pink);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 0 25px rgba(255,46,138,.3);">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="var(--neon-pink)"><polygon points="5 3 19 12 5 21"/></svg>
+              </div>
+              <p style="color:var(--muted);">Video tutorial coming soon! 🎥</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Solution -->
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggle(this)">
+            <span class="acc-emoji">✅</span>
+            <span class="acc-title" style="color:var(--neon-green)">সমাধান ও সম্পূর্ণ কোড (Solution)</span>
+            <svg class="acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="acc-body">
+            <div class="acc-inner">
+              <p style="margin-bottom:14px;font-size:15px;">কোনো <code style="color:var(--neon-pink)">append()</code> বা এক্সট্রা অপশন ছাড়া মাত্র <strong style="color:var(--neon-green)">২ লাইনের</strong> এই কোডটি দেখো:</p>
+              <div class="terminal">
+                <div class="term-header">
+                  <div style="display:flex;align-items:center;gap:12px;">
+                    <div class="term-dots"><span class="term-dot dot-r"></span><span class="term-dot dot-y"></span><span class="term-dot dot-g"></span></div>
+                    <span class="term-title">solution.py</span>
+                  </div>
+                  <button class="copy-btn" onclick="copyCode2()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    <span id="cpy2">Copy</span>
+                  </button>
+                </div>
+                <div class="term-body">
+                  <div class="term-line"><span class="ln">1</span><span class="cm"># ১. আম্মুর দেওয়া ৩টি জিনিসের লিস্ট</span></div>
+                  <div class="term-line"><span class="ln">2</span><span class="var">grocery</span> = [<span class="str">"Egg"</span>, <span class="str">"Milk"</span>, <span class="str">"Bread"</span>]</div>
+                  <div class="term-line"><span class="ln">3</span></div>
+                  <div class="term-line"><span class="ln">4</span><span class="cm"># ২. লুপ ব্যবহার করে বাজারের ফর্দের সব জিনিস এক এক করে প্রিন্ট করা</span></div>
+                  <div class="term-line"><span class="ln">5</span><span class="kw">for</span> <span class="var">item</span> <span class="kw">in</span> <span class="var">grocery</span>:</div>
+                  <div class="term-line"><span class="ln">6</span>    <span class="var">print</span>(<span class="str">"বাজারে কিনতে হবে:"</span>, <span class="var">item</span>)</div>
+                </div>
+              </div>
+              <div class="output">
+                <div class="output-title">📤 আউটপুট (Output)</div>
+                <div class="output-line">বাজারে কিনতে হবে: Egg</div>
+                <div class="output-line">বাজারে কিনতে হবে: Milk</div>
+                <div class="output-line">বাজারে কিনতে হবে: Bread</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Coding Companion -->
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggle(this)">
+            <span class="acc-emoji">🤖</span>
+            <span class="acc-title" style="color:var(--neon-purple)">AI Coding Companion</span>
+            <svg class="acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="acc-body">
+            <div class="acc-inner">
+              <div style="display:flex;align-items:center;gap:16px;padding:10px 0;">
+                <div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-pink));display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(188,19,254,.3);">🤖</div>
+                <div>
+                  <p style="font-weight:700;color:var(--neon-purple);margin-bottom:4px;">প্রশ্ন করো!</p>
+                  <p style="color:var(--muted);font-size:14px;">তুমি কি <strong>List</strong> কীভাবে কাজ করে সেটা বুঝতে পারছ? নাকি আরেকবার দেখতে চাও?</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- Practice in Python IDE -->
+    <div class="accordion-item">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>💻 Practice in Python IDE</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <p style="margin:0;font-size:14px;line-height:1.6;color:#B8C5C1">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p>
+        <a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;align-self:flex-start;box-shadow:0 0 16px rgba(101,209,178,0.2);margin-top:8px">🚀 Open Python IDE</a>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>Made with <span class="heart">♥</span> for young coders in Bangladesh</p>
+    <p style="margin-top:6px;font-family:'Press Start 2P',monospace;font-size:9px;color:var(--neon-cyan);opacity:.6;">🎮 Python Adventure · Level 03</p>
+  </footer>
+
+  <script>
+    // Particles
+    const symbols = ['{ }','[ ]','" "','==','++','//','01','in','def'];
+    const colors = ['var(--neon-pink)','var(--neon-cyan)','var(--neon-yellow)','var(--neon-green)'];
+    const pContainer = document.getElementById('particles');
+    for (let i = 0; i < 16; i++) {
+      const s = document.createElement('span');
+      s.className = 'particle';
+      s.textContent = symbols[i % symbols.length];
+      s.style.left = Math.random() * 100 + '%';
+      s.style.color = colors[i % colors.length];
+      s.style.animation = `drift ${14 + Math.random() * 8}s linear infinite`;
+      s.style.animationDelay = (Math.random() * 8) + 's';
+      s.style.fontSize = (12 + Math.random() * 10) + 'px';
+      pContainer.appendChild(s);
+    }
+
+    // Accordion
+    function toggle(btn) {
+      const item = btn.closest('.acc-item');
+      const all = document.querySelectorAll('.acc-item');
+      all.forEach(a => { if (a !== item) a.classList.remove('open'); });
+      item.classList.toggle('open');
+    }
+
+    // Copy
+    function copyCode() {
+      const code = `# ১. আম্মুর দেওয়া ৩টি জিনিসের লিস্ট\ngrocery = ["Egg", "Milk", "Bread"]\n\n# ২. লুপ ব্যবহার করে বাজারের ফর্দের সব জিনিস এক এক করে প্রিন্ট করা\nfor item in grocery:\n    print("বাজারে কিনতে হবে:", item)`;
+      navigator.clipboard.writeText(code);
+      const lbl = document.getElementById('cpy');
+      lbl.textContent = 'Copied!'; setTimeout(() => lbl.textContent = 'Copy', 1500);
+    }
+    function copyCode2() {
+      const code = `# ১. আম্মুর দেওয়া ৩টি জিনিসের লিস্ট\ngrocery = ["Egg", "Milk", "Bread"]\n\n# ২. লুপ ব্যবহার করে বাজারের ফর্দের সব জিনিস এক এক করে প্রিন্ট করা\nfor item in grocery:\n    print("বাজারে কিনতে হবে:", item)`;
+      navigator.clipboard.writeText(code);
+      const lbl = document.getElementById('cpy2');
+      lbl.textContent = 'Copied!'; setTimeout(() => lbl.textContent = 'Copy', 1500);
+    }
+  </script>
+
+</body>
+</html>

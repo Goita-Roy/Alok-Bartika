@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐍 Chapter 1: Hello World - Chapter Dashboard</title>
+    <link rel="stylesheet" href="Begineer.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🐍 অধ্যায় ১ — হ্যালো ওয়ার্ল্ড</h1>
+            <p>আমাদের পাইথন প্রোগ্রামিং এর প্রথম ধাপ! কম্পিউটারের সাথে সুন্দর ভাষার মাধ্যমে পরিচিত হওয়া।</p>
+        </header>
+
+        <!-- CHAPTER PROGRESS BAR -->
+        <div class="progress-bar-sticky">
+            <div class="progress-header">
+                <span>🔄 অধ্যায় অগ্রগতি (Chapter Progress)</span>
+                <span id="chapter-1-percent" style="font-weight: 800; color: var(--primary);">0% Completed</span>
+            </div>
+            <div class="progress-track">
+                <div id="chapter-1-fill" class="progress-fill"></div>
+            </div>
+        </div>
+
+        <!-- SUBCLASSES GRID -->
+        <div class="grid">
+            <!-- Basic Card -->
+            <a href="c1_basic.html" class="subclass-card" data-subclass-id="c1_basic">
+                <div>
+                    <h3>🔰 Basic</h3>
+                    <p>এই অধ্যায়ের বেসিক কনসেপ্ট এবং নিয়মাবলী জানুন।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+            
+            <!-- Setting Up Card -->
+            <a href="c1_setting_up.html" class="subclass-card" data-subclass-id="c1_setting_up">
+                <div>
+                    <h3>⚙️ Setting Up</h3>
+                    <p>কম্পিউটারকে পাইথন কোড বুঝতে এবং রান করতে প্রস্তুত করুন।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+
+            <!-- Pattern Card -->
+            <a href="c1_pattern.html" class="subclass-card" data-subclass-id="c1_pattern">
+                <div>
+                    <h3>📐 Pattern</h3>
+                    <p>পিন্ট স্টেটমেন্ট ব্যবহার করে চমৎকার জ্যামিতিক ব্লক এবং প্যাটার্ন আঁকা শিখুন।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+
+            <!-- Initials Card -->
+            <a href="c1_initials.html" class="subclass-card" data-subclass-id="c1_initials">
+                <div>
+                    <h3>🔤 Initials</h3>
+                    <p>আপনার নামের আদ্যক্ষরগুলো চমৎকার ব্লক আর্ট দিয়ে ফুটিয়ে তুলুন!</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+
+            <!-- Snail Mail Card -->
+            <a href="c1_snail_mail.html" class="subclass-card" data-subclass-id="c1_snail_mail">
+                <div>
+                    <h3>✉️ Snail Mail</h3>
+                    <p>পাইথনের সাহায্যে একটি আস্ত ডিজিটাল চিঠি এবং লেভেল আর্ট তৈরি করুন।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+        </div>
+
+        <!-- NAV FOOTER -->
+        <div class="nav-footer">
+            <button class="btn btn-secondary" onclick="window.location.href='index.html'">
+                ⬅️ কোর্স ম্যাপে ফেরো
+            </button>
+            <button class="btn btn-primary" onclick="window.location.href='class2.html'">
+                পরবর্তী অধ্যায় ➡️
+            </button>
+        </div>
+    </div>
+
+    <!-- CONTROL PANEL -->
+    <div class="controls-panel">
+        <button class="control-btn" id="theme-btn">🌙</button>
+        <button class="control-btn" id="voice-bot-btn">🤖</button>
+    </div>
+
+    <script src="Begineer.js"></script>
+</body>
+</html>

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>৩টি বোতল — Python Loop Adventure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0118;
+  --bg2:#150528;
+  --neon-pink:#ff3df0;
+  --neon-cyan:#3df0ff;
+  --neon-yellow:#fff03d;
+  --neon-green:#3dff8a;
+  --neon-purple:#a93dff;
+  --text:#f5e8ff;
+  --muted:#9b8ab8;
+  --card:rgba(30,10,55,0.6);
+  --border:rgba(255,61,240,0.35);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:'Hind Siliguri',sans-serif;overflow-x:hidden}
+body{
+  min-height:100vh;
+  background:
+    radial-gradient(circle at 15% 10%,rgba(255,61,240,0.18),transparent 45%),
+    radial-gradient(circle at 85% 25%,rgba(61,240,255,0.15),transparent 45%),
+    radial-gradient(circle at 50% 90%,rgba(169,61,255,0.18),transparent 50%),
+    linear-gradient(180deg,var(--bg),var(--bg2));
+  position:relative;
+}
+.arcade{font-family:'Press Start 2P',monospace;letter-spacing:0.5px}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* Floating blobs */
+.blob{position:fixed;border-radius:50%;filter:blur(70px);opacity:0.55;pointer-events:none;z-index:0}
+.blob.b1{width:380px;height:380px;background:var(--neon-pink);top:-80px;left:-80px;animation:float 14s ease-in-out infinite}
+.blob.b2{width:340px;height:340px;background:var(--neon-cyan);top:35%;right:-100px;animation:float 18s ease-in-out infinite reverse}
+.blob.b3{width:300px;height:300px;background:var(--neon-purple);bottom:-90px;left:30%;animation:float 16s ease-in-out infinite}
+@keyframes float{
+  0%,100%{transform:translate(0,0) scale(1)}
+  50%{transform:translate(40px,-30px) scale(1.1)}
+}
+
+/* Particles */
+.particles{position:fixed;inset:0;pointer-events:none;z-index:1}
+.particle{position:absolute;font-family:'JetBrains Mono',monospace;font-weight:700;opacity:0.5;animation:drift linear infinite}
+@keyframes drift{
+  0%{transform:translateY(0) rotate(0)}
+  100%{transform:translateY(-120vh) rotate(360deg)}
+}
+
+.container{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:40px 22px 80px}
+
+/* Hero */
+.hero{text-align:center;padding:50px 14px 30px}
+.badge{
+  display:inline-block;padding:8px 18px;border:2px solid var(--neon-cyan);
+  border-radius:999px;background:rgba(61,240,255,0.08);
+  color:var(--neon-cyan);font-size:11px;margin-bottom:22px;
+  box-shadow:0 0 22px rgba(61,240,255,0.4);
+  animation:pulseGlow 2.5s ease-in-out infinite;
+}
+@keyframes pulseGlow{
+  0%,100%{box-shadow:0 0 22px rgba(61,240,255,0.4)}
+  50%{box-shadow:0 0 38px rgba(61,240,255,0.75)}
+}
+h1.title{
+  font-family:'Press Start 2P',monospace;font-size:clamp(26px,5vw,52px);
+  line-height:1.3;background:linear-gradient(90deg,var(--neon-pink),var(--neon-yellow),var(--neon-cyan));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 0 30px rgba(255,61,240,0.4);margin-bottom:18px;
+}
+.subtitle{font-size:18px;color:var(--muted);max-width:720px;margin:0 auto 28px}
+
+/* Bottle shelf */
+.shelf-wrap{margin:34px auto 10px;max-width:560px;position:relative}
+.shelf{
+  display:flex;justify-content:space-around;align-items:flex-end;gap:14px;
+  padding:24px 18px 14px;background:rgba(20,5,40,0.6);
+  border:2px solid var(--border);border-radius:18px;
+  box-shadow:0 0 30px rgba(255,61,240,0.25),inset 0 0 30px rgba(169,61,255,0.15);
+  position:relative;
+}
+.shelf::after{
+  content:"";position:absolute;left:6%;right:6%;bottom:8px;height:6px;
+  background:linear-gradient(90deg,var(--neon-pink),var(--neon-purple),var(--neon-cyan));
+  border-radius:6px;box-shadow:0 0 18px var(--neon-pink);
+}
+.bottle{
+  position:relative;width:54px;display:flex;flex-direction:column;align-items:center;
+  animation:bobble 3.2s ease-in-out infinite;
+}
+.bottle:nth-child(2){animation-delay:.6s}
+.bottle:nth-child(3){animation-delay:1.2s}
+@keyframes bobble{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-6px)}
+}
+.bottle .cap{width:18px;height:10px;background:var(--neon-yellow);border-radius:3px 3px 0 0;box-shadow:0 0 10px var(--neon-yellow)}
+.bottle .neck{width:14px;height:14px;background:linear-gradient(180deg,#3dff8a,#1aa15a)}
+.bottle .body{
+  width:46px;height:80px;border-radius:10px 10px 14px 14px;
+  background:linear-gradient(180deg,rgba(61,255,138,0.85),rgba(61,240,255,0.6));
+  border:2px solid rgba(255,255,255,0.4);
+  box-shadow:0 0 18px rgba(61,255,138,0.55),inset 0 -10px 18px rgba(0,0,0,0.25);
+  position:relative;
+}
+.bottle .label{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:'Press Start 2P',monospace;font-size:14px;color:#0a0118;
+  background:var(--neon-yellow);padding:3px 6px;border-radius:4px;
+}
+.shelf-label{
+  text-align:center;margin-top:14px;color:var(--neon-cyan);font-family:'JetBrains Mono',monospace;font-size:13px;
+}
+
+/* Cards section */
+.section{margin-top:54px}
+.section-title{
+  font-family:'Press Start 2P',monospace;font-size:18px;color:var(--neon-yellow);
+  margin-bottom:18px;text-shadow:0 0 14px rgba(255,240,61,0.5);
+}
+.card{
+  background:var(--card);border:1.5px solid var(--border);border-radius:18px;
+  padding:22px;backdrop-filter:blur(10px);
+  box-shadow:0 6px 30px rgba(0,0,0,0.4),0 0 0 1px rgba(255,61,240,0.1);
+  margin-bottom:18px;
+}
+.card p{line-height:1.75;color:var(--text);margin-bottom:10px}
+.card .hi{color:var(--neon-cyan);font-weight:700}
+.card .hot{color:var(--neon-pink);font-weight:700}
+.card code{
+  font-family:'JetBrains Mono',monospace;background:rgba(255,61,240,0.12);
+  color:var(--neon-pink);padding:2px 8px;border-radius:6px;font-size:14px;
+}
+
+/* Terminal */
+.terminal{
+  background:#05000d;border:2px solid var(--neon-green);border-radius:14px;
+  padding:18px;font-family:'JetBrains Mono',monospace;font-size:14px;
+  box-shadow:0 0 26px rgba(61,255,138,0.3);color:var(--neon-green);
+  overflow-x:auto;
+}
+.terminal .bar{display:flex;gap:6px;margin-bottom:12px}
+.terminal .bar span{width:11px;height:11px;border-radius:50%;background:#ff5f56}
+.terminal .bar span:nth-child(2){background:#ffbd2e}
+.terminal .bar span:nth-child(3){background:#27c93f}
+.terminal .line{margin:4px 0;opacity:0;animation:reveal .6s forwards}
+.terminal .line:nth-child(2){animation-delay:.3s}
+.terminal .line:nth-child(3){animation-delay:.7s}
+.terminal .line:nth-child(4){animation-delay:1.1s}
+.terminal .line:nth-child(5){animation-delay:1.5s}
+.terminal .line:nth-child(6){animation-delay:1.9s}
+.terminal .line:nth-child(7){animation-delay:2.3s}
+.terminal .line:nth-child(8){animation-delay:2.7s}
+.terminal .line:nth-child(9){animation-delay:3.1s}
+.terminal .win{color:var(--neon-yellow);font-weight:700}
+@keyframes reveal{to{opacity:1}}
+
+/* Accordion */
+.accordion-item{
+  background:var(--card);border:1.5px solid var(--border);border-radius:14px;
+  margin-bottom:12px;overflow:hidden;transition:all .3s;
+}
+.accordion-item:hover{border-color:var(--neon-cyan);box-shadow:0 0 22px rgba(61,240,255,0.25)}
+.accordion-head{
+  padding:16px 20px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;
+  font-weight:700;font-size:16px;color:var(--neon-cyan);
+}
+.accordion-head .ico{font-size:20px}
+.accordion-body{max-height:0;overflow:hidden;transition:max-height .4s ease;padding:0 20px}
+.accordion-body.open{max-height:1200px;padding:0 20px 20px}
+.accordion-body p{line-height:1.7;color:var(--text);margin-bottom:10px}
+
+/* Code block */
+.codewrap{position:relative;margin-top:10px}
+.copy{
+  position:absolute;top:10px;right:10px;background:var(--neon-pink);color:#0a0118;
+  border:none;padding:6px 12px;border-radius:6px;font-family:'JetBrains Mono',monospace;
+  font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 0 14px rgba(255,61,240,0.5);
+}
+pre{
+  background:#05000d;color:#e9d8ff;padding:18px;border-radius:12px;overflow-x:auto;
+  font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;
+  border:1.5px solid rgba(169,61,255,0.4);
+}
+.k{color:var(--neon-pink)}
+.s{color:var(--neon-yellow)}
+.c{color:#6b7280;font-style:italic}
+.n{color:var(--neon-cyan)}
+
+.play{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  width:90px;height:90px;border-radius:50%;margin:14px auto;
+  background:linear-gradient(135deg,var(--neon-pink),var(--neon-purple));
+  box-shadow:0 0 30px rgba(255,61,240,0.6);cursor:pointer;
+  animation:pulseGlow 2s ease-in-out infinite;
+}
+.play::before{content:"";border-left:22px solid #fff;border-top:14px solid transparent;border-bottom:14px solid transparent;margin-left:6px}
+
+footer{text-align:center;color:var(--muted);font-size:12px;margin-top:50px}
+</style>
+</head>
+<body>
+<div class="blob b1"></div>
+<div class="blob b2"></div>
+<div class="blob b3"></div>
+<div class="particles" id="particles"></div>
+
+<div class="container">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="badge arcade"> PYTHON LOOP</div>
+    <h1 class="title">৩টি বোতল 🍾</h1>
+    <p class="subtitle">"দেয়ালে বোতল আছে... একটি পড়ে গেল!" — চলো লুপ দিয়ে এই মজার ছড়াটি কোডে ফুটিয়ে তুলি।</p>
+
+    <div class="shelf-wrap">
+      <div class="shelf">
+        <div class="bottle"><div class="cap"></div><div class="neck"></div><div class="body"><span class="label">1</span></div></div>
+        <div class="bottle"><div class="cap"></div><div class="neck"></div><div class="body"><span class="label">2</span></div></div>
+        <div class="bottle"><div class="cap"></div><div class="neck"></div><div class="body"><span class="label">3</span></div></div>
+      </div>
+      <div class="shelf-label">📚 পড়ার টেবিলের তাক</div>
+    </div>
+  </section>
+
+  <!-- INSTRUCTIONS -->
+  <section class="section">
+    <h2 class="section-title">🎯 নির্দেশনা</h2>
+    <div class="card">
+      <p>মনে করো, তোমার পড়ার টেবিলের তাকে <span class="hot">৩টি বোতল</span> সাজানো আছে। তুমি একটি একটি করে বোতল নামাবে আর প্রতিবার বলবে কয়টি বাকি আছে।</p>
+      <p>আমরা <code>for</code> লুপ আর <code>range(3, 0, -1)</code> ব্যবহার করে <span class="hi">উল্টো দিকে</span> ৩ → ২ → ১ গুনব।</p>
+    </div>
+
+    <div class="terminal">
+      <div class="bar"><span></span><span></span><span></span></div>
+      <div class="line">$ python three_bottles.py</div>
+      <div class="line">তাকে বোতল আছে: 3 টি</div>
+      <div class="line">১টি বোতল নিচে নামালাম!</div>
+      <div class="line">তাকে বোতল আছে: 2 টি</div>
+      <div class="line">১টি বোতল নিচে নামালাম!</div>
+      <div class="line">তাকে বোতল আছে: 1 টি</div>
+      <div class="line">১টি বোতল নিচে নামালাম!</div>
+      <div class="line win">🎉 ছড়া শেষ!</div>
+    </div>
+  </section>
+
+  <!-- HELP -->
+  <section class="section">
+    <h2 class="section-title">🆘 সাহায্য</h2>
+
+    <div class="accordion-item">
+      <div class="accordion-head" onclick="toggle(this)">
+        <span>💡 হিন্টস (Hints)</span><span class="ico">+</span>
+      </div>
+      <div class="accordion-body">
+        <p>ছড়াতে ৩, ২, ১ এভাবে <span class="hi">উল্টো গুনতে</span> হবে। পাইথনে উল্টো গুনতে চাইলে আমরা <code>range(3, 0, -1)</code> লিখি।</p>
+        <p>এর মানে হলো — <span class="hot">৩ থেকে শুরু</span> করো, <span class="hot">০-এর আগ পর্যন্ত</span> যাও (অর্থাৎ ১ পর্যন্ত), আর প্রতিবারে <span class="hot">১ করে মাইনাস</span> করো।</p>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <div class="accordion-head" onclick="toggle(this)">
+        <span>📹 Walkthrough Video</span><span class="ico">+</span>
+      </div>
+      <div class="accordion-body">
+        <div class="play"></div>
+        <p style="text-align:center;color:var(--muted)">ভিডিওটি দেখতে প্লে বাটনে ক্লিক করো</p>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <div class="accordion-head" onclick="toggle(this)">
+        <span>🛠️ সমাধান ও সম্পূর্ণ কোড</span><span class="ico">+</span>
+      </div>
+      <div class="accordion-body">
+        <p>কোনো কঠিন শর্ত ছাড়াই মাত্র <span class="hot">৩ লাইনের</span> এই কোডটি দেখো:</p>
+        <div class="codewrap">
+          <button class="copy" onclick="copyCode(this)">COPY</button>
+<pre id="code"><span class="c"># ৩ থেকে শুরু করে উল্টো দিকে ১ পর্যন্ত গুনবে</span>
+<span class="k">for</span> bottles <span class="k">in</span> <span class="n">range</span>(<span class="n">3</span>, <span class="n">0</span>, -<span class="n">1</span>):
+    <span class="n">print</span>(<span class="s">"তাকে বোতল আছে:"</span>, bottles, <span class="s">"টি"</span>)
+    <span class="n">print</span>(<span class="s">"১টি বোতল নিচে নামালাম!"</span>)</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <div class="accordion-head" onclick="toggle(this)">
+        <span>🤖 AI Coding Companion</span><span class="ico">+</span>
+      </div>
+
+    <!-- Practice in Python IDE -->
+    <div class="accordion-item">
+      <div class="accordion-head" onclick="toggle(this)">
+        <span>💻 Practice in Python IDE</span><span class="ico">+</span>
+      </div>
+      <div class="accordion-body">
+        <p>এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p>
+        <a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;align-self:flex-start;box-shadow:0 0 16px rgba(101,209,178,0.2);margin-top:8px">🚀 Open Python IDE</a>
+      </div>
+    </div>
+
+      <div class="accordion-body">
+        <p>আটকে গেলে AI Companion-কে জিজ্ঞেস করো — সে তোমাকে হিন্ট দেবে কিন্তু সরাসরি উত্তর বলবে না!</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>Made with 💜 for Python Adventurers · Level 02</footer>
+</div>
+
+<script>
+function toggle(el){
+  const body=el.nextElementSibling;
+  const ico=el.querySelector('.ico');
+  body.classList.toggle('open');
+  ico.textContent=body.classList.contains('open')?'−':'+';
+}
+function copyCode(btn){
+  const code=document.getElementById('code').innerText;
+  navigator.clipboard.writeText(code);
+  btn.textContent='COPIED!';
+  setTimeout(()=>btn.textContent='COPY',1500);
+}
+// particles
+const syms=['for','range','3','2','1','{}','()','[]',':','#','>>','<<'];
+const colors=['#ff3df0','#3df0ff','#fff03d','#3dff8a','#a93dff'];
+const pc=document.getElementById('particles');
+for(let i=0;i<18;i++){
+  const p=document.createElement('div');
+  p.className='particle';
+  p.textContent=syms[Math.floor(Math.random()*syms.length)];
+  p.style.left=Math.random()*100+'%';
+  p.style.top=(100+Math.random()*30)+'%';
+  p.style.color=colors[Math.floor(Math.random()*colors.length)];
+  p.style.fontSize=(11+Math.random()*16)+'px';
+  p.style.animationDuration=(14+Math.random()*16)+'s';
+  p.style.animationDelay=(Math.random()*10)+'s';
+  pc.appendChild(p);
+}
+</script>
+</body>
+</html>

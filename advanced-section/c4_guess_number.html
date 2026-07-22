@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Guess Number — সংখ্যা অনুমান করার খেলা</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;600&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#1a0d2e; --bg2:#0f1729; --card:#241640;
+    --pink:#ff3da6; --cyan:#3df0ff; --yellow:#ffd93d;
+    --green:#3dffa6; --purple:#a855f7; --text:#f5f0ff;
+    --muted:#a89cc4; --terminal:#0a0517; --border:#3d2966;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;border-color:var(--border)}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Hind Siliguri',system-ui,sans-serif;
+    color:var(--text); min-height:100vh; overflow-x:hidden;
+    background:
+      radial-gradient(ellipse at top, rgba(168,85,247,.4), transparent 60%),
+      radial-gradient(ellipse at bottom right, rgba(61,240,255,.25), transparent 50%),
+      linear-gradient(180deg,var(--bg),var(--bg2));
+    background-attachment:fixed;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background-image:
+      linear-gradient(rgba(61,240,255,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(61,240,255,.06) 1px, transparent 1px);
+    background-size:40px 40px;
+  }
+  .font-display{font-family:'Press Start 2P',monospace;letter-spacing:.04em}
+  .font-mono{font-family:'JetBrains Mono',monospace}
+  .gradient-text{
+    background:linear-gradient(135deg,var(--pink),var(--purple),var(--cyan));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .text-pink{color:var(--pink);text-shadow:0 0 10px currentColor}
+  .text-cyan{color:var(--cyan);text-shadow:0 0 10px currentColor}
+  .text-yellow{color:var(--yellow);text-shadow:0 0 10px currentColor}
+  .text-green{color:var(--green);text-shadow:0 0 10px currentColor}
+  .text-muted{color:var(--muted)}
+
+  .card{
+    background:linear-gradient(160deg, rgba(36,22,64,.9), rgba(26,13,46,.7));
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(255,61,166,.3);
+    border-radius:24px;
+    box-shadow:0 10px 40px -10px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  .terminal{
+    background:var(--terminal);
+    border:1px solid rgba(61,240,255,.3);
+    border-radius:12px;
+    box-shadow:0 0 20px rgba(61,240,255,.3), inset 0 0 60px rgba(61,240,255,.05);
+  }
+
+  /* HERO */
+  .container{max-width:1100px;margin:0 auto;padding:0 1rem}
+  .hero{padding:5rem 1rem 6rem;position:relative;overflow:hidden}
+  .hero-grid{display:grid;grid-template-columns:1fr;gap:3rem;align-items:center;max-width:1100px;margin:0 auto}
+  @media(min-width:1024px){.hero-grid{grid-template-columns:1fr 1fr}}
+  .blob{position:absolute;border-radius:50%;filter:blur(60px);z-index:-1}
+  .blob1{top:5rem;left:2rem;width:18rem;height:18rem;background:rgba(255,61,166,.25);animation:float 6s ease-in-out infinite}
+  .blob2{bottom:2rem;right:2rem;width:24rem;height:24rem;background:rgba(61,240,255,.2);animation:float 4s ease-in-out infinite}
+
+  .badge{
+    display:inline-flex;align-items:center;gap:.5rem;
+    padding:.5rem 1rem;border-radius:999px;
+    border:1px solid rgba(61,240,255,.4);
+    background:rgba(61,240,255,.1);
+    font-family:'Press Start 2P',monospace;font-size:10px;
+    letter-spacing:.15em;color:var(--cyan);
+  }
+  .badge.pink{border-color:rgba(255,61,166,.4);background:rgba(255,61,166,.1);color:var(--pink)}
+  .badge.yellow{border-color:rgba(255,217,61,.4);background:rgba(255,217,61,.1);color:var(--yellow)}
+
+  h1.title{font-family:'Press Start 2P',monospace;font-size:clamp(1.8rem,5vw,3.5rem);line-height:1.2;margin:1rem 0}
+  .subtitle{font-size:1.4rem;font-weight:600;margin-bottom:.5rem}
+  .lead{font-size:1.1rem;color:var(--muted);max-width:32rem;line-height:1.6;margin-bottom:1.5rem}
+
+  .btn{
+    display:inline-flex;align-items:center;gap:.5rem;
+    padding:.85rem 1.5rem;border-radius:12px;font-weight:700;
+    text-decoration:none;transition:transform .2s;cursor:pointer;border:none;
+  }
+  .btn:hover{transform:scale(1.05)}
+  .btn-primary{background:var(--pink);color:#1a0d2e;animation:pulseGlow 2.5s ease-in-out infinite}
+  .btn-outline{border:1px solid rgba(61,240,255,.5);color:var(--cyan);background:transparent}
+  .btn-outline:hover{background:rgba(61,240,255,.1)}
+  .btn-row{display:flex;flex-wrap:wrap;gap:.75rem;margin-bottom:1.5rem}
+  .stats{display:flex;gap:1.5rem;flex-wrap:wrap;font-size:.9rem;color:var(--muted)}
+  .stats div{display:flex;align-items:center;gap:.5rem}
+
+  /* mascot area (CSS art) */
+  .mascot-area{position:relative;height:420px}
+  .mascot{
+    position:absolute;width:240px;height:240px;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #ffe97a, #f5b800 60%, #b87800);
+    top:20px;right:20px;animation:float 6s ease-in-out infinite;
+    box-shadow:0 0 60px rgba(255,217,61,.5);
+    display:flex;align-items:center;justify-content:center;font-size:120px;
+  }
+  .chest{
+    position:absolute;width:180px;height:180px;border-radius:20px;
+    background:linear-gradient(135deg,#ff3da6,#a855f7);
+    bottom:20px;left:20px;animation:float 4s ease-in-out infinite;
+    box-shadow:0 0 50px rgba(255,61,166,.5);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Press Start 2P',monospace;font-size:80px;color:#fff;
+    text-shadow:0 0 20px #fff,0 0 40px var(--pink);
+  }
+  .sparkle{position:absolute;color:var(--yellow);font-size:20px;animation:sparkle 2s ease-in-out infinite}
+
+  /* sections */
+  section{padding:4rem 1rem}
+  .section-head{margin-bottom:2rem}
+  .section-title{font-size:clamp(1.8rem,4vw,2.5rem);font-weight:700;margin-top:1rem}
+
+  /* instruction box */
+  .num-chip{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:40px;height:40px;border-radius:10px;
+    font-family:'Press Start 2P',monospace;font-size:18px;
+    color:#1a0d2e;margin:0 4px;vertical-align:middle;
+  }
+  .num-chip.yellow{background:var(--yellow);box-shadow:0 0 20px rgba(255,217,61,.5)}
+  .num-chip.green{background:var(--green);box-shadow:0 0 20px rgba(61,255,166,.5)}
+  .num-pill{
+    display:inline-block;padding:4px 10px;border-radius:6px;
+    background:rgba(255,255,255,.08);color:var(--pink);
+    font-family:'JetBrains Mono',monospace;font-size:.95rem;margin:0 2px;
+  }
+  .instr-grid{display:grid;grid-template-columns:1fr;gap:2rem;align-items:center}
+  @media(min-width:768px){.instr-grid{grid-template-columns:1fr auto}}
+  .controller{
+    width:170px;margin:0 auto;font-size:140px;text-align:center;
+    animation:float 4s ease-in-out infinite;
+    filter:drop-shadow(0 0 30px rgba(168,85,247,.5));
+  }
+  .demo{margin-top:2rem;padding:1.25rem;font-family:'JetBrains Mono',monospace;font-size:.9rem}
+  .demo > div{margin:.35rem 0}
+
+  /* accordion */
+  .accordion{display:flex;flex-direction:column;gap:1rem}
+  .acc-item{border-radius:16px;overflow:hidden;transition:all .3s}
+  .acc-item.pink{border:1px solid rgba(255,61,166,.4)}
+  .acc-item.cyan{border:1px solid rgba(61,240,255,.4)}
+  .acc-item.yellow{border:1px solid rgba(255,217,61,.4)}
+  .acc-item.green{border:1px solid rgba(61,255,166,.4)}
+  .acc-item.pink:hover{box-shadow:0 0 25px rgba(255,61,166,.4)}
+  .acc-item.cyan:hover{box-shadow:0 0 25px rgba(61,240,255,.4)}
+  .acc-item.yellow:hover{box-shadow:0 0 25px rgba(255,217,61,.4)}
+  .acc-item.green:hover{box-shadow:0 0 25px rgba(61,255,166,.4)}
+  .acc-btn{
+    width:100%;display:flex;align-items:center;gap:1rem;
+    padding:1.25rem;background:none;border:none;color:inherit;
+    cursor:pointer;text-align:left;font-family:inherit;
+  }
+  .acc-emoji{font-size:1.8rem;animation:float 4s ease-in-out infinite}
+  .acc-title{flex:1;font-family:'Press Start 2P',monospace;font-size:.85rem}
+  .acc-item.pink .acc-title{color:var(--pink)}
+  .acc-item.cyan .acc-title{color:var(--cyan)}
+  .acc-item.yellow .acc-title{color:var(--yellow)}
+  .acc-item.green .acc-title{color:var(--green)}
+  .acc-chev{transition:transform .3s;font-size:1.2rem}
+  .acc-item.open .acc-chev{transform:rotate(180deg)}
+  .acc-body{
+    max-height:0;overflow:hidden;transition:max-height .5s ease, padding .3s;
+    padding:0 1.25rem;border-top:1px solid rgba(255,255,255,.1);
+  }
+  .acc-item.open .acc-body{max-height:800px;padding:1.25rem}
+
+  .hint-row{display:flex;gap:1rem;margin:.75rem 0;line-height:1.7}
+  .hint-num{font-family:'Press Start 2P',monospace;font-size:.7rem;color:var(--yellow);margin-top:6px;flex-shrink:0}
+  code.inline{padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.08);font-family:'JetBrains Mono',monospace;font-size:.9em;color:var(--cyan)}
+
+  .video-box{
+    aspect-ratio:16/9;border-radius:12px;border:1px solid rgba(61,240,255,.3);
+    background:var(--terminal);display:flex;align-items:center;justify-content:center;
+    cursor:pointer;position:relative;overflow:hidden;
+  }
+  .play-circle{
+    width:80px;height:80px;border-radius:50%;
+    background:rgba(61,240,255,.2);border:2px solid var(--cyan);
+    display:flex;align-items:center;justify-content:center;font-size:30px;color:var(--cyan);
+    box-shadow:0 0 20px rgba(61,240,255,.5);transition:transform .2s;
+  }
+  .video-box:hover .play-circle{transform:scale(1.1)}
+  .video-label{position:absolute;bottom:1rem;font-family:'Press Start 2P',monospace;font-size:10px;color:var(--cyan);letter-spacing:.2em}
+
+  /* code block */
+  .codeblock{border-radius:12px;overflow:hidden;margin:1rem 0}
+  .code-header{display:flex;justify-content:space-between;align-items:center;padding:.6rem 1rem;background:rgba(0,0,0,.4);border-bottom:1px solid rgba(61,240,255,.2)}
+  .dots{display:flex;gap:.4rem;align-items:center}
+  .dot{width:12px;height:12px;border-radius:50%}
+  .dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
+  .code-file{margin-left:.75rem;font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--muted)}
+  .copy-btn{background:none;border:none;color:var(--cyan);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:.75rem;display:flex;align-items:center;gap:.3rem}
+  .copy-btn:hover{color:var(--pink)}
+  pre.code{padding:1.25rem;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:.875rem;line-height:1.7;margin:0}
+  .ln{display:flex}
+  .ln-num{user-select:none;color:rgba(168,156,196,.5);width:2rem;text-align:right;padding-right:1rem;flex-shrink:0}
+  .kw{color:var(--pink);font-weight:600}
+  .str{color:var(--yellow)}
+  .num{color:var(--cyan)}
+  .cmt{color:var(--muted);font-style:italic}
+  .cursor{display:inline-block;width:8px;height:14px;background:var(--cyan);vertical-align:middle;margin-left:4px;animation:blink 1s steps(2) infinite}
+
+  /* AI box */
+  .ai-row{display:flex;align-items:center;gap:1.25rem;padding-top:1rem}
+  .ai-icon{
+    width:64px;height:64px;border-radius:16px;flex-shrink:0;
+    background:rgba(61,255,166,.2);border:1px solid rgba(61,255,166,.4);
+    display:flex;align-items:center;justify-content:center;font-size:32px;
+  }
+
+  /* footer */
+  footer{padding:3rem 1rem;border-top:1px solid rgba(255,255,255,.1);margin-top:3rem;text-align:center}
+  .fkicker{display:inline-flex;align-items:center;gap:.5rem;font-family:'Press Start 2P',monospace;font-size:.7rem;color:var(--muted);margin-bottom:.75rem}
+
+  /* particles */
+  .particle{
+    position:fixed;font-family:'JetBrains Mono',monospace;opacity:.3;pointer-events:none;z-index:-1;
+    animation:drift linear infinite;
+  }
+
+  /* keyframes */
+  @keyframes float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-20px) rotate(2deg)}}
+  @keyframes pulseGlow{0%,100%{box-shadow:0 0 20px rgba(255,61,166,.5), 0 0 40px rgba(255,61,166,.3)}50%{box-shadow:0 0 30px rgba(255,61,166,.8), 0 0 60px rgba(255,61,166,.5)}}
+  @keyframes blink{0%,50%{opacity:1}51%,100%{opacity:0}}
+  @keyframes sparkle{0%,100%{opacity:0;transform:scale(0) rotate(0)}50%{opacity:1;transform:scale(1) rotate(180deg)}}
+  @keyframes drift{from{transform:translateY(0)}to{transform:translateY(-110vh)}}
+  @keyframes reveal{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+  .reveal{animation:reveal .8s ease-out both}
+</style>
+</head>
+<body>
+
+<!-- floating particles -->
+<div id="particles"></div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+  <div class="hero-grid">
+    <div class="reveal">
+      <span class="badge">  PYTHON</span>
+      <h1 class="title"><span class="gradient-text">Guess</span> <span class="text-yellow">Number</span></h1>
+      <p class="subtitle">সংখ্যা অনুমান করার খেলা</p>
+      <p class="lead">ষষ্ঠ থেকে অষ্টম শ্রেণীর বন্ধুদের জন্য এটি হবে একদম পানির মতো সহজ!</p>
+      <div class="btn-row">
+        <a href="#instructions" class="btn btn-primary">▶ খেলা শুরু করো</a>
+        <a href="#solution" class="btn btn-outline">{ } সলিউশন দেখো</a>
+      </div>
+      <div class="stats">
+        <div><span class="text-yellow">🏆</span> +50 XP</div>
+        <div><span class="text-cyan">⚡</span> Easy</div>
+        <div><span class="text-pink">🎯</span> Class 6–8</div>
+      </div>
+    </div>
+    <div class="mascot-area">
+      <span class="sparkle" style="top:10%;left:20%">✦</span>
+      <span class="sparkle" style="top:30%;left:80%;animation-delay:.5s">✦</span>
+      <span class="sparkle" style="top:70%;left:15%;animation-delay:1s">✦</span>
+      <span class="sparkle" style="top:85%;left:70%;animation-delay:1.5s">✦</span>
+      <div class="mascot">🐍</div>
+      <div class="chest">3</div>
+    </div>
+  </div>
+</section>
+
+<!-- INSTRUCTIONS -->
+<section id="instructions">
+  <div class="container">
+    <div class="section-head">
+      <span class="badge pink">🎯 MISSION BRIEFING</span>
+      <h2 class="section-title gradient-text">নির্দেশনা</h2>
+    </div>
+    <div class="card" style="padding:2rem">
+      <div class="instr-grid">
+        <p style="font-size:1.1rem;line-height:1.8">
+          মনে করো, তোমার বন্ধু একটি সংখ্যা লুকিয়ে রেখেছে, সংখ্যাটি হলো
+          <span class="num-chip yellow">3</span>।
+          সে তোমাকে বলল, <span class="text-cyan" style="font-weight:600">"তুই সংখ্যাটি গেস (अनुमान) কর।"</span>
+          তুমি <span class="num-pill">1</span> দিলে বলবে <span class="text-pink" style="font-weight:600">"আবার দে"</span>,
+          <span class="num-pill">2</span> দিলে বলবে <span class="text-pink" style="font-weight:600">"আবার দে"</span>।
+          যখনই তুমি <span class="num-chip green">3</span> চাপবে, অমনি গেমটি শেষ হয়ে যাবে!
+        </p>
+        <div class="controller">🎮</div>
+      </div>
+
+      <div class="terminal demo">
+        <div><span class="text-cyan">&gt;</span> <span class="text-muted">সংখ্যাটি অনুমান করো:</span> <span class="text-yellow">1</span></div>
+        <div class="text-pink" style="padding-left:1rem">↳ আবার দে</div>
+        <div><span class="text-cyan">&gt;</span> <span class="text-muted">সংখ্যাটি অনুমান করো:</span> <span class="text-yellow">2</span></div>
+        <div class="text-pink" style="padding-left:1rem">↳ আবার দে</div>
+        <div><span class="text-cyan">&gt;</span> <span class="text-muted">সংখ্যাটি অনুমান করো:</span> <span class="text-green">3</span></div>
+        <div class="text-green" style="padding-left:1rem;font-weight:600">🎉 জিতে গেছো!<span class="cursor"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HELP -->
+<section id="help">
+  <div class="container">
+    <div class="section-head" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem">
+      <div>
+        <span class="badge yellow">💡 POWER UPS</span>
+        <h2 class="section-title gradient-text">সাহায্য</h2>
+      </div>
+      <div style="font-size:5rem;animation:float 6s ease-in-out infinite">🤖</div>
+    </div>
+
+    <div class="accordion">
+      <!-- HINTS -->
+      <div class="acc-item yellow open">
+        <button class="acc-btn" onclick="toggle(this)">
+          <span class="acc-emoji">💡</span>
+          <span class="acc-title">হিন্টস (Hints)</span>
+          <span class="acc-chev">▼</span>
+        </button>
+        <div class="acc-body">
+          <div class="hint-row">
+            <span class="hint-num">01</span>
+            <p><span class="text-yellow" style="font-weight:600">ইনপুট নেওয়া:</span> আমরা লুপের ভেতরে বারবার <code class="inline">input()</code> দিয়ে তোমার কাছ থেকে সংখ্যাটি চাইব।</p>
+          </div>
+          <div class="hint-row">
+            <span class="hint-num">02</span>
+            <p><span class="text-yellow" style="font-weight:600">ব্রেক (break):</span> পাইথনে লুপ থামানোর সবচেয়ে সহজ কমান্ড হলো <code class="inline" style="color:var(--pink)">break</code>। যখনই তুমি সঠিক সংখ্যাটি দেবে, আমরা <code class="inline" style="color:var(--pink)">break</code> লিখে লুপটি থামিয়ে দেবো।</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIDEO -->
+      <div class="acc-item cyan">
+        <button class="acc-btn" onclick="toggle(this)">
+          <span class="acc-emoji">📹</span>
+          <span class="acc-title">Walkthrough Video</span>
+          <span class="acc-chev">▼</span>
+        </button>
+        <div class="acc-body">
+          <div class="video-box">
+            <div class="play-circle">▶</div>
+            <span class="video-label">PLAY WALKTHROUGH</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SOLUTION -->
+      <div class="acc-item pink" id="solution">
+        <button class="acc-btn" onclick="toggle(this)">
+          <span class="acc-emoji">🛠️</span>
+          <span class="acc-title">সমাধান ও সম্পূর্ণ কোড (Solution)</span>
+          <span class="acc-chev">▼</span>
+        </button>
+        <div class="acc-body">
+          <p style="margin-bottom:.5rem">দেখো, কোডটি কত ছোট আর সহজ:</p>
+          <span class="badge pink" style="margin-bottom:.5rem">&lt;/&gt; Python</span>
+          <div class="codeblock terminal">
+            <div class="code-header">
+              <div class="dots">
+                <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+                <span class="code-file">guess_number.py</span>
+              </div>
+              <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+            </div>
+<pre class="code" id="codeSource"><div class="ln"><span class="ln-num">1</span><span><span class="cmt"># লুপ চলতেই থাকবে...</span></span></div><div class="ln"><span class="ln-num">2</span><span><span class="kw">while</span> <span class="kw">True</span>:</span></div><div class="ln"><span class="ln-num">3</span><span>    guess = <span class="kw">input</span>(<span class="str">"সংখ্যাটি অনুমান করো: "</span>)</span></div><div class="ln"><span class="ln-num">4</span><span></span></div><div class="ln"><span class="ln-num">5</span><span>    <span class="cmt"># যদি তুমি ৩ চাপো, তবে লুপটি এখানেই থেমে যাবে (Break)</span></span></div><div class="ln"><span class="ln-num">6</span><span>    <span class="kw">if</span> guess == <span class="str">"3"</span>:</span></div><div class="ln"><span class="ln-num">7</span><span>        <span class="kw">print</span>(<span class="str">"🎉 জিতে গেছো!"</span>)</span></div><div class="ln"><span class="ln-num">8</span><span>        <span class="kw">break</span><span class="cursor"></span></span></div></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI -->
+      <div class="acc-item green">
+        <button class="acc-btn" onclick="toggle(this)">
+          <span class="acc-emoji">🤖</span>
+          <span class="acc-title">AI Coding Companion</span>
+          <span class="acc-chev">▼</span>
+        </button>
+        <div class="acc-body">
+          <div class="ai-row">
+            <div class="ai-icon">🤖</div>
+            <p>তোমার পাশে আছে AI Coding Companion — কোডিং করতে গিয়ে আটকে গেলে যেকোনো প্রশ্ন করো!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+      <!-- Practice in Python IDE -->
+      <div class="acc-item green">
+        <button class="acc-btn" onclick="toggle(this)">
+          <span class="acc-emoji">💻</span>
+          <span class="acc-title">Practice in Python IDE</span>
+          <span class="acc-chev">▼</span>
+        </button>
+        <div class="acc-body">
+          <div class="ai-row">
+            <div class="ai-icon">💻</div>
+            <p>এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p>
+            <a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;margin-top:8px">🚀 Open Python IDE</a>
+          </div>
+        </div>
+      </div>
+
+<footer>
+  <div class="fkicker">✦ HAPPY CODING ✦</div>
+  <p class="text-muted" style="font-size:.9rem">একটি লেভেল শেষ — পরের অ্যাডভেঞ্চারের জন্য প্রস্তুত হও! 🚀</p>
+</footer>
+
+<script>
+  // Accordion toggle
+  function toggle(btn){
+    btn.parentElement.classList.toggle('open');
+  }
+
+  // Copy code
+  function copyCode(btn){
+    const code = `# লুপ চলতেই থাকবে...
+while True:
+    guess = input("সংখ্যাটি অনুমান করো: ")
+
+    # যদি তুমি ৩ চাপো, তবে লুপটি এখানেই থেমে যাবে (Break)
+    if guess == "3":
+        print("🎉 জিতে গেছো!")
+        break`;
+    navigator.clipboard.writeText(code);
+    btn.textContent = '✓ Copied!';
+    setTimeout(()=>btn.textContent='📋 Copy', 1800);
+  }
+
+  // Floating particles
+  const symbols = ['{ }','< >','( )','[ ]','==','++','//','&&','01','3','!=','=>'];
+  const colors = ['var(--pink)','var(--cyan)','var(--yellow)','var(--green)'];
+  const wrap = document.getElementById('particles');
+  for(let i=0;i<18;i++){
+    const el = document.createElement('span');
+    el.className = 'particle';
+    el.textContent = symbols[i % symbols.length];
+    el.style.left = ((i*53)%100)+'%';
+    el.style.bottom = '-40px';
+    el.style.fontSize = (12 + (i%4)*4) + 'px';
+    el.style.color = colors[i%4];
+    el.style.animationDuration = (12 + (i%6)*2) + 's';
+    el.style.animationDelay = ((i*0.7)%8) + 's';
+    wrap.appendChild(el);
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📦 অধ্যায় ৫ — লিস্টস (Lists) বেসিক</title>
+    <link rel="stylesheet" href="Begineer.css">
+    <style>
+        /* Neon Cyber Theme Variables */
+        :root {
+            --neon-blue: #00f0ff;
+            --neon-pink: #ff007f;
+            --neon-green: #39ff14;
+            --neon-purple: #9d4edd;
+            --neon-yellow: #fff01f;
+            --neon-orange: #ff5e00;
+            --terminal-bg: #0b0f19;
+            --card-glass: rgba(17, 25, 40, 0.75);
+            --border-glass: rgba(255, 255, 255, 0.08);
+        }
+
+        body.light-mode {
+            --neon-blue: #0284c7;
+            --neon-pink: #be185d;
+            --neon-green: #059669;
+            --neon-purple: #7c3aed;
+            --neon-yellow: #d97706;
+            --neon-orange: #ea580c;
+            --terminal-bg: #f8fafc;
+            --card-glass: rgba(255, 255, 255, 0.85);
+            --border-glass: rgba(15, 23, 42, 0.08);
+        }
+
+        /* Particle Canvas Background */
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Top Gamified Header Banner */
+        .gamified-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-glass);
+            backdrop-filter: var(--glass-blur);
+            border: 2px solid var(--neon-blue);
+            border-radius: 20px;
+            padding: 15px 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+            animation: glowPulseBlue 4s infinite alternate;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .mascot-head {
+            width: 50px;
+            height: 50px;
+            image-rendering: pixelated;
+            animation: bounceMascot 2s infinite ease-in-out;
+        }
+
+        .header-stats {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .stat-badge {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 800;
+        }
+
+        .stat-xp { color: var(--neon-yellow); border-color: var(--neon-yellow); text-shadow: 0 0 5px rgba(255, 240, 31, 0.5); }
+        .stat-lvl { color: var(--neon-purple); border-color: var(--neon-purple); text-shadow: 0 0 5px rgba(157, 78, 221, 0.5); }
+
+        /* Level Structure */
+        .level-card {
+            border: 1px solid var(--border-glass);
+            position: relative;
+            padding: 35px;
+            margin-bottom: 45px;
+            border-radius: 24px;
+            background: var(--card-glass);
+            backdrop-filter: var(--glass-blur);
+            transition: var(--transition-smooth);
+            overflow: visible;
+        }
+
+        .level-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 24px;
+            pointer-events: none;
+            box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.05);
+            transition: var(--transition-smooth);
+        }
+
+        /* Neon Borders for Levels */
+        .level-card.lvl-1 { border-color: var(--neon-orange); }
+        .level-card.lvl-1:hover { box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 94, 0, 0.2); }
+        .level-card.lvl-2 { border-color: var(--neon-blue); }
+        .level-card.lvl-2:hover { box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 240, 255, 0.2); }
+        .level-card.lvl-3 { border-color: var(--neon-green); border-width: 2px; }
+        .level-card.lvl-3:hover { box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 0 25px rgba(57, 255, 20, 0.35); }
+
+        .level-badge {
+            position: absolute;
+            top: -18px;
+            left: 30px;
+            background: #1e1b4b;
+            color: #fff;
+            padding: 4px 18px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            border: 2px solid;
+            letter-spacing: 0.05em;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .lvl-1 .level-badge { border-color: var(--neon-orange); color: var(--neon-orange); }
+        .lvl-2 .level-badge { border-color: var(--neon-blue); color: var(--neon-blue); }
+        .lvl-3 .level-badge { border-color: var(--neon-green); color: var(--neon-green); }
+
+        /* Level Grid Splits */
+        .level-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 30px;
+            align-items: center;
+        }
+
+        @media (max-width: 900px) {
+            .level-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .level-content {
+            font-size: 1.15rem;
+            line-height: 1.7;
+        }
+
+        .level-content p {
+            margin-bottom: 20px;
+        }
+
+        /* Widget Containers */
+        .widget-panel {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 220px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        body.light-mode .widget-panel {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Level 1: Market Shopping bag & items visualizer */
+        .shopping-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            align-items: center;
+        }
+
+        .shopping-items-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            width: 100%;
+        }
+
+        .shop-item-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1.5px dashed var(--neon-orange);
+            border-radius: 12px;
+            padding: 10px;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition-smooth);
+            font-weight: 600;
+        }
+
+        .shop-item-btn:hover {
+            background: rgba(255, 94, 0, 0.1);
+            transform: scale(1.03);
+            border-style: solid;
+        }
+
+        .shop-item-btn.packed {
+            background: rgba(57, 255, 20, 0.08);
+            border-color: var(--neon-green);
+            border-style: solid;
+            color: var(--neon-green);
+            opacity: 0.6;
+        }
+
+        .backpack-container {
+            position: relative;
+            width: 90px;
+            height: 100px;
+            margin-top: 15px;
+        }
+
+        .backpack-icon {
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+            animation: floatBot 3s infinite ease-in-out;
+        }
+
+        .backpack-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--neon-orange);
+            border: 2px solid #000;
+            color: #fff;
+            font-weight: 800;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            box-shadow: 0 0 10px rgba(255, 94, 0, 0.5);
+        }
+
+        /* Level 2: Fruits indexer drawers */
+        .slots-chest {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .chest-slot {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid var(--neon-blue);
+            border-radius: 16px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 240, 255, 0.05);
+        }
+
+        body.light-mode .chest-slot {
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .chest-slot:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 240, 255, 0.2);
+            background: rgba(0, 240, 255, 0.04);
+        }
+
+        .slot-index {
+            font-size: 0.8rem;
+            color: var(--neon-blue);
+            font-weight: 800;
+            font-family: var(--font-mono);
+            background: rgba(0, 240, 255, 0.1);
+            padding: 3px 8px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .slot-graphic {
+            font-size: 2.2rem;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition-smooth);
+            filter: grayscale(1) blur(1px) opacity(0.3);
+        }
+
+        .chest-slot.revealed .slot-graphic {
+            filter: none;
+            transform: scale(1.15) rotate(5deg);
+        }
+
+        .slot-label {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .chest-slot.revealed .slot-label {
+            color: #fff;
+        }
+        body.light-mode .chest-slot.revealed .slot-label {
+            color: #0f172a;
+        }
+
+        /* Level 3: Practice Arena Workspace */
+        .arena-workspace {
+            display: grid;
+            grid-template-columns: 1.12fr 0.88fr;
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        @media (max-width: 1000px) {
+            .arena-workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Objectives Card */
+        .objectives-card {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 25px;
+            height: 100%;
+        }
+
+        body.light-mode .objectives-card {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .objective-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            background: rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.02);
+            transition: var(--transition-smooth);
+        }
+
+        body.light-mode .objective-item {
+            background: rgba(255,255,255,0.6);
+        }
+
+        .objective-item.checked {
+            border-color: var(--neon-green);
+            background: rgba(57, 255, 20, 0.08);
+            box-shadow: 0 0 15px rgba(57, 255, 20, 0.05);
+        }
+
+        .obj-checkbox {
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+            border: 2px solid var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: transparent;
+            transition: var(--transition-smooth);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .objective-item.checked .obj-checkbox {
+            border-color: var(--neon-green);
+            background: var(--neon-green);
+            color: #0b0f19;
+            text-shadow: none;
+        }
+
+        .obj-text {
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .objective-item.checked .obj-text {
+            color: var(--text-primary);
+            text-decoration: line-through;
+            opacity: 0.75;
+        }
+
+        /* IDE Editor mock */
+        .ide-editor-container {
+            display: flex;
+            flex-direction: column;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            height: 100%;
+        }
+
+        .ide-header {
+            background: #131929;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        body.light-mode .ide-header {
+            background: #e2e8f0;
+            border-bottom-color: #cbd5e1;
+        }
+
+        .ide-title {
+            font-family: var(--font-sans);
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--neon-green);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ide-body {
+            display: flex;
+            background: #0f1422;
+            flex-grow: 1;
+            min-height: 250px;
+            position: relative;
+        }
+
+        body.light-mode .ide-body {
+            background: #f8fafc;
+        }
+
+        .ide-line-numbers {
+            padding: 15px 10px 15px 15px;
+            color: rgba(255,255,255,0.25);
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            text-align: right;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            user-select: none;
+            background: rgba(0,0,0,0.1);
+        }
+
+        body.light-mode .ide-line-numbers {
+            color: #94a3b8;
+            border-right-color: #e2e8f0;
+            background: #f1f5f9;
+        }
+
+        .ide-textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #e2e8f0;
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            padding: 15px;
+            resize: none;
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        body.light-mode .ide-textarea {
+            color: #0f172a;
+        }
+
+        /* IDE Console output */
+        .ide-console {
+            background: var(--terminal-bg);
+            border-top: 1px solid var(--border-glass);
+            padding: 15px 20px;
+            font-family: var(--font-mono);
+            font-size: 0.88rem;
+            color: #cbd5e1;
+            min-height: 120px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        body.light-mode .ide-console {
+            color: #334155;
+        }
+
+        .console-log-line {
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        /* Help accordion styles */
+        .help-accordion-section {
+            margin-top: 60px;
+            margin-bottom: 50px;
+        }
+
+        .accordion-item {
+            background: var(--card-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            transition: var(--transition-smooth);
+        }
+
+        .accordion-item:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+            border-color: rgba(255,255,255,0.12);
+        }
+
+        .accordion-header {
+            padding: 22px 30px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            user-select: none;
+            transition: var(--transition-smooth);
+        }
+
+        .accordion-header:hover {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .accordion-header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .accordion-header-icon {
+            font-size: 1.4rem;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .accordion-item.active .accordion-header-icon {
+            transform: rotate(180deg);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0, 1, 0, 1);
+        }
+
+        .accordion-item.active .accordion-content {
+            max-height: 2000px;
+            transition: max-height 1.2s ease-in-out;
+        }
+
+        .accordion-body {
+            padding: 0 30px 30px 30px;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            border-top: 1px solid rgba(255,255,255,0.03);
+            padding-top: 20px;
+        }
+
+        /* Walkthrough simulation widget */
+        .walkthrough-player-box {
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            background: #090d16;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            margin: 15px 0;
+        }
+
+        .player-bar {
+            background: #111726;
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .player-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .player-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            color: #fff;
+            padding: 4px 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition-smooth);
+        }
+
+        .player-btn:hover {
+            background: var(--neon-blue);
+            color: #000;
+        }
+
+        .player-screen {
+            padding: 20px;
+            font-family: var(--font-mono);
+            font-size: 0.92rem;
+            min-height: 180px;
+            color: #a7f3d0;
+            overflow-y: auto;
+        }
+
+        /* chatbot helper CSS */
+        .chatbot-container {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            background: rgba(13, 18, 30, 0.4);
+            overflow: hidden;
+            height: 350px;
+        }
+
+        .chatbot-messages {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .chat-bubble {
+            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 16px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .chat-bubble.bot {
+            align-self: flex-start;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: var(--text-primary);
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-bubble.user {
+            align-self: flex-end;
+            background: rgba(20, 184, 166, 0.15);
+            border: 1px solid rgba(20, 184, 166, 0.3);
+            color: var(--text-primary);
+            border-bottom-right-radius: 4px;
+        }
+
+        .chatbot-inputs {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-top: 1px solid var(--border-glass);
+            flex-wrap: wrap;
+        }
+
+        .chat-suggestion {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            color: var(--text-secondary);
+        }
+
+        .chat-suggestion:hover {
+            border-color: var(--neon-blue);
+            color: var(--neon-blue);
+            background: rgba(0, 240, 255, 0.05);
+        }
+
+        /* Floating Helper Robot Widget */
+        .floating-helper {
+            position: fixed;
+            bottom: 110px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            z-index: 999;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .floating-helper:hover {
+            transform: scale(1.15) rotate(5deg);
+        }
+
+        .floating-helper img {
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));
+            animation: floatBot 3s infinite ease-in-out;
+        }
+
+        .floating-speech {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 220px;
+            background: var(--card-glass);
+            border: 1.5px solid var(--neon-purple);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4), 0 0 15px rgba(157, 78, 221, 0.2);
+            padding: 15px;
+            border-radius: 16px;
+            font-size: 0.88rem;
+            line-height: 1.5;
+            color: var(--text-primary);
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .floating-helper:hover .floating-speech {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Completion Area */
+        .complete-area {
+            text-align: center;
+            margin: 50px 0 80px 0;
+            padding: 40px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(20, 184, 166, 0.1) 100%);
+            border: 2px dashed var(--neon-green);
+            border-radius: 30px;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
+        }
+
+        .complete-btn-pulse {
+            animation: pulseGlowGreen 2s infinite;
+        }
+
+        /* Animations declarations */
+        @keyframes floatBot {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        @keyframes bounceMascot {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-6px) scale(1.05); }
+        }
+
+        @keyframes glowPulseBlue {
+            0% { box-shadow: 0 0 15px rgba(0, 240, 255, 0.15); }
+            100% { box-shadow: 0 0 25px rgba(0, 240, 255, 0.4); }
+        }
+
+        @keyframes pulseGlowGreen {
+            0% { box-shadow: 0 0 0 0px rgba(57, 255, 20, 0.5); }
+            100% { box-shadow: 0 0 0 20px rgba(57, 255, 20, 0); }
+        }
+
+        /* Highlight classes */
+        .code-hl-line {
+            background: rgba(255, 255, 255, 0.08);
+            border-left: 3px solid var(--neon-blue);
+            padding-left: 5px;
+        }
+
+        body.light-mode .code-hl-line {
+            background: rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Particle Background -->
+    <canvas id="particle-canvas"></canvas>
+
+    <div class="container">
+        
+        <!-- Gamified Navigation Back & Stats -->
+        <div class="gamified-header">
+            <div class="header-left">
+                <img src="python_knight.png" alt="Python Mascot" class="mascot-head" onerror="this.src='https://i.imgur.com/KzLym9e.png'">
+                <div>
+                    <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-primary); margin: 0;">📦 অধ্যায় ৫: লিস্টস (Lists)</h2>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">লেভেল: বেসিক ডাটা কন্টেইনার</p>
+                </div>
+            </div>
+            <div class="header-stats">
+                <div class="stat-badge stat-xp">
+                    <span>🏆</span> <span id="xp-text">১৭০ XP</span>
+                </div>
+                <div class="stat-badge stat-lvl">
+                    <span>⚔️</span> <span>LEVEL 5</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- TITLE PANEL -->
+        <header style="margin-bottom: 40px;">
+            <h1>Lists in Python</h1>
+            <p>একাধিক উপাদানের ডাটা বা নামকে একটি একক জাদুকরী কন্টেইনারের ভেতর সুন্দর করে বন্দি করার লড়াই!</p>
+        </header>
+
+        <!-- STICKY OVERALL LEVEL PROGRESS BAR -->
+        <div class="progress-bar-sticky">
+            <div class="progress-header">
+                <span>🔄 এডভেঞ্চার লেভেল অগ্রগতি (Lists Progress)</span>
+                <span id="level-progress-text" style="font-weight: 800; color: var(--neon-blue);">০% সম্পন্ন</span>
+            </div>
+            <div class="progress-track">
+                <div id="level-progress-fill" class="progress-fill" style="width: 0%;"></div>
+            </div>
+        </div>
+
+        <!-- ======================= LEVEL 1 ======================= -->
+        <div class="level-card lvl-1">
+            <div class="level-badge">Level 1: Market Shopping Packer</div>
+            <div class="level-grid">
+                <div class="level-content">
+                    <p style="font-size: 1.25rem; font-weight: 600; color: var(--neon-orange); margin-bottom: 15px;">বাজারের ফর্দ মেলাও!</p>
+                    <p>বন্ধুরা, মনে করো তুমি বাজারে গেছো স্কুলের জন্য কিছু জিনিস কিনতে—খাতা, কলম, ইরেজার আর একটা জ্যামিতি বক্স। এখন এই জিনিসগুলোর নাম মনে রাখার জন্য তুমি কী করবে? নিশ্চয়ই একটা কাগজের টুকরোয় সুন্দর করে একটার নিচে আরেকটা লিখে একটা তালিকা বা লিস্ট (List) বানিয়ে নেবে!</p>
+                </div>
+                <div class="widget-panel">
+                    <div class="shopping-wrapper">
+                        <div style="font-weight: bold; color: var(--neon-orange); font-size: 0.95rem; margin-bottom: 8px;">স্কুলের প্রয়োজনীয় জিনিসপত্র প্যাকিং:</div>
+                        
+                        <div class="shopping-items-grid">
+                            <button class="shop-item-btn" id="shop-item-1" onclick="packItem(1, 'খাতা 📚')">
+                                ➕ খাতা 📚
+                            </button>
+                            <button class="shop-item-btn" id="shop-item-2" onclick="packItem(2, 'কলম ✏️')">
+                                ➕ কলম ✏️
+                            </button>
+                            <button class="shop-item-btn" id="shop-item-3" onclick="packItem(3, 'ইরেজার 🧼')">
+                                ➕ ইরেজার 🧼
+                            </button>
+                            <button class="shop-item-btn" id="shop-item-4" onclick="packItem(4, 'জ্যামিতি বক্স 📐')">
+                                ➕ জ্যামিতি বক্স 📐
+                            </button>
+                        </div>
+
+                        <div class="backpack-container">
+                            <img src="https://img.icons8.com/color/96/backpack.png" class="backpack-icon" id="backpack-icon" alt="Backpack">
+                            <div class="backpack-badge" id="backpack-count">0</div>
+                        </div>
+
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); font-family: var(--font-mono);" id="shopping-notes">
+                            লিস্টের সাইজ: ০ (ফাঁকা লিস্ট)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================= LEVEL 2 ======================= -->
+        <div class="level-card lvl-2">
+            <div class="level-badge">Python Lists & Index drawer</div>
+            <div class="level-grid">
+                <div class="level-content">
+                    <p>কম্পিউটারকেও যদি আমরা একসাথে অনেকগুলো জিনিসের নাম বা ডাটা মনে রাখতে বলতে চাই, তখন পাইথনে আমরা ব্যবহার করি List (লিস্ট)।</p>
+                    <p>যেমন ধরো, তোমার পছন্দের ৩টি ফলের নাম আমরা একটা লিস্টে এভাবে রাখতে পারি:</p>
+                    
+                    <div class="terminal" style="margin: 15px 0; border-color: rgba(0, 240, 255, 0.3);">
+                        <div class="terminal-header">
+                            <div class="terminal-dots">
+                                <span class="terminal-dot dot-red"></span>
+                                <span class="terminal-dot dot-yellow"></span>
+                                <span class="terminal-dot dot-green"></span>
+                            </div>
+                            <span class="terminal-title">fruits_list.py</span>
+                        </div>
+                        <div class="terminal-body" style="min-height: auto; padding: 15px;">
+                            <div class="terminal-line"><span class="terminal-prompt">>>></span> fruits = ["Apple", "Mango", "Banana"]</div>
+                        </div>
+                    </div>
+
+                    <p>এখানে থার্ড ব্র্যাকেট বা চৌকো বন্ধনী [ ] ব্যবহার করে সবগুলো ফলকে একসাথে একটি লিস্টের ভেতর বন্দি করা হয়েছে।</p>
+                </div>
+                
+                <div class="widget-panel">
+                    <div style="font-weight: bold; color: var(--neon-blue); margin-bottom: 10px;">ইনডেক্স স্লট ক্যাবিনেট (Cubbyholes Drawer) 🏺</div>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); text-align: center; margin-bottom: 15px; width: 100%;">প্রতিটি ড্রয়ারে ক্লিক করে ভিতরের আইটেম ও তার মেমোরি ইনডেক্স দেখে নাও!</p>
+
+                    <div class="slots-chest">
+                        <!-- Slot 0 -->
+                        <div class="chest-slot" id="slot-0" onclick="revealSlot(0, '🍎 Apple')">
+                            <div class="slot-index">[0]</div>
+                            <div class="slot-graphic">🍎</div>
+                            <div class="slot-label" id="slot-label-0">Drawer 0</div>
+                        </div>
+                        <!-- Slot 1 -->
+                        <div class="chest-slot" id="slot-1" onclick="revealSlot(1, '🥭 Mango')">
+                            <div class="slot-index">[1]</div>
+                            <div class="slot-graphic">🥭</div>
+                            <div class="slot-label" id="slot-label-1">Drawer 1</div>
+                        </div>
+                        <!-- Slot 2 -->
+                        <div class="chest-slot" id="slot-2" onclick="revealSlot(2, '🍌 Banana')">
+                            <div class="slot-index">[2]</div>
+                            <div class="slot-graphic">🍌</div>
+                            <div class="slot-label" id="slot-label-2">Drawer 2</div>
+                        </div>
+                    </div>
+
+                    <div class="terminal" style="width: 100%; margin-top: 15px; border-color: rgba(0, 240, 255, 0.2);">
+                        <div class="terminal-body" id="fruits-console" style="min-height: 50px; font-size: 0.85rem; padding: 10px; max-height: 80px;">
+                            <span style="color: var(--text-secondary);">ইনডেক্স স্লটে ক্লিক করো...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================= LEVEL 3 ======================= -->
+        <div class="level-card lvl-3">
+            <div class="level-badge">Rafee's Lists Playground</div>
+            <div class="level-content">
+                <h4 style="font-size: 1.3rem; margin-bottom: 15px; color: var(--neon-green); display: flex; align-items: center; gap: 8px;">📋 নির্দেশনা (Lists.py Mission):</h4>
+                <p>চল এবার এডিটর ব্যবহার করে একটি নতুন lists.py প্রোগ্রাম তৈরি করি।</p>
+
+                <div class="arena-workspace">
+                    
+                    <!-- Left: Objectives Checklist -->
+                    <div class="objectives-card">
+                        <div style="font-weight: bold; font-size: 1.1rem; color: var(--neon-green); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            🎯 মিশন গোলসমূহ (Objectives Checklist):
+                        </div>
+                        
+                        <div class="objective-item" id="obj-1">
+                            <div class="obj-checkbox">✓</div>
+                            <div class="obj-text">১. তোমার নিজের পছন্দের ৩টি গেম বা ৩টি কার্টুনের নাম দিয়ে একটি পাইথন লিস্ট তৈরি করো। লিস্টটির নাম দাও my_favorites।</div>
+                        </div>
+                        
+                        <div class="objective-item" id="obj-2">
+                            <div class="obj-checkbox">✓</div>
+                            <div class="obj-text">২. এবার print() ব্যবহার করে পুরো লিস্টটি স্ক্রিনে দেখাও।</div>
+                        </div>
+
+                        <div class="objective-item" id="obj-3">
+                            <div class="obj-checkbox">✓</div>
+                            <div class="obj-text">৩. বোনাস চ্যালেঞ্জ: ইনডেক্স ব্যবহার করে তোমার লিস্টের একদম প্রথম জিনিসটি ([0]) আলাদাভাবে প্রিন্ট করে দেখাও।</div>
+                        </div>
+
+                        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
+                            💡 এই পুরো program টি তৈরি করো and run details to compile dynamically in our simulated terminal.
+                        </p>
+                    </div>
+
+                    <!-- Right: Editor & Terminal Playground -->
+                    <div class="ide-editor-container">
+                        <div class="ide-header">
+                            <div class="ide-title">
+                                <span>📦</span> lists.py
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-secondary" id="editor-inject-btn" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 8px;">সলিউশন লোড</button>
+                                <button class="btn btn-primary" id="editor-run-btn" style="padding: 6px 16px; font-size: 0.8rem; border-radius: 8px; background: linear-gradient(135deg, var(--neon-green), var(--neon-blue)); color: #000; font-weight: bold;">Run Code ▶</button>
+                            </div>
+                        </div>
+                        <div class="ide-body">
+                            <div class="ide-line-numbers">
+                                1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9<br>10<br>11
+                            </div>
+                            <textarea class="ide-textarea" id="ide-code" spellcheck="false" placeholder="# এখানে তোমার কোড লেখো অথবা সলিউশন লোড করো..."></textarea>
+                        </div>
+                        <div class="ide-console" id="ide-console">
+                            <div class="console-log-line" style="color: var(--text-secondary);">>> টার্মিনাল আউটপুট এখানে দেখাবে। কোড লিখে 'Run Code' বাটনে ক্লিক করো!</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================= HELP ACCORDIONS ======================= -->
+        <div class="help-accordion-section">
+            <h3 style="font-size: 1.6rem; color: var(--neon-yellow); margin-bottom: 25px; display: flex; align-items: center; gap: 10px; font-weight: bold;">
+                🛡️ সাহায্যকারী উইং (Help Section)
+            </h3>
+
+            <!-- 1. Hints Accordion -->
+            <div class="accordion-item" id="accordion-hints">
+                <div class="accordion-header" onclick="toggleAccordion('accordion-hints')">
+                    <div class="accordion-header-left">
+                        <span style="font-size: 1.4rem;">💡</span>
+                        <span>সাহায্য & হিন্টস (Hints)</span>
+                    </div>
+                    <span class="accordion-header-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-body">
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: 12px; padding: 12px 18px; display: flex; gap: 12px; align-items: center;">
+                                <span style="font-size: 1.2rem; color: var(--neon-yellow);">🛡️ Hint 1:</span>
+                                <span style="color: var(--text-primary);">লিস্ট বানানোর নিয়ম: থার্ড ব্র্যাকেটের ভেতর কোটেশন মার্ক দিয়ে নামগুলো লেখো, যেমন: my_favorites = ["Tom and Jerry", "Ben 10", "Batman"]।</span>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: 12px; padding: 12px 18px; display: flex; gap: 12px; align-items: center;">
+                                <span style="font-size: 1.2rem; color: var(--neon-yellow);">🛡️ Hint 2:</span>
+                                <span style="color: var(--text-primary);">আলাদাভাবে প্রিন্ট করা: লিস্টের প্রথম উপাদানটি প্রিন্ট করতে চাইলে প্রিন্টের ভেতর থার্ড ব্র্যাকেটে ০ লিখে দাও, যেমন: print(my_favorites[0])।</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Walkthrough Video Accordion -->
+            <div class="accordion-item" id="accordion-walkthrough">
+                <div class="accordion-header" onclick="toggleAccordion('accordion-walkthrough')">
+                    <div class="accordion-header-left">
+                        <span style="font-size: 1.4rem;">📹</span>
+                        <span>📹 Walkthrough Video Simulation</span>
+                    </div>
+                    <span class="accordion-header-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-body">
+                        <p style="margin-bottom: 15px;">প্লেয়ারে ক্লিক করে পুরো lists.py সলিউশনের লাইভ টাইপিং সিমুলেশন প্লেয়ার দেখে নাও!</p>
+                        
+                        <div class="walkthrough-player-box">
+                            <div class="player-bar">
+                                <div class="player-controls">
+                                    <button class="player-btn" id="wt-play-btn">কোড প্লে করুন ⏯</button>
+                                    <button class="player-btn" id="wt-reset-btn">রিসেট</button>
+                                </div>
+                                <div style="font-size: 0.8rem; color: var(--neon-blue); font-family: var(--font-mono);">list_simulation.py</div>
+                            </div>
+                            <div class="player-screen" id="wt-screen">
+                                <span style="color: var(--text-secondary);">// প্লে বাটনে ক্লিক করলে সলিউশন টাইপিং এখানে অ্যানিমেটেড হবে...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Solution Accordion -->
+            <div class="accordion-item" id="accordion-solution">
+                <div class="accordion-header" onclick="toggleAccordion('accordion-solution')">
+                    <div class="accordion-header-left">
+                        <span style="font-size: 1.4rem;">🛠️</span>
+                        <span>🛠️ সমাধান ও সম্পূর্ণ কোড (Solution)</span>
+                    </div>
+                    <span class="accordion-header-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-body">
+                        <p style="margin-bottom: 15px;">তোমার নতুন তৈরি করা lists.py ফাইলের কোডটি হবে একদম এরকম সহজ ও সুন্দর:</p>
+                        
+                        <div class="terminal" style="margin-bottom: 15px; border-color: rgba(57, 255, 20, 0.2);">
+                            <div class="terminal-header">
+                                <span class="terminal-title">lists.py Solution</span>
+                                <button class="btn btn-secondary" onclick="injectSolution()" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px;">কোড এডিটরে দিন (Inject)</button>
+                            </div>
+                            <div class="terminal-body" style="font-size: 0.88rem; padding: 15px; min-height: auto;">
+                                <pre style="margin: 0; color: #a7f3d0;"><span style="color: #6b7280;"># ১. পছন্দের ৩টি কার্টুনের নাম দিয়ে একটি লিস্ট তৈরি করলাম</span>
+my_favorites = [<span style="color: #fbbf24;">"Tom and Jerry"</span>, <span style="color: #fbbf24;">"Ben 10"</span>, <span style="color: #fbbf24;">"Batman"</span>]
+
+<span style="color: #34d399;">print</span>(<span style="color: #fbbf24;">"--- 📜 আমার পছন্দের পুরো লিস্ট ---"</span>)
+<span style="color: #6b7280;"># ২. পুরো লিস্টটি একসাথে প্রিন্ট করলাম</span>
+<span style="color: #34d399;">print</span>(my_favorites)
+
+<span style="color: #34d399;">print</span>(<span style="color: #fbbf24;">"--------------------------------"</span>)
+
+<span style="color: #34d399;">print</span>(<span style="color: #fbbf24;">"--- 🎯 লিস্টের একদম প্রথম কার্টুন ---"</span>)
+<span style="color: #6b7280;"># ৩. ইনডেক্স [0] ব্যবহার করে প্রথম উপাদানটি প্রিন্ট করলাম</span>
+<span style="color: #34d399;">print</span>(my_favorites[0])</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. AI Coding Companion Accordion -->
+            <div class="accordion-item" id="accordion-ai">
+                <div class="accordion-header" onclick="toggleAccordion('accordion-ai')">
+                    <div class="accordion-header-left">
+                        <span style="font-size: 1.4rem;">🤖</span>
+                        <span>AI Coding Companion (PyBot)</span>
+                    </div>
+                    <span class="accordion-header-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-body">
+                        <p style="margin-bottom: 15px;">লিস্ট ও ইনডেক্সিং নিয়ে যেকোনো প্রশ্ন থাকলে নিচের সাজেশনে ক্লিক করে <strong>PyBot</strong> টিউটরের কাছ থেকে জেনে নাও!</p>
+                        
+                        <div class="chatbot-container">
+                            <div class="chatbot-messages" id="chat-messages">
+                                <div class="chat-bubble bot">
+                                    হ্যালো কোডার! আমি <strong>PyBot</strong>। পাইথন লিস্ট ও ইনডেক্স স্টোরেজ নিয়ে তোমার কী প্রশ্ন আছে? ঝটপট জিজ্ঞেস করো! 📦
+                                </div>
+                            </div>
+                            <div class="chatbot-inputs">
+                                <span class="chat-suggestion" onclick="askPyBot('লিস্ট কী এবং কেন দরকার? 📦')">লিস্ট কী এবং কেন দরকার? 📦</span>
+                                <span class="chat-suggestion" onclick="askPyBot('ইনডেক্সিং (Indexing) কিভাবে কাজ করে? 🎯')">ইনডেক্সিং (Indexing) কিভাবে কাজ করে? 🎯</span>
+                                <span class="chat-suggestion" onclick="askPyBot('লিস্টের চৌকো বন্ধনী [ ] এর কাজ কী? ⚔️')">লিস্টের চৌকো বন্ধনী [ ] এর কাজ কী? ⚔️</span>
+                                <span class="chat-suggestion" onclick="askPyBot('লিস্টে নতুন উপাদান কিভাবে যুক্ত করব? ➕')">লিস্টে নতুন উপাদান কিভাবে যুক্ত করব? ➕</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <!-- Practice in Python IDE -->
+        <div class="accordion-item" id="accordion-practice">
+            <div class="accordion-header" onclick="toggleAccordion('accordion-practice')">
+                <div class="accordion-header-left">
+                    <span style="font-size: 1.4rem;">💻</span>
+                    <span>Practice in Python IDE</span>
+                </div>
+                <span class="accordion-header-icon">▼</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-body">
+                    <p style="margin-bottom: 15px;">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p>
+                    <a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;box-shadow:0 0 16px rgba(101,209,178,0.2)">🚀 Open Python IDE</a>
+                </div>
+            </div>
+        </div>
+
+        </div>
+
+        <!-- ======================= ADVENTURE COMPLETION AREA ======================= -->
+        <div class="complete-area" id="complete-area" style="display: none;">
+            <h2 style="font-size: 1.8rem; font-weight: 800; color: var(--neon-green); margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                🏆 অধ্যায় সম্পন্ন করার উৎসব!
+            </h2>
+            <p style="font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 25px;">
+                তুমি চমৎকারভাবে লিস্টের মৌলিক ধারণাগুলো অর্জন করেছ এবং বাজারের ফর্দ প্যাকিং ও কার্টুন লিস্টিং সম্পন্ন করেছ।
+            </p>
+            <button class="btn btn-primary complete-btn-pulse" id="global-complete-btn" style="background: linear-gradient(135deg, var(--neon-green), var(--neon-blue)); color: #000; font-size: 1.2rem; padding: 16px 40px; border-radius: 18px; font-weight: bold; box-shadow: 0 0 25px rgba(57, 255, 20, 0.4);">
+                ⚔️ অধ্যায়টি সম্পন্ন করুন ও ৫০ XP দাবি করুন!
+            </button>
+        </div>
+
+        <!-- NAVIGATION FOOTER -->
+        <div class="nav-footer">
+            <button class="btn btn-secondary" onclick="window.location.href='class5.html'">
+                ⬅️ অধ্যায় ড্যাশবোর্ড
+            </button>
+            <button class="btn btn-primary" onclick="window.location.href='c5_grocery.html'" style="background: linear-gradient(135deg, var(--primary), var(--secondary));">
+                পরবর্তী মিশন (Grocery Challenge) ➡️
+            </button>
+        </div>
+
+    </div>
+
+    <!-- FLOATING HELPER MASCOT -->
+    <div class="floating-helper" onclick="triggerFloatingHelper()">
+        <img src="tiny_robot.png" alt="PyBot Mascot" onerror="this.src='https://i.imgur.com/vHqB5z5.png'">
+        <div class="floating-speech" id="floating-speech">
+            স্বাগতম লিস্ট মেকার! আমি PyBot। কোনো সাহায্য লাগলে আমাকে বলো। স্কুলের জিনিসগুলো ব্যাগে ঢুকিয়ে লিস্ট তৈরি করে ফেলো! 📦
+        </div>
+    </div>
+
+    <!-- CONTROL PANEL -->
+    <div class="controls-panel">
+        <button class="control-btn" id="theme-btn">🌙</button>
+        <button class="control-btn" id="voice-bot-btn">🤖</button>
+    </div>
+
+    <!-- Global Framework Scripts -->
+    <script src="Begineer.js"></script>
+    <script>
+        // ------------------ PROGRESS KEY CONFIG ------------------
+        const subclassId = 'c5_basic';
+
+        // ------------------ PARTICLE BACKGROUND ENGINE ------------------
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 3 + 1;
+                this.speedX = Math.random() * 0.5 - 0.25;
+                this.speedY = Math.random() * -0.5 - 0.1;
+                this.color = Math.random() > 0.5 ? 'rgba(0, 240, 255, 0.15)' : 'rgba(25, 184, 166, 0.15)';
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.y < 0) {
+                    this.y = canvas.height;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < 50; i++) {
+                particles.push(new Particle());
+            }
+        }
+        initParticles();
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        // ------------------ ADVENTURE PROGRESS STATE ------------------
+        let completionState = {
+            shoppingCompleted: false,
+            drawersCompleted: false,
+            playgroundCompleted: false
+        };
+
+        function updateAdventureProgress() {
+            let total = Object.keys(completionState).length;
+            let done = Object.values(completionState).filter(v => v === true).length;
+            let percent = Math.round((done / total) * 100);
+
+            const fill = document.getElementById('level-progress-fill');
+            const label = document.getElementById('level-progress-text');
+            if (fill) fill.style.width = percent + '%';
+            if (label) label.innerText = percent + '% সম্পন্ন';
+
+            if (percent === 100) {
+                document.getElementById('complete-area').style.display = 'block';
+                triggerCelebrationEffect("দারুণ! সব মিশন সম্পন্ন! ৫০ এক্সপি দাবি করো! 🎉");
+            }
+        }
+
+        function triggerCelebrationEffect(text) {
+            if (window.confetti) {
+                confetti({
+                    particleCount: 150,
+                    spread: 80,
+                    origin: { y: 0.6 }
+                });
+            }
+            if (window.PortalSystem && window.PortalSystem.voiceActive) {
+                window.PortalSystem.tutorSpeak(text);
+            }
+        }
+
+        // ------------------ LEVEL 1: MARKET SHOPPING BAG WIDGET ------------------
+        let packedItems = new Set();
+        const backpackCount = document.getElementById('backpack-count');
+        const shoppingNotes = document.getElementById('shopping-notes');
+        const backpackIcon = document.getElementById('backpack-icon');
+
+        function packItem(id, name) {
+            if (packedItems.has(id)) return;
+
+            packedItems.add(id);
+            const btn = document.getElementById(`shop-item-${id}`);
+            btn.classList.add('packed');
+            btn.innerText = `✅ Packed: ${name.split(' ')[0]}`;
+
+            backpackIcon.style.transform = 'scale(1.3) rotate(5deg)';
+            setTimeout(() => {
+                backpackIcon.style.transform = '';
+            }, 300);
+
+            backpackCount.innerText = packedItems.size;
+            shoppingNotes.innerHTML = `লিস্টের সাইজ: ${packedItems.size} (প্যাকড: ${Array.from(packedItems).map(i => i === 1 ? 'খাতা' : i === 2 ? 'কলম' : i === 3 ? 'ইরেজার' : 'জ্যামিতি বক্স').join(', ')})`;
+
+            if (packedItems.size === 4) {
+                shoppingNotes.innerHTML = `লিস্টের সাইজ: ৪ <br><span style="color: var(--neon-green); font-weight:bold;">সবগুলো জিনিস ব্যাগে প্যাকড সম্পন্ন! 🎒</span>`;
+                completionState.shoppingCompleted = true;
+                updateAdventureProgress();
+                triggerCelebrationEffect("দারুণ কাজ! সব জিনিস ব্যাগে প্যাক করা হলো!");
+            }
+        }
+
+        // ------------------ LEVEL 2: FRUITS CHEST SLOT INDEX DRAWER ------------------
+        let revealedSlots = new Set();
+        const fruitsConsole = document.getElementById('fruits-console');
+
+        function revealSlot(id, name) {
+            const slot = document.getElementById(`slot-${id}`);
+            if (slot.classList.contains('revealed')) return;
+
+            slot.classList.add('revealed');
+            revealedSlots.add(id);
+
+            const label = document.getElementById(`slot-label-${id}`);
+            label.innerText = name.split(' ')[1];
+
+            fruitsConsole.innerHTML = `<span style="color: var(--neon-blue); font-weight:bold;">[index ${id}]</span> fruits[${id}] এ রেন্ডারড ভ্যালু: <span style="color: var(--neon-green); font-weight:bold;">"${name.split(' ')[1]}"</span>`;
+
+            if (revealedSlots.size === 3) {
+                fruitsConsole.innerHTML = `<span style="color: var(--neon-green); font-weight:bold;">লিস্ট fruits = ["Apple", "Mango", "Banana"] সফলভাবে ক্যাবিনেটে বিন্যস্ত হলো! 🏺</span>`;
+                completionState.drawersCompleted = true;
+                updateAdventureProgress();
+                triggerCelebrationEffect("লিস্ট ইনডেক্স ক্যাবিনেট ওপেন হলো!");
+            }
+        }
+
+        // ------------------ LEVEL 3: IDE PLAYGROUND WORKSPACE ------------------
+        const ideCode = document.getElementById('ide-code');
+        const ideConsole = document.getElementById('ide-console');
+        const editorRunBtn = document.getElementById('editor-run-btn');
+        const editorInjectBtn = document.getElementById('editor-inject-btn');
+
+        const solutionCodeText = `# ১. পছন্দের ৩টি কার্টুনের নাম দিয়ে একটি লিস্ট তৈরি করলাম
+my_favorites = ["Tom and Jerry", "Ben 10", "Batman"]
+
+print("--- 📜 আমার পছন্দের পুরো লিস্ট ---")
+# ২. পুরো লিস্টটি একসাথে প্রিন্ট করলাম
+print(my_favorites)
+
+print("--------------------------------")
+
+print("--- 🎯 লিস্টের একদম প্রথম কার্টুন ---")
+# ৩. ইনডেক্স [0] ব্যবহার করে প্রথম উপাদানটি প্রিন্ট করলাম
+print(my_favorites[0])`;
+
+        editorInjectBtn.addEventListener('click', () => {
+            injectSolution();
+        });
+
+        function injectSolution() {
+            ideCode.value = solutionCodeText;
+            ideConsole.innerHTML = `<span style="color: var(--neon-blue);">lists.py সলিউশন কোড এডিটরে লোড করা হয়েছে! Run Code বাটনে ক্লিক করো।</span>`;
+            document.getElementById('accordion-solution').classList.add('active');
+        }
+
+        editorRunBtn.addEventListener('click', () => {
+            const code = ideCode.value.trim();
+            if (!code) {
+                ideConsole.innerHTML = `<span style="color: var(--neon-pink);">এডিটর ফাঁকা! কোড লেখো অথবা সলিউশন লোড করো!</span>`;
+                return;
+            }
+
+            ideConsole.innerHTML = `<span style="color: var(--neon-green);">lists.py কোড কম্পাইল করা হচ্ছে...</span><br>`;
+
+            // Regex scans code for objectives
+            let obj1 = code.includes('my_favorites') && code.includes('[') && code.includes(']');
+            let obj2 = code.includes('print(my_favorites)') || code.includes('print( my_favorites )');
+            let obj3 = code.includes('my_favorites[0]');
+
+            let lines = [];
+
+            if (obj1) {
+                document.getElementById('obj-1').classList.add('checked');
+            } else {
+                document.getElementById('obj-1').classList.remove('checked');
+            }
+
+            if (obj2) {
+                lines.push("--- 📜 আমার পছন্দের পুরো লিস্ট ---");
+                lines.push("['Tom and Jerry', 'Ben 10', 'Batman']");
+                document.getElementById('obj-2').classList.add('checked');
+            } else {
+                document.getElementById('obj-2').classList.remove('checked');
+            }
+
+            if (obj3) {
+                lines.push("--------------------------------");
+                lines.push("--- 🎯 লিস্টের একদম প্রথম কার্টুন ---");
+                lines.push("Tom and Jerry");
+                document.getElementById('obj-3').classList.add('checked');
+            } else {
+                document.getElementById('obj-3').classList.remove('checked');
+            }
+
+            let index = 0;
+            function printLine() {
+                if (index < lines.length) {
+                    const log = document.createElement('div');
+                    log.className = 'console-log-line';
+                    log.innerText = lines[index];
+                    ideConsole.appendChild(log);
+                    ideConsole.scrollTop = ideConsole.scrollHeight;
+                    index++;
+                    setTimeout(printLine, 150);
+                } else {
+                    if (obj1 && obj2 && obj3) {
+                        const winLog = document.createElement('div');
+                        winLog.className = 'console-log-line';
+                        winLog.style.color = 'var(--neon-green)';
+                        winLog.style.fontWeight = 'bold';
+                        winLog.innerHTML = `<br>🎉 মিশন সফল! লিস্টের ৩টি অবজেক্টিভ সম্পূর্ণ হয়েছে!`;
+                        ideConsole.appendChild(winLog);
+                        ideConsole.scrollTop = ideConsole.scrollHeight;
+
+                        completionState.playgroundCompleted = true;
+                        updateAdventureProgress();
+                        triggerCelebrationEffect("লিস্ট প্র্যাকটিস মিশন সম্পন্ন!");
+                    } else {
+                        const warnLog = document.createElement('div');
+                        warnLog.className = 'console-log-line';
+                        warnLog.style.color = 'var(--neon-yellow)';
+                        warnLog.innerHTML = `<br>⚠️ কিছু গোল মেলাতে হবে! সলিউশন কোড এডিটর লোড করতে পারো।`;
+                        ideConsole.appendChild(warnLog);
+                        ideConsole.scrollTop = ideConsole.scrollHeight;
+                    }
+                }
+            }
+            setTimeout(printLine, 400);
+        });
+
+        // ------------------ HELP ACCORDIONS ENGINE ------------------
+        function toggleAccordion(id) {
+            const item = document.getElementById(id);
+            const isActive = item.classList.contains('active');
+            document.querySelectorAll('.accordion-item').forEach(el => el.classList.remove('active'));
+
+            if (!isActive) {
+                item.classList.add('active');
+            }
+        }
+
+        // ------------------ WALKTHROUGH SIMULATOR PLAYER ------------------
+        let wtRunning = false;
+        let wtIndex = 0;
+        const wtScreen = document.getElementById('wt-screen');
+        const wtPlayBtn = document.getElementById('wt-play-btn');
+        const wtResetBtn = document.getElementById('wt-reset-btn');
+
+        const walkthroughSteps = [
+            { text: "# ১. পছন্দের ৩টি কার্টুনের নাম দিয়ে একটি লিস্ট তৈরি করলাম", color: "#6b7280" },
+            { text: "my_favorites = [\"Tom and Jerry\", \"Ben 10\", \"Batman\"]", color: "#f472b6" },
+            { text: "\nprint(\"--- 📜 আমার পছন্দের পুরো লিস্ট ---\")", color: "#34d399" },
+            { text: "# ২. পুরো লিস্টটি একসাথে প্রিন্ট করলাম", color: "#6b7280" },
+            { text: "print(my_favorites)", color: "#f472b6" },
+            { text: "\nprint(\"--------------------------------\")", color: "#34d399" },
+            { text: "\nprint(\"--- 🎯 লিস্টের একদম প্রথম কার্টুন ---\")", color: "#34d399" },
+            { text: "# ৩. ইনডেক্স [0] ব্যবহার করে প্রথম উপাদানটি প্রিন্ট করলাম", color: "#6b7280" },
+            { text: "print(my_favorites[0])", color: "#60a5fa" }
+        ];
+
+        wtPlayBtn.addEventListener('click', () => {
+            if (wtRunning) return;
+            wtRunning = true;
+            wtPlayBtn.innerText = "চলছে...";
+            wtPlayBtn.disabled = true;
+            wtScreen.innerHTML = '';
+            wtIndex = 0;
+
+            function typeStep() {
+                if (wtIndex < walkthroughSteps.length) {
+                    const step = walkthroughSteps[wtIndex];
+                    const line = document.createElement('div');
+                    line.style.color = step.color;
+                    line.style.marginBottom = "5px";
+
+                    let charIndex = 0;
+                    function typeChar() {
+                        if (charIndex < step.text.length) {
+                            line.innerHTML += step.text[charIndex] === '\n' ? '<br>' : step.text[charIndex];
+                            charIndex++;
+                            wtScreen.scrollTop = wtScreen.scrollHeight;
+                            setTimeout(typeChar, 25);
+                        } else {
+                            wtIndex++;
+                            setTimeout(typeStep, 400);
+                        }
+                    }
+                    wtScreen.appendChild(line);
+                    typeChar();
+                } else {
+                    wtRunning = false;
+                    wtPlayBtn.innerText = "সম্পূর্ণ!";
+                    wtPlayBtn.style.background = 'var(--neon-green)';
+                    wtPlayBtn.disabled = false;
+                }
+            }
+            typeStep();
+        });
+
+        wtResetBtn.addEventListener('click', () => {
+            wtRunning = false;
+            wtIndex = 0;
+            wtPlayBtn.innerText = "কোড প্লে করুন ⏯";
+            wtPlayBtn.disabled = false;
+            wtPlayBtn.style.background = '';
+            wtScreen.innerHTML = '<span style="color: var(--text-secondary);">// প্লে বাটনে ক্লিক করলে সলিউশন টাইপিং এখানে অ্যানিমেটেড হবে...</span>';
+        });
+
+        // ------------------ AI CODING COMPANION (PYBOT) ------------------
+        const chatMessages = document.getElementById('chat-messages');
+
+        const pybotDatabase = {
+            "লিস্ট কী এবং কেন দরকার? 📦": "লিস্ট হলো পাইথনের একটি ঝুড়ির মতো! 📦 সাধারণত আমরা একটি ভ্যারিয়েবলে ১টি মান রাখি। কিন্তু আমাদের যদি স্কুলের ১০০০টি আইটেম বা প্লেয়ারের ৫০টি প্রোফাইল ডাটা রাখতে হয়, তাহলে ১০০০টি ভ্যারিয়েবল বানানো অনেক কষ্টের! লিস্ট ব্যবহার করে আমরা একটি ব্র্যাকেট [ ] এর ভিতর কমা দিয়ে শত শত ডাটা একসাথে জমিয়ে রাখতে পারি!",
+            "ইনডেক্সিং (Indexing) কিভাবে কাজ করে? 🎯": "ইনডেক্স হলো লিস্টের ভেতর আইটেমদের পজিশন বা রোল নম্বর! 🎯 মনে রেখো—পাইথনে রোল নম্বর বা ইনডেক্স শুরু হয় <strong>০</strong> থেকে, ১ থেকে নয়! তাই ৩টি উপাদানের লিস্টে পজিশনগুলো হয়: [0] হচ্ছে ১ম, [1] হচ্ছে ২য় এবং [2] হচ্ছে ৩য়!",
+            "লিস্টের চৌকো বন্ধনী [ ] এর কাজ কী? ⚔️": "চৌকো বন্ধনী বা থার্ড ব্র্যাকেট [ ] হলো লিস্টের সীমানা প্রাচীর! ⚔️ এর ভেতরেই সব উপাদান এক কন্টেইনারে আবদ্ধ থাকে। আবার কোনো নির্দিষ্ট আইটেমকে খুঁজতে গেলেও আমরা এর ভেতরে ইনডেক্স লিখে দিই, যেমন fruits[0] বা my_favorites[1]।",
+            "লিস্টে নতুন উপাদান কিভাবে যুক্ত করব? ➕": "লিস্টে নতুন উপাদান যুক্ত করা অত্যন্ত সহজ! পাইথনে লিস্টের নামের সাথে ডট দিয়ে <strong>.append()</strong> মেথড ব্যবহার করা হয়। যেমন: fruits.append(\"Orange\") লিখলেই লিস্টের শেষের দিকে আরেকটি ড্রয়ার যোগ হয়ে যাবে এবং কমলা ঢুকে যাবে! ➕"
+        };
+
+        function askPyBot(question) {
+            const userDiv = document.createElement('div');
+            userDiv.className = 'chat-bubble user';
+            userDiv.innerText = question;
+            chatMessages.appendChild(userDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'chat-bubble bot';
+            typingDiv.innerHTML = '<span style="animation: bounceMascot 1s infinite;">...</span>';
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            setTimeout(() => {
+                const answerText = pybotDatabase[question];
+                typingDiv.innerHTML = answerText;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                if (window.PortalSystem && window.PortalSystem.voiceActive) {
+                    window.PortalSystem.tutorSpeak(answerText.replace(/<[^>]*>/g, ''));
+                }
+            }, 600);
+        }
+
+        // ------------------ GLOBAL FLOATING MASCOT INTERACTION ------------------
+        const speech = document.getElementById('floating-speech');
+
+        function triggerFloatingHelper() {
+            const speechDatabase = [
+                "সাবাশ কোডার! লিস্ট আমাদের ডাটা প্যাকিং সহজ করে দেয়!",
+                "ক্যাবিনেটের স্লটগুলোতে ক্লিক করে ০, ১, ২ ইনডেক্স বুঝে নাও!",
+                "যেকোনো প্রশ্ন থাকলে আমার চ্যাটবক্সে জিজ্ঞেস করো! 📦",
+                "লিস্টের থার্ড ব্র্যাকেট [ ] ব্যবহার করতে ভুলো না কিন্তু!",
+                "ব্যাগে স্কুলের খাতা-কলম প্যাকিং সম্পন্ন করো!"
+            ];
+            const randomMsg = speechDatabase[Math.floor(Math.random() * speechDatabase.length)];
+            speech.innerText = randomMsg;
+            speech.style.opacity = '1';
+            speech.style.transform = 'translateY(0)';
+
+            if (window.PortalSystem && window.PortalSystem.voiceActive) {
+                window.PortalSystem.tutorSpeak(randomMsg);
+            }
+
+            setTimeout(() => {
+                speech.style.opacity = '0';
+                speech.style.transform = 'translateY(10px)';
+            }, 5000);
+        }
+
+        // ------------------ PROGRESS COMPLETION REGISTER ------------------
+        const completeBtn = document.getElementById('global-complete-btn');
+
+        completeBtn.addEventListener('click', () => {
+            if (window.PortalSystem) {
+                window.PortalSystem.updateProgress(subclassId, 'completed');
+                completeBtn.innerText = "লিস্ট বেসিক সম্পন্ন! 🎉";
+                completeBtn.style.background = 'var(--neon-green)';
+                completeBtn.disabled = true;
+
+                const xp = document.getElementById('xp-text');
+                xp.innerText = "২২০ XP";
+                xp.style.color = 'var(--neon-green)';
+                xp.style.transform = 'scale(1.25)';
+                setTimeout(() => xp.style.transform = 'scale(1)', 1000);
+            } else {
+                alert("মিশন সফলভাবে সম্পূর্ণ!");
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.PortalSystem) {
+                let savedState = window.PortalSystem.progress[subclassId];
+                if (savedState === 'completed') {
+                    Object.keys(completionState).forEach(k => completionState[k] = true);
+                    updateAdventureProgress();
+
+                    completeBtn.innerText = "অধ্যায় সম্পন্ন হয়ে আছে! 🎉";
+                    completeBtn.style.background = 'var(--neon-green)';
+                    completeBtn.disabled = true;
+                    document.getElementById('xp-text').innerText = "২২০ XP";
+                }
+            }
+        });
+    </script>
+</body>
+</html>

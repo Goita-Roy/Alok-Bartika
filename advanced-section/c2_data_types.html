@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🧬 Data Types · Python Adventure · Level 05</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+Bengali:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --neon-pink: #ff2e8a;
+      --neon-cyan: #00e5ff;
+      --neon-purple: #bc13fe;
+      --neon-yellow: #ffe74c;
+      --neon-green: #39ff14;
+      --neon-orange: #ff9f1c;
+      --bg: #0a0a1f;
+      --surface: #12122e;
+      --card: #181838;
+      --text: #f0f0ff;
+      --muted: #8892b0;
+      --terminal: #050510;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'Noto Sans Bengali', sans-serif;
+      min-height: 100vh; overflow-x: hidden;
+    }
+    code, pre { font-family: 'JetBrains Mono', monospace; }
+
+    .particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .particle { position: absolute; font-family: 'JetBrains Mono', monospace; font-size: 14px; opacity: .25; bottom: -30px; }
+    @keyframes drift {
+      0% { transform: translateY(0) translateX(0) rotate(0deg); }
+      100% { transform: translateY(-110vh) translateX(30px) rotate(360deg); }
+    }
+
+    .hero { position: relative; z-index: 1; padding: 80px 20px 40px; text-align: center; overflow: hidden; }
+    .hero-blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .35; pointer-events: none; }
+    .badge {
+      display: inline-block; padding: 6px 20px;
+      border: 1px solid rgba(0,229,255,.4); border-radius: 999px;
+      color: var(--neon-cyan); font-family: 'Press Start 2P', monospace;
+      font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+      background: rgba(0,229,255,.08); margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-family: 'Press Start 2P', monospace; font-size: clamp(22px,5vw,40px);
+      line-height: 1.5; margin-bottom: 20px; color: #fff;
+    }
+    .hero .subtitle { color: var(--muted); font-size: 17px; max-width: 660px; margin: 0 auto 30px; line-height: 1.7; }
+    .cta-btn {
+      display: inline-flex; align-items: center; gap: 10px; padding: 14px 34px;
+      border-radius: 14px; border: none; cursor: pointer; font-size: 15px;
+      font-family: 'Noto Sans Bengali', sans-serif; font-weight: 700;
+      color: #fff; background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+      box-shadow: 0 0 30px rgba(0,229,255,.3), 0 0 60px rgba(188,19,254,.2);
+      transition: transform .2s, box-shadow .3s;
+    }
+    .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(0,229,255,.5); }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 0 20px 60px; position: relative; z-index: 1; }
+
+    .section-block {
+      background: linear-gradient(160deg, rgba(24,24,56,.95), rgba(12,12,46,.85));
+      border: 1px solid rgba(0,229,255,.2); border-radius: 24px; padding: 40px;
+      margin-bottom: 40px; backdrop-filter: blur(10px); box-shadow: 0 20px 60px rgba(0,0,0,.4);
+    }
+    .section-block h2 {
+      font-family: 'Press Start 2P', monospace; font-size: 16px; color: var(--neon-cyan);
+      margin-bottom: 24px; display: flex; align-items: center; gap: 12px;
+    }
+
+    /* Data type cards */
+    .types-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px; margin: 24px 0 12px;
+    }
+    .type-card {
+      position: relative; padding: 24px 20px; border-radius: 20px;
+      background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08);
+      transition: transform .3s, box-shadow .3s;
+      animation: bobble 3.5s ease-in-out infinite;
+    }
+    .type-card:nth-child(2) { animation-delay: .3s; }
+    .type-card:nth-child(3) { animation-delay: .6s; }
+    .type-card:nth-child(4) { animation-delay: .9s; }
+    .type-card:hover { transform: translateY(-4px); }
+    .type-card.t-int    { border-color: rgba(0,229,255,.4);   box-shadow: 0 0 25px rgba(0,229,255,.12); }
+    .type-card.t-float  { border-color: rgba(188,19,254,.4);  box-shadow: 0 0 25px rgba(188,19,254,.12); }
+    .type-card.t-str    { border-color: rgba(255,231,76,.4);  box-shadow: 0 0 25px rgba(255,231,76,.12); }
+    .type-card.t-bool   { border-color: rgba(57,255,20,.4);   box-shadow: 0 0 25px rgba(57,255,20,.12); }
+    .type-icon { font-size: 38px; display: block; margin-bottom: 10px; }
+    .type-name {
+      font-family: 'Press Start 2P', monospace; font-size: 12px;
+      margin-bottom: 8px; letter-spacing: .5px;
+    }
+    .t-int .type-name   { color: var(--neon-cyan); }
+    .t-float .type-name { color: var(--neon-purple); }
+    .t-str .type-name   { color: var(--neon-yellow); }
+    .t-bool .type-name  { color: var(--neon-green); }
+    .type-desc { font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 14px; }
+    .type-example {
+      display: block; background: rgba(0,0,0,.4); border-radius: 8px;
+      padding: 8px 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px;
+      color: #c8f7c5; margin-top: 6px;
+    }
+    @keyframes bobble {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    /* Story note */
+    .story {
+      background: rgba(0,229,255,.05); border-left: 3px solid var(--neon-cyan);
+      border-radius: 0 12px 12px 0; padding: 18px 22px; margin: 18px 0;
+      font-size: 15px; line-height: 1.8; color: #d5e8ff;
+    }
+    .story strong { color: var(--neon-yellow); }
+
+    /* Terminal (reused) */
+    .terminal {
+      background: var(--terminal); border: 1px solid rgba(0,229,255,.25);
+      border-radius: 18px; overflow: hidden; margin: 24px 0;
+      box-shadow: 0 0 40px rgba(0,229,255,.08), inset 0 0 60px rgba(0,229,255,.03);
+    }
+    .term-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; background: rgba(0,0,0,.3);
+      border-bottom: 1px solid rgba(0,229,255,.15);
+    }
+    .term-dots { display: flex; gap: 8px; }
+    .term-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-r { background: #ff5f56; } .dot-y { background: #ffbd2e; } .dot-g { background: #27c93f; }
+    .term-title { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); }
+    .copy-btn {
+      background: none; border: none; color: var(--neon-cyan);
+      font-family: 'JetBrains Mono', monospace; font-size: 12px;
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+    }
+    .copy-btn:hover { color: var(--neon-pink); }
+    .term-body {
+      padding: 22px 26px; font-family: 'JetBrains Mono', monospace;
+      font-size: 14px; line-height: 1.9;
+    }
+    .term-line { display: flex; gap: 12px; }
+    .ln { color: rgba(136,146,176,.4); min-width: 24px; text-align: right; user-select: none; }
+    .kw { color: var(--neon-pink); font-weight: 600; }
+    .str { color: var(--neon-yellow); }
+    .num { color: var(--neon-cyan); }
+    .var { color: var(--neon-green); }
+    .bool { color: var(--neon-purple); font-weight: 600; }
+    .cm { color: var(--muted); font-style: italic; }
+    .bl { animation: blink 1s steps(2) infinite; display: inline-block; width: 10px; height: 18px; background: var(--neon-cyan); vertical-align: middle; margin-left: 4px; }
+    @keyframes blink { 0%,50% { opacity: 1; } 51%,100% { opacity: 0; } }
+    .output {
+      background: rgba(57,255,20,.04); border: 1px solid rgba(57,255,20,.15);
+      border-radius: 14px; padding: 20px 24px; margin-top: 20px;
+    }
+    .output-title { font-family: 'Press Start 2P', monospace; font-size: 10px; color: var(--neon-green); margin-bottom: 14px; }
+    .output-line { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #c8f7c5; line-height: 1.8; }
+
+    /* Accordion */
+    .accordion { display: flex; flex-direction: column; gap: 16px; }
+    .acc-item {
+      background: linear-gradient(160deg, rgba(24,24,56,.9), rgba(12,12,46,.8));
+      border: 1px solid rgba(0,229,255,.2); border-radius: 20px;
+      overflow: hidden; transition: box-shadow .3s; box-shadow: 0 10px 40px rgba(0,0,0,.25);
+    }
+    .acc-item:hover { box-shadow: 0 0 30px rgba(0,229,255,.18); }
+    .acc-header {
+      width: 100%; display: flex; align-items: center; gap: 16px; padding: 20px 24px;
+      background: none; border: none; color: var(--text); cursor: pointer; text-align: left;
+      font-family: 'Noto Sans Bengali', sans-serif; font-size: 16px; font-weight: 700;
+    }
+    .acc-emoji { font-size: 28px; animation: floatSlow 3.5s ease-in-out infinite; }
+    .acc-title { flex: 1; }
+    .acc-chevron { width: 22px; height: 22px; transition: transform .3s; stroke: var(--neon-cyan); stroke-width: 2.5; fill: none; }
+    .acc-item.open .acc-chevron { transform: rotate(180deg); }
+    .acc-body { max-height: 0; overflow: hidden; transition: max-height .5s ease, opacity .4s ease; opacity: 0; }
+    .acc-item.open .acc-body { max-height: 1200px; opacity: 1; }
+    .acc-inner { padding: 0 24px 24px; border-top: 1px solid rgba(255,255,255,.06); }
+    .hint-card {
+      background: rgba(0,229,255,.05); border: 1px solid rgba(0,229,255,.2);
+      border-radius: 14px; padding: 18px 20px; margin-top: 14px;
+    }
+    .hint-card p { font-size: 15px; line-height: 1.8; }
+    .hint-card code {
+      display: inline-block; padding: 4px 10px; margin: 4px 2px;
+      background: rgba(0,0,0,.35); border-radius: 6px; color: var(--neon-cyan);
+      font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    }
+    @keyframes floatSlow { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+    footer { text-align: center; padding: 50px 20px 30px; color: var(--muted); font-size: 13px; position: relative; z-index: 1; }
+    .heart { color: var(--neon-pink); animation: pulseGlow 2s infinite; }
+    @keyframes pulseGlow { 0%,100% { opacity: .7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.15); } }
+  </style>
+</head>
+<body>
+
+  <div class="particles" id="particles"></div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-blob" style="width:500px;height:500px;background:#00e5ff;top:-160px;left:-100px;"></div>
+    <div class="hero-blob" style="width:400px;height:400px;background:#bc13fe;bottom:-80px;right:-80px;"></div>
+    <div class="badge">Level 05 · Python Data Types</div>
+    <h1>🧬 Data Types</h1>
+    <p class="subtitle">পাইথনের ৪টি প্রধান ডেটা টাইপ — <strong style="color:var(--neon-cyan)">int</strong>, <strong style="color:var(--neon-purple)">float</strong>, <strong style="color:var(--neon-yellow)">str</strong> আর <strong style="color:var(--neon-green)">bool</strong> — চলো একসাথে চিনে নিই!</p>
+    <a href="#types" class="cta-btn">🚀 শুরু করো</a>
+  </section>
+
+  <main class="container">
+
+    <!-- TYPES -->
+    <section class="section-block" id="types">
+      <h2>📦 ৪টি ডেটা টাইপ</h2>
+
+      <div class="types-grid">
+        <div class="type-card t-int">
+          <span class="type-icon">🔢</span>
+          <div class="type-name">INTEGER</div>
+          <p class="type-desc"><strong style="color:#fff">int</strong> হলো পূর্ণ সংখ্যা। কোনো ডেসিমাল পয়েন্ট থাকে না।</p>
+          <span class="type-example">year = 2023</span>
+          <span class="type-example">age = 32</span>
+        </div>
+
+        <div class="type-card t-float">
+          <span class="type-icon">🌊</span>
+          <div class="type-name">FLOAT</div>
+          <p class="type-desc"><strong style="color:#fff">float</strong> হলো দশমিক সংখ্যা — যেমন দাম বা পাইয়ের মান।</p>
+          <span class="type-example">pi = 3.14159</span>
+          <span class="type-example">meal_cost = 12.99</span>
+        </div>
+
+        <div class="type-card t-str">
+          <span class="type-icon">💬</span>
+          <div class="type-name">STRING</div>
+          <p class="type-desc"><strong style="color:#fff">str</strong> দিয়ে টেক্সট রাখা হয়। <code style="color:var(--neon-yellow)">' '</code> বা <code style="color:var(--neon-yellow)">" "</code>-এর ভেতরে লিখতে হয়।</p>
+          <span class="type-example">message = "good nite"</span>
+          <span class="type-example">username = '@snoopdogg'</span>
+        </div>
+
+        <div class="type-card t-bool">
+          <span class="type-icon">⚡</span>
+          <div class="type-name">BOOLEAN</div>
+          <p class="type-desc"><strong style="color:#fff">bool</strong>-এ থাকে শুধু দুটো মান — <strong style="color:var(--neon-green)">True</strong> অথবা <strong style="color:var(--neon-pink)">False</strong>।</p>
+          <span class="type-example">late_to_class = False</span>
+          <span class="type-example">cranky = True</span>
+        </div>
+      </div>
+
+      <div class="story">
+        💡 প্রথম চ্যাপ্টারে আমরা <code style="color:var(--neon-cyan);background:rgba(0,0,0,.35);padding:2px 8px;border-radius:6px;">print()</code> ব্যবহার করার সময়ই string ডেটা টাইপ ব্যবহার করেছিলাম — মনে আছে?
+      </div>
+    </section>
+
+    <!-- INSTRUCTIONS -->
+    <section class="section-block">
+      <h2 style="color:var(--neon-pink);">📜 নির্দেশনা</h2>
+      <div class="story" style="background:rgba(255,46,138,.06);border-left-color:var(--neon-pink);">
+        এই exercise-এ কোনো নির্দিষ্ট কাজ নেই! ✨<br>
+        শুধু <strong>Submit answer</strong> আর <strong>Next</strong> বাটনে ক্লিক করো।<br><br>
+        চাইলে কোড এডিটরে নিচের মতো করে ৪টি ভ্যারিয়েবল তৈরি করে প্র্যাকটিস করতে পারো 👇
+      </div>
+
+      <div class="terminal">
+        <div class="term-header">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="term-dots"><span class="term-dot dot-r"></span><span class="term-dot dot-y"></span><span class="term-dot dot-g"></span></div>
+            <span class="term-title">data_types.py</span>
+          </div>
+          <button class="copy-btn" onclick="copyCode('cpy')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span id="cpy">Copy</span>
+          </button>
+        </div>
+        <div class="term-body">
+          <div class="term-line"><span class="ln">1</span><span class="var">username</span> = <span class="str">'@sonny'</span></div>
+          <div class="term-line"><span class="ln">2</span><span class="var">level</span> = <span class="num">14</span></div>
+          <div class="term-line"><span class="ln">3</span><span class="var">course_progress</span> = <span class="num">0.92</span></div>
+          <div class="term-line"><span class="ln">4</span><span class="var">pet_alive</span> = <span class="bool">True</span></div>
+          <div class="term-line"><span class="ln">5</span></div>
+          <div class="term-line"><span class="ln">6</span><span class="var">print</span>(<span class="var">username</span>)</div>
+          <div class="term-line"><span class="ln">7</span><span class="var">print</span>(<span class="var">level</span>)</div>
+          <div class="term-line"><span class="ln">8</span><span class="var">print</span>(<span class="var">course_progress</span>)</div>
+          <div class="term-line"><span class="ln">9</span><span class="var">print</span>(<span class="var">pet_alive</span>)<span class="bl"></span></div>
+        </div>
+        <div class="output">
+          <div class="output-title">📤 আউটপুট (Output)</div>
+          <div class="output-line">@sonny</div>
+          <div class="output-line">14</div>
+          <div class="output-line">0.92</div>
+          <div class="output-line">True</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HELP -->
+    <section>
+      <h2 style="font-family:'Press Start 2P',monospace;font-size:14px;color:var(--neon-yellow);margin-bottom:24px;text-align:center;">💡 সাহায্য</h2>
+      <div class="accordion">
+
+        <div class="acc-item open">
+          <button class="acc-header" onclick="toggle(this)">
+            <span class="acc-emoji">💡</span>
+            <span class="acc-title" style="color:var(--neon-yellow)">হিন্ট (Hint)</span>
+            <svg class="acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="acc-body">
+            <div class="acc-inner">
+              <div class="hint-card">
+                <p>এখন একটু confusing লাগলে চিন্তা করো না — পরের exercise গুলোতে আরও ভালোভাবে শিখবে। 🌱</p>
+                <p style="margin-top:10px;">প্রতিটি ডেটা টাইপ মনে রাখতে এই সহজ সূত্রটা মনে রেখো:</p>
+                <p style="margin-top:6px;">
+                  <code>int → পূর্ণ সংখ্যা</code>
+                  <code>float → দশমিক</code>
+                  <code>str → টেক্সট</code>
+                  <code>bool → True / False</code>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggle(this)">
+            <span class="acc-emoji">🎬</span>
+            <span class="acc-title" style="color:var(--neon-pink)">Walkthrough Video</span>
+            <svg class="acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="acc-body">
+            <div class="acc-inner" style="text-align:center;padding:30px;">
+              <div style="width:80px;height:80px;border-radius:50%;border:3px solid var(--neon-pink);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 0 25px rgba(255,46,138,.3);">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="var(--neon-pink)"><polygon points="5 3 19 12 5 21"/></svg>
+              </div>
+              <p style="color:var(--muted);">Video tutorial coming soon! 🎥</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggle(this)">
+            <span class="acc-emoji">🤖</span>
+            <span class="acc-title" style="color:var(--neon-purple)">AI Coding Companion</span>
+            <svg class="acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="acc-body">
+            <div class="acc-inner">
+              <div style="display:flex;align-items:center;gap:16px;padding:10px 0;">
+                <div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-cyan));display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 0 20px rgba(188,19,254,.3);">🤖</div>
+                <div>
+                  <p style="font-weight:700;color:var(--neon-purple);margin-bottom:4px;">প্রশ্ন করো!</p>
+                  <p style="color:var(--muted);font-size:14px;">কোন ডেটা টাইপ কোথায় ব্যবহার করব — বুঝতে পারছ না? নির্ভয়ে জিজ্ঞেস করো!</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- Practice in Python IDE -->
+    <div class="accordion-item">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>💻 Practice in Python IDE</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <p style="margin:0;font-size:14px;line-height:1.6;color:#B8C5C1">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p>
+        <a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;align-self:flex-start;box-shadow:0 0 16px rgba(101,209,178,0.2);margin-top:8px">🚀 Open Python IDE</a>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>Made with <span class="heart">♥</span> for young coders in Bangladesh</p>
+    <p style="margin-top:6px;font-family:'Press Start 2P',monospace;font-size:9px;color:var(--neon-cyan);opacity:.6;">🎮 Python Adventure · Level 05</p>
+  </footer>
+
+  <script>
+    const symbols = ['int','float','str','bool','{ }','" "','==','True','False','01','3.14'];
+    const colors = ['var(--neon-pink)','var(--neon-cyan)','var(--neon-yellow)','var(--neon-green)','var(--neon-purple)'];
+    const pContainer = document.getElementById('particles');
+    for (let i = 0; i < 18; i++) {
+      const s = document.createElement('span');
+      s.className = 'particle';
+      s.textContent = symbols[i % symbols.length];
+      s.style.left = Math.random() * 100 + '%';
+      s.style.color = colors[i % colors.length];
+      s.style.animation = `drift ${14 + Math.random() * 8}s linear infinite`;
+      s.style.animationDelay = (Math.random() * 8) + 's';
+      s.style.fontSize = (12 + Math.random() * 10) + 'px';
+      pContainer.appendChild(s);
+    }
+
+    function toggle(btn) {
+      const item = btn.closest('.acc-item');
+      document.querySelectorAll('.acc-item').forEach(a => { if (a !== item) a.classList.remove('open'); });
+      item.classList.toggle('open');
+    }
+
+    function copyCode(id) {
+      const code = `username = '@sonny'\nlevel = 14\ncourse_progress = 0.92\npet_alive = True\n\nprint(username)\nprint(level)\nprint(course_progress)\nprint(pet_alive)`;
+      navigator.clipboard.writeText(code);
+      const lbl = document.getElementById(id);
+      lbl.textContent = 'Copied!';
+      setTimeout(() => lbl.textContent = 'Copy', 1500);
+    }
+  </script>
+
+</body>
+</html>

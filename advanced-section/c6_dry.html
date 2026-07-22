@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>D.R.Y. — Don't Repeat Yourself — Python Coding Adventure</title>
+<meta name="description" content="Learn the D.R.Y. principle and Python functions through a fun Bengali coding adventure." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Hind+Siliguri:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        background: 'oklch(0.18 0.04 270)',
+        foreground: 'oklch(0.97 0.02 95)',
+        card: 'oklch(0.23 0.05 270)',
+        primary: { DEFAULT: 'oklch(0.78 0.19 145)', foreground: 'oklch(0.15 0.04 270)' },
+        secondary: 'oklch(0.28 0.06 270)',
+        muted: { DEFAULT: 'oklch(0.28 0.05 270)', foreground: 'oklch(0.75 0.04 270)' },
+        accent: { DEFAULT: 'oklch(0.82 0.18 75)', foreground: 'oklch(0.18 0.04 270)' },
+        border: 'oklch(0.35 0.08 270)',
+        mana: 'oklch(0.7 0.2 250)',
+        health: 'oklch(0.7 0.22 20)',
+        terminal: 'oklch(0.85 0.22 145)',
+      },
+      fontFamily: {
+        pixel: ['"Press Start 2P"', 'system-ui', 'monospace'],
+        display: ['"Hind Siliguri"', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
+      },
+    }
+  }
+}
+</script>
+<style>
+  :root {
+    --primary: oklch(0.78 0.19 145);
+    --accent: oklch(0.82 0.18 75);
+    --mana: oklch(0.7 0.2 250);
+    --health: oklch(0.7 0.22 20);
+    --terminal: oklch(0.85 0.22 145);
+    --border: oklch(0.35 0.08 270);
+  }
+  html, body { font-family: "Hind Siliguri", system-ui, sans-serif; }
+  body {
+    background: oklch(0.18 0.04 270);
+    color: oklch(0.97 0.02 95);
+    background-image:
+      radial-gradient(circle at 20% 10%, oklch(0.78 0.19 145 / 0.08), transparent 40%),
+      radial-gradient(circle at 80% 60%, oklch(0.7 0.2 250 / 0.08), transparent 40%);
+    min-height: 100vh;
+  }
+  .font-pixel { font-family: "Press Start 2P", monospace; letter-spacing: 0.02em; }
+  .font-mono  { font-family: "JetBrains Mono", monospace; }
+  .pixel-border { box-shadow: 0 0 0 2px var(--border), 4px 4px 0 oklch(0.1 0.03 270); }
+  .pixel-border-sm { box-shadow: 0 0 0 2px var(--border), 2px 2px 0 oklch(0.1 0.03 270); }
+  .text-glow { text-shadow: 0 0 12px currentColor, 0 0 24px currentColor; }
+  .bg-grid {
+    background-image:
+      linear-gradient(oklch(0.78 0.19 145 / 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(0.78 0.19 145 / 0.08) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .bg-scanlines {
+    background-image: repeating-linear-gradient(0deg, oklch(0 0 0 / 0.15) 0, oklch(0 0 0 / 0.15) 1px, transparent 1px, transparent 3px);
+  }
+  .terminal-shadow {
+    box-shadow:
+      inset 0 0 60px oklch(0.85 0.22 145 / 0.08),
+      0 20px 60px -20px oklch(0 0 0 / 0.6),
+      0 0 0 1px oklch(0.85 0.22 145 / 0.3);
+  }
+
+  @keyframes float-slow { 0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-20px) rotate(3deg)} }
+  @keyframes float-fast { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+  @keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+  @keyframes sparkle { 0%,100%{opacity:0;transform:scale(.5) rotate(0)} 50%{opacity:1;transform:scale(1) rotate(180deg)} }
+  @keyframes pop-in { 0%{transform:scale(0) rotate(-10deg);opacity:0} 60%{transform:scale(1.1) rotate(2deg)} 100%{transform:scale(1) rotate(0);opacity:1} }
+  @keyframes glow-pulse { 0%,100%{filter:drop-shadow(0 0 8px var(--primary))} 50%{filter:drop-shadow(0 0 24px var(--primary))} }
+  @keyframes xp-rise { 0%{transform:translateY(0);opacity:0} 20%{opacity:1} 100%{transform:translateY(-60px);opacity:0} }
+  @keyframes drift { 0%{transform:translate(0,0);opacity:.6} 50%{opacity:1} 100%{transform:translate(60px,-120px);opacity:0} }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-3px) rotate(-1deg)} 75%{transform:translateX(3px) rotate(1deg)} }
+  @keyframes arrow-flow { 0%{transform:translateX(-6px);opacity:.4} 50%{opacity:1} 100%{transform:translateX(6px);opacity:.4} }
+
+  .animate-float-slow { animation: float-slow 6s ease-in-out infinite; }
+  .animate-float-fast { animation: float-fast 3s ease-in-out infinite; }
+  .animate-blink      { animation: blink 1s steps(1) infinite; }
+  .animate-sparkle    { animation: sparkle 2s ease-in-out infinite; }
+  .animate-pop-in     { animation: pop-in 0.6s cubic-bezier(0.34,1.56,0.64,1) backwards; }
+  .animate-glow-pulse { animation: glow-pulse 2.5s ease-in-out infinite; }
+  .animate-xp-rise    { animation: xp-rise 2s ease-out infinite; }
+  .animate-shake      { animation: shake 0.5s ease-in-out infinite; }
+  .animate-arrow      { animation: arrow-flow 1.5s ease-in-out infinite; }
+
+  .pixel-particle {
+    position: absolute; width: 6px; height: 6px;
+    box-shadow: 0 0 8px currentColor;
+    animation: drift linear infinite;
+  }
+
+  .accordion-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s ease, opacity .3s; opacity: 0; }
+  .accordion-body > div { overflow: hidden; }
+  .accordion[open] .accordion-body { grid-template-rows: 1fr; opacity: 1; }
+  .accordion[open] .chevron { transform: rotate(180deg); }
+  .chevron { transition: transform .3s; }
+
+  .art-emoji { font-size: clamp(8rem, 22vw, 16rem); line-height: 1; filter: drop-shadow(0 10px 30px rgba(0,0,0,.5)); }
+
+  /* Strike-through "wrong" code lines */
+  .wrong-line { position: relative; }
+  .wrong-line::after {
+    content:''; position:absolute; left:0; right:0; top:50%;
+    border-top: 2px solid oklch(0.7 0.22 20 / 0.7);
+    transform: rotate(-1deg);
+  }
+</style>
+</head>
+<body>
+
+<!-- HUD -->
+<header class="sticky top-0 z-50 backdrop-blur-md bg-[oklch(0.18_0.04_270/0.7)] border-b" style="border-color:var(--border)">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <span class="text-primary text-lg">⌨</span>
+      <span class="font-pixel text-[10px] sm:text-xs">CODE QUEST</span>
+    </div>
+    <div class="flex items-center gap-3 sm:gap-4 text-xs">
+      <span class="flex items-center gap-1.5 font-pixel text-[9px] text-accent">🏆 LVL 2</span>
+      <div class="hidden sm:flex items-center gap-1.5">
+        <span class="font-pixel text-[9px] text-muted-foreground">XP</span>
+        <div class="w-24 h-2 rounded-full overflow-hidden pixel-border-sm" style="background:oklch(0.28 0.06 270)">
+          <div class="h-full w-2/3 animate-glow-pulse" style="background:linear-gradient(90deg,var(--accent),var(--primary))"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="relative overflow-hidden">
+  <div class="absolute inset-0 bg-grid opacity-40"></div>
+  <div id="particles" class="absolute inset-0 pointer-events-none"></div>
+  <div class="relative max-w-6xl mx-auto px-4 pt-12 pb-16 sm:pt-20 sm:pb-24">
+    <div class="grid lg:grid-cols-2 gap-10 items-center">
+      <div class="space-y-6 animate-pop-in">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border" style="background:oklch(0.28 0.06 270);border-color:var(--border)">
+          <span class="text-accent animate-sparkle">✨</span>
+          <span class="font-pixel text-[9px] text-accent">QUEST #02 • FUNCTIONS</span>
+        </div>
+        <h1 class="font-pixel text-3xl sm:text-5xl lg:text-6xl leading-tight">
+          <span class="text-primary text-glow">D.R.Y.</span><br>
+          <span class="text-2xl sm:text-3xl">Don't Repeat Yourself</span>
+        </h1>
+        <p class="text-base sm:text-lg text-muted-foreground leading-relaxed">
+          D.R.Y.-এর পূর্ণরূপ হলো <span class="text-primary font-semibold">Don't Repeat Yourself</span>। বাংলায় এর সহজ মানে হলো—<span class="text-accent">"একই কাজ বা একই কোড বারবার করো না!"</span>
+        </p>
+        <p class="text-base sm:text-lg text-muted-foreground leading-relaxed">
+          বাস্তব জীবনের একটা উদাহরণ দিই। মনে করো, তোমাদের ক্লাসের ক্যাপ্টেন প্রতিদিন ক্লাসে এসে ব্ল্যাকবোর্ডে এই ৩টি লাইন লেখে:
+        </p>
+        <ol class="space-y-2">
+          <li class="flex items-center gap-3 p-3 bg-card pixel-border rounded-md animate-pop-in" style="animation-delay:.1s"><span class="font-pixel text-xs text-accent">১.</span><span>"সবাই শান্ত থাকো।"</span></li>
+          <li class="flex items-center gap-3 p-3 bg-card pixel-border rounded-md animate-pop-in" style="animation-delay:.2s"><span class="font-pixel text-xs text-accent">২.</span><span>"বই বের করো।"</span></li>
+          <li class="flex items-center gap-3 p-3 bg-card pixel-border rounded-md animate-pop-in" style="animation-delay:.3s"><span class="font-pixel text-xs text-accent">৩.</span><span>"পড়া শুরু করো।"</span></li>
+        </ol>
+      </div>
+      <div class="relative flex justify-center animate-pop-in" style="animation-delay:.2s">
+        <div class="absolute inset-0 blur-3xl rounded-full" style="background:oklch(0.78 0.19 145 / 0.2)"></div>
+        <div class="relative art-emoji animate-float-slow">📋</div>
+        <div class="absolute top-4 right-4 font-pixel text-[10px] text-accent animate-xp-rise">+75 XP</div>
+        <div class="absolute -bottom-2 left-2 font-pixel text-[10px] text-primary animate-sparkle">D.R.Y!</div>
+      </div>
+    </div>
+
+    <!-- Captain story callout -->
+    <div class="mt-12 grid md:grid-cols-3 gap-4 items-center">
+      <div class="bg-card pixel-border rounded-lg p-5 text-center animate-pop-in">
+        <div class="text-5xl mb-2 animate-shake">😩</div>
+        <p class="font-pixel text-[10px] text-[color:var(--health)] mb-2">আগে (BEFORE)</p>
+        <p class="text-sm text-muted-foreground">প্রতিদিন এত বড় ৩টি লাইন বোর্ডে লিখতে ক্যাপ্টেনের হাত ব্যথা হয়ে যায়।</p>
+      </div>
+      <div class="text-center font-pixel text-2xl text-accent animate-arrow">➜</div>
+      <div class="bg-card pixel-border rounded-lg p-5 text-center animate-pop-in" style="animation-delay:.15s">
+        <div class="text-5xl mb-2 animate-float-fast">😎</div>
+        <p class="font-pixel text-[10px] text-primary mb-2">এখন (AFTER)</p>
+        <p class="text-sm text-muted-foreground">একদিন সে বুদ্ধি করে একটা বড় কাগজে এই ৩টি লাইন লিখে দেয়ালে টাঙিয়ে দিল। এখন থেকে সে শুধু আঙুল দিয়ে দেখায়!</p>
+      </div>
+    </div>
+
+    <p class="mt-10 text-base sm:text-lg text-center text-muted-foreground max-w-3xl mx-auto">
+      প্রোগ্রামিংয়েও একই কোড বারবার কপি-পেস্ট না করে, সেটাকে এক জায়গায় জমিয়ে রাখাকেই বলে D.R.Y. নিয়ম। আর এই নিয়মটি মেনে চলার জন্য আমরা ব্যবহার করি <span class="text-primary font-semibold">Function (ফাংশন)</span>!
+    </p>
+  </div>
+</section>
+
+<!-- INSTRUCTIONS -->
+<section class="relative py-16 sm:py-20">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="flex items-center gap-3 mb-6">
+      <div class="size-12 rounded-md flex items-center justify-center pixel-border-sm animate-glow-pulse" style="background:linear-gradient(135deg,var(--primary),oklch(0.6 0.15 145))">
+        <span class="text-xl">📜</span>
+      </div>
+      <div>
+       
+        <h2 class="font-pixel text-sm sm:text-lg">নির্দেশনা</h2>
+      </div>
+    </div>
+
+    <div class="bg-card pixel-border rounded-xl p-6 sm:p-8 relative overflow-hidden">
+      <div class="absolute inset-0 bg-grid opacity-20"></div>
+      <div class="relative grid lg:grid-cols-5 gap-6 items-center">
+        <div class="lg:col-span-3 space-y-4">
+          <p class="text-base sm:text-lg leading-relaxed">
+            মনে করো, তোমার বন্ধু <span class="text-primary font-semibold">সিয়াম</span> পাইথনে একটি কোড লিখছে যেখানে তাকে <span class="text-accent">৩ জন আলাদা মানুষের</span> জন্য একই শুভেচ্ছা বার্তা প্রিন্ট করতে হবে।
+          </p>
+          <p class="text-base sm:text-lg leading-relaxed">
+            সে লুপ বা ফাংশন না চিনে বোকার মতো একই কোড <span class="text-[color:var(--health)] font-semibold">৩ বার কপি-পেস্ট</span> করেছে! চলো, আমরা D.R.Y. নিয়ম মেনে ফাংশন ব্যবহার করে সিয়ামের কোডটিকে একদম ছোট আর সুন্দর বানিয়ে দিই।
+          </p>
+        </div>
+        <div class="lg:col-span-2 flex justify-around items-end gap-2">
+          <div class="text-center">
+            <div class="text-6xl animate-float-fast">🧑‍💻</div>
+            <p class="font-pixel text-[9px] text-primary mt-2">সিয়াম</p>
+          </div>
+          <div class="text-center">
+            <div class="text-6xl animate-float-fast" style="animation-delay:.3s">🧑‍🎓</div>
+            <p class="font-pixel text-[9px] text-primary mt-2">রাফি</p>
+          </div>
+          <div class="text-center">
+            <div class="text-6xl animate-float-fast" style="animation-delay:.6s">👩‍🎓</div>
+            <p class="font-pixel text-[9px] text-primary mt-2">মালিহা</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WRONG vs RIGHT CODE TERMINAL -->
+<section class="relative py-16 sm:py-20" style="background:oklch(0.15 0.04 270)">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="flex items-center justify-between mb-6 flex-wrap gap-4">
+      <div class="flex items-center gap-3">
+        <div class="size-12 rounded-md flex items-center justify-center pixel-border-sm animate-glow-pulse" style="background:linear-gradient(135deg,var(--primary),oklch(0.6 0.15 145))">
+          <span class="text-xl">⌨</span>
+        </div>
+        <div>
+          <p class="font-pixel text-[9px] text-accent text-glow">LEVEL 02</p>
+          <h2 class="font-pixel text-sm sm:text-lg">ভুল vs সঠিক কোড</h2>
+        </div>
+      </div>
+      <div class="art-emoji animate-float-fast" style="font-size:5rem">🐍</div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <!-- WRONG terminal -->
+      <div class="rounded-lg terminal-shadow overflow-hidden" style="background:oklch(0.12 0.03 270)">
+        <div class="flex items-center gap-2 px-4 py-2.5 border-b" style="background:oklch(0.16 0.04 270);border-color:var(--border)">
+          <span class="size-3 rounded-full" style="background:oklch(0.7 0.22 20)"></span>
+          <span class="size-3 rounded-full bg-accent"></span>
+          <span class="size-3 rounded-full bg-primary"></span>
+          <span class="ml-3 font-pixel text-[10px]" style="color:var(--health)">❌ siam_wrong.py</span>
+        </div>
+        <pre id="wrong-editor" class="p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed min-h-[280px] relative overflow-hidden whitespace-pre-wrap">
+          <div class="absolute inset-0 bg-scanlines pointer-events-none opacity-30"></div>
+        </pre>
+      </div>
+      <!-- RIGHT terminal -->
+      <div class="rounded-lg terminal-shadow overflow-hidden" style="background:oklch(0.1 0.02 270)">
+        <div class="flex items-center justify-between px-4 py-2.5 border-b" style="background:oklch(0.14 0.03 270);border-color:var(--border)">
+          <span class="font-pixel text-[10px]" style="color:var(--terminal)">✅ siam_dry.py</span>
+          <span class="font-mono text-[10px] text-muted-foreground">D.R.Y.</span>
+        </div>
+        <pre id="right-editor" class="p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed min-h-[280px] relative whitespace-pre-wrap" style="color:var(--terminal)">
+          <div class="absolute inset-0 bg-scanlines pointer-events-none opacity-30"></div>
+        </pre>
+      </div>
+    </div>
+
+    <!-- OUTPUT -->
+    <div class="mt-6 rounded-lg terminal-shadow overflow-hidden" style="background:oklch(0.1 0.02 270)">
+      <div class="flex items-center justify-between px-4 py-2.5 border-b" style="background:oklch(0.14 0.03 270);border-color:var(--border)">
+        <span class="font-pixel text-[10px]" style="color:var(--terminal)">▶ OUTPUT</span>
+        <span class="font-mono text-[10px] text-muted-foreground">running...</span>
+      </div>
+      <pre id="output" class="p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed min-h-[140px] relative whitespace-pre-wrap" style="color:var(--terminal)">
+<span class="text-muted-foreground">$ python siam_dry.py</span>
+</pre>
+    </div>
+  </div>
+</section>
+
+<!-- HELP -->
+<section class="relative py-16 sm:py-20">
+  <div class="max-w-3xl mx-auto px-4">
+    <div class="flex items-center gap-3 mb-6">
+      <div class="size-12 rounded-md flex items-center justify-center pixel-border-sm animate-glow-pulse" style="background:linear-gradient(135deg,var(--primary),oklch(0.6 0.15 145))">
+        <span class="text-xl">✨</span>
+      </div>
+      <div>
+        <p class="font-pixel text-[9px] text-accent text-glow">LEVEL 03</p>
+        <h2 class="font-pixel text-sm sm:text-lg">সাহায্য ও হিন্টস</h2>
+      </div>
+    </div>
+    <div id="help" class="space-y-3"></div>
+  </div>
+</section>
+
+<footer class="border-t py-8 text-center" style="border-color:var(--border)">
+  <p class="font-pixel text-[10px] text-muted-foreground">✨ QUEST COMPLETE — STAY D.R.Y., ADVENTURER ✨</p>
+</footer>
+
+<script>
+// Particles
+(function(){
+  const root = document.getElementById('particles');
+  const colors = ['oklch(0.78 0.19 145)','oklch(0.82 0.18 75)','oklch(0.7 0.2 250)'];
+  for (let i=0;i<30;i++){
+    const p = document.createElement('span');
+    p.className = 'pixel-particle';
+    p.style.left = Math.random()*100 + '%';
+    p.style.top  = (60 + Math.random()*40) + '%';
+    p.style.color = colors[i%3];
+    p.style.background = colors[i%3];
+    p.style.animationDuration = (4 + Math.random()*6) + 's';
+    p.style.animationDelay = (Math.random()*5) + 's';
+    root.appendChild(p);
+  }
+})();
+
+// Wrong / Right code animation
+const WRONG = [
+  { t:'# একই কোড ৩ বার কপি-পেস্ট 😩', c:'text-muted-foreground' },
+  { t:'print("স্বাগতম বন্ধু, সিয়াম")',  wrong:true },
+  { t:'print("স্বাগতম বন্ধু, রাফি")',    wrong:true },
+  { t:'print("স্বাগতম বন্ধু, মালিহা")',  wrong:true },
+];
+const RIGHT = [
+  { t:'# ১. ফাংশন তৈরি করলাম', c:'text-muted-foreground' },
+  { t:'def sfe_wish(name):', style:'color:var(--mana)' },
+  { t:'    print("স্বাগতম বন্ধু,", name)' },
+  { t:'' },
+  { t:'# ২. নাম ধরে ফাংশন কল করছি', c:'text-muted-foreground' },
+  { t:'sfe_wish("সিয়াম")',   style:'color:var(--accent)' },
+  { t:'sfe_wish("রাফি")',     style:'color:var(--accent)' },
+  { t:'sfe_wish("মালিহা")',   style:'color:var(--accent)' },
+];
+const OUTPUT = [
+  'স্বাগতম বন্ধু, সিয়াম',
+  'স্বাগতম বন্ধু, রাফি',
+  'স্বাগতম বন্ধু, মালিহা',
+];
+
+function escapeHtml(s){ return s.replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"})[m]); }
+function renderLine(target, l, n){
+  const div = document.createElement('div');
+  if (l.c) div.className = l.c;
+  if (l.wrong) div.className = (div.className + ' wrong-line animate-pop-in').trim();
+  if (l.style) div.setAttribute('style', l.style);
+  div.innerHTML = `<span class="text-muted-foreground/40 inline-block w-6 select-none">${n}</span>${escapeHtml(l.t)||'&nbsp;'}`;
+  target.appendChild(div);
+}
+
+const wrongEl = document.getElementById('wrong-editor');
+const rightEl = document.getElementById('right-editor');
+const outEl   = document.getElementById('output');
+
+let wi=0, ri=0, oi=0;
+function tickWrong(){
+  if (wi < WRONG.length){
+    renderLine(wrongEl, WRONG[wi], wi+1);
+    wi++;
+    setTimeout(tickWrong, 250);
+  } else {
+    setTimeout(tickRight, 500);
+  }
+}
+function tickRight(){
+  if (ri < RIGHT.length){
+    renderLine(rightEl, RIGHT[ri], ri+1);
+    ri++;
+    setTimeout(tickRight, 220);
+  } else {
+    setTimeout(tickOut, 400);
+  }
+}
+function tickOut(){
+  if (oi < OUTPUT.length){
+    const d = document.createElement('div');
+    d.className = 'animate-pop-in';
+    d.textContent = '✨ ' + OUTPUT[oi++];
+    outEl.appendChild(d);
+    setTimeout(tickOut, 400);
+  }
+}
+setTimeout(tickWrong, 400);
+
+// Help accordion
+const cards = [
+  { id:'hint', title:'Hints (হিন্টস)', icon:'💡', color:'var(--accent)', html:`
+    <div class="space-y-4 text-sm sm:text-base">
+      <div class="p-4 rounded-md border" style="border-color:var(--border);background:oklch(0.7 0.22 20 / 0.08)">
+        <p><strong style="color:var(--health)">❌ ভুল পদ্ধতি (Repeat করা):</strong> ৩ বার আলাদা করে <code class="font-mono px-2 py-0.5 rounded text-accent" style="background:oklch(0.28 0.06 270)">print()</code> লিখলে কোড বড় হয়ে যায়। এটা D.R.Y. নিয়মের বিরোধী।</p>
+      </div>
+      <div class="p-4 rounded-md border" style="border-color:var(--border);background:oklch(0.78 0.19 145 / 0.08)">
+        <p><strong class="text-primary">✅ সঠিক পদ্ধতি (D.R.Y. নিয়ম):</strong> আমরা <code class="font-mono px-2 py-0.5 rounded text-accent" style="background:oklch(0.28 0.06 270)">def</code> ব্যবহার করে একটি ফাংশন বানাবো। ফাংশনের ভেতর একবারই <code class="font-mono px-2 py-0.5 rounded text-accent" style="background:oklch(0.28 0.06 270)">print()</code> থাকবে, আর প্যারামিটার হিসেবে আমরা বন্ধুদের নাম পাঠিয়ে দেবো!</p>
+      </div>
+    </div>` },
+  { id:'video', title:'Walkthrough Video', icon:'🎬', color:'var(--mana)', html:`
+    <div class="aspect-video rounded-md flex items-center justify-center pixel-border-sm" style="background:oklch(0.1 0.02 270)">
+      <div class="text-center space-y-2">
+        <div class="text-5xl animate-float-fast" style="color:var(--mana)">▶</div>
+        <p class="font-pixel text-[10px] text-muted-foreground">▶ VIDEO COMING SOON</p>
+      </div>
+    </div>` },
+  { id:'solution', title:'সমাধান ও সম্পূর্ণ কোড (Solution)', icon:'✅', color:'var(--primary)', html:`
+    <div class="space-y-3">
+      <p class="text-sm sm:text-base">সিয়ামের বড় কোডটিকে আমরা D.R.Y. নিয়ম মেনে কত সহজে ছোট করে ফেলেছি, দেখো:</p>
+      <pre class="p-4 rounded-md font-mono text-xs sm:text-sm overflow-x-auto border" style="background:oklch(0.1 0.02 270);border-color:var(--border)"># ১. ফাংশন তৈরি করলাম (একই কোড বারবার লেখা লাগবে না)
+def sfe_wish(name):
+    print("স্বাগতম বন্ধু,", name)
+
+
+# ২. নাম ধরে আলাদা আলাদা মানুষের জন্য ফাংশন কল করছি
+sfe_wish("সিয়াম")
+sfe_wish("রাফি")
+sfe_wish("মালিহা")</pre>
+    </div>` },
+  { id:'ai', title:'AI Coding Companion', icon:'🤖', color:'var(--health)', html:`
+    <div class="flex gap-4 items-start">
+      <div class="text-5xl animate-float-fast shrink-0">🤖</div>
+      <p class="text-sm sm:text-base text-muted-foreground">আটকে গেছ? তোমার AI Coding Companion সাহায্য করতে প্রস্তুত! ফাংশন, প্যারামিটার বা D.R.Y. নিয়ে যেকোনো প্রশ্ন করো।</p>
+    </div>` },
+
+  { id:'practice', title:'Practice in Python IDE', icon:'💻', color:'var(--cyan)', html:`
+    <div class="flex gap-4 items-start">
+      <div class="text-5xl shrink-0">💻</div>
+      <p class="text-sm sm:text-base text-muted-foreground">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p>
+      <a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;box-shadow:0 0 16px rgba(101,209,178,0.2)">🚀 Open Python IDE</a>
+    </div>` },
+
+];
+document.getElementById('help').innerHTML = cards.map((c,i)=>`
+  <details class="accordion bg-card pixel-border rounded-lg overflow-hidden animate-pop-in" style="animation-delay:${i*0.08}s" ${c.id==='hint'?'open':''}>
+    <summary class="list-none cursor-pointer flex items-center justify-between gap-3 p-4 sm:p-5 hover:bg-[oklch(0.28_0.06_270/0.5)] transition-colors">
+      <div class="flex items-center gap-3">
+        <div class="size-10 rounded-md flex items-center justify-center text-xl" style="background:oklch(0.28 0.06 270);color:${c.color}">${c.icon}</div>
+        <h3 class="font-pixel text-[11px] sm:text-sm text-left">${c.title}</h3>
+      </div>
+      <span class="chevron text-muted-foreground">▼</span>
+    </summary>
+    <div class="accordion-body"><div><div class="p-4 sm:p-5 pt-0 border-t" style="border-color:var(--border)">${c.html}</div></div></div>
+  </details>`).join('');
+</script>
+</body>
+</html>

@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🎰 Slot Machine — Python Class & Object Adventure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0514; --bg2:#140826; --panel:#1a0f2e;
+    --neon:#ff2e88; --neon2:#ffd23f; --neon3:#00e5ff; --neon4:#7cffb0;
+    --text:#f5e9ff; --muted:#a99cc7; --border:#3a2557;
+    --gold:linear-gradient(135deg,#ffd23f,#ff8a00,#ff2e88);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Hind Siliguri',system-ui,sans-serif;overflow-x:hidden}
+  body{
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(255,46,136,.22), transparent 60%),
+      radial-gradient(900px 500px at 110% 10%, rgba(0,229,255,.18), transparent 60%),
+      radial-gradient(800px 600px at 50% 110%, rgba(255,210,63,.15), transparent 60%),
+      linear-gradient(180deg,var(--bg),var(--bg2));
+    min-height:100vh;
+  }
+  .pixel{font-family:'Press Start 2P',monospace;letter-spacing:.5px}
+  .mono{font-family:'JetBrains Mono',monospace}
+  .wrap{max-width:1100px;margin:0 auto;padding:32px 20px 80px;position:relative;z-index:2}
+
+  /* particles */
+  .particles{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+  .particles span{position:absolute;font-size:22px;opacity:.55;animation:floaty linear infinite}
+  @keyframes floaty{
+    0%{transform:translateY(110vh) rotate(0)} 100%{transform:translateY(-15vh) rotate(360deg)}
+  }
+
+  /* hero */
+  .hero{position:relative;border:1px solid var(--border);border-radius:24px;
+    background:linear-gradient(160deg,rgba(255,46,136,.12),rgba(0,229,255,.08));
+    padding:28px 24px;overflow:hidden}
+  .hero::before{content:"";position:absolute;inset:-2px;border-radius:24px;
+    background:conic-gradient(from 0deg,#ff2e88,#ffd23f,#00e5ff,#7cffb0,#ff2e88);
+    filter:blur(28px);opacity:.35;z-index:-1;animation:spin 12s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .badge{display:inline-block;padding:6px 12px;border:1px solid var(--neon);border-radius:999px;
+    color:var(--neon);font-size:11px;background:rgba(255,46,136,.08)}
+  h1{font-size:clamp(22px,3.4vw,34px);margin:14px 0 6px;line-height:1.35}
+  .shimmer{background:var(--gold);-webkit-background-clip:text;background-clip:text;color:transparent;
+    background-size:200% 100%;animation:shimmer 3s linear infinite}
+  @keyframes shimmer{to{background-position:-200% 0}}
+  .sub{color:var(--muted);font-size:15px;max-width:720px}
+
+  /* slot mascot */
+  .machine{margin:22px auto 6px;width:min(100%,420px);background:linear-gradient(180deg,#2a1547,#160a2b);
+    border:2px solid var(--neon);border-radius:22px;padding:18px;box-shadow:0 0 40px rgba(255,46,136,.35), inset 0 0 30px rgba(255,210,63,.08)}
+  .machine .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .bulbs{display:flex;gap:6px}
+  .bulb{width:10px;height:10px;border-radius:50%;background:#ffd23f;box-shadow:0 0 10px #ffd23f;animation:blink 1.2s infinite alternate}
+  .bulb:nth-child(2){background:#ff2e88;box-shadow:0 0 10px #ff2e88;animation-delay:.2s}
+  .bulb:nth-child(3){background:#00e5ff;box-shadow:0 0 10px #00e5ff;animation-delay:.4s}
+  @keyframes blink{to{opacity:.25}}
+  .reels{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;background:#0a0514;border:2px inset #ffd23f;border-radius:14px;padding:14px}
+  .reel{height:90px;background:linear-gradient(180deg,#fff,#e9e9f5);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:48px;overflow:hidden;position:relative}
+  .reel .strip{display:flex;flex-direction:column;animation:roll 1.2s cubic-bezier(.2,.8,.2,1) infinite}
+  .reel.stopped .strip{animation:none}
+  .reel .strip span{height:90px;display:flex;align-items:center;justify-content:center;font-size:52px}
+  @keyframes roll{0%{transform:translateY(0)}100%{transform:translateY(-450px)}}
+  .lever{margin-top:12px;display:flex;justify-content:space-between;align-items:center}
+  .lever button{cursor:pointer;border:none;background:var(--gold);color:#1a0a00;font-weight:800;
+    padding:10px 18px;border-radius:10px;box-shadow:0 6px 0 #8a4a00;transition:transform .1s}
+  .lever button:active{transform:translateY(3px);box-shadow:0 3px 0 #8a4a00}
+  .result{color:#ffd23f;font-weight:700;min-height:22px}
+
+  /* sections */
+  .section{margin-top:26px;border:1px solid var(--border);border-radius:18px;background:rgba(20,8,38,.7);
+    padding:22px;backdrop-filter:blur(6px);opacity:0;transform:translateY(20px);transition:.7s}
+  .section.in{opacity:1;transform:none}
+  .section h2{margin:0 0 8px;font-size:18px;display:flex;gap:10px;align-items:center}
+  .chip{font-size:11px;padding:4px 10px;border-radius:999px;background:rgba(0,229,255,.15);color:var(--neon3);border:1px solid rgba(0,229,255,.4)}
+  .lead{color:var(--text);font-size:16px;line-height:1.85}
+  .quote{border-left:4px solid var(--neon2);padding:10px 14px;background:rgba(255,210,63,.08);border-radius:8px;margin:10px 0}
+
+  /* analogy cards */
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+  @media(max-width:640px){.cards{grid-template-columns:1fr}}
+  .card{border:1px dashed var(--border);border-radius:14px;padding:14px;background:rgba(255,255,255,.02);transition:.3s}
+  .card:hover{border-color:var(--neon);transform:translateY(-3px);box-shadow:0 10px 30px rgba(255,46,136,.2)}
+  .card .ico{font-size:28px}
+  .card b{color:var(--neon2)}
+
+  /* accordion */
+  details{border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin:10px 0;background:rgba(255,255,255,.02)}
+  details[open]{border-color:var(--neon3);box-shadow:0 0 24px rgba(0,229,255,.18)}
+  summary{cursor:pointer;font-weight:700;list-style:none;display:flex;align-items:center;gap:10px}
+  summary::-webkit-details-marker{display:none}
+  summary .arrow{transition:.3s}
+  details[open] summary .arrow{transform:rotate(90deg)}
+
+  /* code */
+  pre{background:#06030d;border:1px solid var(--border);border-radius:12px;padding:16px;overflow:auto;
+    font-family:'JetBrains Mono',monospace;font-size:13.5px;line-height:1.7;color:#e9e0ff}
+  .k{color:#ff79c6}.s{color:#ffd23f}.c{color:#7a6b9a;font-style:italic}.v{color:#7cffb0}.a{color:#00e5ff}.n{color:#ff9e64}
+
+  /* terminal */
+  .term{background:#000;border:1px solid #222;border-radius:12px;padding:14px;font-family:'JetBrains Mono',monospace;
+    color:#7cffb0;min-height:200px;white-space:pre-wrap;line-height:1.7;font-size:14px;position:relative}
+  .term::before{content:"● ● ●";color:#ff5f56;letter-spacing:6px;display:block;margin-bottom:8px;opacity:.7}
+  .cursor{display:inline-block;width:8px;background:#7cffb0;animation:bl 1s steps(2) infinite}
+  @keyframes bl{50%{opacity:0}}
+
+  /* ai companion */
+  .ai{display:flex;gap:12px;padding:14px;border-radius:14px;background:linear-gradient(135deg,rgba(124,255,176,.1),rgba(0,229,255,.1));border:1px solid rgba(124,255,176,.3)}
+  .ai .av{width:46px;height:46px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;animation:pulseGlow 2s infinite}
+  @keyframes pulseGlow{0%,100%{box-shadow:0 0 0 0 rgba(255,210,63,.5)}50%{box-shadow:0 0 0 12px rgba(255,210,63,0)}}
+
+  .foot{text-align:center;margin-top:30px;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<div class="particles" id="particles"></div>
+
+<div class="wrap">
+  <header class="hero">
+    <span class="badge pixel">LEVEL 04 · SLOT MACHINE</span>
+    <h1>🎰 <span class="shimmer">Slot Machine</span> — Python Class & Object Adventure</h1>
+    <p class="sub">হাতল টানো, ৩টি চাকা ঘোরাও, আর জ্যাকপটের অপেক্ষায় থাকো! চলো পাইথনে এই জাদুকরী মেশিন বানিয়ে ফেলি।</p>
+
+    <div class="machine" aria-label="Slot machine mascot">
+      <div class="top">
+        <div class="bulbs"><span class="bulb"></span><span class="bulb"></span><span class="bulb"></span></div>
+        <div class="pixel" style="font-size:10px;color:#ffd23f">LUCKY DRAW</div>
+        <div class="bulbs"><span class="bulb"></span><span class="bulb"></span><span class="bulb"></span></div>
+      </div>
+      <div class="reels">
+        <div class="reel" id="r1"><div class="strip"><span>🍎</span><span>💎</span><span>🍒</span><span>🌟</span><span>🍎</span></div></div>
+        <div class="reel" id="r2"><div class="strip"><span>💎</span><span>🍒</span><span>🌟</span><span>🍎</span><span>💎</span></div></div>
+        <div class="reel" id="r3"><div class="strip"><span>🍒</span><span>🌟</span><span>🍎</span><span>💎</span><span>🍒</span></div></div>
+      </div>
+      <div class="lever">
+        <div class="result" id="result">স্পিন বাটন চাপো! 🌀</div>
+        <button id="spin">🎯 SPIN</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="section">
+    <h2>📖 ধারণা <span class="chip">Concept</span></h2>
+    <div class="quote lead">
+      "তোমরা যারা বিভিন্ন ভিডিও গেমে বা বিনোদন পার্কে গিয়েছ, তারা নিশ্চয়ই বড় একটি স্ক্রিনওয়ালা মেশিন দেখেছ—যেখানে একটা হাতল টানলে স্ক্রিনের ভেতরের ৩টি চাকা একসাথে ঘুরতে থাকে। তারপর স্ক্রিনে যদি একই রকমের ৩টি ছবি (যেমন: ৩টি আপেল 🍎🍎🍎 বা ৩টি ডায়মন্ড 💎💎💎) মিলে যায়, তবেই কেল্লাফতে! এই জাদুকরী গেম খেলার মেশিনটাকেই বলে <b>Slot Machine</b>।"
+    </div>
+    <p class="lead">সব স্লট মেশিনেরই একটা কমন ডিজাইন বা নকশা থাকে। যেমন—মেশিনটার একটা নাম (<b>brand</b>) থাকে আর তাতে জেতার জন্য কিছু প্রতীক বা চিহ্ন (<b>symbols</b>) থাকে। পাইথনে এই সাধারণ নকশাটিই হলো আমাদের <b>Class</b>। আর এই নকশা ব্যবহার করে তৈরি করা আসল একেকটি মেশিন হলো এক একটি <b>Object</b>!</p>
+
+    <div class="cards">
+      <div class="card"><div class="ico">🏭</div><b>Class = মেশিনের নকশা</b><p style="margin:6px 0 0;color:var(--muted)">brand, symbols — common blueprint</p></div>
+      <div class="card"><div class="ico">🎰</div><b>Object = আসল মেশিন</b><p style="margin:6px 0 0;color:var(--muted)">Lucky-7, Mega-Spin ইত্যাদি</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>🎯 নির্দেশনা <span class="chip">Mission</span></h2>
+    <p class="lead">মনে করো, তুমি গেম জোনের জন্য একটি ডিজিটাল স্লট মেশিন বানাচ্ছ। মেশিনের স্ক্রিনে ৩টি স্লট বা ঘর আছে। গেমার যখনই স্পিন বাটন চাপবে, পাইথনের লটারির বাক্স (<b>random</b> মডিউল) থেকে ৩টি ঘরে হঠাৎ করে ৩টি ফলের ইমোজি বসে যাবে। চলো, এই দারুণ মজার লাকি ড্র গেমটি কোড লিখে বানিয়ে ফেলি!</p>
+  </section>
+
+  <section class="section">
+    <h2>🆘 সাহায্য <span class="chip">Help Zone</span></h2>
+
+    <details>
+      <summary><span class="arrow">▶</span> 💡 হিন্টস (Hints)</summary>
+      <ul class="lead">
+        <li><b>মডিউল আনা:</b> কোডের শুরুতেই <code class="mono">import random</code> লিখে নাও।</li>
+        <li><b>ফলের ঝুড়ি (List):</b> <code class="mono">fruits = ["🍎", "💎", "🍒", "🌟"]</code></li>
+        <li><b>লটারির জাদুকর:</b> <code class="mono">random.choice(fruits)</code> — ৩টি স্লটের জন্য ৩ বার!</li>
+      </ul>
+    </details>
+
+    <details>
+      <summary><span class="arrow">▶</span> 📹 Walkthrough Video</summary>
+      <div style="aspect-ratio:16/9;background:#000;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#666">🎬 ভিডিও শীঘ্রই আসছে...</div>
+    </details>
+
+    <details open>
+      <summary><span class="arrow">▶</span> 🛠️ সমাধান ও সম্পূর্ণ কোড (Solution)</summary>
+      <pre id="code"></pre>
+    </details>
+
+    <details>
+      <summary><span class="arrow">▶</span> 🖥️ আউটপুট (Run Output)</summary>
+      <div class="term" id="term"></div>
+      <div style="margin-top:10px"><button id="run" style="cursor:pointer;background:var(--gold);border:none;padding:8px 16px;border-radius:8px;font-weight:700">▶ Run Again</button></div>
+    </details>
+
+    <details>
+      <summary><span class="arrow">▶</span> 🤖 AI Coding Companion</summary>
+      <div class="ai">
+        <div class="av">🤖</div>
+        <div>
+          <b>Bondhu AI:</b> আটকে গেছ? আমাকে জিজ্ঞেস করো — "random.choice কীভাবে কাজ করে?" বা "জ্যাকপট কীভাবে চেক করব?" আমি step-by-step বুঝিয়ে দেব!
+        </div>
+      </div>
+    </details>
+  </section>
+
+
+  <details class="accordion">
+    <summary><span class="ico" style="background:rgba(101,209,178,.15);color:var(--cyan)">💻</span><span style="color:var(--cyan)">Practice in Python IDE</span></summary>
+    <div class="body"><p style="margin:0;color:#d1d5db">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p><a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;margin-top:8px">🚀 Open Python IDE</a></div>
+  </details>
+
+  <p class="foot pixel">⚡ MADE WITH PYTHON × PIXELS ⚡</p>
+</div>
+
+<script>
+  // particles
+  const icons=['🍎','💎','🍒','🌟','🎰','🪙','7️⃣','🎲'];
+  const p=document.getElementById('particles');
+  for(let i=0;i<28;i++){
+    const s=document.createElement('span');
+    s.textContent=icons[i%icons.length];
+    s.style.left=Math.random()*100+'%';
+    s.style.animationDuration=(8+Math.random()*12)+'s';
+    s.style.animationDelay=(-Math.random()*15)+'s';
+    s.style.fontSize=(14+Math.random()*22)+'px';
+    p.appendChild(s);
+  }
+
+  // reveal
+  const io=new IntersectionObserver(es=>es.forEach(e=>e.isIntersecting&&e.target.classList.add('in')),{threshold:.12});
+  document.querySelectorAll('.section').forEach(s=>io.observe(s));
+
+  // spin
+  const items=['🍎','💎','🍒','🌟'];
+  const reels=['r1','r2','r3'].map(id=>document.getElementById(id));
+  const result=document.getElementById('result');
+  function spin(){
+    result.textContent='চাকা ঘুরছে... 🌀';
+    reels.forEach(r=>r.classList.remove('stopped'));
+    const picks=[0,1,2].map(()=>items[Math.floor(Math.random()*items.length)]);
+    reels.forEach((r,i)=>setTimeout(()=>{
+      r.classList.add('stopped');
+      r.querySelector('.strip').innerHTML=`<span>${picks[i]}</span>`;
+      if(i===2){
+        if(picks[0]===picks[1]&&picks[1]===picks[2]) result.textContent='🎉 জ্যাকপট! তুমি জিতেছ! 👑';
+        else result.textContent='😢 মিলল না! আবার চেষ্টা করো 👍';
+      }
+    },600+i*500));
+  }
+  document.getElementById('spin').onclick=spin;
+
+  // syntax highlight
+  function hl(code){
+    return code
+      .replace(/(#[^\n]*)/g,'<span class="c">$1</span>')
+      .replace(/\b(import|if|else|print)\b/g,'<span class="k">$1</span>')
+      .replace(/\b(random)\b/g,'<span class="v">$1</span>')
+      .replace(/\.(choice)\b/g,'.<span class="a">$1</span>')
+      .replace(/(&quot;[^&]*&quot;|"[^"]*")/g,'<span class="s">$1</span>')
+      .replace(/\b(slot1|slot2|slot3|items)\b/g,'<span class="n">$1</span>');
+  }
+  const code=`<span class="c"># ১. পাইথনের লটারির জাদুকরী বাক্স (Module) ইমপোর্ট করলাম</span>
+import random
+
+<span class="c"># ২. আমাদের স্লট মেশিনের ফলের ঝুড়ি বা লিস্ট তৈরি করলাম</span>
+items = ["🍎", "💎", "🍒", "🌟"]
+
+print("--- 🎰 আমার পাইথন স্লট মেশিন গেম 🎰 ---")
+print("চাকা ঘুরছে... স্পিন হচ্ছে... 🌀")
+
+<span class="c"># ৩. random.choice ব্যবহার করে ঝুড়ি থেকে ৩টি ঘরে ৩টি প্রতীক লটারি করে নিলাম</span>
+slot1 = random.choice(items)
+slot2 = random.choice(items)
+slot3 = random.choice(items)
+
+<span class="c"># ৪. এবার স্ক্রিনে লটারির ফল বা রেজাল্ট দেখানোর পালা</span>
+print("--------------------")
+print(f"|  {slot1}  |  {slot2}  |  {slot3}  |")
+print("--------------------")
+
+<span class="c"># ৫. বোনাস ট্রিক: যদি ৩টি ঘরই মিলে যায়, তবে গেমার জিতে যাবে!</span>
+if slot1 == slot2 == slot3:
+    print("🎉 জ্যাকপট!!! তুমি গেমটিতে জিতে গেছ! 👑")
+else:
+    print("😢 ইশ! মিলল না। আবার চেষ্টা করো বন্ধু! 👍")`;
+  document.getElementById('code').innerHTML=hl(code.replace(/<span class="k">(import|if|else|print)<\/span>/g,'$1')).replace(/\b(import|if|else|print)\b/g,'<span class="k">$1</span>');
+
+  // terminal typewriter
+  const term=document.getElementById('term');
+  async function type(text,delay=18){
+    for(const ch of text){term.textContent+=ch;await new Promise(r=>setTimeout(r,delay))}
+    term.textContent+='\n';
+  }
+  async function run(){
+    term.textContent='';
+    const s1=items[Math.floor(Math.random()*4)],s2=items[Math.floor(Math.random()*4)],s3=items[Math.floor(Math.random()*4)];
+    await type('--- 🎰 আমার পাইথন স্লট মেশিন গেম 🎰 ---');
+    await type('চাকা ঘুরছে... স্পিন হচ্ছে... 🌀');
+    await new Promise(r=>setTimeout(r,400));
+    await type('--------------------');
+    await type(`|  ${s1}  |  ${s2}  |  ${s3}  |`);
+    await type('--------------------');
+    if(s1===s2&&s2===s3) await type('🎉 জ্যাকপট!!! তুমি গেমটিতে জিতে গেছ! 👑');
+    else await type('😢 ইশ! মিলল না। আবার চেষ্টা করো বন্ধু! 👍');
+    const c=document.createElement('span');c.className='cursor';c.textContent=' ';term.appendChild(c);
+  }
+  document.getElementById('run').onclick=run;
+  setTimeout(run,800);
+</script>
+</body>
+</html>

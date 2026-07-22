@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>🐌 Snail Mail · চিঠি থেকে ভবিষ্যৎ | Python Letter Adventure</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: radial-gradient(circle at 10% 20%, #0e1a1f, #03070c);
+      font-family: 'Fira Code', monospace;
+      color: #e6f7ff;
+      line-height: 1.5;
+      overflow-x: hidden;
+      padding: 2rem 1rem;
+    }
+
+    /* pixel grid overlay */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: repeating-linear-gradient(0deg, rgba(100, 255, 200, 0.03) 0px, rgba(100, 255, 200, 0.03) 2px, transparent 2px, transparent 8px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    canvas#particleCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* retro card system */
+    .game-card {
+      background: rgba(10, 25, 35, 0.8);
+      backdrop-filter: blur(8px);
+      border: 2px solid #78ffc7;
+      border-radius: 28px;
+      box-shadow: 0 12px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,245,0.1);
+      transition: transform 0.2s, border-color 0.2s;
+      margin-bottom: 2rem;
+      overflow: hidden;
+    }
+
+    .game-card:hover {
+      transform: translateY(-3px);
+      border-color: #ffd966;
+    }
+
+    .card-header {
+      padding: 1.3rem 2rem;
+      background: rgba(0, 28, 35, 0.7);
+      border-bottom: 2px dashed #78ffc7;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+    }
+
+    .card-content {
+      padding: 2rem;
+    }
+
+    pre, code {
+      font-family: 'Fira Code', monospace;
+      background: #05161e;
+      padding: 0.2rem 0.5rem;
+      border-radius: 16px;
+      font-size: 0.85rem;
+    }
+
+    pre {
+      padding: 1rem;
+      overflow-x: auto;
+      border: 1px solid #78ffc7;
+      background: #041016;
+      border-radius: 20px;
+    }
+
+    .terminal-window {
+      background: #010b10;
+      border: 1px solid #ffd966;
+      border-radius: 24px;
+      padding: 1.2rem;
+      font-family: 'Fira Code', monospace;
+      box-shadow: inset 0 0 10px #78ffc730;
+    }
+
+    .badge {
+      background: #ffd966;
+      color: #0a1f1a;
+      padding: 4px 12px;
+      border-radius: 30px;
+      font-size: 0.65rem;
+      font-weight: bold;
+      font-family: 'Press Start 2P', monospace;
+      display: inline-block;
+    }
+
+    /* animated snail + mail */
+    .snail-mail-icon {
+      animation: wobble 4s infinite ease;
+      display: inline-block;
+      font-size: 3rem;
+      filter: drop-shadow(0 4px 6px #78ffc7);
+    }
+
+    @keyframes wobble {
+      0%, 100% { transform: translateX(0px) rotate(0deg); }
+      25% { transform: translateX(4px) rotate(3deg); }
+      75% { transform: translateX(-3px) rotate(-2deg); }
+    }
+
+    /* letter interactive */
+    .letter-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .input-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.8rem;
+      background: #0b1a22;
+      padding: 0.8rem;
+      border-radius: 20px;
+    }
+    .input-group label {
+      font-weight: bold;
+      min-width: 180px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.7rem;
+    }
+    input, select {
+      background: #010b10;
+      border: 1px solid #78ffc7;
+      padding: 8px 14px;
+      border-radius: 40px;
+      color: #cafff0;
+      font-family: 'Fira Code', monospace;
+      flex: 1;
+      outline: none;
+    }
+    button {
+      background: #1f4a4f;
+      border: none;
+      color: white;
+      padding: 8px 18px;
+      border-radius: 60px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.65rem;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    button:active {
+      transform: scale(0.96);
+    }
+    .twitter-share {
+      background: #1DA1F2;
+      color: white;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* accordion */
+    .accordion-item {
+      background: #0a121fcc;
+      border: 1px solid #78ffc7;
+      border-radius: 24px;
+      margin-bottom: 1rem;
+    }
+    .accordion-header {
+      padding: 1rem 1.5rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #071e28;
+      border-radius: 24px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.7rem;
+    }
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 0 1.5rem;
+    }
+    .accordion-item.open .accordion-content {
+      max-height: 700px;
+      padding: 1.5rem;
+      border-top: 1px solid #78ffc7;
+    }
+    .accordion-icon {
+      transition: transform 0.3s;
+    }
+    .accordion-item.open .accordion-icon {
+      transform: rotate(180deg);
+    }
+    .blinking-cursor {
+      display: inline-block;
+      width: 10px;
+      height: 1.1rem;
+      background: #78ffc7;
+      vertical-align: middle;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    .footer-note {
+      text-align: center;
+      font-size: 0.7rem;
+      margin-top: 2rem;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="particleCanvas"></canvas>
+
+<div class="container">
+  <!-- HERO: Snail Mail header -->
+  <div class="game-card" style="text-align: center; background: linear-gradient(125deg, #0c1a24, #02080c);">
+    <div class="card-content" style="padding: 1.5rem;">
+      <div class="snail-mail-icon">🐌📬✨</div>
+      <h1 style="font-family: 'Press Start 2P'; font-size: 1.6rem; margin-top: 0.5rem;">SNAIL MAIL</h1>
+      <p style="margin-top: 0.8rem;">চিঠি লেখো ভবিষ্যতের programmer-কে ✉️</p>
+      <div class="blinking-cursor"></div>
+    </div>
+  </div>
+
+  <!-- CONGRATS & শিখেছি (exact content) -->
+  <div class="game-card">
+    <div class="card-header">
+      🎉 Chapter 1 শেষ করার জন্য অভিনন্দন! 🎉
+    </div>
+    <div class="card-content">
+      <p>চলো দ্রুত দেখে নিই আমরা কী কী শিখেছি:</p>
+      <ul style="margin: 1rem 0 0 1.5rem; list-style-type: '✓ ';">
+        <li>print() ফাংশন ব্যবহার করে terminal-এ লেখা বা তথ্য দেখানো যায়।</li>
+        <li>Python কোড উপরে থেকে নিচে এক লাইনের পর এক লাইন রান হয়।</li>
+        <li># ব্যবহার করে comments লেখা হয়।</li>
+      </ul>
+      <p style="margin-top: 1.5rem;">এবার আরেকটি মজার কাজ করি!</p>
+    </div>
+  </div>
+
+  <!-- নির্দেশনা + INTERACTIVE LETTER BUILDER -->
+  <div class="game-card">
+    <div class="card-header">
+      📜 নির্দেশনা · letter.py · future self
+    </div>
+    <div class="card-content">
+      <p>একটি খালি letter.py প্রোগ্রাম তৈরি করো।<br>
+      এই exercise-এ তুমি Python ব্যবহার করে তোমার future self-কে একটি চিঠি লিখবে।<br>
+      একটু ভাবো — coding শেখার এই যাত্রায় তুমি কী অর্জন করতে চাও।<br>
+      print() ব্যবহার করে নিচের বিষয়গুলো output দেখাও:</p>
+      <ul style="margin: 1rem 0 1rem 2rem;">
+        <li>আজকের তারিখ</li>
+        <li>এখন তোমার কেমন লাগছে</li>
+        <li>Coding শিখে তুমি কী করতে চাও</li>
+        <li>ভবিষ্যতের programmer version-এর জন্য একটি মেসেজ</li>
+        <li>তোমার favorite emoji</li>
+      </ul>
+      <p>শেষ হলে একটি screenshot নাও এবং Twitter icon-এ ক্লিক করে তোমার letter পোস্ট করো!<br>
+      <em>P.S. সঠিক সময়ে আমরা এই চিঠিটি তোমাকে আবার ফিরিয়ে দেব</em> 🕰️✨</p>
+    </div>
+  </div>
+
+  <!-- LIVE LETTER COMPOSER (Visual interactive, no extra lesson) -->
+  <div class="game-card">
+    <div class="card-header">
+      ✉️ লেটার স্টুডিও · তোমার personalized চিঠি
+    </div>
+    <div class="card-content">
+      <div class="letter-form">
+        <div class="input-group">
+          <label><i class="fas fa-calendar-alt"></i> আজকের তারিখ</label>
+          <input type="date" id="letterDate" value="2026-05-29">
+        </div>
+        <div class="input-group">
+          <label><i class="fas fa-smile"></i> এখন তোমার কেমন লাগছে</label>
+          <input type="text" id="letterFeeling" placeholder="উদা: চ্যালেঞ্জিং কিন্তু মজার!" value="উত্তেজনা আর কৌতূহল! 🚀">
+        </div>
+        <div class="input-group">
+          <label><i class="fas fa-laptop-code"></i> Coding শিখে তুমি কী করতে চাও</label>
+          <input type="text" id="letterDream" placeholder="গেম ডেভেলপার, AI, ওয়েব…" value="চমৎকার গেম এবং রোবট বানাবো! 🤖">
+        </div>
+        <div class="input-group">
+          <label><i class="fas fa-envelope"></i> ভবিষ্যতের programmer-এর মেসেজ</label>
+          <input type="text" id="letterMessage" placeholder="ভবিষ্যৎ আমাকে বলো..." value="কখনো থেমো না, তুমি পারবে! 💪🐍">
+        </div>
+        <div class="input-group">
+          <label><i class="fas fa-star"></i> তোমার favorite emoji</label>
+          <input type="text" id="letterEmoji" placeholder="😍, 🐉, ⚡" value="🐌✨">
+        </div>
+      </div>
+
+      <!-- Python Code Preview & Output -->
+      <div style="margin: 1.5rem 0;">
+        <div class="badge">🐍 generated letter.py (print statements)</div>
+        <pre id="pythonCodePreview" style="margin-top: 10px;"># future self letter
+print("Date: 2026-05-29")
+print("Feeling: উত্তেজনা আর কৌতূহল! 🚀")
+print("Coding goal: চমৎকার গেম এবং রোবট বানাবো! 🤖")
+print("Future message: কখনো থেমো না, তুমি পারবে! 💪🐍")
+print("Favorite emoji: 🐌✨")</pre>
+      </div>
+
+      <div class="terminal-window" id="letterOutputDisplay">
+        <span style="color:#aaffdd;">📬 Your letter output (terminal):</span><br>
+        <span id="outputLines"></span>
+      </div>
+
+      <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem; justify-content: center;">
+        <button id="copyLetterBtn" class="demo-btn"><i class="fas fa-copy"></i> কপি আউটপুট</button>
+        <button id="twitterShareBtn" class="twitter-share"><i class="fab fa-twitter"></i> টুইট করে চিঠি পোস্ট করো</button>
+      </div>
+      <p style="font-size: 0.7rem; margin-top: 1rem;">⭐ screenshot নিয়ে টুইটারে শেয়ার করো! (টুইটার আইকনে ক্লিক)</p>
+    </div>
+  </div>
+
+  <!-- সাহায্য ACCORDION (Hints, Walkthrough Video, Solution, AI Coding Companion) -->
+  <div style="margin-top: 0.5rem;">
+    <div style="display: flex; gap: 10px; margin-bottom: 0.8rem;">
+      <span class="badge" style="background:#ffb347;">🆘 সাহায্য</span>
+      <span class="badge">🧠 click to unlock</span>
+    </div>
+
+    <!-- HINT (exact) -->
+    <div class="accordion-item" id="hintAccordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>💡 হিন্টস</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <p>পাঁচটি print() ব্যবহার করো, প্রতিটি প্রয়োজনীয় তথ্যের জন্য। তারিখ dynamic দেখাতে পারে তবে প্রথমে fixed string হিসেবেও চলে। মনে রেখো, python উপরে থেকে নিচে রান করে! 🐍</p>
+        <div class="badge">✨ print("আজকের তারিখ: ...") ✨</div>
+      </div>
+    </div>
+
+    <!-- WALKTHROUGH VIDEO (animated reveal) -->
+    <div class="accordion-item" id="videoAccordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>🎥 Walkthrough Video</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <div style="background:#03161e; border-radius: 24px; padding: 1rem;">
+          <p>📼 <strong>অ্যানিমেটেড ধাপে ধাপে গাইড</strong> — কিভাবে letter.py তৈরি করো?</p>
+          <div id="walkthroughDemo" style="background:#01070f; padding: 1rem; border-radius: 20px; font-family:'Fira Code'; white-space: pre-line; min-height: 180px;">
+            ▶️ Press play to build the letter
+          </div>
+          <div style="display: flex; gap: 12px; margin-top: 15px; justify-content: center;">
+            <button id="playWalkBtn" class="demo-btn">▶️ ধাপে ধাপে দেখাও</button>
+            <button id="resetWalkBtn" class="demo-btn">⟳ রিসেট</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SOLUTION (exact code sample) -->
+    <div class="accordion-item" id="solutionAccordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>✅ Solution · letter.py উদাহরণ</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <pre style="margin-bottom: 1rem;"># আমার first letter to future self 💌
+print("Date: 29 May 2026")
+print("Feeling: super excited & full of dreams!")
+print("I want to build creative tools and help people using code.")
+print("Dear future programmer: keep learning, stay curious!")
+print("Favorite emoji: 🚀🐍")</pre>
+        <p>👉 উপরের কোডটি letter.py এ লিখে রান করলে output পাবে। তুমি নিজের মত করে personalize করতে পারো!</p>
+        <button id="loadExampleBtn" class="demo-btn">📋 আমার লেটারে উদাহরণ লোড করো</button>
+      </div>
+    </div>
+
+    <!-- AI CODING COMPANION -->
+    <div class="accordion-item" id="aiAccordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>🤖 AI Coding Companion</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+
+    <!-- Practice in Python IDE -->
+    <div class="accordion-item">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>💻 Practice in Python IDE</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <p style="margin:0;font-size:14px;line-height:1.6;color:#B8C5C1">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p>
+        <a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;align-self:flex-start;box-shadow:0 0 16px rgba(101,209,178,0.2);margin-top:8px">🚀 Open Python IDE</a>
+      </div>
+    </div>
+
+      <div class="accordion-content">
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+          <div style="font-size: 3rem;">🧠✨</div>
+          <div>
+            <p><strong>💬 AI টিপস:</strong> "print() এর ভিতরে স্ট্রিং যোগ করতে + ব্যবহার করতে পারো, কমা দিয়ে একাধিক জিনিস প্রিন্ট করতে পারো। চিঠি লেখার সময় নিজের আবেগ মেশাও! ভবিষ্যতের programmer version-কে উৎসাহ দাও।"</p>
+            <button id="aiQuickTip" class="demo-btn">⚡ আমার জন্য আইডিয়া জেনারেট করো</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    🐌 Snail Mail · ধাপে ধাপে চিঠি তৈরি করো, টুইট করো, ভবিষ্যৎ ডেভেলপারকে অনুপ্রাণিত করো!
+  </div>
+</div>
+
+<script>
+  // -------------------- Particle bg --------------------
+  const canvas = document.getElementById('particleCanvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  class Particle {
+    constructor() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.size = Math.random() * 2.5 + 1;
+      this.speedX = (Math.random() - 0.5) * 0.3;
+      this.speedY = (Math.random() - 0.5) * 0.2;
+      this.color = `rgba(120, 255, 200, ${Math.random() * 0.3 + 0.1})`;
+    }
+    update() {
+      this.x += this.speedX;
+      this.y += this.speedY;
+      if (this.x < 0) this.x = canvas.width;
+      if (this.x > canvas.width) this.x = 0;
+      if (this.y < 0) this.y = canvas.height;
+      if (this.y > canvas.height) this.y = 0;
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.fill();
+    }
+  }
+  function initParticles(cnt) { for (let i=0;i<cnt;i++) particles.push(new Particle()); }
+  function animateParticles() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p => { p.update(); p.draw(); });
+    requestAnimationFrame(animateParticles);
+  }
+  initParticles(60);
+  animateParticles();
+  // -------------------- interactive letter logic --------------------
+  const dateInput = document.getElementById('letterDate');
+  const feelingInput = document.getElementById('letterFeeling');
+  const dreamInput = document.getElementById('letterDream');
+  const messageInput = document.getElementById('letterMessage');
+  const emojiInput = document.getElementById('letterEmoji');
+  const outputSpan = document.getElementById('outputLines');
+  const pythonCodePreview = document.getElementById('pythonCodePreview');
+
+  function formatDate(dateVal) {
+    if(!dateVal) return "2026-05-29";
+    const d = new Date(dateVal);
+    return d.toLocaleDateString('en-GB', { year:'numeric', month:'long', day:'numeric' });
+  }
+
+  function updateLetter() {
+    const rawDate = dateInput.value;
+    const dateStr = formatDate(rawDate);
+    const feeling = feelingInput.value.trim() || "শিখতে দারুণ লাগছে!";
+    const dream = dreamInput.value.trim() || "ইনোভেটিভ প্রজেক্ট বানাবো";
+    const futureMsg = messageInput.value.trim() || "ভবিষ্যৎ programmer, keep shining!";
+    const favEmoji = emojiInput.value.trim() || "🐍❤️";
+
+    const output = `Date: ${dateStr}\nFeeling: ${feeling}\nCoding goal: ${dream}\nFuture message: ${futureMsg}\nFavorite emoji: ${favEmoji}`;
+    outputSpan.innerText = output;
+
+    // python code preview
+    const code = `# future self letter 💌\nprint("Date: ${dateStr}")\nprint("Feeling: ${feeling}")\nprint("Coding goal: ${dream}")\nprint("Future message: ${futureMsg}")\nprint("Favorite emoji: ${favEmoji}")`;
+    pythonCodePreview.innerText = code;
+  }
+
+  function attachInputEvents() {
+    const inputs = [dateInput, feelingInput, dreamInput, messageInput, emojiInput];
+    inputs.forEach(inp => inp.addEventListener('input', updateLetter));
+  }
+  attachInputEvents();
+  updateLetter();
+
+  // copy output
+  document.getElementById('copyLetterBtn').addEventListener('click', () => {
+    const letterText = outputSpan.innerText;
+    navigator.clipboard.writeText(letterText);
+    alert('📋 চিঠির আউটপুট কপি হয়েছে! এখন screenshot নিয়ে টুইট করতে পারো।');
+  });
+
+  // twitter share (letter content)
+  document.getElementById('twitterShareBtn').addEventListener('click', () => {
+    const letterContent = outputSpan.innerText;
+    const tweetText = `🐍 আমার Future self-কে চিঠি:\n\n${letterContent}\n\n#SnailMail #PythonLearning #CodingJourney 🐌✨`;
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+    window.open(url, '_blank');
+  });
+
+  // load example solution into form fields (without overwriting lesson)
+  document.getElementById('loadExampleBtn')?.addEventListener('click', () => {
+    feelingInput.value = "অসাধারণ উৎসাহ, নতুন কিছু শিখছি!";
+    dreamInput.value = "ওপেন সোর্স কন্ট্রিবিউটর ও গেম ডেভেলপার হতে চাই";
+    messageInput.value = "ভবিষ্যৎ আমি: কখনো হার মানিস না, তুমি রকস্টার!";
+    emojiInput.value = "🚀🐍💻";
+    dateInput.value = "2026-05-29";
+    updateLetter();
+  });
+
+  // AI quick tip
+  document.getElementById('aiQuickTip')?.addEventListener('click', () => {
+    const tips = [
+      "💡 print() এর ভিতরে \n ব্যবহার করলে লাইন ব্রেক হয়",
+      "🧠 তোমার ভবিষ্যৎ self কে চ্যালেঞ্জ দিতে ভুলো না!",
+      "✨ favorite emoji হিসেবে 🐍 বা 🌟 দারুণ কাজ করে",
+      "📅 আজকের তারিখ আপনার letter কে authentic করে তোলে"
+    ];
+    alert(tips[Math.floor(Math.random() * tips.length)]);
+  });
+
+  // ------------- walkthrough video animation (7 steps)
+  const walkthroughSteps = [
+    "🔹 Step 1: print('Date: 29 May 2026')",
+    "🔸 Step 2: print('Feeling: Challenging but super fun!')",
+    "🔹 Step 3: print('Coding goal: Build AI tools & games')",
+    "🔸 Step 4: print('Future message: Keep coding, stay curious!')",
+    "🔹 Step 5: print('Favorite emoji: 🐌✨')",
+    "⭐ Output will show 5 lines perfectly! ⭐"
+  ];
+  let walkIdx = 0;
+  let walkInterval = null;
+  const walkDisplayDiv = document.getElementById('walkthroughDemo');
+  function updateWalkDisplay(stepNum) {
+    if (stepNum === 0) {
+      walkDisplayDiv.innerText = "🎬 Press 'ধাপে ধাপে দেখাও' to see how to build letter.py step by step!";
+      return;
+    }
+    let text = "";
+    for (let i=0; i<stepNum && i<walkthroughSteps.length; i++) {
+      text += walkthroughSteps[i] + "\n";
+    }
+    walkDisplayDiv.innerText = text || "✨ Letter ready!";
+  }
+  function startWalk() {
+    if (walkInterval) clearInterval(walkInterval);
+    walkIdx = 0;
+    updateWalkDisplay(0);
+    walkInterval = setInterval(() => {
+      if (walkIdx < walkthroughSteps.length) {
+        walkIdx++;
+        updateWalkDisplay(walkIdx);
+      } else {
+        clearInterval(walkInterval);
+        walkInterval = null;
+      }
+    }, 900);
+  }
+  function resetWalk() {
+    if (walkInterval) { clearInterval(walkInterval); walkInterval = null; }
+    walkIdx = 0;
+    updateWalkDisplay(0);
+  }
+  document.getElementById('playWalkBtn')?.addEventListener('click', startWalk);
+  document.getElementById('resetWalkBtn')?.addEventListener('click', resetWalk);
+  updateWalkDisplay(0);
+  // accordion helper
+  function toggleAccordion(header) {
+    const item = header.closest('.accordion-item');
+    if(item) item.classList.toggle('open');
+  }
+
+  // floating snail decorations
+  for(let i=0;i<12;i++) {
+    let span = document.createElement('div');
+    span.innerText = '🐌✉️';
+    span.style.position = 'fixed';
+    span.style.fontSize = (Math.random() * 18 + 12) + 'px';
+    span.style.left = Math.random() * 95 + '%';
+    span.style.bottom = Math.random() * 100 + '%';
+    span.style.opacity = 0.1;
+    span.style.pointerEvents = 'none';
+    span.style.zIndex = 0;
+    span.style.animation = 'wobble 15s infinite';
+    document.body.appendChild(span);
+  }
+  // ensure all original textual content is present, no extra lessons added
+</script>
+</body>
+</html>

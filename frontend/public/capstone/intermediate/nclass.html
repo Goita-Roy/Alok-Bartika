@@ -1,0 +1,178 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduCode - Smart City Exploration</title>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --accent-color: #FF9800;
+            --bg-color: #e3f2fd;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        h1 { color: #1565c0; margin-top: 20px; }
+        p { color: #555; }
+
+        /* সিটি কন্টেইনার */
+        .city-container {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            background: url('https://img.freepik.com/free-vector/flat-style-city-landscape_23-2148203577.jpg') no-repeat center center;
+            background-size: cover;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin: 20px;
+            border: 5px solid white;
+        }
+
+        /* হটস্পট ডিজাইন */
+        .hotspot {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: var(--accent-color);
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid white;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7); }
+            70% { transform: scale(1.2); box-shadow: 0 0 0 10px rgba(255, 152, 0, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 152, 0, 0); }
+        }
+
+        /* হটস্পট পজিশন (কাল্পনিক পজিশন) */
+        #hospital { top: 40%; left: 20%; }
+        #school { top: 35%; left: 60%; }
+        #atm { top: 70%; left: 45%; }
+
+        /* পপ-আপ কার্ড */
+        .info-card {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 100;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -60%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+
+        .info-card h2 { color: var(--primary-color); margin-top: 0; }
+        .info-card button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* প্রগ্রেস বার */
+        .progress-container { width: 300px; background: #ddd; border-radius: 10px; margin: 10px; }
+        .progress-bar { width: 0%; height: 20px; background: var(--primary-color); border-radius: 10px; transition: width 0.5s; }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); z-index: 90;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>EduCode: স্মার্ট সিটি এক্সপ্লোরার</h1>
+    <p>শহরের বিভিন্ন জায়গায় ক্লিক করে কম্পিউটারের ব্যবহার খুঁজে বের করো!</p>
+
+    <div class="progress-container">
+        <div class="progress-bar" id="myBar"></div>
+    </div>
+    <div id="score">খুঁজে পেয়েছো: 0/3</div>
+
+    <div class="city-container">
+        <!-- হটস্পট সমূহ -->
+        <div class="hotspot" id="hospital" onclick="showInfo('hospital')"></div>
+        <div class="hotspot" id="school" onclick="showInfo('school')"></div>
+        <div class="hotspot" id="atm" onclick="showInfo('atm')"></div>
+    </div>
+
+    <!-- পপ-আপ কার্ড -->
+    <div class="overlay" id="overlay"></div>
+    <div class="info-card" id="infoCard">
+        <h2 id="title">নাম</h2>
+        <p id="desc">বিস্তারিত তথ্য...</p>
+        <button onclick="closeInfo()">দারুণ!</button>
+    </div>
+
+    <script>
+        const data = {
+            hospital: {
+                title: "🏥 হাসপাতাল",
+                desc: "এখানে কম্পিউটার ব্যবহার করে রোগীর এক্স-রে রিপোর্ট দেখা হয় এবং সব তথ্য জমা রাখা হয়।"
+            },
+            school: {
+                title: "🏫 স্কুল",
+                desc: "তোমাদের রেজাল্ট তৈরি করতে এবং বড় স্ক্রিনে ডিজিটাল ক্লাস নিতে কম্পিউটার ব্যবহৃত হয়।"
+            },
+            atm: {
+                title: "💳 ATM বুথ",
+                desc: "এটি একটি বিশেষ কম্পিউটার যা ব্যাংক একাউন্ট চেক করে টাকা বের করে দেয়।"
+            }
+        };
+
+        let found = new Set();
+
+        function showInfo(place) {
+            document.getElementById('title').innerText = data[place].title;
+            document.getElementById('desc').innerText = data[place].desc;
+            document.getElementById('infoCard').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+
+            // স্কোর আপডেট
+            found.add(place);
+            updateProgress();
+        }
+
+        function closeInfo() {
+            document.getElementById('infoCard').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+            
+            if(found.size === 3) {
+                alert("অভিনন্দন! তুমি স্মার্ট সিটির সব কম্পিউটার খুঁজে পেয়েছো। 🏆");
+            }
+        }
+
+        function updateProgress() {
+            let percentage = (found.size / 3) * 100;
+            document.getElementById('myBar').style.width = percentage + "%";
+            document.getElementById('score').innerText = `খুঁজে পেয়েছো: ${found.size}/3`;
+        }
+    </script>
+</body>
+</html>

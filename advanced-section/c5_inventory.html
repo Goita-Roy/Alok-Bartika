@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Inventory (ইনভেন্টরি) — Python Coding Adventure</title>
+<meta name="description" content="Learn Python lists through a Minecraft-style inventory adventure. Bengali coding lesson with gamified visuals." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Hind+Siliguri:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        background: 'oklch(0.18 0.04 270)',
+        foreground: 'oklch(0.97 0.02 95)',
+        card: 'oklch(0.23 0.05 270)',
+        primary: { DEFAULT: 'oklch(0.78 0.19 145)', foreground: 'oklch(0.15 0.04 270)' },
+        secondary: 'oklch(0.28 0.06 270)',
+        muted: { DEFAULT: 'oklch(0.28 0.05 270)', foreground: 'oklch(0.75 0.04 270)' },
+        accent: { DEFAULT: 'oklch(0.82 0.18 75)', foreground: 'oklch(0.18 0.04 270)' },
+        border: 'oklch(0.35 0.08 270)',
+        mana: 'oklch(0.7 0.2 250)',
+        health: 'oklch(0.7 0.22 20)',
+        terminal: 'oklch(0.85 0.22 145)',
+      },
+      fontFamily: {
+        pixel: ['"Press Start 2P"', 'system-ui', 'monospace'],
+        display: ['"Hind Siliguri"', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
+      },
+    }
+  }
+}
+</script>
+<style>
+  :root {
+    --primary: oklch(0.78 0.19 145);
+    --accent: oklch(0.82 0.18 75);
+    --mana: oklch(0.7 0.2 250);
+    --health: oklch(0.7 0.22 20);
+    --terminal: oklch(0.85 0.22 145);
+    --border: oklch(0.35 0.08 270);
+  }
+  html, body { font-family: "Hind Siliguri", system-ui, sans-serif; }
+  body {
+    background: oklch(0.18 0.04 270);
+    color: oklch(0.97 0.02 95);
+    background-image:
+      radial-gradient(circle at 20% 10%, oklch(0.78 0.19 145 / 0.08), transparent 40%),
+      radial-gradient(circle at 80% 60%, oklch(0.7 0.2 250 / 0.08), transparent 40%);
+    min-height: 100vh;
+  }
+  .font-pixel { font-family: "Press Start 2P", monospace; letter-spacing: 0.02em; }
+  .font-mono  { font-family: "JetBrains Mono", monospace; }
+  .pixel-border {
+    box-shadow: 0 0 0 2px var(--border), 4px 4px 0 oklch(0.1 0.03 270);
+  }
+  .pixel-border-sm {
+    box-shadow: 0 0 0 2px var(--border), 2px 2px 0 oklch(0.1 0.03 270);
+  }
+  .text-glow { text-shadow: 0 0 12px currentColor, 0 0 24px currentColor; }
+  .bg-grid {
+    background-image:
+      linear-gradient(oklch(0.78 0.19 145 / 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(0.78 0.19 145 / 0.08) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .bg-scanlines {
+    background-image: repeating-linear-gradient(0deg, oklch(0 0 0 / 0.15) 0, oklch(0 0 0 / 0.15) 1px, transparent 1px, transparent 3px);
+  }
+  .terminal-shadow {
+    box-shadow:
+      inset 0 0 60px oklch(0.85 0.22 145 / 0.08),
+      0 20px 60px -20px oklch(0 0 0 / 0.6),
+      0 0 0 1px oklch(0.85 0.22 145 / 0.3);
+  }
+
+  @keyframes float-slow { 0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-20px) rotate(3deg)} }
+  @keyframes float-fast { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+  @keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+  @keyframes sparkle { 0%,100%{opacity:0;transform:scale(.5) rotate(0)} 50%{opacity:1;transform:scale(1) rotate(180deg)} }
+  @keyframes pop-in { 0%{transform:scale(0) rotate(-10deg);opacity:0} 60%{transform:scale(1.1) rotate(2deg)} 100%{transform:scale(1) rotate(0);opacity:1} }
+  @keyframes glow-pulse { 0%,100%{filter:drop-shadow(0 0 8px var(--primary))} 50%{filter:drop-shadow(0 0 24px var(--primary))} }
+  @keyframes xp-rise { 0%{transform:translateY(0);opacity:0} 20%{opacity:1} 100%{transform:translateY(-60px);opacity:0} }
+  @keyframes drift { 0%{transform:translate(0,0);opacity:.6} 50%{opacity:1} 100%{transform:translate(60px,-120px);opacity:0} }
+
+  .animate-float-slow { animation: float-slow 6s ease-in-out infinite; }
+  .animate-float-fast { animation: float-fast 3s ease-in-out infinite; }
+  .animate-blink      { animation: blink 1s steps(1) infinite; }
+  .animate-sparkle    { animation: sparkle 2s ease-in-out infinite; }
+  .animate-pop-in     { animation: pop-in 0.6s cubic-bezier(0.34,1.56,0.64,1) backwards; }
+  .animate-glow-pulse { animation: glow-pulse 2.5s ease-in-out infinite; }
+  .animate-xp-rise    { animation: xp-rise 2s ease-out infinite; }
+
+  .pixel-particle {
+    position: absolute; width: 6px; height: 6px;
+    background: var(--primary);
+    box-shadow: 0 0 8px var(--primary);
+    animation: drift linear infinite;
+  }
+
+  .accordion-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s ease, opacity .3s; opacity: 0; }
+  .accordion-body > div { overflow: hidden; }
+  .accordion[open] .accordion-body { grid-template-rows: 1fr; opacity: 1; }
+  .accordion[open] .chevron { transform: rotate(180deg); }
+  .chevron { transition: transform .3s; }
+
+  /* Big emoji "art" for bag/mascot */
+  .art-emoji { font-size: clamp(8rem, 22vw, 16rem); line-height: 1; filter: drop-shadow(0 10px 30px rgba(0,0,0,.5)); }
+</style>
+</head>
+<body>
+
+<!-- HUD -->
+<header class="sticky top-0 z-50 backdrop-blur-md bg-[oklch(0.18_0.04_270/0.7)] border-b" style="border-color:var(--border)">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <span class="text-primary text-lg">⌨</span>
+      <span class="font-pixel text-[10px] sm:text-xs">CODE QUEST</span>
+    </div>
+    <div class="flex items-center gap-3 sm:gap-4 text-xs">
+      <span class="flex items-center gap-1.5 font-pixel text-[9px] text-accent">🏆 LVL 1</span>
+      <div class="hidden sm:flex items-center gap-1.5">
+        <span class="font-pixel text-[9px] text-muted-foreground">XP</span>
+        <div class="w-24 h-2 rounded-full overflow-hidden pixel-border-sm" style="background:oklch(0.28 0.06 270)">
+          <div class="h-full w-1/3 animate-glow-pulse" style="background:linear-gradient(90deg,var(--accent),var(--primary))"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="relative overflow-hidden">
+  <div class="absolute inset-0 bg-grid opacity-40"></div>
+  <div id="particles" class="absolute inset-0 pointer-events-none"></div>
+  <div class="relative max-w-6xl mx-auto px-4 pt-12 pb-16 sm:pt-20 sm:pb-24">
+    <div class="grid lg:grid-cols-2 gap-10 items-center">
+      <div class="space-y-6 animate-pop-in">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border" style="background:oklch(0.28 0.06 270);border-color:var(--border)">
+          <span class="text-accent animate-sparkle">✨</span>
+          <span class="font-pixel text-[9px] text-accent">QUEST #01 • PYTHON LISTS</span>
+        </div>
+        <h1 class="font-pixel text-3xl sm:text-5xl lg:text-6xl leading-tight">
+          <span class="text-primary text-glow">inventory</span><br>
+          <span class="text-2xl sm:text-3xl">(ইনভেন্টরি)</span>
+        </h1>
+        <p class="text-base sm:text-lg text-muted-foreground leading-relaxed">
+          তোমরা যারা ফ্রি ফায়ার (Free Fire), পাবজি (PUBG) বা মাইনক্রাফট (Minecraft) গেম খেলো, তারা এই শব্দটির সাথে খুব ভালোভাবে পরিচিত! গেমে তোমার ব্যাগের ভেতর কী কী অস্ত্র, মেডকিট বা জিনিসপত্র আছে—তার তালিকাকেই বলা হয় Inventory (ইনভেন্টরি)।
+        </p>
+        <p class="text-base sm:text-lg text-muted-foreground leading-relaxed">
+          সহজ কথায়, আমাদের কাছে মোট কী কী জিনিস জমা আছে, তার তালিকাকেই ইনভেন্টরি বলে। পাইথনে এই ইনভেন্টরি বা ব্যাগের তালিকা তৈরি করার সবচেয়ে সহজ উপায় হলো <span class="text-primary font-semibold">List (লিস্ট)</span>।
+        </p>
+      </div>
+      <div class="relative flex justify-center animate-pop-in" style="animation-delay:.2s">
+        <div class="absolute inset-0 blur-3xl rounded-full" style="background:oklch(0.78 0.19 145 / 0.2)"></div>
+        <div class="relative art-emoji animate-float-slow">🎒</div>
+        <div class="absolute top-4 right-4 font-pixel text-[10px] text-accent animate-xp-rise">+50 XP</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INSTRUCTIONS -->
+<section class="relative py-16 sm:py-20">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="flex items-center gap-3 mb-6">
+      <div class="size-12 rounded-md flex items-center justify-center pixel-border-sm animate-glow-pulse" style="background:linear-gradient(135deg,var(--primary),oklch(0.6 0.15 145))">
+        <span class="text-xl">🎒</span>
+      </div>
+      <div>
+        <p class="font-pixel text-[9px] text-accent text-glow">LEVEL 01</p>
+        <h2 class="font-pixel text-sm sm:text-lg">নির্দেশনা</h2>
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-5 gap-8 items-center">
+      <div class="lg:col-span-3 space-y-5">
+        <p class="text-base sm:text-lg leading-relaxed">
+          মনে করো, তুমি <span class="text-primary font-semibold">মাইনক্রাফট</span> গেম খেলছ। গেমের শুরুতে তোমার ব্যাগের (Inventory) ভেতর ৩টি জিনিস আছে:
+        </p>
+        <ol class="space-y-3" id="item-list"></ol>
+        <p class="text-base sm:text-lg leading-relaxed pt-2">
+          তুমি দেখতে চাও তোমার ব্যাগে এই মুহূর্তে কী কী জিনিস আছে। চলো, পাইথন কোড লিখে তোমার গেমের ব্যাগটি স্ক্রিনে ফুটিয়ে তুলি!
+        </p>
+      </div>
+
+      <div class="lg:col-span-2">
+        <div class="bg-card pixel-border rounded-xl p-5 sm:p-6 relative overflow-hidden">
+          <div class="absolute inset-0 bg-grid opacity-20"></div>
+          <div class="relative">
+            <p class="font-pixel text-[10px] text-accent mb-4 text-center">🎒 YOUR INVENTORY 🎒</p>
+            <div id="slots" class="grid grid-cols-3 gap-3 sm:gap-5"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CODE TERMINAL -->
+<section class="relative py-16 sm:py-20" style="background:oklch(0.15 0.04 270)">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="flex items-center justify-between mb-6 flex-wrap gap-4">
+      <div class="flex items-center gap-3">
+        <div class="size-12 rounded-md flex items-center justify-center pixel-border-sm animate-glow-pulse" style="background:linear-gradient(135deg,var(--primary),oklch(0.6 0.15 145))">
+          <span class="text-xl">⌨</span>
+        </div>
+        <div>
+          <p class="font-pixel text-[9px] text-accent text-glow">LEVEL 02</p>
+          <h2 class="font-pixel text-sm sm:text-lg">কোড চালাও</h2>
+        </div>
+      </div>
+      <div class="art-emoji animate-float-fast" style="font-size:5rem">🐍</div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="rounded-lg terminal-shadow overflow-hidden" style="background:oklch(0.12 0.03 270)">
+        <div class="flex items-center gap-2 px-4 py-2.5 border-b" style="background:oklch(0.16 0.04 270);border-color:var(--border)">
+          <span class="size-3 rounded-full" style="background:oklch(0.7 0.22 20)"></span>
+          <span class="size-3 rounded-full bg-accent"></span>
+          <span class="size-3 rounded-full bg-primary"></span>
+          <span class="ml-3 font-pixel text-[10px] text-muted-foreground">inventory.py</span>
+        </div>
+        <pre id="editor" class="p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed min-h-[280px] relative overflow-hidden whitespace-pre-wrap">
+          <div class="absolute inset-0 bg-scanlines pointer-events-none opacity-30"></div>
+        </pre>
+      </div>
+      <div class="rounded-lg terminal-shadow overflow-hidden" style="background:oklch(0.1 0.02 270)">
+        <div class="flex items-center justify-between px-4 py-2.5 border-b" style="background:oklch(0.14 0.03 270);border-color:var(--border)">
+          <span class="font-pixel text-[10px]" style="color:var(--terminal)">▶ OUTPUT</span>
+          <span class="font-mono text-[10px] text-muted-foreground">running...</span>
+        </div>
+        <pre id="output" class="p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed min-h-[280px] relative whitespace-pre-wrap" style="color:var(--terminal)">
+          <div class="absolute inset-0 bg-scanlines pointer-events-none opacity-30"></div>
+<span class="text-muted-foreground">$ python inventory.py</span>
+</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HELP -->
+<section class="relative py-16 sm:py-20">
+  <div class="max-w-3xl mx-auto px-4">
+    <div class="flex items-center gap-3 mb-6">
+      <div class="size-12 rounded-md flex items-center justify-center pixel-border-sm animate-glow-pulse" style="background:linear-gradient(135deg,var(--primary),oklch(0.6 0.15 145))">
+        <span class="text-xl">✨</span>
+      </div>
+      <div>
+        <p class="font-pixel text-[9px] text-accent text-glow">LEVEL 03</p>
+        <h2 class="font-pixel text-sm sm:text-lg">সাহায্য</h2>
+      </div>
+    </div>
+    <div id="help" class="space-y-3"></div>
+  </div>
+</section>
+
+<footer class="border-t py-8 text-center" style="border-color:var(--border)">
+  <p class="font-pixel text-[10px] text-muted-foreground">✨ QUEST COMPLETE — KEEP CODING ADVENTURER ✨</p>
+</footer>
+
+<script>
+// Pixel particles
+(function(){
+  const root = document.getElementById('particles');
+  const colors = ['oklch(0.78 0.19 145)','oklch(0.82 0.18 75)','oklch(0.7 0.2 250)'];
+  for (let i=0;i<30;i++){
+    const p = document.createElement('span');
+    p.className = 'pixel-particle';
+    p.style.left = Math.random()*100 + '%';
+    p.style.top  = (60 + Math.random()*40) + '%';
+    p.style.background = colors[i%3];
+    p.style.boxShadow = '0 0 8px ' + colors[i%3];
+    p.style.animationDuration = (4 + Math.random()*6) + 's';
+    p.style.animationDelay = (Math.random()*5) + 's';
+    root.appendChild(p);
+  }
+})();
+
+// Item list
+const items = [
+  { n:"১", name:'"Sword"',  bn:"(তলোয়ার)", emoji:"⚔️" },
+  { n:"২", name:'"Shield"', bn:"(ঢাল)",     emoji:"🛡️" },
+  { n:"৩", name:'"Apple"',  bn:"(আপেল)",   emoji:"🍎" },
+];
+document.getElementById('item-list').innerHTML = items.map((it,i)=>`
+  <li class="flex items-center gap-4 p-4 bg-card pixel-border rounded-lg hover:translate-x-2 transition-transform animate-pop-in" style="animation-delay:${i*0.15}s">
+    <span class="font-pixel text-base text-accent shrink-0">${it.n}.</span>
+    <span class="text-2xl">${it.emoji}</span>
+    <span class="font-mono text-primary font-semibold">${it.name}</span>
+    <span class="text-muted-foreground">${it.bn}</span>
+  </li>`).join('');
+
+// Inventory slots
+const slots = [
+  { name:"Sword",  bn:"তলোয়ার", icon:"⚔️", color:"var(--mana)" },
+  { name:"Shield", bn:"ঢাল",     icon:"🛡️", color:"var(--primary)" },
+  { name:"Apple",  bn:"আপেল",   icon:"🍎", color:"var(--health)" },
+];
+document.getElementById('slots').innerHTML = slots.map((s,i)=>`
+  <div class="relative aspect-square bg-card pixel-border rounded-md flex flex-col items-center justify-center gap-2 p-2 animate-pop-in hover:scale-110 hover:-translate-y-1 transition-transform cursor-pointer" style="animation-delay:${i*0.15}s">
+    <span class="absolute top-1 left-2 font-pixel text-[10px] text-muted-foreground">${i+1}</span>
+    <span class="text-4xl sm:text-5xl animate-float-fast" style="animation-delay:${i*0.3}s;color:${s.color}">${s.icon}</span>
+    <div class="text-center">
+      <p class="font-pixel text-[9px] sm:text-[11px]">${s.name}</p>
+      <p class="text-xs text-muted-foreground">${s.bn}</p>
+    </div>
+    <span class="absolute -top-2 -right-2 text-accent animate-sparkle text-xl" style="animation-delay:${i*0.5}s">✨</span>
+  </div>`).join('');
+
+// Terminal animation
+const CODE = [
+  { t:"# ১. গেমের ব্যাগের ভেতর ৩টি জিনিস নিয়ে লিস্ট তৈরি করলাম", c:"text-muted-foreground" },
+  { t:"", c:"" },
+  { t:'bag = ["Sword", "Shield", "Apple"]', c:"" },
+  { t:"", c:"" },
+  { t:'print("--- 🎒 আমার গেমের ব্যাগের ইনভেন্টরি 🎒 ---")', c:"" },
+  { t:"", c:"" },
+  { t:"# ২. লুপ ব্যবহার করে ব্যাগ থেকে এক এক করে জিনিসগুলো প্রিন্ট করলাম", c:"text-muted-foreground" },
+  { t:"", c:"" },
+  { t:"for item in bag:", c:"", style:"color:var(--mana)" },
+  { t:'    print("✨ ব্যাগে আছে:", item)', c:"" },
+];
+const OUTPUT = [
+  "--- 🎒 আমার গেমের ব্যাগের ইনভেন্টরি 🎒 ---",
+  "✨ ব্যাগে আছে: Sword",
+  "✨ ব্যাগে আছে: Shield",
+  "✨ ব্যাগে আছে: Apple",
+];
+const editor = document.getElementById('editor');
+const output = document.getElementById('output');
+let ci=0, oi=0;
+function escapeHtml(s){ return s.replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"})[m]); }
+function tick(){
+  if (ci < CODE.length){
+    const l = CODE[ci++];
+    const line = document.createElement('div');
+    if (l.c) line.className = l.c;
+    if (l.style) line.setAttribute('style', l.style);
+    line.innerHTML = `<span class="text-muted-foreground/40 inline-block w-6 select-none">${ci}</span>${escapeHtml(l.t)||'&nbsp;'}`;
+    editor.appendChild(line);
+    setTimeout(tick, 220);
+  } else if (oi < OUTPUT.length){
+    const line = document.createElement('div');
+    line.className = 'animate-pop-in';
+    line.textContent = OUTPUT[oi++];
+    output.appendChild(line);
+    setTimeout(tick, 400);
+  }
+}
+setTimeout(tick, 400);
+
+// Help accordion
+const cards = [
+  { id:'hint', title:'Hints (হিন্টস)', icon:'💡', color:'var(--accent)', html:`
+    <div class="space-y-3 text-sm sm:text-base">
+      <p><strong class="text-primary">গেমের ব্যাগ (List):</strong> ৩টি জিনিসকে একসাথে রাখার জন্য একটি পাইথন লিস্ট তৈরি করো: <code class="font-mono px-2 py-0.5 rounded text-accent" style="background:oklch(0.28 0.06 270)">bag = ["Sword", "Shield", "Apple"]</code>।</p>
+      <p><strong class="text-primary">লুপের জাদু:</strong> ব্যাগের ভেতরের সব জিনিস এক এক করে স্ক্রিনে দেখতে আমরা <code class="font-mono px-2 py-0.5 rounded text-accent" style="background:oklch(0.28 0.06 270)">for</code> লুপ ব্যবহার করব। যেমন: <code class="font-mono px-2 py-0.5 rounded text-accent" style="background:oklch(0.28 0.06 270)">for item in bag:</code>।</p>
+    </div>` },
+  { id:'video', title:'Walkthrough Video', icon:'🎬', color:'var(--mana)', html:`
+    <div class="aspect-video rounded-md flex items-center justify-center pixel-border-sm" style="background:oklch(0.1 0.02 270)">
+      <div class="text-center space-y-2">
+        <div class="text-5xl animate-float-fast" style="color:var(--mana)">▶</div>
+        <p class="font-pixel text-[10px] text-muted-foreground">▶ VIDEO COMING SOON</p>
+      </div>
+    </div>` },
+  { id:'solution', title:'সমাধান ও সম্পূর্ণ কোড (Solution)', icon:'✅', color:'var(--primary)', html:`
+    <div class="space-y-3">
+      <p class="text-sm sm:text-base">কোডটি খুব ছোট এবং সহজ, নিচে ভালো করে লক্ষ্য করো:</p>
+      <pre class="p-4 rounded-md font-mono text-xs sm:text-sm overflow-x-auto border" style="background:oklch(0.1 0.02 270);border-color:var(--border)"># ১. গেমের ব্যাগের ভেতর ৩টি জিনিস নিয়ে লিস্ট তৈরি করলাম
+bag = ["Sword", "Shield", "Apple"]
+
+print("--- 🎒 আমার গেমের ব্যাগের ইনভেন্টরি 🎒 ---")
+
+# ২. লুপ ব্যবহার করে ব্যাগ থেকে এক এক করে জিনিসগুলো প্রিন্ট করলাম
+for item in bag:
+    print("✨ ব্যাগে আছে:", item)</pre>
+    </div>` },
+  { id:'ai', title:'AI Coding Companion', icon:'🤖', color:'var(--health)', html:`
+    <div class="flex gap-4 items-start">
+      <div class="text-5xl animate-float-fast shrink-0">🤖</div>
+      <p class="text-sm sm:text-base text-muted-foreground">আটকে গেছ? তোমার AI Coding Companion সাহায্য করতে প্রস্তুত! কোডের যেকোনো অংশ নিয়ে প্রশ্ন করো।</p>
+    </div>` },
+
+  { id:'practice', title:'Practice in Python IDE', icon:'💻', color:'var(--cyan)', html:`
+    <div class="flex gap-4 items-start">
+      <div class="text-5xl shrink-0">💻</div>
+      <p class="text-sm sm:text-base text-muted-foreground">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p>
+      <a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;box-shadow:0 0 16px rgba(101,209,178,0.2)">🚀 Open Python IDE</a>
+    </div>` },
+
+];
+document.getElementById('help').innerHTML = cards.map((c,i)=>`
+  <details class="accordion bg-card pixel-border rounded-lg overflow-hidden animate-pop-in" style="animation-delay:${i*0.08}s" ${c.id==='hint'?'open':''}>
+    <summary class="list-none cursor-pointer flex items-center justify-between gap-3 p-4 sm:p-5 hover:bg-[oklch(0.28_0.06_270/0.5)] transition-colors">
+      <div class="flex items-center gap-3">
+        <div class="size-10 rounded-md flex items-center justify-center text-xl" style="background:oklch(0.28 0.06 270);color:${c.color}">${c.icon}</div>
+        <h3 class="font-pixel text-[11px] sm:text-sm text-left">${c.title}</h3>
+      </div>
+      <span class="chevron text-muted-foreground">▼</span>
+    </summary>
+    <div class="accordion-body"><div><div class="p-4 sm:p-5 pt-0 border-t" style="border-color:var(--border)">${c.html}</div></div></div>
+  </details>`).join('');
+</script>
+</body>
+</html>

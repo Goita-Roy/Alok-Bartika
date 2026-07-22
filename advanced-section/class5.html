@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📋 Chapter 5: Lists - Chapter Dashboard</title>
+    <link rel="stylesheet" href="Begineer.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>📋 অধ্যায় ৫ — লিস্টস (Lists)</h1>
+            <p>তথ্য সুবিন্যস্ত রাখা! একাধিক ডেটা বা নামের তালিকা তৈরি এবং তাদের নিয়ে নানাবিধ কাজ করা শিখুন।</p>
+        </header>
+
+        <!-- CHAPTER PROGRESS BAR -->
+        <div class="progress-bar-sticky">
+            <div class="progress-header">
+                <span>🔄 অধ্যায় অগ্রগতি (Chapter Progress)</span>
+                <span id="chapter-5-percent" style="font-weight: 800; color: var(--primary);">0% Completed</span>
+            </div>
+            <div class="progress-track">
+                <div id="chapter-5-fill" class="progress-fill"></div>
+            </div>
+        </div>
+
+        <!-- SUBCLASSES GRID -->
+        <div class="grid">
+            <!-- Basic Card -->
+            <a href="c5_basic.html" class="subclass-card" data-subclass-id="c5_basic">
+                <div>
+                    <h3>🔰 Basic</h3>
+                    <p>এই অধ্যায়ের বেসিক কনসেপ্ট এবং নিয়মাবলী জানুন।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+            
+            <!-- Grocery Card -->
+            <a href="c5_grocery.html" class="subclass-card" data-subclass-id="c5_grocery">
+                <div>
+                    <h3>🛒 Grocery</h3>
+                    <p>বাজারের ফর্দ তৈরি করার এবং স্বয়ংক্রিয়ভাবে মোট খরচ হিসাব করার সিস্টেম বানান।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+
+            <!-- To-Do Card -->
+            <a href="c5_todo.html" class="subclass-card" data-subclass-id="c5_todo">
+                <div>
+                    <h3>✍️ To-Do</h3>
+                    <p>আপনার নিত্যদিনের কাজের পরিকল্পনা এবং তালিকা সহজে ট্র্যাকিং ও এডিটিং করার টুল।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+
+            <!-- Inventory Card -->
+            <a href="c5_inventory.html" class="subclass-card" data-subclass-id="c5_inventory">
+                <div>
+                    <h3>📦 Inventory</h3>
+                    <p>দোকানের বা গেমের আইটেম স্টোরেজ এবং ইনভেন্টরি ম্যানেজমেন্ট কন্ট্রোল সিস্টেম।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+        </div>
+
+        <!-- NAV FOOTER -->
+        <div class="nav-footer">
+            <button class="btn btn-secondary" onclick="window.location.href='class4.html'">
+                ⬅️ পূর্ববর্তী অধ্যায়
+            </button>
+            <button class="btn btn-primary" onclick="window.location.href='class6.html'">
+                পরবর্তী অধ্যায় ➡️
+            </button>
+        </div>
+    </div>
+
+    <!-- CONTROL PANEL -->
+    <div class="controls-panel">
+        <button class="control-btn" id="theme-btn">🌙</button>
+        <button class="control-btn" id="voice-bot-btn">🤖</button>
+    </div>
+
+    <script src="Begineer.js"></script>
+</body>
+</html>

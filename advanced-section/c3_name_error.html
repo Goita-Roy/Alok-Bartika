@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>🕵️ NameError · Python Detective Adventure</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: radial-gradient(circle at 20% 30%, #0c0f1c, #020308);
+      font-family: 'Fira Code', monospace;
+      color: #eef5ff;
+      line-height: 1.5;
+      overflow-x: hidden;
+      padding: 2rem 1rem;
+    }
+
+    /* animated grid */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: repeating-linear-gradient(0deg, rgba(0, 255, 200, 0.02) 0px, rgba(0, 255, 200, 0.02) 2px, transparent 2px, transparent 8px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    canvas#particleCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* retro card */
+    .detective-card {
+      background: rgba(10, 20, 32, 0.85);
+      backdrop-filter: blur(8px);
+      border: 2px solid #ffcc55;
+      border-radius: 32px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,240,0.1);
+      transition: transform 0.2s, border-color 0.2s;
+      margin-bottom: 2rem;
+      overflow: hidden;
+    }
+
+    .detective-card:hover {
+      transform: translateY(-3px);
+      border-color: #6effc0;
+    }
+
+    .card-header {
+      padding: 1.3rem 2rem;
+      background: rgba(0, 28, 38, 0.7);
+      border-bottom: 2px dashed #ffcc55;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+    }
+
+    .card-content {
+      padding: 2rem;
+    }
+
+    pre, code {
+      font-family: 'Fira Code', monospace;
+      background: #041016;
+      padding: 0.2rem 0.5rem;
+      border-radius: 16px;
+      font-size: 0.85rem;
+      border-left: 3px solid #ffcc55;
+    }
+
+    pre {
+      padding: 1rem;
+      overflow-x: auto;
+      border: 1px solid #ffcc55;
+      border-radius: 24px;
+    }
+
+    .interactive-demo {
+      background: #010f16;
+      border-radius: 28px;
+      padding: 1.2rem;
+      margin: 1.5rem 0;
+      border: 1px solid #ffcc55;
+    }
+
+    .code-editor {
+      background: #030c12;
+      border-radius: 20px;
+      padding: 0.5rem;
+    }
+    textarea {
+      width: 100%;
+      background: #01070c;
+      border: 1px solid #ffcc55;
+      color: #f8f8f8;
+      font-family: 'Fira Code', monospace;
+      padding: 1rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      resize: vertical;
+    }
+    button {
+      background: #1f5a63;
+      border: none;
+      color: white;
+      padding: 8px 20px;
+      border-radius: 60px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.65rem;
+      cursor: pointer;
+      transition: 0.2s;
+      margin-top: 10px;
+      margin-right: 8px;
+      box-shadow: 0 2px 0 #0d3a40;
+    }
+    button:active {
+      transform: translateY(2px);
+      box-shadow: none;
+    }
+    .terminal-output {
+      background: #01070c;
+      border-radius: 24px;
+      padding: 1rem;
+      font-family: 'Fira Code', monospace;
+      margin-top: 1rem;
+      border: 1px solid #ffcc55;
+      white-space: pre-wrap;
+    }
+
+    /* accordion */
+    .accordion-item {
+      background: #0a121fcc;
+      border: 1px solid #ffcc55;
+      border-radius: 28px;
+      margin-bottom: 1rem;
+      backdrop-filter: blur(4px);
+    }
+    .accordion-header {
+      padding: 1rem 1.5rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #071e28;
+      border-radius: 28px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.7rem;
+    }
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 0 1.5rem;
+    }
+    .accordion-item.open .accordion-content {
+      max-height: 700px;
+      padding: 1.5rem;
+      border-top: 1px solid #ffcc55;
+    }
+    .accordion-icon {
+      transition: transform 0.3s;
+    }
+    .accordion-item.open .accordion-icon {
+      transform: rotate(180deg);
+    }
+
+    .badge {
+      background: #ffcc55;
+      color: #0a1f1a;
+      padding: 4px 12px;
+      border-radius: 40px;
+      font-size: 0.65rem;
+      font-family: 'Press Start 2P', monospace;
+      display: inline-block;
+    }
+
+    .blinking-cursor {
+      display: inline-block;
+      width: 10px;
+      height: 1rem;
+      background: #ffcc55;
+      vertical-align: middle;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .floating-detective {
+      position: absolute;
+      font-size: 1.8rem;
+      opacity: 0.1;
+      pointer-events: none;
+      animation: floatDetective 16s infinite linear;
+      z-index: 0;
+    }
+    @keyframes floatDetective {
+      0% { transform: translateY(0px) rotate(0deg); }
+      100% { transform: translateY(-80px) rotate(12deg); }
+    }
+
+    .output-box {
+      background: #010a0f;
+      border-radius: 20px;
+      padding: 1rem;
+      font-family: 'Fira Code', monospace;
+      margin-top: 1rem;
+      border-left: 4px solid #ffcc55;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="particleCanvas"></canvas>
+
+<div class="container">
+  <!-- Hero -->
+  <div class="detective-card" style="text-align: center; background: linear-gradient(135deg, #0e1c28, #02070e);">
+    <div class="card-content" style="padding: 1.8rem;">
+      <div style="display: flex; justify-content: center; gap: 20px; align-items: center;">
+        <span style="font-size: 3rem;">🕵️🐍❓</span>
+        <h1 style="font-family: 'Press Start 2P'; font-size: 1.3rem;">NAMERROR · নামের গোয়েন্দা</h1>
+      </div>
+      <p style="margin: 0.6rem 0;">পাইথন যখন বলে: "এই নাম তো জানি না!"</p>
+      <div class="blinking-cursor"></div>
+    </div>
+  </div>
+
+  <!-- Main lesson (exact content) -->
+  <div class="detective-card">
+    <div class="card-header">📖 NameError · সহজ ভাষায়</div>
+    <div class="card-content">
+      <p><strong>সহজ কথায়:</strong> ক্লাসে হুট করে যদি নতুন কোনো স্যার এসে ডাকেন, "বল্টু, তুমি দাঁড়াও!" আর তোমাদের ক্লাসে যদি 'বল্টু' নামে কেউই না থাকে, তবে সবাই কেমন হা করে তাকিয়ে থাকবে না? পাইথনের বেলাতেও তাই! পাইথনকে যদি এমন কোনো নাম বা ভেরিয়েবলের (Variable) কাজ করতে বলা হয় যা সে চেনেই না, তখন সে মাথা চুলকে বলে <strong>NameError</strong>।</p>
+      <p><strong>💡 বাস্তব উদাহরণ:</strong> তুমি বাজারে যাওয়ার সময় আম্মু তোমাকে বলল, "ব্যাগ থেকে টাকা নিয়ে যাও।" কিন্তু তুমি ব্যাগে কোনো টাকাই রাখোনি! ব্যাস, ঝামেলা পেকে গেল!</p>
+    </div>
+  </div>
+
+  <!-- Instructions (exact content) + interactive detective challenge -->
+  <div class="detective-card">
+    <div class="card-header">🕵️ নির্দেশনা · কোডিং গোয়েন্দা!</div>
+    <div class="card-content">
+      <p>বন্ধুরা, মনে করো তুমি এখন একজন কোডিং গোয়েন্দা!</p>
+      <pre>run_scored = 45
+print(Run_scored)</pre>
+      <p>তোমাকে বলতে হবে সেখানে কী ভুল হয়েছে এবং তার সমাধান কী।</p>
+
+      <!-- Interactive live demo: detect NameError and fix -->
+      <div class="interactive-demo">
+        <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 15px;">
+          <i class="fas fa-search" style="font-size: 1.6rem; color: #ffcc55;"></i>
+          <span class="badge">🔍 গোয়েন্দা ল্যাব · ভুল ধরো ও ঠিক করো</span>
+        </div>
+        <div class="code-editor">
+          <textarea id="codeArea" rows="4">run_scored = 45
+print(Run_scored)</textarea>
+          <div>
+            <button id="runDetectiveBtn"><i class="fas fa-play"></i> কোড রান করো</button>
+            <button id="fixNameBtn"><i class="fas fa-wrench"></i> সঠিক সমাধান দেখাও</button>
+          </div>
+          <div id="detectiveOutput" class="terminal-output">
+            <span style="color:#aaffdd;">🚀 আউটপুট এখানে দেখাবে...</span>
+          </div>
+        </div>
+        <p class="badge" style="margin-top: 10px;">✨ হিন্ট: ভেরিয়েবলের নামের বানান ও কেস খেয়াল করো!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help section (accordion) -->
+  <div style="margin: 1rem 0 2rem;">
+    <div style="display: flex; gap: 12px; margin-bottom: 0.8rem;">
+      <span class="badge" style="background: #ffaa55;">🆘 সাহায্য</span>
+      <span class="badge">🔽 expand করো</span>
+    </div>
+
+    <!-- Hint (exact) -->
+    <div class="accordion-item" id="hintAccordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>💡 হিন্টস</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <p>ভেরিয়েবলের নাম কেস-সেন্সিটিভ (case-sensitive)। <code>run_scored</code> আর <code>Run_scored</code> সম্পূর্ণ আলাদা। পাইথন ছোট হাতের ও বড় হাতের অক্ষর আলাদা গণ্য করে।</p>
+        <div class="badge">👉 টিপ: print(run_scored) ব্যবহার করো</div>
+      </div>
+    </div>
+
+    <!-- Walkthrough Video (animated) -->
+    <div class="accordion-item" id="videoAccordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>📹 Walkthrough Video</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <div style="background:#021016; border-radius: 28px; padding: 1rem;">
+          <p><strong>🎬 অ্যানিমেটেড গোয়েন্দা গাইড</strong> — NameError সনাক্তকরণ ও সমাধান</p>
+          <div id="walkthroughContainer" style="background:#01070f; border-radius: 24px; padding: 1rem; min-height: 200px;">
+            <pre id="walkthroughText" style="background:transparent; border:none;">▶️ Play চাপুন, দেখুন কীভাবে NameError ধরা পড়ে</pre>
+            <div id="walkthroughVisual" style="margin-top: 12px;"></div>
+          </div>
+          <div style="display: flex; gap: 12px; margin-top: 1rem; justify-content: center;">
+            <button id="playWalkBtn"><i class="fas fa-play"></i> Play Animation</button>
+            <button id="resetWalkBtn"><i class="fas fa-sync-alt"></i> Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Solution (exact) -->
+    <div class="accordion-item" id="solutionAccordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>✅ সমাধান (Solution)</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <pre>run_scored = 45
+print(run_scored)   # দুটোই ছোট হাতের অক্ষরে লিখতে হবে!</pre>
+        <div class="output-box">
+          <span style="color:#ffcc55;">📤 Output:</span><br>
+          45<br>
+          Howdy 🤠
+        </div>
+        <p class="badge">✨ ভুলটি ছিল: print(Run_scored) — এখানে 'R' বড় হাতের। সমাধান: print(run_scored)</p>
+        <button id="copySolutionBtn" class="demo-btn"><i class="far fa-copy"></i> কোড কপি করো</button>
+      </div>
+    </div>
+
+    <!-- AI Coding Companion -->
+    <div class="accordion-item" id="aiAccordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>🤖 AI Coding Companion</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+
+    <!-- Practice in Python IDE -->
+    <div class="accordion-item">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>💻 Practice in Python IDE</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <p style="margin:0;font-size:14px;line-height:1.6;color:#B8C5C1">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p>
+        <a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;align-self:flex-start;box-shadow:0 0 16px rgba(101,209,178,0.2);margin-top:8px">🚀 Open Python IDE</a>
+      </div>
+    </div>
+
+      <div class="accordion-content">
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-start;">
+          <div style="font-size: 2.8rem;">🧠🔍</div>
+          <div>
+            <p><strong>✨ AI উপদেশ:</strong> "NameError সাধারণত বানান বা কেস মিল না থাকায় হয়। সব ভেরিয়েবল নাম consistent রাখো। Python এ name definitions case-sensitive. গোয়েন্দার মত সব জায়গায় একই নাম ব্যবহার করো!"</p>
+            <button id="aiTipBtn" class="demo-btn"><i class="fas fa-lightbulb"></i> আরেকটি টিপ</button>
+            <div id="aiTipArea" style="margin-top: 12px; background:#0a1c24; border-radius: 20px; padding: 8px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer style="text-align: center; font-size: 0.65rem; opacity:0.6; margin-top: 1rem;">
+    🕵️ NameError solved · Python detective badge unlocked! 🤠
+  </footer>
+</div>
+
+<script>
+  // ---------- particle background ----------
+  const canvas = document.getElementById('particleCanvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  class Particle {
+    constructor() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.size = Math.random() * 2.5 + 1;
+      this.speedX = (Math.random() - 0.5) * 0.3;
+      this.speedY = (Math.random() - 0.5) * 0.2;
+      this.color = `rgba(255, 204, 85, ${Math.random() * 0.3 + 0.1})`;
+    }
+    update() {
+      this.x += this.speedX;
+      this.y += this.speedY;
+      if (this.x < 0) this.x = canvas.width;
+      if (this.x > canvas.width) this.x = 0;
+      if (this.y < 0) this.y = canvas.height;
+      if (this.y > canvas.height) this.y = 0;
+    }
+    draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fillStyle = this.color; ctx.fill(); }
+  }
+  function initParticles(cnt) { for(let i=0;i<cnt;i++) particles.push(new Particle()); }
+  function animateParticles() { ctx.clearRect(0,0,canvas.width,canvas.height); particles.forEach(p=>{p.update();p.draw();}); requestAnimationFrame(animateParticles); }
+  initParticles(85);
+  animateParticles();
+
+  // Accordion toggle
+  function toggleAccordion(header) {
+    const item = header.closest('.accordion-item');
+    if(item) item.classList.toggle('open');
+  }
+
+  // ---------- Detective lab interactive ----------
+  const codeArea = document.getElementById('codeArea');
+  const runBtn = document.getElementById('runDetectiveBtn');
+  const fixBtn = document.getElementById('fixNameBtn');
+  const outputDiv = document.getElementById('detectiveOutput');
+
+  function simulatePython() {
+    let code = codeArea.value;
+    // very simple simulation of NameError detection
+    if (code.includes('print(Run_scored)') && code.includes('run_scored = 45')) {
+      outputDiv.innerHTML = `<span style="color:#ff8888;">❌ NameError (simulated):</span>\nTraceback (most recent call last):\n  File "detective.py", line 2, in <module>\n    print(Run_scored)\nNameError: name 'Run_scored' is not defined. Did you mean: 'run_scored'?\n\n💡 পাইথন বলছে: 'Run_scored' নামে কোনো ভেরিয়েবল নেই। আপনি সম্ভবত 'run_scored' বোঝাতে চেয়েছেন।`;
+      return;
+    }
+    if (code.includes('print(run_scored)') && code.includes('run_scored = 45')) {
+      outputDiv.innerHTML = `<span style="color:#aaffdd;">✅ সফল! আউটপুট:</span>\n45\n\nHowdy 🤠`;
+      return;
+    }
+    if (code.includes('run_scored = 45') && !code.includes('print')) {
+      outputDiv.innerHTML = `<span style="color:#ffaa66;">⚠️ কোডে print() নেই, তাই আউটপুট কিছু দেখাবে না। তবে কোন NameError নেই।</span>`;
+      return;
+    }
+    outputDiv.innerHTML = `<span style="color:#ffaa66;">⚠️ সিমুলেশন: কোডে সমস্যা আছে। নিশ্চিত করো ভেরিয়েবল ডিফাইন করা আছে এবং print-এ সঠিক নাম ব্যবহার করেছো।</span>`;
+  }
+
+  function fixNameError() {
+    codeArea.value = `run_scored = 45
+print(run_scored)`;
+    simulatePython();
+  }
+
+  runBtn.addEventListener('click', simulatePython);
+  fixBtn.addEventListener('click', fixNameError);
+  // initial run
+  simulatePython();
+
+  // copy solution code
+  document.getElementById('copySolutionBtn').addEventListener('click', () => {
+    const solutionCode = `run_scored = 45
+print(run_scored)   # দুটোই ছোট হাতের অক্ষরে লিখতে হবে!`;
+    navigator.clipboard.writeText(solutionCode);
+    alert("✅ সমাধান কোড কপি হয়েছে!");
+  });
+
+  // Walkthrough animation (NameError detection)
+  const walkSteps = [
+    { text: "📌 Step 1: ভেরিয়েবল ডিফাইন করা হয়েছে: run_scored = 45", visual: "✅ run_scored নামে ভেরিয়েবল তৈরি" },
+    { text: "⚠️ Step 2: print(Run_scored) — বড় হাতের R ব্যবহার করা হয়েছে", visual: "পাইথন 'Run_scored' নাম খুঁজে পায় না" },
+    { text: "❌ Step 3: NameError: name 'Run_scored' is not defined", visual: "লাল রঙের ত্রুটি বার্তা" },
+    { text: "🔧 Step 4: সমাধান: print(run_scored) ছোট হাতের অক্ষরে", visual: "আউটপুট: 45 এবং Howdy 🤠" }
+  ];
+  let stepIdx = -1;
+  let walkInterval = null;
+  const walkText = document.getElementById('walkthroughText');
+  const walkVis = document.getElementById('walkthroughVisual');
+
+  function updateWalk(step) {
+    if(step < 0 || step >= walkSteps.length) {
+      walkText.innerText = "🎉 NameError চিহ্নিত করতে শিখে গেছো! এখন নিজে চেষ্টা করো 🎉";
+      walkVis.innerHTML = "<span class='badge'>✅ গোয়েন্দা ব্যাজ অর্জিত!</span>";
+      return;
+    }
+    walkText.innerText = walkSteps[step].text;
+    walkVis.innerHTML = `<div style="background:#021016; padding:8px 14px; border-radius:20px;">🕵️ ${walkSteps[step].visual} 🕵️</div>`;
+  }
+
+  function startWalk() {
+    if(walkInterval) clearInterval(walkInterval);
+    stepIdx = -1;
+    walkInterval = setInterval(() => {
+      if(stepIdx < walkSteps.length-1) {
+        stepIdx++;
+        updateWalk(stepIdx);
+      } else {
+        clearInterval(walkInterval);
+        walkInterval = null;
+        updateWalk(stepIdx);
+      }
+    }, 1700);
+  }
+  function resetWalk() {
+    if(walkInterval) { clearInterval(walkInterval); walkInterval = null; }
+    stepIdx = -1;
+    walkText.innerText = "▶️ Play চাপুন, দেখুন কীভাবে NameError ধরা পড়ে";
+    walkVis.innerHTML = "";
+  }
+  document.getElementById('playWalkBtn').addEventListener('click', startWalk);
+  document.getElementById('resetWalkBtn').addEventListener('click', resetWalk);
+  resetWalk();
+
+  // AI tips
+  const nameErrorTips = [
+    "🧠 Python এ ভেরিয়েবল নাম কেস-সেন্সিটিভ: myVar এবং myvar আলাদা।",
+    "📝 নামের শুরুতে সংখ্যা ব্যবহার করা যাবে না।",
+    "🐍 NameError এড়াতে সব জায়গায় একই স্পেলিং ও কেস ব্যবহার করো।",
+    "💡 IDE তে autocomplete চালু রাখলে বানান ভুল কম হয়।",
+    "🔍 print(dir()) ব্যবহার করে দেখতে পারো কোন নাম ডিফাইন করা আছে।"
+  ];
+  document.getElementById('aiTipBtn').addEventListener('click', () => {
+    const tip = nameErrorTips[Math.floor(Math.random() * nameErrorTips.length)];
+    document.getElementById('aiTipArea').innerHTML = `<i class="fas fa-robot"></i> ${tip}`;
+  });
+
+  // floating detective icons
+  const icons = ['🕵️', '🐍', '❓', '🔍', '⚠️', 'NameError', 'run_scored'];
+  for(let i=0;i<50;i++) {
+    let div = document.createElement('div');
+    div.className = 'floating-detective';
+    div.innerText = icons[Math.floor(Math.random() * icons.length)];
+    div.style.left = Math.random() * 95 + '%';
+    div.style.top = Math.random() * 100 + '%';
+    div.style.animationDuration = 12 + Math.random() * 15 + 's';
+    div.style.fontSize = 1.2 + Math.random() * 1.6 + 'rem';
+    document.body.appendChild(div);
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚠️ Chapter 3: Errors - Chapter Dashboard</title>
+    <link rel="stylesheet" href="Begineer.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>⚠️ অধ্যায় ৩ — ত্রুটি ও সনাক্তকরণ</h1>
+            <p>কোডিং এ ভুল করা খুবই স্বাভাবিক! পাইথনের বিভিন্ন বাগ (Bug) বা এরর চিহ্নিত করা এবং তাদের ফিক্স করা শিখুন।</p>
+        </header>
+
+        <!-- CHAPTER PROGRESS BAR -->
+        <div class="progress-bar-sticky">
+            <div class="progress-header">
+                <span>🔄 অধ্যায় অগ্রগতি (Chapter Progress)</span>
+                <span id="chapter-3-percent" style="font-weight: 800; color: var(--primary);">0% Completed</span>
+            </div>
+            <div class="progress-track">
+                <div id="chapter-3-fill" class="progress-fill"></div>
+            </div>
+        </div>
+
+        <!-- SUBCLASSES GRID -->
+        <div class="grid">
+            <!-- Basic Card -->
+            <a href="c3_basic.html" class="subclass-card" data-subclass-id="c3_basic">
+                <div>
+                    <h3>🔰 Basic</h3>
+                    <p>এই অধ্যায়ের বেসিক কনসেপ্ট এবং নিয়মাবলী জানুন।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+            
+            <!-- Syntax Error Card -->
+            <a href="c3_syntax_error.html" class="subclass-card" data-subclass-id="c3_syntax_error">
+                <div>
+                    <h3>🔴 Syntax Error</h3>
+                    <p>কোডের লেখার ব্যাকরণগত ভুলগুলো বুঝতে এবং সংশোধন করতে শিখুন।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+
+            <!-- Name Error Card -->
+            <a href="c3_name_error.html" class="subclass-card" data-subclass-id="c3_name_error">
+                <div>
+                    <h3>🟡 Name Error</h3>
+                    <p>অসংজ্ঞায়িত অবজেক্ট বা নাম কল করার সময় ঘটা কমন ভুলগুলোর মুখোমুখি হোন।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+
+            <!-- Type Error Card -->
+            <a href="c3_type_error.html" class="subclass-card" data-subclass-id="c3_type_error">
+                <div>
+                    <h3>🔵 Type Error</h3>
+                    <p>স্ট্রিং এর সাথে নাম্বার ডাইরেক্ট যোগ করার মত ডেটা টাইপের অমিল সংক্রান্ত ভুল দূর করুন।</p>
+                </div>
+                <span class="badge not-started">Not Started</span>
+            </a>
+        </div>
+
+        <!-- NAV FOOTER -->
+        <div class="nav-footer">
+            <button class="btn btn-secondary" onclick="window.location.href='class2.html'">
+                ⬅️ পূর্ববর্তী অধ্যায়
+            </button>
+            <button class="btn btn-primary" onclick="window.location.href='class4.html'">
+                পরবর্তী অধ্যায় ➡️
+            </button>
+        </div>
+    </div>
+
+    <!-- CONTROL PANEL -->
+    <div class="controls-panel">
+        <button class="control-btn" id="theme-btn">🌙</button>
+        <button class="control-btn" id="voice-bot-btn">🤖</button>
+    </div>
+
+    <script src="Begineer.js"></script>
+</body>
+</html>

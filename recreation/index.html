@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>আলোকবর্তিকা — কোডিং শেখো, স্বপ্ন গড়ো</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Navbar -->
+    <header class="navbar">
+        <div class="container">
+            <div class="nav-content">
+                <div class="logo">
+                    <span class="logo-dot"></span>
+                    <span class="logo-text">আলোকবর্তিকা</span>
+                </div>
+                <nav class="nav-links">
+                    <a href="#" class="active">হোম</a>
+                    <a href="#">কোর্স</a>
+                    <a href="#">আমাদের সম্পর্কে</a>
+                    <a href="#">যোগাযোগ</a>
+                </nav>
+                <div class="nav-auth">
+                    <button class="btn btn-login">লগইন করো</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container">
+                <div class="hero-grid">
+                    <div class="hero-content">
+                        <div class="badge-hero">
+                            <span class="badge-dot"></span>
+                            <span>বাংলায় Python শিখি</span>
+                        </div>
+                        <h1 class="hero-title">
+                            কোডিং শেখো,<br>
+                            <span class="text-purple">স্বপ্ন গড়ো</span>
+                        </h1>
+                        <p class="hero-subtitle">
+                            আলোকবর্তিকা — বাংলাদেশের প্রথম বাংলা মাধ্যম Python শিক্ষা প্ল্যাটফর্ম। ৬ষ্ঠ থেকে ৮ ম শ্রেণীর শিক্ষার্থীদের জন্য তৈরি, সম্পূর্ণ বিনামূল্যে।
+                        </p>
+                        <div class="hero-actions">
+                            <button class="btn btn-primary">এখনি শুরু করো &nbsp; →</button>
+                            <button class="btn btn-secondary">ভিডিও দেখো &nbsp; <span class="play-icon">▶</span></button>
+                        </div>
+                    </div>
+                    <div class="hero-visual">
+                        <div class="ide-card">
+                            <div class="ide-header">
+                                <div class="ide-info">
+                                    <div class="ide-icon">🐍</div>
+                                    <div class="ide-title">
+                                        <h3>Python IDE</h3>
+                                        <span>Stage 3 — Loops</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ide-editor">
+                                <div class="line">
+                                    <span class="ln">1</span>
+                                    <span class="comment"># ১ থেকে ৫ print করে</span>
+                                </div>
+                                <div class="line"><span class="ln">2</span></div>
+                                <div class="line">
+                                    <span class="ln">3</span>
+                                    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="func">range</span>(<span class="num">1</span>, <span class="num">6</span>):
+                                </div>
+                                <div class="line">
+                                    <span class="ln">4</span>
+                                    <span class="indent"></span><span class="func">print</span>(i)
+                                </div>
+                            </div>
+                            <div class="ide-output">
+                                <div class="output-label">OUTPUT</div>
+                                <div class="output-content">
+                                    <p>1   2   3   4   5</p>
+                                    <p class="success-msg">✓ সঠিক! +50 XP পেয়েছ!</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Bar -->
+        <section class="stats-bar">
+            <div class="container">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value">500+</div>
+                        <div class="stat-label">শিক্ষার্থী</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">12</div>
+                        <div class="stat-label">অধ্যায়</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">3</div>
+                        <div class="stat-label">শেখার Stage</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">95%</div>
+                        <div class="stat-label">সন্তুষ্টি হার</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Learning Stages -->
+        <section class="stages">
+            <div class="container">
+                <div class="section-header">
+                    <span class="badge">শেখার পথ</span>
+                    <h2 class="section-title">তিনটি ধাপে Python শেখো</h2>
+                    <p class="section-desc">সহজ থেকে কঠিন — প্রতিটি ধাপ তোমাকে পরের জন্য প্রস্তুত করবে</p>
+                </div>
+                <div class="stages-grid">
+                    <div class="stage-card">
+                        <span class="stage-num">01</span>
+                        <div class="stage-icon">🧩</div>
+                        <h3 class="stage-title">Logic First</h3>
+                        <p class="stage-desc">Drag-drop পাজল দিয়ে logical thinking শেখো। কোনো code লেখা ছাড়াই চিন্তা করতে শেখো।</p>
+                        <span class="badge badge-beginner">Beginner</span>
+                    </div>
+                    <div class="stage-card">
+                        <span class="stage-num">02</span>
+                        <div class="stage-icon">🎨</div>
+                        <h3 class="stage-title">Visual Bridge</h3>
+                        <p class="stage-desc">Block coding দিয়ে প্রোগ্রামিং এর ধারণা শেখো। Scratch-এর মতো blocks দিয়ে কোড তৈরি করো।</p>
+                        <span class="badge badge-intermediate">Intermediate</span>
+                    </div>
+                    <div class="stage-card">
+                        <span class="stage-num">03</span>
+                        <div class="stage-icon">🐍</div>
+                        <h3 class="stage-title">Python IDE</h3>
+                        <p class="stage-desc">Browser-এ সরাসরি Python শেখো। Real-time error feedback আর AI hint সহ।</p>
+                        <span class="badge badge-advanced">Advanced</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features">
+            <div class="container">
+                <div class="section-header">
+                    <span class="badge">বৈশিষ্ট্য</span>
+                    <h2 class="section-title">কেন আলোকবর্তিকা?</h2>
+                </div>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🗣️</div>
+                        <div class="feature-info">
+                            <h4 class="feature-title">সম্পূর্ণ বাংলায়</h4>
+                            <p class="feature-desc">সব lesson, instruction এবং AI hint বাংলায় — যাতে বুঝতে সহজ হয়।</p>
+                        </div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🤖</div>
+                        <div class="feature-info">
+                            <h4 class="feature-title">AI সহায়ক</h4>
+                            <p class="feature-desc">আটকে গেলে AI hint দেবে, কিন্তু সরাসরি উত্তর দেবে না — নিজে ভেবে বের করো।</p>
+                        </div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🏆</div>
+                        <div class="feature-info">
+                            <h4 class="feature-title">Gamification</h4>
+                            <p class="feature-desc">XP points, badges, leaderboard — শেখাকে মজার প্রতিযোগিতায় পরিণত করে।</p>
+                        </div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📱</div>
+                        <div class="feature-info">
+                            <h4 class="feature-title">যেকোনো ডিভাইসে</h4>
+                            <p class="feature-desc">Phone, tablet বা computer — যেকোনো জায়গা থেকে শেখো।</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta">
+            <div class="container">
+                <div class="cta-content">
+                    <h2 class="cta-title">আজই শুরু করো তোমার coding যাত্রা!</h2>
+                    <p class="cta-subtitle">বিনা-মূল্যে রেজিস্ট্রেশন করো — কোনো ক্রেডিট কার্ড লাগবে না</p>
+                    <button class="btn btn-cta">বিনামূল্যে শুরু করো &nbsp; →</button>
+                    <p class="cta-bottom">ইতিমধ্যে ৫০০+ শিক্ষার্থী যোগ দিয়েছে</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="logo">
+                    <span class="logo-dot white"></span>
+                    <span class="logo-text white">আলোকবর্তিকা</span>
+                </div>
+                <div class="footer-copy">
+                    © ২০২৩ Alokbartika — BRAC University Capstone Project
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

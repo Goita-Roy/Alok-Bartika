@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+.content-protected {
+  position: relative;
+}
+
+.content-protected .protected-content {
+  position: relative;
+  z-index: 1;
+}
+
+.watermark-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0.03;
+}
+
+.watermark-overlay span {
+  position: absolute;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #6366f1;
+  white-space: nowrap;
+  transform: rotate(-35deg);
+  user-select: none;
+  pointer-events: none;
+}
+
+.watermark-overlay span:nth-child(1) { top: 5%; left: 10%; }
+.watermark-overlay span:nth-child(2) { top: 15%; left: 40%; }
+.watermark-overlay span:nth-child(3) { top: 25%; left: 70%; }
+.watermark-overlay span:nth-child(4) { top: 40%; left: 15%; }
+.watermark-overlay span:nth-child(5) { top: 50%; left: 50%; }
+.watermark-overlay span:nth-child(6) { top: 60%; left: 80%; }
+.watermark-overlay span:nth-child(7) { top: 70%; left: 20%; }
+.watermark-overlay span:nth-child(8) { top: 80%; left: 55%; }
+.watermark-overlay span:nth-child(9) { top: 90%; left: 35%; }
+.watermark-overlay span:nth-child(10) { top: 95%; left: 75%; }

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎓 Python Programming Learning Portal</title>
+    <link rel="stylesheet" href="Begineer.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🎓 Python Learning Portal</h1>
+            <p>আপনার পছন্দের অধ্যায়টি সিলেক্ট করুন এবং পাইথনের চমৎকার দুনিয়াতে যাত্রা শুরু করুন!</p>
+        </header>
+
+        <!-- OVERALL PROGRESS CARD -->
+        <div class="card accent">
+            <div class="progress-header">
+                <span>🔄 সামগ্রিক অগ্রগতি (Overall Python Progress)</span>
+                <span id="overall-progress-text" style="font-weight: 800; color: var(--accent);">0%</span>
+            </div>
+            <div class="progress-track">
+                <div id="overall-progress-fill" class="progress-fill" style="background: linear-gradient(to right, var(--primary), var(--accent));"></div>
+            </div>
+        </div>
+
+        <!-- CHAPTERS GRID -->
+        <div class="grid">
+            <!-- Chapter 1 -->
+            <div class="card" onclick="window.location.href='class1.html'">
+                <h3 style="font-size: 1.5rem; margin-bottom: 8px;">🐍 অধ্যায় ১ — হ্যালো ওয়ার্ল্ড</h3>
+                <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 15px;">Setting Up, Pattern, Initials & Snail Mail</p>
+                <div class="progress-header" style="font-size: 0.85rem; margin-bottom: 5px;">
+                    <span id="chapter-1-percent">0% Completed</span>
+                </div>
+                <div class="progress-track" style="height: 6px;">
+                    <div id="chapter-1-fill" class="progress-fill"></div>
+                </div>
+            </div>
+
+            <!-- Chapter 2 -->
+            <div class="card" onclick="window.location.href='class2.html'">
+                <h3 style="font-size: 1.5rem; margin-bottom: 8px;">⚡ অধ্যায় ২ — ভ্যারিয়েবলস</h3>
+                <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 15px;">Data Types, BMI, Pythagorean & Currency</p>
+                <div class="progress-header" style="font-size: 0.85rem; margin-bottom: 5px;">
+                    <span id="chapter-2-percent">0% Completed</span>
+                </div>
+                <div class="progress-track" style="height: 6px;">
+                    <div id="chapter-2-fill" class="progress-fill"></div>
+                </div>
+            </div>
+
+            <!-- Chapter 3 -->
+            <div class="card" onclick="window.location.href='class3.html'">
+                <h3 style="font-size: 1.5rem; margin-bottom: 8px;">⚠️ অধ্যায় ৩ — ত্রুটি ও সনাক্তকরণ</h3>
+                <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 15px;">Syntax Errors, Name Errors & Type Errors</p>
+                <div class="progress-header" style="font-size: 0.85rem; margin-bottom: 5px;">
+                    <span id="chapter-3-percent">0% Completed</span>
+                </div>
+                <div class="progress-track" style="height: 6px;">
+                    <div id="chapter-3-fill" class="progress-fill"></div>
+                </div>
+            </div>
+
+            <!-- Chapter 4 -->
+            <div class="card" onclick="window.location.href='class4.html'">
+                <h3 style="font-size: 1.5rem; margin-bottom: 8px;">🔁 অধ্যায় ৪ — লুপস (Loops)</h3>
+                <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 15px;">Enter PIN, Guess Number & 99 Bottles</p>
+                <div class="progress-header" style="font-size: 0.85rem; margin-bottom: 5px;">
+                    <span id="chapter-4-percent">0% Completed</span>
+                </div>
+                <div class="progress-track" style="height: 6px;">
+                    <div id="chapter-4-fill" class="progress-fill"></div>
+                </div>
+            </div>
+
+            <!-- Chapter 5 -->
+            <div class="card" onclick="window.location.href='class5.html'">
+                <h3 style="font-size: 1.5rem; margin-bottom: 8px;">📋 অধ্যায় ৫ — লিস্টস (Lists)</h3>
+                <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 15px;">Grocery, To-Do List & Inventory</p>
+                <div class="progress-header" style="font-size: 0.85rem; margin-bottom: 5px;">
+                    <span id="chapter-5-percent">0% Completed</span>
+                </div>
+                <div class="progress-track" style="height: 6px;">
+                    <div id="chapter-5-fill" class="progress-fill"></div>
+                </div>
+            </div>
+
+            <!-- Chapter 6 -->
+            <div class="card" onclick="window.location.href='class6.html'">
+                <h3 style="font-size: 1.5rem; margin-bottom: 8px;">🛠️ অধ্যায় ৬ — ফাংশনস (Functions)</h3>
+                <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 15px;">D.R.Y. Concept, Mars Orbiter & Calculator</p>
+                <div class="progress-header" style="font-size: 0.85rem; margin-bottom: 5px;">
+                    <span id="chapter-6-percent">0% Completed</span>
+                </div>
+                <div class="progress-track" style="height: 6px;">
+                    <div id="chapter-6-fill" class="progress-fill"></div>
+                </div>
+            </div>
+
+            <!-- Chapter 7 -->
+            <div class="card" onclick="window.location.href='class7.html'">
+                <h3 style="font-size: 1.5rem; margin-bottom: 8px;">🏛️ অধ্যায় ৭ — ক্লাস ও অবজেক্ট</h3>
+                <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 15px;">Restaurants, Favorite Cities & Bank Accounts</p>
+                <div class="progress-header" style="font-size: 0.85rem; margin-bottom: 5px;">
+                    <span id="chapter-7-percent">0% Completed</span>
+                </div>
+                <div class="progress-track" style="height: 6px;">
+                    <div id="chapter-7-fill" class="progress-fill"></div>
+                </div>
+            </div>
+
+            <!-- Chapter 8 -->
+            <div class="card" onclick="window.location.href='class8.html'">
+                <h3 style="font-size: 1.5rem; margin-bottom: 8px;">📦 অধ্যায় ৮ — মডিউলস (Modules)</h3>
+                <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 15px;">Slot Machine, Countdown & Zen of Python</p>
+                <div class="progress-header" style="font-size: 0.85rem; margin-bottom: 5px;">
+                    <span id="chapter-8-percent">0% Completed</span>
+                </div>
+                <div class="progress-track" style="height: 6px;">
+                    <div id="chapter-8-fill" class="progress-fill"></div>
+                </div>
+            </div>
+        </div>
+
+       
+    <!-- CONTROL PANEL -->
+    <div class="controls-panel">
+        <button class="control-btn" id="theme-btn" title="Toggle Theme">🌙</button>
+        <button class="control-btn" id="voice-bot-btn" title="Toggle Voice Tutor">🤖</button>
+    </div>
+
+    <script src="Begineer.js"></script>
+</body>
+</html>

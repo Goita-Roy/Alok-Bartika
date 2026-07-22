@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛠️ অধ্যায় ৬ — ফাংশনস (Functions) বেসিক</title>
+    <link rel="stylesheet" href="Begineer.css">
+    <style>
+        /* Neon Cyber Theme Variables */
+        :root {
+            --neon-blue: #00f0ff;
+            --neon-pink: #ff007f;
+            --neon-green: #39ff14;
+            --neon-purple: #9d4edd;
+            --neon-yellow: #fff01f;
+            --neon-orange: #ff5e00;
+            --terminal-bg: #0b0f19;
+            --card-glass: rgba(17, 25, 40, 0.75);
+            --border-glass: rgba(255, 255, 255, 0.08);
+        }
+
+        body.light-mode {
+            --neon-blue: #0284c7;
+            --neon-pink: #be185d;
+            --neon-green: #059669;
+            --neon-purple: #7c3aed;
+            --neon-yellow: #d97706;
+            --neon-orange: #ea580c;
+            --terminal-bg: #f8fafc;
+            --card-glass: rgba(255, 255, 255, 0.85);
+            --border-glass: rgba(15, 23, 42, 0.08);
+        }
+
+        /* Particle Canvas Background */
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Top Gamified Header Banner */
+        .gamified-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-glass);
+            backdrop-filter: var(--glass-blur);
+            border: 2px solid var(--neon-purple);
+            border-radius: 20px;
+            padding: 15px 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 0 20px rgba(157, 78, 221, 0.2);
+            animation: glowPulsePurple 4s infinite alternate;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .mascot-head {
+            width: 50px;
+            height: 50px;
+            image-rendering: pixelated;
+            animation: bounceMascot 2s infinite ease-in-out;
+        }
+
+        .header-stats {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .stat-badge {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 800;
+        }
+
+        .stat-xp { color: var(--neon-yellow); border-color: var(--neon-yellow); text-shadow: 0 0 5px rgba(255, 240, 31, 0.5); }
+        .stat-lvl { color: var(--neon-purple); border-color: var(--neon-purple); text-shadow: 0 0 5px rgba(157, 78, 221, 0.5); }
+
+        /* Level Structure */
+        .level-card {
+            border: 1px solid var(--border-glass);
+            position: relative;
+            padding: 35px;
+            margin-bottom: 45px;
+            border-radius: 24px;
+            background: var(--card-glass);
+            backdrop-filter: var(--glass-blur);
+            transition: var(--transition-smooth);
+            overflow: visible;
+        }
+
+        .level-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 24px;
+            pointer-events: none;
+            box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.05);
+            transition: var(--transition-smooth);
+        }
+
+        /* Neon Borders for Levels */
+        .level-card.lvl-1 { border-color: var(--neon-purple); }
+        .level-card.lvl-1:hover { box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(157, 78, 221, 0.2); }
+        .level-card.lvl-2 { border-color: var(--neon-pink); }
+        .level-card.lvl-2:hover { box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 0, 127, 0.2); }
+        .level-card.lvl-3 { border-color: var(--neon-green); border-width: 2px; }
+        .level-card.lvl-3:hover { box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 0 25px rgba(57, 255, 20, 0.35); }
+
+        .level-badge {
+            position: absolute;
+            top: -18px;
+            left: 30px;
+            background: #1e1b4b;
+            color: #fff;
+            padding: 4px 18px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            border: 2px solid;
+            letter-spacing: 0.05em;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .lvl-1 .level-badge { border-color: var(--neon-purple); color: var(--neon-purple); }
+        .lvl-2 .level-badge { border-color: var(--neon-pink); color: var(--neon-pink); }
+        .lvl-3 .level-badge { border-color: var(--neon-green); color: var(--neon-green); }
+
+        /* Level Grid Splits */
+        .level-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 30px;
+            align-items: center;
+        }
+
+        @media (max-width: 900px) {
+            .level-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .level-content {
+            font-size: 1.15rem;
+            line-height: 1.7;
+        }
+
+        .level-content p {
+            margin-bottom: 20px;
+        }
+
+        /* Widget Containers */
+        .widget-panel {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 220px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        body.light-mode .widget-panel {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Level 1: Robot stove tea brewing simulation */
+        .robot-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            gap: 15px;
+        }
+
+        .stove-area {
+            position: relative;
+            width: 130px;
+            height: 130px;
+        }
+
+        .stove-pot {
+            width: 100%;
+            height: auto;
+            image-rendering: pixelated;
+        }
+
+        .fire-burn {
+            position: absolute;
+            bottom: 5px;
+            left: 25px;
+            width: 80px;
+            height: 25px;
+            background: radial-gradient(circle, var(--neon-orange) 20%, transparent 60%);
+            border-radius: 50%;
+            animation: firePulse 0.5s infinite alternate;
+            opacity: 0;
+        }
+
+        @keyframes firePulse {
+            0% { transform: scaleY(0.8); filter: drop-shadow(0 0 2px var(--neon-orange)); }
+            100% { transform: scaleY(1.2); filter: drop-shadow(0 0 10px var(--neon-orange)); }
+        }
+
+        .tea-kettle-steam {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: space-around;
+            pointer-events: none;
+        }
+
+        .tea-steam-bubble {
+            width: 6px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: riseSteam 1s infinite ease-out;
+            opacity: 0;
+        }
+        .tea-steam-bubble:nth-child(2) { animation-delay: 0.3s; }
+        .tea-steam-bubble:nth-child(3) { animation-delay: 0.6s; }
+
+        @keyframes riseSteam {
+            0% { transform: translateY(20px) scale(0.6); opacity: 0; }
+            50% { opacity: 0.5; }
+            100% { transform: translateY(-20px) scale(1.5); opacity: 0; }
+        }
+
+        .cups-tray {
+            display: flex;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .tea-cup-item {
+            font-size: 2.2rem;
+            transform: scale(0);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .tea-cup-item.served {
+            transform: scale(1.2) rotate(5deg);
+            opacity: 1;
+        }
+
+        /* Level 2: Indentation alignment gate */
+        .indent-tutor-panel {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .indent-code-block {
+            background: #090d16;
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 20px;
+            font-family: var(--font-mono);
+            font-size: 0.92rem;
+            position: relative;
+        }
+
+        .indent-line {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .indent-space-box {
+            height: 24px;
+            background: rgba(255, 0, 127, 0.1);
+            border: 1.5px dashed var(--neon-pink);
+            border-radius: 4px;
+            margin-right: 8px;
+            width: 0px;
+            transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            color: var(--neon-pink);
+            overflow: hidden;
+            font-weight: bold;
+        }
+
+        .indent-line.aligned .indent-space-box {
+            width: 60px;
+            background: rgba(57, 255, 20, 0.1);
+            border-color: var(--neon-green);
+            color: var(--neon-green);
+        }
+
+        .indent-err-msg {
+            color: var(--neon-pink);
+            font-size: 0.8rem;
+            margin-top: 10px;
+            font-family: var(--font-mono);
+            display: block;
+        }
+
+        /* Level 3: Practice Arena Workspace */
+        .arena-workspace {
+            display: grid;
+            grid-template-columns: 1.12fr 0.88fr;
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        @media (max-width: 1000px) {
+            .arena-workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Objectives Card */
+        .objectives-card {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 25px;
+            height: 100%;
+        }
+
+        body.light-mode .objectives-card {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .objective-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            background: rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.02);
+            transition: var(--transition-smooth);
+        }
+
+        body.light-mode .objective-item {
+            background: rgba(255,255,255,0.6);
+        }
+
+        .objective-item.checked {
+            border-color: var(--neon-green);
+            background: rgba(57, 255, 20, 0.08);
+            box-shadow: 0 0 15px rgba(57, 255, 20, 0.05);
+        }
+
+        .obj-checkbox {
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+            border: 2px solid var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: transparent;
+            transition: var(--transition-smooth);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .objective-item.checked .obj-checkbox {
+            border-color: var(--neon-green);
+            background: var(--neon-green);
+            color: #0b0f19;
+            text-shadow: none;
+        }
+
+        .obj-text {
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .objective-item.checked .obj-text {
+            color: var(--text-primary);
+            text-decoration: line-through;
+            opacity: 0.75;
+        }
+
+        /* IDE Editor mock */
+        .ide-editor-container {
+            display: flex;
+            flex-direction: column;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            height: 100%;
+        }
+
+        .ide-header {
+            background: #131929;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        body.light-mode .ide-header {
+            background: #e2e8f0;
+            border-bottom-color: #cbd5e1;
+        }
+
+        .ide-title {
+            font-family: var(--font-sans);
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--neon-green);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ide-body {
+            display: flex;
+            background: #0f1422;
+            flex-grow: 1;
+            min-height: 250px;
+            position: relative;
+        }
+
+        body.light-mode .ide-body {
+            background: #f8fafc;
+        }
+
+        .ide-line-numbers {
+            padding: 15px 10px 15px 15px;
+            color: rgba(255,255,255,0.25);
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            text-align: right;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            user-select: none;
+            background: rgba(0,0,0,0.1);
+        }
+
+        body.light-mode .ide-line-numbers {
+            color: #94a3b8;
+            border-right-color: #e2e8f0;
+            background: #f1f5f9;
+        }
+
+        .ide-textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #e2e8f0;
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            padding: 15px;
+            resize: none;
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        body.light-mode .ide-textarea {
+            color: #0f172a;
+        }
+
+        /* IDE Console output */
+        .ide-console {
+            background: var(--terminal-bg);
+            border-top: 1px solid var(--border-glass);
+            padding: 15px 20px;
+            font-family: var(--font-mono);
+            font-size: 0.88rem;
+            color: #cbd5e1;
+            min-height: 120px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        body.light-mode .ide-console {
+            color: #334155;
+        }
+
+        .console-log-line {
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        /* Help accordion styles */
+        .help-accordion-section {
+            margin-top: 60px;
+            margin-bottom: 50px;
+        }
+
+        .accordion-item {
+            background: var(--card-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            transition: var(--transition-smooth);
+        }
+
+        .accordion-item:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+            border-color: rgba(255,255,255,0.12);
+        }
+
+        .accordion-header {
+            padding: 22px 30px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            user-select: none;
+            transition: var(--transition-smooth);
+        }
+
+        .accordion-header:hover {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .accordion-header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .accordion-header-icon {
+            font-size: 1.4rem;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .accordion-item.active .accordion-header-icon {
+            transform: rotate(180deg);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0, 1, 0, 1);
+        }
+
+        .accordion-item.active .accordion-content {
+            max-height: 2000px;
+            transition: max-height 1.2s ease-in-out;
+        }
+
+        .accordion-body {
+            padding: 0 30px 30px 30px;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            border-top: 1px solid rgba(255,255,255,0.03);
+            padding-top: 20px;
+        }
+
+        /* Walkthrough simulation widget */
+        .walkthrough-player-box {
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            background: #090d16;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            margin: 15px 0;
+        }
+
+        .player-bar {
+            background: #111726;
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .player-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .player-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            color: #fff;
+            padding: 4px 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition-smooth);
+        }
+
+        .player-btn:hover {
+            background: var(--neon-blue);
+            color: #000;
+        }
+
+        .player-screen {
+            padding: 20px;
+            font-family: var(--font-mono);
+            font-size: 0.92rem;
+            min-height: 180px;
+            color: #a7f3d0;
+            overflow-y: auto;
+        }
+
+        /* chatbot helper CSS */
+        .chatbot-container {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            background: rgba(13, 18, 30, 0.4);
+            overflow: hidden;
+            height: 350px;
+        }
+
+        .chatbot-messages {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .chat-bubble {
+            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 16px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .chat-bubble.bot {
+            align-self: flex-start;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: var(--text-primary);
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-bubble.user {
+            align-self: flex-end;
+            background: rgba(20, 184, 166, 0.15);
+            border: 1px solid rgba(20, 184, 166, 0.3);
+            color: var(--text-primary);
+            border-bottom-right-radius: 4px;
+        }
+
+        .chatbot-inputs {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-top: 1px solid var(--border-glass);
+            flex-wrap: wrap;
+        }
+
+        .chat-suggestion {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            color: var(--text-secondary);
+        }
+
+        .chat-suggestion:hover {
+            border-color: var(--neon-blue);
+            color: var(--neon-blue);
+            background: rgba(0, 240, 255, 0.05);
+        }
+
+        /* Floating Helper Robot Widget */
+        .floating-helper {
+            position: fixed;
+            bottom: 110px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            z-index: 999;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .floating-helper:hover {
+            transform: scale(1.15) rotate(5deg);
+        }
+
+        .floating-helper img {
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));
+            animation: floatBot 3s infinite ease-in-out;
+        }
+
+        .floating-speech {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 220px;
+            background: var(--card-glass);
+            border: 1.5px solid var(--neon-purple);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4), 0 0 15px rgba(157, 78, 221, 0.2);
+            padding: 15px;
+            border-radius: 16px;
+            font-size: 0.88rem;
+            line-height: 1.5;
+            color: var(--text-primary);
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .floating-helper:hover .floating-speech {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Completion Area */
+        .complete-area {
+            text-align: center;
+            margin: 50px 0 80px 0;
+            padding: 40px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(20, 184, 166, 0.1) 100%);
+            border: 2px dashed var(--neon-green);
+            border-radius: 30px;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
+        }
+
+        .complete-btn-pulse {
+            animation: pulseGlowGreen 2s infinite;
+        }
+
+        /* Animations declarations */
+        @keyframes floatBot {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        @keyframes bounceMascot {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-6px) scale(1.05); }
+        }
+
+        @keyframes glowPulsePurple {
+            0% { box-shadow: 0 0 15px rgba(157, 78, 221, 0.15); }
+            100% { box-shadow: 0 0 25px rgba(157, 78, 221, 0.4); }
+        }
+
+        @keyframes pulseGlowGreen {
+            0% { box-shadow: 0 0 0 0px rgba(57, 255, 20, 0.5); }
+            100% { box-shadow: 0 0 0 20px rgba(57, 255, 20, 0); }
+        }
+
+        /* Highlight classes */
+        .code-hl-line {
+            background: rgba(255, 255, 255, 0.08);
+            border-left: 3px solid var(--neon-blue);
+            padding-left: 5px;
+        }
+
+        body.light-mode .code-hl-line {
+            background: rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Particle Background -->
+    <canvas id="particle-canvas"></canvas>
+
+    <div class="container">
+        
+        <!-- Gamified Navigation Back & Stats -->
+        <div class="gamified-header">
+            <div class="header-left">
+                <img src="python_knight.png" alt="Python Mascot" class="mascot-head" onerror="this.src='https://i.imgur.com/KzLym9e.png'">
+                <div>
+                    <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-primary); margin: 0;">🛠️ অধ্যায় ৬: ফাংশনস (Functions)</h2>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">লেভেল: বেসিক রোবোটিক্স ল্যাব</p>
+                </div>
+            </div>
+            <div class="header-stats">
+                <div class="stat-badge stat-xp">
+                    <span>🏆</span> <span id="xp-text">২২০ XP</span>
+                </div>
+                <div class="stat-badge stat-lvl">
+                    <span>⚔️</span> <span>LEVEL 6</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- TITLE PANEL -->
+        <header style="margin-bottom: 40px;">
+            <h1>🛠️ অধ্যায় ৬ — ফাংশনস (Functions)</h1>
+            <p>আমাদের পাইথন রোবটকে জাদুকরী রেসিপি বা কাজ শিখিয়ে নাম ধরে ডেকে সহজে কাজ করিয়ে নেওয়ার দারুণ ল্যাব!</p>
+        </header>
+
+        <!-- STICKY OVERALL LEVEL PROGRESS BAR -->
+        <div class="progress-bar-sticky">
+            <div class="progress-header">
+                <span>🔄 এডভেঞ্চার লেভেল অগ্রগতি (Functions Progress)</span>
+                <span id="level-progress-text" style="font-weight: 800; color: var(--neon-purple);">০% সম্পন্ন</span>
+            </div>
+            <div class="progress-track">
+                <div id="level-progress-fill" class="progress-fill" style="width: 0%;"></div>
+            </div>
+        </div>
+
+        <!-- ======================= LEVEL 1 ======================= -->
+        <div class="level-card lvl-1">
+            <div class="level-badge">Level 1: Magic Robot Tea Maker</div>
+            <div class="level-grid">
+                <div class="level-content">
+                    <p style="font-size: 1.25rem; font-weight: 600; color: var(--neon-purple); margin-bottom: 15px;">রোবট দিয়ে চা তৈরি! 🍵</p>
+                    <p>বন্ধুরা, মনে করো তোমার ঘরে একটা জাদুকরী রোবট আছে। তুমি তাকে শিখিয়ে দিলে—"যখনই আমি বলব 'চা বানাও', তুমি রান্নাঘরে গিয়ে এক কাপ চা বানিয়ে আনবে।" এখন থেকে তোমাকে আর কষ্ট করে প্রতিবার চায়ের রেসিপি বলতে হবে না, শুধু "চা বানাও" বললেই রোবটটি চটপট চা বানিয়ে দেবে!</p>
+                    <p>পাইথনে এই জাদুকরী রোবটের মতোই কাজ করে Function (ফাংশন)। ফাংশন হলো এক টুকরো কোড, যা একটি নির্দিষ্ট কাজ করতে পারে। একবার ফাংশনটি বানিয়ে রাখলে, কোডে যতবার ইচ্ছা তাকে নাম ধরে ডেকে (Call করে) সেই কাজটা করিয়ে নেওয়া যায়।</p>
+                </div>
+                <div class="widget-panel">
+                    <div class="robot-panel">
+                        <div style="font-weight: bold; color: var(--neon-purple); font-size: 0.95rem;">জাদুকরী রান্নাঘর স্টোভ:</div>
+                        
+                        <div class="stove-area">
+                            <div class="fire-burn" id="stove-fire"></div>
+                            <img src="https://img.icons8.com/color/96/kettle.png" class="stove-pot" id="stove-pot" alt="Kettle">
+                            <div class="tea-kettle-steam">
+                                <span class="tea-steam-bubble"></span>
+                                <span class="tea-steam-bubble"></span>
+                                <span class="tea-steam-bubble"></span>
+                            </div>
+                        </div>
+
+                        <div class="cups-tray">
+                            <span class="tea-cup-item" id="cup-1">🍵</span>
+                            <span class="tea-cup-item" id="cup-2">🍵</span>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                            <button class="btn btn-secondary" id="robot-define-btn" style="border-color: var(--neon-purple); font-size: 0.82rem;">১. রোবটকে রেসিপি শেখাও (def make_tea())</button>
+                            <button class="btn btn-primary" id="robot-call-btn" style="background: linear-gradient(135deg, var(--neon-purple), var(--neon-pink)); color: #fff; font-size: 0.82rem;" disabled>২. রোবটকে ডাকুন (make_tea())</button>
+                        </div>
+
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); font-family: var(--font-mono); text-align: center;" id="robot-logs">
+                            রোবট অবস্থা: রেসিপি শেখানো হয়নি।
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================= LEVEL 2 ======================= -->
+        <div class="level-card lvl-2">
+            <div class="level-badge">Level 2: Indentation Gate Tutor</div>
+            <div class="level-grid">
+                <div class="level-content">
+                    <p style="font-size: 1.25rem; font-weight: 600; color: var(--neon-pink); margin-bottom: 15px;">ইনডেন্টেশনের সীমারেখা! 📐</p>
+                    <p>ফাংশন ডিফাইন করার পর তার ভেতরের প্রতিটা লাইনকে অবশ্যই ডান দিকে জায়গা ছেড়ে বা <strong>Indentation</strong> বজায় রেখে লিখতে হয়। কোলনের পরের লাইনে জায়গা না ছাড়লে পাইথন রোবট রাগ করে কাজ করবে না!</p>
+                </div>
+                
+                <div class="widget-panel">
+                    <div class="indent-tutor-panel">
+                        <div style="font-weight: bold; color: var(--neon-pink); font-size: 0.95rem; margin-bottom: 5px;">ইমার্জেন্সি এলাইনমেন্ট কারেক্টর:</div>
+                        
+                        <div class="indent-code-block">
+                            <div class="indent-line"><span style="color: var(--neon-purple);">def</span> make_tea():</div>
+                            <div class="indent-line" id="tutor-code-line">
+                                <div class="indent-space-box" id="tutor-space-box">ERR</div>
+                                <span>print(<span style="color: var(--neon-yellow);">"🍵 রোবটটি গরম গরম চা বানিয়ে এনেছে!"</span>)</span>
+                            </div>
+                        </div>
+
+                        <div class="indent-err-msg" id="tutor-err-msg">
+                            ⚠️ IndentationError: expected an indented block after function definition on line 1
+                        </div>
+
+                        <button class="btn btn-primary" id="tutor-tab-btn" style="background: linear-gradient(135deg, var(--neon-pink), var(--neon-orange)); color: #fff; font-size: 0.85rem; width: 100%;">Tab বাটন টিপুন (৪ স্পেস ডান দিকে সরান)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================= LEVEL 3 ======================= -->
+        <div class="level-card lvl-3">
+            <div class="level-badge">Level 3: Rafee's Functions Arena</div>
+            <div class="level-content">
+                <h4 style="font-size: 1.3rem; margin-bottom: 15px; color: var(--neon-green); display: flex; align-items: center; gap: 8px;">📋 নির্দেশনা (Assignment):</h4>
+                <p>চল এবার এডিটর ব্যবহার করে একটি নতুন functions.py প্রোগ্রাম তৈরি করি।</p>
+
+                <div class="arena-workspace">
+                    
+                    <!-- Left: Objectives Checklist -->
+                    <div class="objectives-card">
+                        <div style="font-weight: bold; font-size: 1.1rem; color: var(--neon-green); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            🎯 মিশন গোলসমূহ (Objectives Checklist):
+                        </div>
+                        
+                        <div class="objective-item" id="obj-1">
+                            <div class="obj-checkbox">✓</div>
+                            <div class="obj-text"><strong>ধাপ ১ (রোবটকে কাজ শেখানো):</strong> প্রথমে def কিওয়ার্ড ব্যবহার করে make_tea() নামের একটি সহজ ফাংশন বা জাদুকরী বাক্স তৈরি করো।</div>
+                        </div>
+                        
+                        <div class="objective-item" id="obj-2">
+                            <div class="obj-checkbox">✓</div>
+                            <div class="obj-text"><strong>ধাপ ২ (ভেতরের কোড):</strong> ফাংশনটির ঠিক নিচের লাইনে ৪টি স্পেস (Tab) ডান দিকে চেপে একটি print() লেখো। ব্র্যাকেটের ভেতর লিখে দাও: "🍵 রোবটটি গরম গরম চা বানিয়ে এনেছে!"।</div>
+                        </div>
+
+                        <div class="objective-item" id="obj-3">
+                            <div class="obj-checkbox">✓</div>
+                            <div class="obj-text"><strong>ধাপ ৩ (রোবটকে অর্ডার দেওয়া):</strong> এবার ফাংশনের একদম বাইরে (লাইনের শুরুতে) চলে এসো। তারপর ফাংশনটিকে পরপর ২ বার নাম ধরে ডাকো (Call করো), যেন রোবটটি আমাদের জন্য ২ কাপ চা বানিয়ে দেয়!</div>
+                        </div>
+
+                        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
+                            💡 এই পুরো program টি তৈরি করো and run details to compile dynamically in our simulated terminal.
+                        </p>
+                    </div>
+
+                    <!-- Right: Editor & Terminal Playground -->
+                    <div class="ide-editor-container">
+                        <div class="ide-header">
+                            <div class="ide-title">
+                                <span>🤖</span> functions.py
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-secondary" id="editor-inject-btn" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 8px;">সলিউশন লোড</button>
+                                <button class="btn btn-primary" id="editor-run-btn" style="padding: 6px 16px; font-size: 0.8rem; border-radius: 8px; background: linear-gradient(135deg, var(--neon-green), var(--neon-blue)); color: #000; font-weight: bold;">Run Code ▶</button>
+                            </div>
+                        </div>
+                        <div class="ide-body">
+                            <div class="ide-line-numbers">
+                                1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9<br>10<br>11
+                            </div>
+                            <textarea class="ide-textarea" id="ide-code" spellcheck="false" placeholder="# এখানে তোমার কোড লেখো অথবা সলিউশন লোড করো..."></textarea>
+                        </div>
+                        <div class="ide-console" id="ide-console">
+                            <div class="console-log-line" style="color: var(--text-secondary);">>> টার্মিনাল আউটপুট এখানে দেখাবে। কোড লিখে 'Run Code' বাটনে ক্লিক করো!</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================= HELP ACCORDIONS ======================= -->
+        <div class="help-accordion-section">
+            <h3 style="font-size: 1.6rem; color: var(--neon-yellow); margin-bottom: 25px; display: flex; align-items: center; gap: 10px; font-weight: bold;">
+                🛡️ সাহায্যকারী উইং (Help Section)
+            </h3>
+
+            <!-- 1. Hints Accordion -->
+            <div class="accordion-item" id="accordion-hints">
+                <div class="accordion-header" onclick="toggleAccordion('accordion-hints')">
+                    <div class="accordion-header-left">
+                        <span style="font-size: 1.4rem;">💡</span>
+                        <span>সাহায্য ও হিন্টস (Hints)</span>
+                    </div>
+                    <span class="accordion-header-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-body">
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: 12px; padding: 12px 18px; display: flex; gap: 12px; align-items: center;">
+                                <span style="font-size: 1.2rem; color: var(--neon-yellow);">🛡️ হিন্ট ১:</span>
+                                <span style="color: var(--text-primary);">ফাংশন তৈরি করার সময় নামের শেষে ফার্স্ট ব্র্যাকেট এবং একটি কোলন দিতে ভুলো না, যেমন: def make_tea():।</span>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: 12px; padding: 12px 18px; display: flex; gap: 12px; align-items: center;">
+                                <span style="font-size: 1.2rem; color: var(--neon-yellow);">🛡️ হিন্ট ২:</span>
+                                <span style="color: var(--text-primary);">(ডান দিকে জায়গা ছাড়া): কোলন দেওয়ার পর পরের লাইনে লেখার সময় অবশ্যই কিবোর্ডের Tab বাটন চেপে জায়গা ছেড়ে লিখতে হবে। একে পাইথনে Indentation বলে। জায়গা না ছাড়লে পাইথন রোবটটি রাগ করে কাজ করবে না (Error দেখাবে)!</span>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: 12px; padding: 12px 18px; display: flex; gap: 12px; align-items: center;">
+                                <span style="font-size: 1.2rem; color: var(--neon-yellow);">🛡️ হিন্ট ৩:</span>
+                                <span style="color: var(--text-primary);">ফাংশনকে কাজ করাতে চাইলে বা ডাকতে চাইলে কোনো স্পেস ছাড়া লাইনের শুরু থেকে শুধু তার নাম লিখতে হয়, যেমন: make_tea()।</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Walkthrough Video Accordion -->
+            <div class="accordion-item" id="accordion-walkthrough">
+                <div class="accordion-header" onclick="toggleAccordion('accordion-walkthrough')">
+                    <div class="accordion-header-left">
+                        <span style="font-size: 1.4rem;">📹</span>
+                        <span>Walkthrough Video Simulation</span>
+                    </div>
+                    <span class="accordion-header-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-body">
+                        <p style="margin-bottom: 15px;">ভিডিওর বদলে এখানে একটি <strong>লাইভ ফাংশন কোডিং সিমুলেশন প্লেয়ার</strong> তৈরি করা হয়েছে। "কোড প্লে করুন" বাটনে ক্লিক করে রোবট ফাংশন তৈরির ধাপগুলো দেখে নাও!</p>
+                        
+                        <div class="walkthrough-player-box">
+                            <div class="player-bar">
+                                <div class="player-controls">
+                                    <button class="player-btn" id="wt-play-btn">কোড প্লে করুন ⏯</button>
+                                    <button class="player-btn" id="wt-reset-btn">রিসেট</button>
+                                </div>
+                                <div style="font-size: 0.8rem; color: var(--neon-blue); font-family: var(--font-mono);">function_simulation.py</div>
+                            </div>
+                            <div class="player-screen" id="wt-screen">
+                                <span style="color: var(--text-secondary);">// প্লে বাটনে ক্লিক করলে সলিউশন টাইপিং এখানে অ্যানিমেটেড হবে...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Solution Accordion -->
+            <div class="accordion-item" id="accordion-solution">
+                <div class="accordion-header" onclick="toggleAccordion('accordion-solution')">
+                    <div class="accordion-header-left">
+                        <span style="font-size: 1.4rem;">🛠️</span>
+                        <span>🛠️ समाधान ও সম্পূর্ণ কোড (Solution)</span>
+                    </div>
+                    <span class="accordion-header-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-body">
+                        <p style="margin-bottom: 15px;">তোমার নতুন তৈরি করা functions.py ফাইলের কোডটি হবে একদম এরকম সহজ ও পরিষ্কার:</p>
+                        
+                        <div class="terminal" style="margin-bottom: 15px; border-color: rgba(157, 78, 221, 0.25);">
+                            <div class="terminal-header">
+                                <span class="terminal-title">functions.py Solution</span>
+                                <button class="btn btn-secondary" onclick="injectSolution()" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px;">কোড এডিটরে দিন (Inject)</button>
+                            </div>
+                            <div class="terminal-body" style="font-size: 0.88rem; padding: 15px; min-height: auto;">
+                                <pre style="margin: 0; color: #a7f3d0;"><span style="color: #6b7280;"># ১. রোবটকে চা বানানোর নিয়মটি শিখিয়ে দিলাম (Function Define)</span>
+<span style="color: #f472b6;">def</span> <span style="color: #60a5fa;">make_tea</span>():
+    <span style="color: #34d399;">print</span>(<span style="color: #fbbf24;">"🍵 রোবটটি গরম গরম চা বানিয়ে এনেছে!"</span>)
+
+<span style="color: #34d399;">print</span>(<span style="color: #fbbf24;">"--- 🤖 রোবটকে আদেশ দেওয়ার সময় ---"</span>)
+
+<span style="color: #6b7280;"># ২. এবার রোবটকে প্রথম কাপ চায়ের জন্য ডাকলাম (First Call)</span>
+make_tea()
+
+<span style="color: #6b7280;"># ৩. রোবটকে দ্বিতীয় কাপ চায়ের জন্য আবার ডাকলাম (Second Call)</span>
+make_tea()
+
+<span style="color: #34d399;">print</span>(<span style="color: #fbbf24;">"--- 🎉 দুই কাপ চা তৈরি শেষ! ---"</span>)</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. AI Coding Companion Accordion -->
+            <div class="accordion-item" id="accordion-ai">
+                <div class="accordion-header" onclick="toggleAccordion('accordion-ai')">
+                    <div class="accordion-header-left">
+                        <span style="font-size: 1.4rem;">🤖</span>
+                        <span>AI Coding Companion (PyBot)</span>
+                    </div>
+                    <span class="accordion-header-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-body">
+                        <p style="margin-bottom: 15px;">ফাংশন ও ইনডেন্টেশন নিয়ে কোনো প্রশ্ন থাকলে নিচে ক্লিক করে <strong>PyBot</strong> এর কাছ থেকে ঝটপট বাংলা ব্যাখ্যা জেনে নাও!</p>
+                        
+                        <div class="chatbot-container">
+                            <div class="chatbot-messages" id="chat-messages">
+                                <div class="chat-bubble bot">
+                                    হ্যালো কোডার! আমি <strong>PyBot</strong>। ফাংশনের জাদুকরী ধারণাগুলো বুঝতে তোমার কোথায় সমস্যা হচ্ছে? নিচের প্রশ্নগুলোতে ক্লিক করে আমাকে জিজ্ঞেস করো! 🤖
+                                </div>
+                            </div>
+                            <div class="chatbot-inputs">
+                                <span class="chat-suggestion" onclick="askPyBot('ফাংশন কী এবং কেন দরকার? 🤖')">ফাংশন কী এবং কেন দরকার? 🤖</span>
+                                <span class="chat-suggestion" onclick="askPyBot('Indentation (ইনডেন্টেশন) এর নিয়ম কী? 📐')">Indentation (ইনডেন্টেশন) এর নিয়ম কী? 📐</span>
+                                <span class="chat-suggestion" onclick="askPyBot('ডিফাইন করা (Define) আর কল করা (Call) এর মধ্যে পার্থক্য কী? ⚔️')">ডিফাইন করা (Define) আর কল করা (Call) এর মধ্যে পার্থক্য কী? ⚔️</span>
+                                <span class="chat-suggestion" onclick="askPyBot('প্যারামিটার (Parameters) বা আর্গুমেন্ট কী? 🧪')">প্যারামিটার (Parameters) বা আর্গুমেন্ট কী? 🧪</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <!-- Practice in Python IDE -->
+        <div class="accordion-item" id="accordion-practice">
+            <div class="accordion-header" onclick="toggleAccordion('accordion-practice')">
+                <div class="accordion-header-left">
+                    <span style="font-size: 1.4rem;">💻</span>
+                    <span>Practice in Python IDE</span>
+                </div>
+                <span class="accordion-header-icon">▼</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-body">
+                    <p style="margin-bottom: 15px;">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p>
+                    <a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;box-shadow:0 0 16px rgba(101,209,178,0.2)">🚀 Open Python IDE</a>
+                </div>
+            </div>
+        </div>
+
+        </div>
+
+        <!-- ======================= ADVENTURE COMPLETION AREA ======================= -->
+        <div class="complete-area" id="complete-area" style="display: none;">
+            <h2 style="font-size: 1.8rem; font-weight: 800; color: var(--neon-green); margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                🏆 অধ্যায় সম্পন্ন করার উৎসব!
+            </h2>
+            <p style="font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 25px;">
+                তুমি চমৎকারভাবে ফাংশন তৈরি, ইনডেন্টেশন গেট ও দুই কাপ চায়ের রোবট আদেশ মিশন সম্পন্ন করেছ।
+            </p>
+            <button class="btn btn-primary complete-btn-pulse" id="global-complete-btn" style="background: linear-gradient(135deg, var(--neon-green), var(--neon-blue)); color: #000; font-size: 1.2rem; padding: 16px 40px; border-radius: 18px; font-weight: bold; box-shadow: 0 0 25px rgba(57, 255, 20, 0.4);">
+                ⚔️ অধ্যায়টি সম্পন্ন করুন ও ৫০ XP দাবি করুন!
+            </button>
+        </div>
+
+        <!-- NAVIGATION FOOTER -->
+        <div class="nav-footer">
+            <button class="btn btn-secondary" onclick="window.location.href='class6.html'">
+                ⬅️ অধ্যায় ড্যাশবোর্ড
+            </button>
+            <button class="btn btn-primary" onclick="window.location.href='c6_dry.html'" style="background: linear-gradient(135deg, var(--primary), var(--secondary));">
+                পরবর্তী মিশন (D.R.Y. Concept) ➡️
+            </button>
+        </div>
+
+    </div>
+
+    <!-- FLOATING HELPER MASCOT -->
+    <div class="floating-helper" onclick="triggerFloatingHelper()">
+        <img src="tiny_robot.png" alt="PyBot Mascot" onerror="this.src='https://i.imgur.com/vHqB5z5.png'">
+        <div class="floating-speech" id="floating-speech">
+            স্বাগতম রোবট ল্যাবে! আমি PyBot। রোবটকে চা বানানোর নিয়ম ডিফাইন করে তাকে ডেকে দুই কাপ চা তৈরি করিয়ে নাও! 🤖
+        </div>
+    </div>
+
+    <!-- CONTROL PANEL -->
+    <div class="controls-panel">
+        <button class="control-btn" id="theme-btn">🌙</button>
+        <button class="control-btn" id="voice-bot-btn">🤖</button>
+    </div>
+
+    <!-- Global Framework Scripts -->
+    <script src="Begineer.js"></script>
+    <script>
+        // ------------------ PROGRESS KEY CONFIG ------------------
+        const subclassId = 'c6_basic';
+
+        // ------------------ PARTICLE BACKGROUND ENGINE ------------------
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 3 + 1;
+                this.speedX = Math.random() * 0.5 - 0.25;
+                this.speedY = Math.random() * -0.5 - 0.1;
+                this.color = Math.random() > 0.5 ? 'rgba(157, 78, 221, 0.15)' : 'rgba(255, 0, 127, 0.15)';
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.y < 0) {
+                    this.y = canvas.height;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < 50; i++) {
+                particles.push(new Particle());
+            }
+        }
+        initParticles();
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        // ------------------ ADVENTURE PROGRESS STATE ------------------
+        let completionState = {
+            robotCompleted: false,
+            indentCompleted: false,
+            practiceCompleted: false
+        };
+
+        function updateAdventureProgress() {
+            let total = Object.keys(completionState).length;
+            let done = Object.values(completionState).filter(v => v === true).length;
+            let percent = Math.round((done / total) * 100);
+
+            const fill = document.getElementById('level-progress-fill');
+            const label = document.getElementById('level-progress-text');
+            if (fill) fill.style.width = percent + '%';
+            if (label) label.innerText = percent + '% সম্পন্ন';
+
+            if (percent === 100) {
+                document.getElementById('complete-area').style.display = 'block';
+                triggerCelebrationEffect("দারুণ! সব মিশন সম্পন্ন! ৫০ এক্সপি দাবি করো! 🎉");
+            }
+        }
+
+        function triggerCelebrationEffect(text) {
+            if (window.confetti) {
+                confetti({
+                    particleCount: 150,
+                    spread: 80,
+                    origin: { y: 0.6 }
+                });
+            }
+            if (window.PortalSystem && window.PortalSystem.voiceActive) {
+                window.PortalSystem.tutorSpeak(text);
+            }
+        }
+
+        // ------------------ LEVEL 1: ROBOT TEA MAKER WIDGET ------------------
+        let robotTaught = false;
+        let teaCallCount = 0;
+        const robotDefineBtn = document.getElementById('robot-define-btn');
+        const robotCallBtn = document.getElementById('robot-call-btn');
+        const stoveFire = document.getElementById('stove-fire');
+        const stovePot = document.getElementById('stove-pot');
+        const robotLogs = document.getElementById('robot-logs');
+
+        robotDefineBtn.addEventListener('click', () => {
+            robotTaught = true;
+            robotDefineBtn.innerText = "✅ রেসিপি ডিফাইনড!";
+            robotDefineBtn.disabled = true;
+            robotDefineBtn.style.background = 'var(--neon-green)';
+            robotDefineBtn.style.color = '#000';
+            
+            robotCallBtn.disabled = false;
+            robotLogs.innerHTML = `রোবট অবস্থা: <span style="color: var(--neon-green); font-weight:bold;">make_tea() ডিফাইনড সম্পন্ন!</span> আদেশ দিন।`;
+            triggerCelebrationEffect("রোবট চা বানানোর রেসিপি শিখে নিয়েছে!");
+        });
+
+        robotCallBtn.addEventListener('click', () => {
+            if (!robotTaught || teaCallCount >= 2) return;
+
+            robotCallBtn.disabled = true;
+            stoveFire.style.opacity = '1';
+            stovePot.style.transform = 'scale(1.1) translateY(-5px)';
+            
+            // Steam activation
+            document.querySelectorAll('.tea-steam-bubble').forEach(b => b.style.animationPlayState = 'running');
+
+            robotLogs.innerHTML = `রোবট অবস্থা: <span style="color: var(--neon-yellow);">চা ফুটানো হচ্ছে... 🍵</span>`;
+
+            setTimeout(() => {
+                teaCallCount++;
+                stoveFire.style.opacity = '0';
+                stovePot.style.transform = '';
+
+                const cup = document.getElementById(`cup-${teaCallCount}`);
+                if (cup) {
+                    cup.classList.add('served');
+                }
+
+                robotLogs.innerHTML = `রোবট অবস্থা: <span style="color: var(--neon-green); font-weight:bold;">${teaCallCount} কাপ চা ডেলিভারড! 🍵</span>`;
+                
+                if (teaCallCount === 2) {
+                    robotCallBtn.innerText = "২ কাপ চা ডেলিভারড!";
+                    robotCallBtn.disabled = true;
+                    robotCallBtn.style.background = 'var(--neon-green)';
+                    robotCallBtn.style.color = '#000';
+                    completionState.robotCompleted = true;
+                    updateAdventureProgress();
+                    triggerCelebrationEffect("রোবট দুই কাপ গরম গরম চা বানিয়ে এনেছে!");
+                } else {
+                    robotCallBtn.disabled = false;
+                }
+            }, 1200);
+        });
+
+        // ------------------ LEVEL 2: INDENTATION GATE TUTOR ------------------
+        let indentAligned = false;
+        const tutorTabBtn = document.getElementById('tutor-tab-btn');
+        const tutorSpaceBox = document.getElementById('tutor-space-box');
+        const tutorCodeLine = document.getElementById('tutor-code-line');
+        const tutorErrMsg = document.getElementById('tutor-err-msg');
+
+        tutorTabBtn.addEventListener('click', () => {
+            if (indentAligned) return;
+
+            indentAligned = true;
+            tutorSpaceBox.innerText = '••••';
+            tutorCodeLine.classList.add('aligned');
+            
+            tutorErrMsg.innerText = "✅ Indentation Corrected! Code compiles successfully.";
+            tutorErrMsg.style.color = "var(--neon-green)";
+
+            tutorTabBtn.innerText = "এলাইনমেন্ট সম্পূর্ণ!";
+            tutorTabBtn.disabled = true;
+            tutorTabBtn.style.background = 'var(--neon-green)';
+            tutorTabBtn.style.color = '#000';
+
+            completionState.indentCompleted = true;
+            updateAdventureProgress();
+            triggerCelebrationEffect("ইনডেন্টেশন ত্রুটি দূর হয়েছে!");
+        });
+
+        // ------------------ LEVEL 3: IDE PLAYGROUND WORKSPACE ------------------
+        const ideCode = document.getElementById('ide-code');
+        const ideConsole = document.getElementById('ide-console');
+        const editorRunBtn = document.getElementById('editor-run-btn');
+        const editorInjectBtn = document.getElementById('editor-inject-btn');
+
+        const solutionCodeText = `# ১. রোবটকে চা বানানোর নিয়মটি শিখিয়ে দিলাম (Function Define)
+def make_tea():
+    print("🍵 রোবটটি গরম গরম চা বানিয়ে এনেছে!")
+
+print("--- 🤖 রোবটকে আদেশ দেওয়ার সময় ---")
+# ২. এবার রোবটকে প্রথম কাপ চায়ের জন্য ডাকলাম (First Call)
+make_tea()
+# ৩. রোবটকে দ্বিতীয় কাপ চায়ের জন্য আবার ডাকলাম (Second Call)
+make_tea()
+print("--- 🎉 দুই কাপ চা তৈরি শেষ! ---")`;
+
+        editorInjectBtn.addEventListener('click', () => {
+            injectSolution();
+        });
+
+        function injectSolution() {
+            ideCode.value = solutionCodeText;
+            ideConsole.innerHTML = `<span style="color: var(--neon-blue);">functions.py সলিউশন কোড এডিটরে লোড করা হয়েছে! Run Code বাটনে ক্লিক করো।</span>`;
+            document.getElementById('accordion-solution').classList.add('active');
+        }
+
+        editorRunBtn.addEventListener('click', () => {
+            const code = ideCode.value.trim();
+            if (!code) {
+                ideConsole.innerHTML = `<span style="color: var(--neon-pink);">এডিটর ফাঁকা! কোড লেখো অথবা সলিউশন লোড করো!</span>`;
+                return;
+            }
+
+            ideConsole.innerHTML = `<span style="color: var(--neon-green);">functions.py কোড কম্পাইল করা হচ্ছে...</span><br>`;
+
+            // Regex scans code for objectives
+            let obj1 = code.includes('def make_tea(') || code.includes('def make_tea ()');
+            let obj2 = code.includes('print(') && code.includes('"🍵 রোবটটি গরম গরম চা বানিয়ে এনেছে!"');
+            
+            // Check calling twice
+            let calls = (code.match(/make_tea\(\)/g) || []).length;
+            let obj3 = calls >= 3; // 1 define count could count depending on syntax, let's verify if make_tea() is called at least twice
+            
+            // Adjust calls validation by subtracting def structure
+            let codeLines = code.split('\n');
+            let callMatches = 0;
+            codeLines.forEach(l => {
+                if (l.trim() === 'make_tea()' && !l.includes('def')) {
+                    callMatches++;
+                }
+            });
+            if (callMatches >= 2) obj3 = true;
+
+            let lines = [];
+
+            if (obj1) {
+                document.getElementById('obj-1').classList.add('checked');
+            } else {
+                document.getElementById('obj-1').classList.remove('checked');
+            }
+
+            if (obj2) {
+                document.getElementById('obj-2').classList.add('checked');
+            } else {
+                document.getElementById('obj-2').classList.remove('checked');
+            }
+
+            if (obj3) {
+                lines.push("--- 🤖 রোবটকে আদেশ দেওয়ার সময় ---");
+                lines.push("🍵 রোবটটি গরম গরম চা বানিয়ে এনেছে!");
+                lines.push("🍵 রোবটটি গরম গরম চা বানিয়ে এনেছে!");
+                lines.push("--- 🎉 দুই কাপ চা তৈরি শেষ! ---");
+                document.getElementById('obj-3').classList.add('checked');
+            } else {
+                document.getElementById('obj-3').classList.remove('checked');
+            }
+
+            let index = 0;
+            function printLine() {
+                if (index < lines.length) {
+                    const log = document.createElement('div');
+                    log.className = 'console-log-line';
+                    log.innerText = lines[index];
+                    ideConsole.appendChild(log);
+                    ideConsole.scrollTop = ideConsole.scrollHeight;
+                    index++;
+                    setTimeout(printLine, 200);
+                } else {
+                    if (obj1 && obj2 && obj3) {
+                        const winLog = document.createElement('div');
+                        winLog.className = 'console-log-line';
+                        winLog.style.color = 'var(--neon-green)';
+                        winLog.style.fontWeight = 'bold';
+                        winLog.innerHTML = `<br>🎉 মিশন সফল! রোবটকে রেসিপি ডিফাইন এবং কল করে ২ কাপ চা তৈরি করা হয়েছে!`;
+                        ideConsole.appendChild(winLog);
+                        ideConsole.scrollTop = ideConsole.scrollHeight;
+
+                        completionState.practiceCompleted = true;
+                        updateAdventureProgress();
+                        triggerCelebrationEffect("ফাংশন প্র্যাকটিস মিশন সম্পন্ন!");
+                    } else {
+                        const warnLog = document.createElement('div');
+                        warnLog.className = 'console-log-line';
+                        warnLog.style.color = 'var(--neon-yellow)';
+                        warnLog.innerHTML = `<br>⚠️ কিছু গোল অপূর্ণ রয়েছে! বাম পাশের অবজেক্টিভ ও সলিউশন চেক করো।`;
+                        ideConsole.appendChild(warnLog);
+                        ideConsole.scrollTop = ideConsole.scrollHeight;
+                    }
+                }
+            }
+            setTimeout(printLine, 450);
+        });
+
+        // ------------------ HELP ACCORDIONS ENGINE ------------------
+        function toggleAccordion(id) {
+            const item = document.getElementById(id);
+            const isActive = item.classList.contains('active');
+            document.querySelectorAll('.accordion-item').forEach(el => el.classList.remove('active'));
+
+            if (!isActive) {
+                item.classList.add('active');
+            }
+        }
+
+        // ------------------ WALKTHROUGH SIMULATOR PLAYER ------------------
+        let wtRunning = false;
+        let wtIndex = 0;
+        const wtScreen = document.getElementById('wt-screen');
+        const wtPlayBtn = document.getElementById('wt-play-btn');
+        const wtResetBtn = document.getElementById('wt-reset-btn');
+
+        const walkthroughSteps = [
+            { text: "# ১. রোবটকে চা বানানোর নিয়মটি শিখিয়ে দিলাম (Function Define)", color: "#6b7280" },
+            { text: "def make_tea():", color: "#f472b6" },
+            { text: "    print(\"🍵 রোবটটি গরম গরম চা বানিয়ে এনেছে!\")", color: "#34d399" },
+            { text: "\nprint(\"--- 🤖 রোবটকে আদেশ দেওয়ার সময় ---\")", color: "#34d399" },
+            { text: "# ২. এবার রোবটকে প্রথম কাপ চায়ের জন্য ডাকলাম (First Call)", color: "#6b7280" },
+            { text: "make_tea()", color: "#60a5fa" },
+            { text: "# ৩. রোবটকে দ্বিতীয় কাপ চায়ের জন্য আবার ডাকলাম (Second Call)", color: "#6b7280" },
+            { text: "make_tea()", color: "#60a5fa" },
+            { text: "\nprint(\"--- 🎉 দুই কাপ চা তৈরি শেষ! ---\")", color: "#34d399" }
+        ];
+
+        wtPlayBtn.addEventListener('click', () => {
+            if (wtRunning) return;
+            wtRunning = true;
+            wtPlayBtn.innerText = "চলছে...";
+            wtPlayBtn.disabled = true;
+            wtScreen.innerHTML = '';
+            wtIndex = 0;
+
+            function typeStep() {
+                if (wtIndex < walkthroughSteps.length) {
+                    const step = walkthroughSteps[wtIndex];
+                    const line = document.createElement('div');
+                    line.style.color = step.color;
+                    line.style.marginBottom = "5px";
+
+                    let charIndex = 0;
+                    function typeChar() {
+                        if (charIndex < step.text.length) {
+                            line.innerHTML += step.text[charIndex] === '\n' ? '<br>' : step.text[charIndex];
+                            charIndex++;
+                            wtScreen.scrollTop = wtScreen.scrollHeight;
+                            setTimeout(typeChar, 25);
+                        } else {
+                            wtIndex++;
+                            setTimeout(typeStep, 400);
+                        }
+                    }
+                    wtScreen.appendChild(line);
+                    typeChar();
+                } else {
+                    wtRunning = false;
+                    wtPlayBtn.innerText = "সম্পূর্ণ!";
+                    wtPlayBtn.style.background = 'var(--neon-green)';
+                    wtPlayBtn.disabled = false;
+                }
+            }
+            typeStep();
+        });
+
+        wtResetBtn.addEventListener('click', () => {
+            wtRunning = false;
+            wtIndex = 0;
+            wtPlayBtn.innerText = "কোড প্লে করুন ⏯";
+            wtPlayBtn.disabled = false;
+            wtPlayBtn.style.background = '';
+            wtScreen.innerHTML = '<span style="color: var(--text-secondary);">// প্লে বাটনে ক্লিক করলে সলিউশন টাইপিং এখানে অ্যানিমেটেড হবে...</span>';
+        });
+
+        // ------------------ AI CODING COMPANION (PYBOT) ------------------
+        const chatMessages = document.getElementById('chat-messages');
+
+        const pybotDatabase = {
+            "ফাংশন কী এবং কেন দরকার? 🤖": "ফাংশন হলো পাইথনের একটি জাদুকরী রোবটের রেসিপি! 🤖 মনে করো কোডে তোমাকে একই বড় কাজ ৪-৫ বার আলাদা জায়গায় করতে হবে। তুমি কি প্রতিবার ১০-১২ লাইন করে কোড কপি-পেস্ট করবে? একদম না! তুমি ওই কাজটার জন্য একবার একটি ফাংশন বানিয়ে ডিফাইন করে রাখবে, আর যখনই দরকার শুধু ১ লাইনে তার নাম লিখে ডেকে কাজ করিয়ে নেবে! এর ফলে কোডের সাইজ কমে এবং রিডিবিলিটি বাড়ে।",
+            "Indentation (ইনডেন্টেশন) এর নিয়ম কী? 📐": "ইনডেন্টেশন হলো ফাংশনের ভেতরের সীমারেখা! 📐 পাইথনে def make_tea(): লেখার পর কোলন দেওয়ার মাধ্যমে ব্লকটি শুরু হয়। এর পরের প্রতিটা লাইনকে বোঝানোর জন্য যে তারা ফাংশনের অধীনস্থ, ডান দিকে কিবোর্ডের Tab বাটন টিপে জায়গা ছেড়ে (সাধারণত ৪টি স্পেস) লিখতে হয়। যদি জায়গা না ছাড়ো, তাহলে পাইথন এডিটর বুঝবে না এবং <strong>IndentationError</strong> ছুড়ে দেবে!",
+            "ডিফাইন করা (Define) আর কল করা (Call) এর মধ্যে পার্থক্য কী? ⚔️": "খুব ইম্পর্ট্যান্ট পার্থক্য! ⚔️<br><strong>Define (def)</strong> মানে হলো রোবটকে রান্নাঘরের রেসিপি বা নিয়ম শেখানো। ডিফাইন করলেই রোবট কিন্তু রান্না করবে না, শুধু নিয়ম মনে রাখবে।<br><strong>Call</strong> মানে হলো রোবটকে আদেশ দেওয়া (যেমন- make_tea())! কল করার সাথে সাথেই রোবট চুলো জ্বালিয়ে চা বানানো শুরু করে দেবে!",
+            "প্যারামিটার (Parameters) বা আর্গুমেন্ট কী? 🧪": "প্যারামিটার হলো ফাংশনের ইনপুট ভ্যালু! 🧪 ধরো, আমরা যদি রোবটকে শুধু চা না বানিয়ে কফি বা লেবুর চাও বানাতে বলতে চাই, তবে make_tea(type) ডিফাইন করতে পারি, যেখানে type হতে পারে 'Coffee' বা 'Green Tea'। ফাংশনের ভিতর এই ভ্যারিয়েবলটি ইনপুট হিসেবে পাঠানোই হলো প্যারামিটার বা আর্গুমেন্ট!"
+        };
+
+        function askPyBot(question) {
+            const userDiv = document.createElement('div');
+            userDiv.className = 'chat-bubble user';
+            userDiv.innerText = question;
+            chatMessages.appendChild(userDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'chat-bubble bot';
+            typingDiv.innerHTML = '<span style="animation: bounceMascot 1s infinite;">...</span>';
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            setTimeout(() => {
+                const answerText = pybotDatabase[question];
+                typingDiv.innerHTML = answerText;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                if (window.PortalSystem && window.PortalSystem.voiceActive) {
+                    window.PortalSystem.tutorSpeak(answerText.replace(/<[^>]*>/g, ''));
+                }
+            }, 600);
+        }
+
+        // ------------------ GLOBAL FLOATING MASCOT INTERACTION ------------------
+        const speech = document.getElementById('floating-speech');
+
+        function triggerFloatingHelper() {
+            const speechDatabase = [
+                "সাবাশ কোডার! ফাংশন কোডকে অনেক সুন্দর ও রি-ইউজেবল করে!",
+                "কলোন (:) দেওয়ার পর কিন্তু ট্যাব বা ৪টি স্পেস দিয়ে লিখতে ভুলো না!",
+                "রেসিপি শেখানোর পর make_tea() কল করলেই চা ডেলিভারি হবে! 🍵",
+                "যেকোনো প্রশ্ন থাকলে আমার চ্যাটবক্সে চলে যাও! 🤖",
+                "ইনডেন্টেশন ত্রুটি দূর করতে এলাইনমেন্ট কারেক্টরে ট্যাব চাপো!"
+            ];
+            const randomMsg = speechDatabase[Math.floor(Math.random() * speechDatabase.length)];
+            speech.innerText = randomMsg;
+            speech.style.opacity = '1';
+            speech.style.transform = 'translateY(0)';
+
+            if (window.PortalSystem && window.PortalSystem.voiceActive) {
+                window.PortalSystem.tutorSpeak(randomMsg);
+            }
+
+            setTimeout(() => {
+                speech.style.opacity = '0';
+                speech.style.transform = 'translateY(10px)';
+            }, 5000);
+        }
+
+        // ------------------ PROGRESS COMPLETION REGISTER ------------------
+        const completeBtn = document.getElementById('global-complete-btn');
+
+        completeBtn.addEventListener('click', () => {
+            if (window.PortalSystem) {
+                window.PortalSystem.updateProgress(subclassId, 'completed');
+                completeBtn.innerText = "ফাংশন বেসিক সম্পন্ন! 🎉";
+                completeBtn.style.background = 'var(--neon-green)';
+                completeBtn.disabled = true;
+
+                const xp = document.getElementById('xp-text');
+                xp.innerText = "২৭০ XP";
+                xp.style.color = 'var(--neon-green)';
+                xp.style.transform = 'scale(1.25)';
+                setTimeout(() => xp.style.transform = 'scale(1)', 1000);
+            } else {
+                alert("মিশন সফলভাবে সম্পূর্ণ!");
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.PortalSystem) {
+                let savedState = window.PortalSystem.progress[subclassId];
+                if (savedState === 'completed') {
+                    Object.keys(completionState).forEach(k => completionState[k] = true);
+                    updateAdventureProgress();
+
+                    completeBtn.innerText = "অধ্যায় সম্পন্ন হয়ে আছে! 🎉";
+                    completeBtn.style.background = 'var(--neon-green)';
+                    completeBtn.disabled = true;
+                    document.getElementById('xp-text').innerText = "২৭০ XP";
+                }
+            }
+        });
+    </script>
+</body>
+</html>

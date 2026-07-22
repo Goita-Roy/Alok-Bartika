@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>⚖️ BMI ক্যালকুলেটর — পাইথন পাওয়ার অপারেটর</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fira+Code:wght@400;600&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --neon:#00ffe1; --pink:#ff2bd6; --yellow:#ffd166; --green:#39ff14;
+    --bg:#05060f; --panel:#0b0f1f; --gold:#ffcf5c; --purple:#a855f7;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Hind Siliguri','Fira Code',monospace;
+    background:
+      radial-gradient(ellipse at top, rgba(0,255,225,0.08), transparent 60%),
+      radial-gradient(ellipse at bottom right, rgba(168,85,247,0.10), transparent 50%),
+      linear-gradient(135deg,#04050d,#0a0f24,#04050d);
+    color:#e6f7ff; min-height:100vh; overflow-x:hidden; position:relative;
+  }
+  .particles{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+  .particles span{position:absolute;bottom:-60px;animation:float-up linear infinite;opacity:0.3}
+  @keyframes float-up{
+    0%{transform:translateY(0) rotate(0)}
+    100%{transform:translateY(-115vh) rotate(360deg)}
+  }
+  .container{max-width:960px;margin:0 auto;padding:32px 20px 80px;position:relative;z-index:1}
+  .badge{
+    display:inline-block;padding:8px 14px;border:1px solid rgba(0,255,225,0.35);
+    background:rgba(0,255,225,0.08);border-radius:999px;
+    font-family:'Press Start 2P',monospace;font-size:9px;color:var(--neon);
+    letter-spacing:1px;margin-bottom:18px;animation:pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse{50%{box-shadow:0 0 24px rgba(0,255,225,0.35)}}
+  h1{
+    font-family:'Press Start 2P',monospace; font-size:22px; line-height:1.6;
+    background:linear-gradient(90deg,var(--neon),var(--purple),var(--pink));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    margin-bottom:14px;
+  }
+  .subtitle{color:#9fb3c8;font-size:15px;margin-bottom:32px;max-width:700px}
+  .quote{
+    border-left:4px solid var(--neon); padding:18px 22px;
+    background:linear-gradient(90deg,rgba(0,255,225,0.08),transparent);
+    border-radius:8px; margin:24px 0; font-size:16px; color:#b8f5ef;
+    box-shadow:0 0 30px rgba(0,255,225,0.08);
+  }
+  .section-title{
+    font-family:'Press Start 2P',monospace;font-size:13px;
+    color:var(--neon);margin:36px 0 14px;letter-spacing:1px;
+  }
+  p{margin:10px 0;line-height:1.85;color:#cbd5e1}
+  strong{color:var(--yellow)}
+  code.inl{background:rgba(0,255,225,0.08);padding:2px 8px;border-radius:6px;font-family:'Fira Code',monospace;color:var(--neon);font-size:0.95em}
+
+  /* Power operator demo */
+  .power-demo{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:20px 0;
+  }
+  .pow-card{
+    background:linear-gradient(160deg,rgba(168,85,247,0.12),rgba(0,255,225,0.06));
+    border:1px solid rgba(168,85,247,0.35);border-radius:14px;padding:20px;text-align:center;
+    box-shadow:0 10px 30px rgba(168,85,247,0.10);transition:transform .25s ease;
+  }
+  .pow-card:hover{transform:translateY(-4px)}
+  .pow-expr{font-family:'Press Start 2P',monospace;font-size:18px;color:var(--yellow);margin-bottom:8px}
+  .pow-expr sup{font-size:13px;color:var(--pink)}
+  .pow-eq{font-family:'Fira Code',monospace;color:#cbd5e1;font-size:13px;margin:6px 0}
+  .pow-res{font-family:'Press Start 2P',monospace;font-size:16px;color:var(--neon);margin-top:6px}
+
+  /* BMI Calculator */
+  .calc-card{
+    background:linear-gradient(180deg,#0a1428,#0a0f24);
+    border:2px solid rgba(0,255,225,0.3);border-radius:16px;padding:26px;margin:22px 0;
+    box-shadow:0 20px 60px rgba(0,0,0,0.55),inset 0 0 60px rgba(0,255,225,0.05);
+  }
+  .calc-title{
+    font-family:'Press Start 2P',monospace;font-size:12px;color:var(--neon);
+    text-align:center;margin-bottom:18px;letter-spacing:1px;
+  }
+  .slider-row{margin:18px 0}
+  .slider-row label{
+    display:flex;justify-content:space-between;align-items:center;
+    font-family:'Fira Code',monospace;font-size:13px;color:#cbd5e1;margin-bottom:8px;
+  }
+  .slider-row label span{font-family:'Press Start 2P',monospace;font-size:11px;color:var(--yellow)}
+  input[type=range]{
+    width:100%;height:8px;border-radius:99px;background:linear-gradient(90deg,var(--neon),var(--purple));
+    -webkit-appearance:none;appearance:none;outline:none;cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;
+    background:var(--yellow);border:2px solid #1a0a00;cursor:pointer;
+    box-shadow:0 0 14px rgba(255,209,102,0.7);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:22px;height:22px;border-radius:50%;background:var(--yellow);
+    border:2px solid #1a0a00;cursor:pointer;box-shadow:0 0 14px rgba(255,209,102,0.7);
+  }
+  .formula-line{
+    text-align:center;margin:18px 0;padding:14px;
+    background:rgba(0,0,0,0.35);border:1px dashed rgba(0,255,225,0.25);border-radius:10px;
+    font-family:'Fira Code',monospace;font-size:14px;color:#9fb3c8;
+  }
+  .formula-line .num{color:var(--yellow)}
+  .formula-line .op{color:var(--pink);font-weight:700}
+  .formula-line .eq{color:var(--neon);font-weight:700}
+  .bmi-result{
+    text-align:center;padding:22px;margin-top:14px;border-radius:14px;
+    background:linear-gradient(135deg,rgba(0,255,225,0.10),rgba(168,85,247,0.10));
+    border:1px solid rgba(0,255,225,0.3);
+  }
+  .bmi-value{font-family:'Press Start 2P',monospace;font-size:32px;color:var(--neon);text-shadow:0 0 18px rgba(0,255,225,0.5);margin:6px 0}
+  .bmi-cat{font-family:'Press Start 2P',monospace;font-size:11px;letter-spacing:1px;margin-top:6px}
+  .bmi-bar{
+    margin-top:18px;height:14px;border-radius:99px;overflow:hidden;
+    background:linear-gradient(90deg,#3b82f6 0%,#3b82f6 22%,#22c55e 22%,#22c55e 50%,#facc15 50%,#facc15 75%,#ef4444 75%,#ef4444 100%);
+    position:relative;border:1px solid rgba(255,255,255,0.15);
+  }
+  .bmi-pointer{
+    position:absolute;top:-6px;width:4px;height:26px;background:#fff;border-radius:2px;
+    box-shadow:0 0 10px rgba(255,255,255,0.8);transition:left .3s ease;
+  }
+  .bmi-legend{
+    display:flex;justify-content:space-between;font-family:'Fira Code',monospace;font-size:10px;
+    color:#9fb3c8;margin-top:8px;flex-wrap:wrap;gap:4px;
+  }
+
+  /* Terminal */
+  .terminal{
+    background:#04060e;border:1px solid rgba(0,255,225,0.25);border-radius:12px;
+    margin:20px 0;overflow:hidden;box-shadow:0 0 30px rgba(0,255,225,0.08);
+  }
+  .term-bar{background:#0b1224;padding:10px 14px;display:flex;gap:6px;align-items:center;border-bottom:1px solid rgba(0,255,225,0.15)}
+  .dot{width:10px;height:10px;border-radius:50%}
+  .dot.r{background:#ff5f56}.dot.y{background:#ffbd2e}.dot.g{background:#27c93f}
+  .term-title{margin-left:10px;font-family:'Fira Code',monospace;font-size:11px;color:#7aa2b8}
+  .term-body{padding:18px;font-family:'Fira Code',monospace;font-size:14px;line-height:1.7;white-space:pre-wrap;overflow-x:auto}
+  .c-comment{color:#6b7c93;font-style:italic}
+  .c-keyword{color:var(--pink)}
+  .c-string{color:var(--green)}
+  .c-func{color:var(--neon)}
+  .c-num{color:var(--yellow)}
+  .c-op{color:var(--pink);font-weight:700}
+
+  /* Accordion */
+  .acc{border:1px solid rgba(0,255,225,0.18);border-radius:12px;margin:12px 0;overflow:hidden;background:rgba(11,15,31,0.6);backdrop-filter:blur(4px)}
+  .acc summary{
+    cursor:pointer;list-style:none;padding:16px 18px;
+    font-family:'Press Start 2P',monospace;font-size:11px;color:var(--yellow);
+    display:flex;justify-content:space-between;align-items:center;
+    background:linear-gradient(90deg,rgba(255,209,102,0.06),transparent);
+  }
+  .acc summary::-webkit-details-marker{display:none}
+  .acc summary::after{content:"▼";color:var(--neon);font-size:10px;transition:transform .25s}
+  .acc[open] summary::after{transform:rotate(180deg)}
+  .acc-body{padding:6px 20px 20px;color:#cbd5e1;font-size:14px;line-height:1.8}
+  .acc-body ul{padding-left:18px;margin:8px 0}
+  .acc-body li{margin:6px 0}
+
+  .fun-fact{
+    margin:22px 0;padding:16px 20px;border-radius:12px;
+    background:linear-gradient(90deg,rgba(255,43,214,0.12),rgba(168,85,247,0.10));
+    border-left:4px solid var(--pink);color:#f8d4ee;font-size:14px;
+  }
+
+  /* Toast */
+  .toast{
+    position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);
+    background:linear-gradient(90deg,var(--neon),var(--purple));
+    color:#0a0a0a;padding:14px 22px;border-radius:999px;
+    font-family:'Press Start 2P',monospace;font-size:10px;letter-spacing:1px;
+    box-shadow:0 0 30px rgba(0,255,225,0.45);opacity:0;pointer-events:none;
+    transition:all .4s ease;z-index:50;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .footer-tip{
+    margin-top:32px;text-align:center;font-size:13px;color:#7aa2b8;
+    border-top:1px dashed rgba(0,255,225,0.15);padding-top:18px;
+  }
+  @media(max-width:600px){
+    h1{font-size:16px}
+    .term-body{font-size:12px}
+    .bmi-value{font-size:24px}
+    .pow-expr{font-size:16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<div class="container">
+  <div class="badge">⚖️ LESSON 04 • POWER OPERATOR</div>
+  <h1>পাওয়ার অপারেটর ও BMI ক্যালকুলেটর</h1>
+  <p class="subtitle">পাইথনের <code class="inl">**</code> অপারেটর দিয়ে স্কয়ার, কিউব ও পাওয়ার — তারপর বানাও তোমার নিজের ডিজিটাল BMI মেশিন!</p>
+
+  <div class="quote">
+    আমরা গণিতে লিখি <strong>2³</strong> বা <strong>10²</strong>। পাইথনে এই পাওয়ার বা ঘাত হিসাব করতে ব্যবহার করি ডাবল স্টার <code class="inl">**</code> — একে বলা হয় <strong>Exponentiation Operator</strong>।
+  </div>
+
+  <h2 class="section-title">⚡ পাওয়ার অপারেটর কীভাবে কাজ করে</h2>
+  <div class="power-demo">
+    <div class="pow-card">
+      <div class="pow-expr">2<sup>3</sup></div>
+      <div class="pow-eq">2 ** 3 = 2×2×2</div>
+      <div class="pow-res">= 8</div>
+    </div>
+    <div class="pow-card">
+      <div class="pow-expr">10<sup>2</sup></div>
+      <div class="pow-eq">10 ** 2 = 10×10</div>
+      <div class="pow-res">= 100</div>
+    </div>
+    <div class="pow-card">
+      <div class="pow-expr">5<sup>4</sup></div>
+      <div class="pow-eq">5 ** 4 = 5×5×5×5</div>
+      <div class="pow-res">= 625</div>
+    </div>
+    <div class="pow-card">
+      <div class="pow-expr">1.5<sup>2</sup></div>
+      <div class="pow-eq">1.5 ** 2 = 1.5×1.5</div>
+      <div class="pow-res">= 2.25</div>
+    </div>
+  </div>
+
+  <h2 class="section-title">🎬 অ্যাসাইনমেন্ট — bmi.py</h2>
+  <p>চলো একটি নতুন <code class="inl">bmi.py</code> ফাইল তৈরি করি। <strong>BMI (Body Mass Index)</strong> দিয়ে বোঝা যায় একজন মানুষের ওজন ও উচ্চতা অনুযায়ী তার স্বাস্থ্য কেমন।</p>
+
+  <div class="formula-line">
+    bmi <span class="eq">=</span> <span class="num">mass</span> <span class="op">/</span> <span class="num">height</span><sup class="op">2</sup>
+  </div>
+
+  <p><strong>ধাপ ১:</strong> ওজন (কেজি) এবং উচ্চতা (মিটার) দুটি ভ্যারিয়েবলে রাখো।<br>
+  <strong>ধাপ ২:</strong> <code class="inl">**</code> অপারেটর দিয়ে height² হিসাব করে সূত্রটি লিখো।<br>
+  <strong>ধাপ ৩:</strong> <code class="inl">print()</code> দিয়ে ফলাফল স্ক্রিনে দেখাও।</p>
+
+  <h2 class="section-title">🧪 ইন্টারঅ্যাক্টিভ BMI ল্যাব</h2>
+  <div class="calc-card">
+    <div class="calc-title">⚖️ DIGITAL BMI CALCULATOR</div>
+
+    <div class="slider-row">
+      <label>⚖️ ওজন (mass) <span id="massLbl">50 কেজি</span></label>
+      <input type="range" id="mass" min="20" max="150" step="1" value="50"/>
+    </div>
+
+    <div class="slider-row">
+      <label>📏 উচ্চতা (height) <span id="heightLbl">1.50 মিটার</span></label>
+      <input type="range" id="height" min="100" max="220" step="1" value="150"/>
+    </div>
+
+    <div class="formula-line" id="formulaLine">
+      my_bmi <span class="eq">=</span> <span class="num">50</span> <span class="op">/</span> (<span class="num">1.5</span> <span class="op">**</span> <span class="num">2</span>) <span class="eq">=</span> <span class="num" id="formulaResult">22.22</span>
+    </div>
+
+    <div class="bmi-result">
+      <div style="font-family:'Fira Code',monospace;font-size:12px;color:#9fb3c8">তোমার BMI</div>
+      <div class="bmi-value" id="bmiValue">22.22</div>
+      <div class="bmi-cat" id="bmiCat" style="color:var(--green)">✅ স্বাভাবিক ওজন</div>
+
+      <div style="position:relative;margin-top:18px">
+        <div class="bmi-bar"><div class="bmi-pointer" id="pointer" style="left:35%"></div></div>
+        <div class="bmi-legend">
+          <span>কম &lt;18.5</span><span>স্বাভাবিক</span><span>বেশি</span><span>স্থূল &gt;30</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fun-fact">
+    💡 <strong>মজার তথ্য:</strong> এই BMI কোনো ডাক্তার আবিষ্কার করেননি — এটি বানিয়েছিলেন বেলজিয়ামের একজন গণিতবিদ <strong>Adolphe Quetelet</strong>, প্রায় ২০০ বছর আগে!
+  </div>
+
+  <h2 class="section-title">💻 কোড টার্মিনাল</h2>
+  <div class="terminal">
+    <div class="term-bar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="term-title">bmi.py</span>
+    </div>
+<div class="term-body"><span class="c-comment"># ১. ওজন (কেজিতে) এবং উচ্চতা (মিটারে)</span>
+mass <span class="c-op">=</span> <span class="c-num">50</span>
+height <span class="c-op">=</span> <span class="c-num">1.5</span>
+
+<span class="c-comment"># ২. ডাবল স্টার (**) অপারেটর দিয়ে BMI সূত্র</span>
+my_bmi <span class="c-op">=</span> mass <span class="c-op">/</span> (height <span class="c-op">**</span> <span class="c-num">2</span>)
+
+<span class="c-func">print</span>(<span class="c-string">"--- ⚖️ ডিজিটাল BMI ক্যালকুলেটর ---"</span>)
+
+<span class="c-comment"># ৩. ফলাফল প্রিন্ট</span>
+<span class="c-func">print</span>(<span class="c-string">"⚖️ ওজন:"</span>, mass, <span class="c-string">"কেজি"</span>)
+<span class="c-func">print</span>(<span class="c-string">"📏 উচ্চতা:"</span>, height, <span class="c-string">"মিটার"</span>)
+<span class="c-func">print</span>(<span class="c-string">"🎯 তোমার BMI:"</span>, my_bmi)</div>
+  </div>
+
+  <h2 class="section-title">🎯 শিক্ষার্থী কর্নার</h2>
+
+  <details class="acc" open>
+    <summary>💡 ইঙ্গিত (Hints)</summary>
+    <div class="acc-body">
+      <ul>
+        <li><strong>হিন্ট ১:</strong> height² বের করতে লিখতে পারো <code class="inl">height * height</code> অথবা পাইথন স্টাইলে <code class="inl">height ** 2</code>।</li>
+        <li><strong>হিন্ট ২:</strong> পুরো সূত্র: <code class="inl">my_bmi = mass / (height ** 2)</code> — ব্র্যাকেট দেওয়া ভালো, যাতে কম্পিউটার আগে স্কয়ারের কাজটি সারে।</li>
+        <li><strong>হিন্ট ৩:</strong> <code class="inl">**</code> মানে পাওয়ার, আর <code class="inl">*</code> মানে শুধু গুণ — দুটো গুলিয়ে ফেলো না!</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="acc">
+    <summary>📹 Walkthrough Video</summary>
+    <div class="acc-body">শীঘ্রই আসছে... 🎬 ভিডিওতে দেখাবো কিভাবে <code class="inl">**</code> অপারেটর কাজ করে এবং BMI কোড লাইন বাই লাইন বুঝিয়ে দেবো।</div>
+  </details>
+
+  <details class="acc">
+    <summary>🛠️ সমাধান ও সম্পূর্ণ কোড</summary>
+    <div class="acc-body">
+      একদম গোছানো পাইথন কোড:
+      <div class="terminal" style="margin-top:10px">
+        <div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="term-title">solution.py</span></div>
+<div class="term-body">mass <span class="c-op">=</span> <span class="c-num">50</span>
+height <span class="c-op">=</span> <span class="c-num">1.5</span>
+
+my_bmi <span class="c-op">=</span> mass <span class="c-op">/</span> (height <span class="c-op">**</span> <span class="c-num">2</span>)
+
+<span class="c-func">print</span>(<span class="c-string">"🎯 তোমার BMI:"</span>, my_bmi)</div>
+      </div>
+    </div>
+  </details>
+
+  <details class="acc">
+    <summary>🤖 AI Coding Companion</summary>
+    <div class="acc-body">আটকে গেছ? AI সঙ্গীকে জিজ্ঞেস করো — "<code class="inl">**</code> আর <code class="inl">*</code> এর পার্থক্য কী?" অথবা "BMI 22.5 হলে স্বাস্থ্য কেমন?" 🤖</div>
+  </details>
+
+  <div class="footer-tip">🏆 BMI স্লাইডার নাড়িয়ে চারটি ক্যাটাগরিই (কম/স্বাভাবিক/বেশি/স্থূল) দেখাও — Power Master ব্যাজ আনলক করো!</div>
+</div>
+
+<div class="toast" id="toast">🏆 POWER MASTER ব্যাজ আনলকড!</div>
+
+
+  <details class="accordion">
+    <summary><span class="ico" style="background:rgba(101,209,178,.15);color:var(--cyan)">💻</span><span style="color:var(--cyan)">Practice in Python IDE</span></summary>
+    <div class="body"><p style="margin:0;color:#d1d5db">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p><a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;margin-top:8px">🚀 Open Python IDE</a></div>
+  </details>
+
+<script>
+  // Particles
+  const emojis=['⚖️','📏','⚡','💪','🔢','✨','🎯','🧮'];
+  const p=document.getElementById('particles');
+  for(let i=0;i<28;i++){
+    const s=document.createElement('span');
+    s.textContent=emojis[i%emojis.length];
+    s.style.left=(Math.random()*100)+'%';
+    s.style.fontSize=(14+Math.random()*22)+'px';
+    s.style.animationDuration=(14+Math.random()*16)+'s';
+    s.style.animationDelay=(-Math.random()*20)+'s';
+    s.style.opacity=(0.15+Math.random()*0.3);
+    p.appendChild(s);
+  }
+
+  // BMI Calculator
+  const massEl=document.getElementById('mass');
+  const heightEl=document.getElementById('height');
+  const massLbl=document.getElementById('massLbl');
+  const heightLbl=document.getElementById('heightLbl');
+  const bmiValue=document.getElementById('bmiValue');
+  const bmiCat=document.getElementById('bmiCat');
+  const pointer=document.getElementById('pointer');
+  const formulaLine=document.getElementById('formulaLine');
+
+  const seen=new Set();
+
+  function categorize(b){
+    if(b<18.5) return {key:'low',label:'⬇️ কম ওজন',color:'#3b82f6'};
+    if(b<25)   return {key:'norm',label:'✅ স্বাভাবিক ওজন',color:'#22c55e'};
+    if(b<30)   return {key:'over',label:'⚠️ বেশি ওজন',color:'#facc15'};
+    return {key:'obese',label:'🔴 স্থূল',color:'#ef4444'};
+  }
+
+  function update(){
+    const mass=parseFloat(massEl.value);
+    const height=parseFloat(heightEl.value)/100; // cm -> m
+    const bmi = mass / (height ** 2);
+    massLbl.textContent = mass + ' কেজি';
+    heightLbl.textContent = height.toFixed(2) + ' মিটার';
+    bmiValue.textContent = bmi.toFixed(2);
+
+    const cat = categorize(bmi);
+    bmiCat.textContent = cat.label;
+    bmiCat.style.color = cat.color;
+    bmiValue.style.color = cat.color;
+    bmiValue.style.textShadow = `0 0 18px ${cat.color}88`;
+
+    // Pointer position on 10–40 scale
+    const clamped = Math.max(10, Math.min(40, bmi));
+    const pct = ((clamped - 10) / 30) * 100;
+    pointer.style.left = pct + '%';
+
+    formulaLine.innerHTML = `my_bmi <span class="eq">=</span> <span class="num">${mass}</span> <span class="op">/</span> (<span class="num">${height.toFixed(2)}</span> <span class="op">**</span> <span class="num">2</span>) <span class="eq">=</span> <span class="num">${bmi.toFixed(2)}</span>`;
+
+    seen.add(cat.key);
+    if(seen.size===4){ showToast(); seen.clear(); seen.add('done'); }
+  }
+
+  massEl.addEventListener('input',update);
+  heightEl.addEventListener('input',update);
+  update();
+
+  function showToast(){
+    const t=document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),2800);
+  }
+</script>
+</body>
+</html>

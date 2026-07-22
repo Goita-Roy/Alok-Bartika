@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bank Account - Class & Object | Python Adventure</title>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Press+Start+2P&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0a0e17;
+      --bg-card: #111827;
+      --bg-code: #1a1f2e;
+      --neon-green: #00ff88;
+      --neon-gold: #ffd700;
+      --neon-blue: #00d4ff;
+      --neon-red: #ff4757;
+      --text-primary: #e2e8f0;
+      --text-muted: #94a3b8;
+      --border-color: rgba(0,255,136,0.15);
+    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Hind Siliguri', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      line-height: 1.8;
+    }
+    /* Particles */
+    .particles-container {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 0; overflow: hidden;
+    }
+    .particle {
+      position: absolute; font-size: 20px; opacity: 0.15;
+      animation: float-particle linear infinite;
+      will-change: transform;
+    }
+    @keyframes float-particle {
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.2; }
+      90% { opacity: 0.2; }
+      100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+    }
+    /* Header */
+    .hero {
+      position: relative; z-index: 1;
+      text-align: center; padding: 60px 20px 40px;
+      background: radial-gradient(ellipse at center, rgba(0,255,136,0.08) 0%, transparent 70%);
+    }
+    .level-badge {
+      display: inline-block; padding: 8px 24px;
+      border: 2px solid var(--neon-gold);
+      color: var(--neon-gold); font-family: 'Press Start 2P', cursive;
+      font-size: 12px; border-radius: 30px; margin-bottom: 20px;
+      animation: pulse-glow 2s infinite;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 10px rgba(255,215,0,0.3); }
+      50% { box-shadow: 0 0 25px rgba(255,215,0,0.6); }
+    }
+    .hero h1 {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 28px; color: var(--neon-green);
+      text-shadow: 0 0 20px rgba(0,255,136,0.5);
+      margin-bottom: 15px; line-height: 1.6;
+    }
+    .hero p { font-size: 18px; color: var(--text-muted); max-width: 600px; margin: 0 auto; }
+    /* Mascot */
+    .mascot-wrap { display: flex; justify-content: center; margin: 30px 0; }
+    .bank-svg { width: 160px; height: 160px; animation: bobbing 3s ease-in-out infinite; filter: drop-shadow(0 0 15px rgba(0,255,136,0.3)); }
+    @keyframes bobbing { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+    /* Container */
+    .container { max-width: 800px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
+    /* Cards */
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: 16px; padding: 28px; margin-bottom: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      opacity: 0; transform: translateY(30px); transition: all 0.6s ease;
+    }
+    .card.visible { opacity: 1; transform: translateY(0); }
+    .card h2 {
+      font-family: 'Press Start 2P', cursive; font-size: 16px;
+      color: var(--neon-gold); margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+    }
+    .card p, .card li { font-size: 17px; color: var(--text-primary); margin-bottom: 12px; }
+    .card ul { padding-left: 24px; }
+    .card li::marker { color: var(--neon-green); }
+    /* Object cards */
+    .object-showcase { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin: 20px 0; }
+    .object-card {
+      background: linear-gradient(135deg, rgba(0,255,136,0.1), rgba(0,212,255,0.05));
+      border: 2px solid var(--neon-green); border-radius: 12px;
+      padding: 20px 24px; min-width: 200px; text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .object-card::before {
+      content: ''; position: absolute; top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: conic-gradient(transparent, rgba(0,255,136,0.1), transparent 30%);
+      animation: shimmer 4s linear infinite;
+    }
+    @keyframes shimmer { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .object-card > * { position: relative; z-index: 1; }
+    .object-card .obj-name { font-family: 'Press Start 2P', cursive; font-size: 11px; color: var(--neon-green); margin-bottom: 8px; }
+    .object-card .obj-details { font-size: 15px; color: var(--text-muted); }
+    .object-card .balance { font-size: 20px; color: var(--neon-gold); font-weight: 700; }
+    /* Help Accordion */
+    .help-section { margin-top: 30px; }
+    details {
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: 12px; margin-bottom: 12px; overflow: hidden;
+    }
+    details[open] { border-color: rgba(0,255,136,0.3); }
+    summary {
+      padding: 18px 24px; cursor: pointer; font-family: 'Press Start 2P', cursive;
+      font-size: 12px; color: var(--neon-blue); display: flex; align-items: center; gap: 12px;
+      list-style: none; transition: background 0.2s;
+    }
+    summary:hover { background: rgba(0,212,255,0.05); }
+    summary::-webkit-details-marker { display: none; }
+    .summary-icon { font-size: 18px; }
+    .chevron { margin-left: auto; transition: transform 0.3s; font-size: 14px; }
+    details[open] .chevron { transform: rotate(180deg); }
+    .details-content { padding: 0 24px 24px; }
+    /* Code Block */
+    .code-block {
+      background: var(--bg-code); border: 1px solid rgba(0,255,136,0.1);
+      border-radius: 12px; padding: 20px; font-family: 'JetBrains Mono', monospace;
+      font-size: 14px; line-height: 1.8; overflow-x: auto; position: relative;
+    }
+    .code-block .comment { color: #6b7280; }
+    .code-block .keyword { color: #c084fc; }
+    .code-block .class-name { color: #fbbf24; }
+    .code-block .string { color: #4ade80; }
+    .code-block .number { color: #fbbf24; }
+    .code-block .variable { color: #60a5fa; }
+    .code-block .attribute { color: #f472b6; }
+    .code-block .function { color: #38bdf8; }
+    /* Video Placeholder */
+    .video-placeholder {
+      background: linear-gradient(135deg, rgba(0,0,0,0.4), rgba(0,0,0,0.6));
+      border: 2px dashed rgba(0,212,255,0.3); border-radius: 12px;
+      padding: 40px; text-align: center; color: var(--text-muted);
+    }
+    .play-btn {
+      width: 60px; height: 60px; border-radius: 50%;
+      background: rgba(0,212,255,0.15); border: 2px solid var(--neon-blue);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px; cursor: pointer; animation: pulse-glow 2s infinite;
+    }
+    .play-btn span { color: var(--neon-blue); font-size: 24px; margin-left: 4px; }
+    /* AI Companion */
+    .ai-card {
+      background: linear-gradient(135deg, rgba(0,255,136,0.08), rgba(0,212,255,0.05));
+      border: 1px solid var(--border-color); border-radius: 12px;
+      padding: 20px; display: flex; gap: 16px; align-items: flex-start;
+    }
+    .ai-avatar {
+      width: 50px; height: 50px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--neon-green), var(--neon-blue));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; flex-shrink: 0;
+    }
+    .ai-text { font-size: 16px; color: var(--text-primary); }
+    .ai-text strong { color: var(--neon-green); }
+    /* Terminal */
+    .terminal {
+      background: #0d1117; border: 1px solid rgba(0,255,136,0.2);
+      border-radius: 12px; padding: 24px; margin-top: 30px;
+      font-family: 'JetBrains Mono', monospace; position: relative;
+      box-shadow: 0 0 30px rgba(0,255,136,0.1);
+    }
+    .terminal-header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot.red { background: #ff5f56; }
+    .dot.yellow { background: #ffbd2e; }
+    .dot.green { background: #27c93f; }
+    .terminal-title { color: var(--text-muted); font-size: 13px; margin-left: 8px; }
+    .terminal-body { font-size: 14px; line-height: 2; color: var(--neon-green); }
+    .terminal-body .prompt { color: var(--neon-blue); }
+    .terminal-body .output { color: var(--text-primary); }
+    .cursor { display: inline-block; width: 10px; height: 18px; background: var(--neon-green); animation: blink 1s infinite; vertical-align: middle; margin-left: 2px; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    .xp-gain {
+      position: absolute; top: -15px; right: 20px;
+      background: linear-gradient(135deg, var(--neon-gold), #ff8c00);
+      color: #000; font-family: 'Press Start 2P', cursive; font-size: 11px;
+      padding: 8px 16px; border-radius: 20px; animation: float-up 3s ease-out forwards;
+      pointer-events: none;
+    }
+    @keyframes float-up {
+      0% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-40px); }
+    }
+    .xp-badge {
+      display: inline-block; background: rgba(0,255,136,0.15);
+      border: 1px solid var(--neon-green); color: var(--neon-green);
+      font-family: 'Press Start 2P', cursive; font-size: 10px;
+      padding: 6px 12px; border-radius: 6px; margin-top: 12px;
+    }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-dark); }
+    ::-webkit-scrollbar-thumb { background: rgba(0,255,136,0.3); border-radius: 4px; }
+    /* Responsive */
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 20px; }
+      .card { padding: 20px; }
+      .object-showcase { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Particles -->
+  <div class="particles-container" id="particles"></div>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="level-badge">LEVEL 3 — BANK ACCOUNT SYSTEM</div>
+    <h1>Bank Account<br>Class & Object</h1>
+    <p>নিজস্ব ডিজিটাল সিন্দুক তৈরি করো — Class দিয়ে নকশা, Object দিয়ে আসল অ্যাকাউন্ট!</p>
+    <div class="mascot-wrap">
+      <svg class="bank-svg" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Building body -->
+        <rect x="30" y="60" width="100" height="70" rx="4" fill="#1a1f2e" stroke="#00ff88" stroke-width="2"/>
+        <!-- Roof -->
+        <path d="M20 60 L80 20 L140 60 Z" fill="#1a1f2e" stroke="#00ff88" stroke-width="2"/>
+        <!-- Door -->
+        <rect x="65" y="90" width="30" height="40" rx="2" fill="#0a0e17" stroke="#ffd700" stroke-width="2"/>
+        <!-- Windows -->
+        <rect x="42" y="75" width="16" height="16" rx="2" fill="#0a0e17" stroke="#00d4ff" stroke-width="1.5"/>
+        <rect x="102" y="75" width="16" height="16" rx="2" fill="#0a0e17" stroke="#00d4ff" stroke-width="1.5"/>
+        <rect x="42" y="105" width="16" height="16" rx="2" fill="#0a0e17" stroke="#00d4ff" stroke-width="1.5"/>
+        <rect x="102" y="105" width="16" height="16" rx="2" fill="#0a0e17" stroke="#00d4ff" stroke-width="1.5"/>
+        <!-- Dollar sign on door -->
+        <text x="80" y="115" text-anchor="middle" fill="#ffd700" font-family="'Press Start 2P', monospace" font-size="16" font-weight="bold">$</text>
+        <!-- Columns -->
+        <rect x="32" y="60" width="4" height="70" fill="#00ff88" opacity="0.3"/>
+        <rect x="124" y="60" width="4" height="70" fill="#00ff88" opacity="0.3"/>
+        <!-- Glow effect -->
+        <circle cx="80" cy="45" r="30" fill="url(#glow)" opacity="0.15"/>
+        <defs>
+          <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#00ff88"/>
+            <stop offset="100%" stop-color="transparent"/>
+          </radialGradient>
+        </defs>
+      </svg>
+    </div>
+  </section>
+
+  <div class="container">
+    <!-- Intro -->
+    <div class="card" data-reveal>
+      <h2><span style="color:var(--neon-green)">01</span> ব্যাংক অ্যাকাউন্ট কী?</h2>
+      <p>সহজ কথায়, "<strong style="color:var(--neon-gold)">ব্যাংকে আমাদের টাকা নিরাপদে জমা রাখার জন্য যে নিজস্ব হিসাব বা ডিজিটাল সিন্দুক থাকে, তাকেই Bank Account বলে।</strong>"</p>
+      <p>পৃথিবীতে যত মানুষেরই ব্যাংক অ্যাকাউন্ট থাকুক না কেন, সবার অ্যাকাউন্টেরই একটা সাধারণ নকশা আছে। যেমন—সব অ্যাকাউন্টেরই একজন মালিকের <strong style="color:var(--neon-blue)">নাম (name)</strong> থাকে আর তাতে কত টাকা জমা আছে তার একটি <strong style="color:var(--neon-gold)">ব্যালেন্স (balance)</strong> থাকে।</p>
+      <p>পাইথনে এই সাধারণ নকশাটিই হলো আমাদের <strong style="color:var(--neon-green)">Class</strong>। আর এই নকশা ব্যবহার করে তৈরি করা রাফি বা সিয়ামের আসল এক একটি অ্যাকাউন্ট হলো এক একটি <strong style="color:var(--neon-blue)">Object</strong>!</p>
+    </div>
+
+    <!-- Instructions -->
+    <div class="card" data-reveal>
+      <h2><span style="color:var(--neon-green)">02</span> নির্দেশনা</h2>
+      <p>মনে করো, তুমি আর তোমার বন্ধু সিয়াম একটি ব্যাংকে টাকা জমা রেখেছ। তোমরা দেখতে চাও কার অ্যাকাউন্টে কত টাকা আছে। আমরা কোনো জটিল কোড না লিখে একদম সহজে পাইথনের সাহায্যে এই ব্যাংক অ্যাকাউন্ট সিস্টেমটি তৈরি করব।</p>
+      <ul>
+        <li>একটি <strong>BankAccount</strong> ক্লাস তৈরি করো।</li>
+        <li>২টি আলাদা মানুষের অ্যাকাউন্টের অবজেক্ট তৈরি করো।</li>
+        <li><strong>ডট (.)</strong> চিহ্নের সাহায্যে অ্যাকাউন্ট দুটির নাম আর টাকার পরিমাণ সেট করে স্ক্রিনে প্রিন্ট করো।</li>
+      </ul>
+    </div>
+
+    <!-- Object Showcase -->
+    <div class="card" data-reveal>
+      <h2><span style="color:var(--neon-green)">03</span> তৈরি হওয়া অ্যাকাউন্টগুলো</h2>
+      <p style="text-align:center; color:var(--text-muted); margin-bottom:16px;">এই দুটি অ্যাকাউন্ট আমাদের কোড থেকে তৈরি হয়েছে:</p>
+      <div class="object-showcase">
+        <div class="object-card">
+          <div class="obj-name">account1</div>
+          <div class="obj-details">👤 Siam</div>
+          <div class="balance">💰 500 Taka</div>
+        </div>
+        <div class="object-card">
+          <div class="obj-name">account2</div>
+          <div class="obj-details">👤 Rafi</div>
+          <div class="balance">💰 1200 Taka</div>
+        </div>
+      </div>
+      <p style="text-align:center; color:var(--text-muted); font-size:15px;">Class থেকে তৈরি প্রতিটি Object-এরই আলাদা আলাদা তথ্য থাকে!</p>
+    </div>
+
+    <!-- Help Section -->
+    <div class="card help-section" data-reveal>
+      <h2><span style="color:var(--neon-gold)">💡</span> সাহায্য</h2>
+
+      <details>
+        <summary><span class="summary-icon">💡</span> হিন্টস (Hints) <span class="chevron">▼</span></summary>
+        <div class="details-content">
+          <p><strong style="color:var(--neon-green)">সহজ ছাঁচ (Class):</strong> প্রথমে একটি খালি ক্লাস তৈরি করো:</p>
+          <div class="code-block">
+            <span class="keyword">class</span> <span class="class-name">BankAccount</span>:<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">pass</span>
+          </div>
+          <p style="margin-top:12px; color:var(--text-muted); font-size:15px;">(pass লিখলে ভেতরে কোনো কোড না থাকলেও ক্লাসটি তৈরি হয়ে যায়)</p>
+          <p style="margin-top:12px;"><strong style="color:var(--neon-blue)">আসল অ্যাকাউন্ট (Object):</strong> এরপর <span style="font-family:'JetBrains Mono',monospace; color:var(--neon-gold);">account1 = BankAccount()</span> লিখে তোমার প্রথম অ্যাকাউন্টের অবজেক্ট তৈরি করো।</p>
+          <p style="margin-top:12px;"><strong style="color:var(--neon-red)">ডট দিয়ে টাকা বসানো:</strong> অবজেক্টের নামের পাশে <strong>ডট (.)</strong> দিয়ে সরাসরি নাম আর ব্যালেন্স লিখে দেওয়া যায়! যেমন:</p>
+          <div class="code-block" style="margin-top:12px;">
+            account1.<span class="attribute">name</span> = <span class="string">"Siam"</span><br>
+            account1.<span class="attribute">balance</span> = <span class="number">500</span>
+          </div>
+        </div>
+      </details>
+
+      <details>
+        <summary><span class="summary-icon">📹</span> Walkthrough Video <span class="chevron">▼</span></summary>
+        <div class="details-content">
+          <div class="video-placeholder">
+            <div class="play-btn"><span>▶</span></div>
+            <p>Walkthrough video coming soon!</p>
+            <p style="font-size:13px; margin-top:8px;">এই ভিডিওতে ধাপে ধাপে দেখানো হবে কীভাবে কোডটি লিখতে হয়</p>
+          </div>
+        </div>
+      </details>
+
+      <details>
+        <summary><span class="summary-icon">🛠️</span> সমাধান ও সম্পূর্ণ কোড (Solution) <span class="chevron">▼</span></summary>
+        <div class="details-content">
+          <p>একদম সহজ উপায়ে লেখা পাইথন কোডটি নিচে দেখো:</p>
+          <div class="code-block" id="solution-code"></div>
+        </div>
+      </details>
+
+      <details>
+        <summary><span class="summary-icon">🤖</span> AI Coding Companion <span class="chevron">▼</span></summary>
+        <div class="details-content">
+          <div class="ai-card">
+            <div class="ai-avatar">🤖</div>
+            <div class="ai-text">
+              <strong>CodeBuddy:</strong> হেই! আমি তোমার AI সাহায্যকারী। <strong>Class</strong> হলো নকশা, আর <strong>Object</strong> হলো সেই নকশা থেকে তৈরি আসল জিনিস। ব্যাংক অ্যাকাউন্টের ক্ষেত্রে <span style="color:var(--neon-gold)">BankAccount</span> হলো Class (ছাঁচ), আর <span style="color:var(--neon-blue)">account1</span> আর <span style="color:var(--neon-blue)">account2</span> হলো Object (আসল অ্যাকাউন্ট)। প্রশ্ন থাকলে জিজ্ঞেস করো! 🚀
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+
+
+  <details class="accordion">
+    <summary><span class="ico" style="background:rgba(101,209,178,.15);color:var(--cyan)">💻</span><span style="color:var(--cyan)">Practice in Python IDE</span></summary>
+    <div class="body"><p style="margin:0;color:#d1d5db">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p><a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;margin-top:8px">🚀 Open Python IDE</a></div>
+  </details>
+
+    <!-- Terminal -->
+    <div class="terminal" data-reveal>
+      <div class="terminal-header">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <span class="terminal-title">python terminal — bank_account.py</span>
+      </div>
+      <div class="terminal-body" id="terminal"></div>
+      <div class="xp-gain">+50 XP</div>
+      <div class="xp-badge">🏆 QUEST COMPLETE: CLASS MASTER!</div>
+    </div>
+  </div>
+
+  <!-- Footer spacer -->
+  <div style="height:60px;"></div>
+
+  <script>
+    // Particles
+    const particleSymbols = ['$','₳','€','£','¥','💰','🏦','💵','💳','🔐','✦','★'];
+    const particleColors = ['#00ff88','#00d4ff','#ffd700','#ff4757','#a78bfa'];
+    const particlesContainer = document.getElementById('particles');
+    for (let i = 0; i < 30; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.textContent = particleSymbols[Math.floor(Math.random() * particleSymbols.length)];
+      p.style.left = Math.random() * 100 + '%';
+      p.style.fontSize = (14 + Math.random() * 18) + 'px';
+      p.style.color = particleColors[Math.floor(Math.random() * particleColors.length)];
+      p.style.animationDuration = (8 + Math.random() * 12) + 's';
+      p.style.animationDelay = (Math.random() * 10) + 's';
+      particlesContainer.appendChild(p);
+    }
+
+    // Reveal on scroll
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('[data-reveal]').forEach(el => observer.observe(el));
+
+    // Solution code
+    const solutionCode = `# ১. ব্যাংক অ্যাকাউন্টের একটি খালি নকশা বা ক্লাস তৈরি করলাম
+class BankAccount:
+    pass
+
+
+# ২. প্রথম অ্যাকাউন্টের অবজেক্ট তৈরি এবং তথ্য যোগ করা
+account1 = BankAccount()
+account1.name = "Siam"
+account1.balance = 500  # সিয়ামের অ্যাকাউন্টে ৫০০ টাকা আছে
+
+
+# ৩. দ্বিতীয় অ্যাকাউন্টের অবজেক্ট তৈরি এবং তথ্য যোগ করা
+account2 = BankAccount()
+account2.name = "Rafi"
+account2.balance = 1200  # রাফির অ্যাকাউন্টে ১২০০ টাকা আছে
+
+
+print("--- 🏦 ব্যাংক অ্যাকাউন্ট সিস্টেম ---")
+
+
+# ৪. এবার সরাসরি ডট (.) ব্যবহার করে স্ক্রিনে প্রিন্ট করার পালা
+print("👤 নাম:", account1.name, "-> 💰 জমা টাকা:", account1.balance, "টাকা")
+print("👤 নাম:", account2.name, "-> 💰 জমা টাকা:", account2.balance, "টাকা")`;
+
+    function highlight(code) {
+      return code
+        .replace(/#.*/g, m => `<span class="comment">${m}</span>`)
+        .replace(/\bclass\b/g, '<span class="keyword">class</span>')
+        .replace(/\bpass\b/g, '<span class="keyword">pass</span>')
+        .replace(/\bprint\b/g, '<span class="function">print</span>')
+        .replace(/\bBankAccount\b/g, '<span class="class-name">BankAccount</span>')
+        .replace(/\baccount1\b/g, '<span class="variable">account1</span>')
+        .replace(/\baccount2\b/g, '<span class="variable">account2</span>')
+        .replace(/\.name/g, '<span class="attribute">.name</span>')
+        .replace(/\.balance/g, '<span class="attribute">.balance</span>')
+        .replace(/"[^"]*"/g, m => `<span class="string">${m}</span>`)
+        .replace(/\b500\b/g, '<span class="number">500</span>')
+        .replace(/\b1200\b/g, '<span class="number">1200</span>');
+    }
+    document.getElementById('solution-code').innerHTML = highlight(solutionCode);
+
+    // Typewriter terminal
+    const terminalLines = [
+      { type:'prompt', text:'~ $ python bank_account.py' },
+      { type:'output', text:'' },
+      { type:'output', text:'--- 🏦 ব্যাংক অ্যাকাউন্ট সিস্টেম ---' },
+      { type:'output', text:'' },
+      { type:'output', text:'👤 নাম: Siam -> 💰 জমা টাকা: 500 টাকা' },
+      { type:'output', text:'👤 নাম: Rafi -> 💰 জমা টাকা: 1200 টাকা' },
+      { type:'output', text:'' },
+      { type:'prompt', text:'~ $ █' }
+    ];
+    const terminalEl = document.getElementById('terminal');
+    let lineIdx = 0, charIdx = 0;
+    function typewriter() {
+      if (lineIdx >= terminalLines.length) return;
+      const line = terminalLines[lineIdx];
+      const prefix = line.type === 'prompt' ? '<span class="prompt">$ </span>' : '';
+      if (charIdx === 0) {
+        const div = document.createElement('div');
+        div.className = line.type;
+        div.innerHTML = prefix;
+        terminalEl.appendChild(div);
+      }
+      const currentDiv = terminalEl.lastChild;
+      const text = line.text;
+      if (charIdx < text.length) {
+        currentDiv.innerHTML = prefix + text.substring(0, charIdx + 1);
+        charIdx++;
+        setTimeout(typewriter, 30);
+      } else {
+        if (line.type === 'prompt' && line.text.includes('█')) {
+          currentDiv.innerHTML = currentDiv.innerHTML.replace('█', '<span class="cursor"></span>');
+        }
+        lineIdx++; charIdx = 0;
+        setTimeout(typewriter, line.type === 'output' && line.text === '' ? 200 : 400);
+      }
+    }
+    setTimeout(typewriter, 800);
+  </script>
+</body>
+</html>

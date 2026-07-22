@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>⏱️ পাইথন time মডিউল — রিয়েল-টাইম কাউন্টডাউন</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Hind+Siliguri:wght@400;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a1f;--neon:#00ffe1;--neon2:#ff2bd6;--neon3:#ffd166;
+    --green:#39ff14;--red:#ff3b6b;--card:#15163a;--border:#2a2b62;
+    --text:#e8ecff;--muted:#9aa3d4;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{overflow-x:hidden}
+  body{
+    font-family:'Hind Siliguri',sans-serif;color:var(--text);line-height:1.75;min-height:100vh;
+    background:radial-gradient(1200px 700px at 10% -10%,#1a0a3a 0%,transparent 60%),
+               radial-gradient(900px 600px at 100% 10%,#06243a 0%,transparent 55%),
+               linear-gradient(180deg,#05061a,#0a0a1f 50%,#07071c);
+    position:relative;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:linear-gradient(transparent 95%,rgba(0,255,225,.12) 95%),
+                     linear-gradient(90deg,transparent 95%,rgba(255,43,214,.10) 95%);
+    background-size:40px 40px;
+    mask-image:linear-gradient(180deg,transparent 0%,black 30%,black 70%,transparent 100%);
+  }
+  .particles{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+  .particle{position:absolute;font-size:18px;opacity:.55;animation:floatUp linear infinite;
+    filter:drop-shadow(0 0 6px var(--neon))}
+  @keyframes floatUp{0%{transform:translateY(110vh) rotate(0)}100%{transform:translateY(-15vh) rotate(360deg)}}
+
+  .wrap{position:relative;z-index:2;max-width:980px;margin:0 auto;padding:40px 22px 80px}
+
+  .hero{
+    text-align:center;padding:50px 24px 40px;border-radius:24px;
+    background:linear-gradient(135deg,rgba(255,43,214,.12),rgba(0,255,225,.10));
+    border:2px solid rgba(0,255,225,.35);
+    box-shadow:0 0 40px rgba(0,255,225,.15),inset 0 0 30px rgba(255,43,214,.08);
+    position:relative;overflow:hidden;
+  }
+  .hero h1{font-family:'Press Start 2P',cursive;font-size:clamp(18px,3.4vw,28px);
+    color:var(--neon);text-shadow:0 0 12px var(--neon),0 0 22px rgba(0,255,225,.5);
+    margin-bottom:18px;line-height:1.5}
+  .hero .sub{color:var(--muted);font-size:17px}
+  .mascot{font-size:64px;display:inline-block;animation:bounce 2.2s ease-in-out infinite;
+    filter:drop-shadow(0 0 14px var(--neon3))}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px) rotate(-4deg)}}
+
+  .badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+  .badge{font-family:'Press Start 2P',cursive;font-size:9px;padding:8px 12px;border-radius:8px;
+    background:#0d0e2a;border:1px solid var(--border);color:var(--neon);box-shadow:0 0 10px rgba(0,255,225,.2)}
+  .badge.pink{color:var(--neon2);box-shadow:0 0 10px rgba(255,43,214,.25)}
+  .badge.yellow{color:var(--neon3);box-shadow:0 0 10px rgba(255,209,102,.25)}
+
+  section{
+    margin-top:40px;padding:30px 26px;border-radius:20px;
+    background:linear-gradient(180deg,rgba(21,22,58,.85),rgba(13,14,42,.85));
+    border:1px solid var(--border);backdrop-filter:blur(6px);
+    opacity:0;transform:translateY(40px);transition:opacity .8s ease,transform .8s ease;
+    position:relative;overflow:hidden;
+  }
+  section.in{opacity:1;transform:none}
+  section h2{font-family:'Press Start 2P',cursive;font-size:14px;line-height:1.7;
+    color:var(--neon3);margin-bottom:18px;text-shadow:0 0 8px rgba(255,209,102,.55);
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  section p{margin-bottom:14px;font-size:17px}
+  section p strong{color:var(--neon)}
+
+  .scene{display:flex;justify-content:center;gap:22px;flex-wrap:wrap;margin:18px 0 22px;font-size:46px}
+  .scene span{display:inline-block;padding:14px;border-radius:14px;background:#0c0d2a;
+    border:1px solid var(--border);box-shadow:0 0 14px rgba(0,255,225,.18);
+    animation:float 3.4s ease-in-out infinite}
+  .scene span:nth-child(2){animation-delay:.4s}
+  .scene span:nth-child(3){animation-delay:.8s}
+  .scene span:nth-child(4){animation-delay:1.2s}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+
+  /* CLOCK */
+  .clock{
+    width:120px;height:120px;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%,#1a1b48,#06061a);
+    border:4px solid var(--neon);margin:10px auto;position:relative;
+    box-shadow:0 0 24px rgba(0,255,225,.45),inset 0 0 18px rgba(0,255,225,.2);
+  }
+  .clock::after{content:"";position:absolute;top:50%;left:50%;width:6px;height:6px;
+    border-radius:50%;background:var(--neon3);transform:translate(-50%,-50%);
+    box-shadow:0 0 10px var(--neon3)}
+  .hand{position:absolute;left:50%;top:50%;background:var(--neon3);transform-origin:bottom center;
+    border-radius:3px;box-shadow:0 0 8px var(--neon3)}
+  .hand.h{width:4px;height:32px;margin-left:-2px;margin-top:-32px;animation:spin 4s linear infinite}
+  .hand.m{width:3px;height:46px;margin-left:-1.5px;margin-top:-46px;background:var(--neon);
+    box-shadow:0 0 8px var(--neon);animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* COUNTDOWN BOMB */
+  .bomb-card{
+    text-align:center;background:linear-gradient(160deg,#3a0d1a,#0b0a26);
+    border:2px solid var(--red);
+    box-shadow:0 0 28px rgba(255,59,107,.3),inset 0 0 22px rgba(255,209,102,.08);
+  }
+  .bomb-card h2{color:var(--red);text-shadow:0 0 10px rgba(255,59,107,.6)}
+  .bomb{
+    margin:18px auto;max-width:440px;padding:28px 22px;border-radius:18px;
+    background:linear-gradient(180deg,#1a0410,#0a0210);
+    border:3px solid var(--neon3);
+    box-shadow:0 0 30px rgba(255,209,102,.35),inset 0 6px 0 rgba(255,255,255,.06);
+    position:relative;
+  }
+  .bomb-icon{font-size:48px;animation:shake 0.6s ease-in-out infinite}
+  @keyframes shake{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+  .display{
+    margin:14px auto;width:200px;height:120px;border-radius:14px;
+    background:#000;border:2px solid var(--red);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Press Start 2P',cursive;font-size:64px;color:var(--red);
+    text-shadow:0 0 18px var(--red),0 0 30px rgba(255,59,107,.6);
+    box-shadow:inset 0 0 24px rgba(255,59,107,.4);
+  }
+  .display.go{color:var(--green);text-shadow:0 0 18px var(--green),0 0 36px rgba(57,255,20,.7);
+    border-color:var(--green);box-shadow:inset 0 0 24px rgba(57,255,20,.4);font-size:42px}
+  .start-btn{
+    font-family:'Press Start 2P',cursive;font-size:11px;padding:14px 22px;border-radius:10px;
+    border:none;cursor:pointer;background:linear-gradient(135deg,var(--red),#8a0a2e);
+    color:#fff;letter-spacing:1px;
+    box-shadow:0 6px 0 #5a0820,0 0 18px rgba(255,59,107,.5);transition:transform .1s;
+  }
+  .start-btn:active{transform:translateY(3px);box-shadow:0 3px 0 #5a0820}
+  .start-btn:disabled{opacity:.6;cursor:not-allowed}
+
+  /* TERMINAL */
+  .terminal{background:#05061a;border:1px solid var(--neon);border-radius:14px;
+    box-shadow:0 0 22px rgba(0,255,225,.2);overflow:hidden;margin:18px 0}
+  .term-bar{background:#0d0e2a;padding:10px 14px;display:flex;align-items:center;gap:8px;
+    border-bottom:1px solid var(--border)}
+  .dot{width:12px;height:12px;border-radius:50%}
+  .dot.r{background:#ff5f56}.dot.y{background:#ffbd2e}.dot.g{background:#27c93f}
+  .term-title{margin-left:10px;font-family:'Fira Code',monospace;font-size:12px;color:var(--muted)}
+  pre.code{margin:0;padding:18px 20px;font-family:'Fira Code',monospace;font-size:14px;
+    color:#d6f5ff;white-space:pre-wrap;word-break:break-word;line-height:1.7}
+  .code .c{color:#6b7bb8;font-style:italic}
+  .code .k{color:#ff79c6}
+  .code .s{color:#ffd166}
+  .code .f{color:#00ffe1}
+  .code .n{color:#bd93f9}
+  .cursor::after{content:"▍";color:var(--green);animation:blink 1s steps(1) infinite;margin-left:2px}
+  @keyframes blink{50%{opacity:0}}
+
+  .hints{list-style:none;display:grid;gap:14px}
+  .hints li{padding:14px 16px;border-radius:12px;background:#0e1030;border:1px solid var(--border);
+    border-left:4px solid var(--neon);transition:transform .25s,box-shadow .25s}
+  .hints li:hover{transform:translateX(6px);box-shadow:0 0 18px rgba(0,255,225,.25)}
+  .hints li b{color:var(--neon3)}
+
+  .acc{display:grid;gap:14px;margin-top:10px}
+  .acc-item{border:1px solid var(--border);border-radius:14px;overflow:hidden;
+    background:#0d0e2a;transition:box-shadow .3s}
+  .acc-item.open{box-shadow:0 0 22px rgba(0,255,225,.25)}
+  .acc-head{width:100%;text-align:left;padding:16px 18px;cursor:pointer;
+    background:linear-gradient(90deg,#141546,#0d0e2a);border:none;color:var(--text);
+    font-family:'Hind Siliguri',sans-serif;font-size:16px;font-weight:700;
+    display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .acc-head .ico{font-size:22px;filter:drop-shadow(0 0 6px var(--neon3))}
+  .acc-head .chev{transition:transform .3s;color:var(--neon)}
+  .acc-item.open .chev{transform:rotate(180deg)}
+  .acc-body{max-height:0;overflow:hidden;transition:max-height .5s ease,padding .3s;padding:0 18px}
+  .acc-item.open .acc-body{max-height:2200px;padding:14px 18px 20px}
+
+  .deco{position:absolute;opacity:.18;font-size:42px;pointer-events:none}
+  .deco.tl{top:10px;left:14px;animation:rot 14s linear infinite}
+  .deco.br{bottom:10px;right:14px;animation:rot 18s linear infinite reverse}
+  @keyframes rot{to{transform:rotate(360deg)}}
+
+  .toast{position:fixed;right:20px;bottom:20px;z-index:9;
+    background:linear-gradient(135deg,var(--neon3),#ff8c42);
+    color:#1a0a00;font-family:'Press Start 2P',cursive;font-size:10px;
+    padding:14px 16px;border-radius:12px;
+    box-shadow:0 8px 24px rgba(0,0,0,.4),0 0 18px rgba(255,209,102,.6);
+    transform:translateY(120%);transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+  .toast.show{transform:translateY(0)}
+
+  .footer{text-align:center;margin-top:50px;color:var(--muted);font-size:14px}
+  .robot{font-size:42px;display:inline-block;animation:wiggle 2s ease-in-out infinite}
+  @keyframes wiggle{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+
+  /* tick rings around clock */
+  .tick-ring{position:absolute;inset:-8px;border:2px dashed rgba(0,255,225,.4);border-radius:50%;animation:rot 8s linear infinite}
+</style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div class="mascot">⏰</div>
+    <h1>time মডিউল — টিক্ টিক্ কাউন্টডাউন</h1>
+    <p class="sub">🏁 ৩... ২... ১... গো! রিয়েল-টাইম টাইমার বানাই পাইথন দিয়ে</p>
+    <div class="badges">
+      <span class="badge">LEVEL · TIME</span>
+      <span class="badge pink">XP · +150</span>
+      <span class="badge yellow">★ SLEEP POWER</span>
+    </div>
+  </header>
+
+  <!-- INTRO -->
+  <section>
+    <span class="deco tl">⏳</span><span class="deco br">⚙️</span>
+    <h2>⏱️ গল্পের শুরু — টিক্ টিক্ ঘড়ির জাদু</h2>
+    <div style="display:flex;justify-content:center;margin:18px 0">
+      <div style="position:relative">
+        <div class="clock">
+          <div class="hand h"></div>
+          <div class="hand m"></div>
+        </div>
+        <div class="tick-ring"></div>
+      </div>
+    </div>
+    <p>আমরা তো লুপ দিয়ে উল্টো গণনা করা শিখেছি, কিন্তু কম্পিউটার সেই গণনা চোখের পলকে এক সেকেন্ডের মধ্যেই শেষ করে ফেলে! আমরা যদি চাই কম্পিউটার ঠিক আমাদের হাতের ঘড়ির মতো টিক্ টিক্ করে প্রতি ১ সেকেন্ড পর পর একটা করে সংখ্যা কমাবে, তবে আমাদের পাইথনের একটা সাহায্যকারী মডিউল লাগবে। এর নাম হলো <strong>time মডিউল</strong>।</p>
+  </section>
+
+  <!-- MISSION -->
+  <section class="bomb-card">
+    <span class="deco tl">💣</span><span class="deco br">🏁</span>
+    <h2>🎯 নির্দেশনা — কাউন্টডাউন মিশন</h2>
+    <p>মনে করো, তুমি একটি বোমার টাইমার বা রেসিং গেমের কাউন্টডাউন বানাচ্ছ। গেমটি শুরু হওয়ার আগে স্ক্রিনে ৩ সেকেন্ডের একটি রিয়েল-টাইম কাউন্টডাউন দেখাতে হবে, যেখানে প্রতি সংখ্যার মাঝে ঠিক ১ সেকেন্ড করে গ্যাপ থাকবে। ৩... (১ সেকেন্ড বিরতি)... ২... (১ সেকেন্ড বিরতি)... ১... গো! চলো, মডিউল দিয়ে এটি বানিয়ে ফেলি।</p>
+
+    <div class="bomb">
+      <div class="bomb-icon">💣</div>
+      <div class="display" id="display">3</div>
+      <button class="start-btn" id="startBtn">▶ START COUNTDOWN</button>
+    </div>
+  </section>
+
+  <!-- HELP -->
+  <section>
+    <span class="deco tl">💡</span><span class="deco br">📘</span>
+    <h2>🆘 সাহায্য</h2>
+
+    <div class="acc">
+      <div class="acc-item">
+        <button class="acc-head"><span><span class="ico">💡</span> হিন্টস (Hints)</span><span class="chev">▼</span></button>
+        <div class="acc-body">
+          <ul class="hints">
+            <li><b>মডিউল আনা:</b> কোডের একদম শুরুতে <code>import time</code> লিখে পাইথনের সময়ের টুলবক্সটিকে ডেকে নাও।</li>
+            <li><b>১ সেকেন্ড থামানো:</b> লুপের ভেতরে প্রতিবার সংখ্যা প্রিন্ট করার পর <code>time.sleep(1)</code> কোডটি লেখো। এতে কম্পিউটার পরের সংখ্যাটি প্রিন্ট করার আগে ১ সেকেন্ড অপেক্ষা করবে।</li>
+            <li><b>লুপের ব্যবহার:</b> আগের মতোই <code>while timer &gt; 0:</code> লুপ ব্যবহার করে প্রতিবার টাইমারের মান ১ করে কমিয়ে দাও।</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head"><span><span class="ico">📹</span> Walkthrough Video</span><span class="chev">▼</span></button>
+        <div class="acc-body">
+          <div style="aspect-ratio:16/9;border-radius:12px;background:repeating-linear-gradient(45deg,#0a0b22,#0a0b22 10px,#11123a 10px,#11123a 20px);display:flex;align-items:center;justify-content:center;border:1px dashed var(--neon)">
+            <div style="text-align:center">
+              <div style="font-size:48px">▶️</div>
+              <div style="font-family:'Press Start 2P',cursive;font-size:10px;color:var(--neon);margin-top:8px">VIDEO COMING SOON</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head"><span><span class="ico">🛠️</span> সমাধান ও সম্পূর্ণ কোড (Solution)</span><span class="chev">▼</span></button>
+        <div class="acc-body">
+          <p>মডিউল ব্যবহার করে তৈরি করা একদম আসল কাউন্টডাউন কোডটি নিচে দেওয়া হলো:</p>
+          <div class="terminal">
+            <div class="term-bar">
+              <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+              <span class="term-title">countdown.py — Python</span>
+            </div>
+<pre class="code"><span class="c"># ১. পাইথনের সময়ের জাদুকরী টুলবক্স (Module) ইমপোর্ট করলাম</span>
+<span class="k">import</span> time
+
+<span class="c"># ২. টাইমার সেট করলাম ৩ সেকেন্ড</span>
+timer = <span class="n">3</span>
+
+<span class="f">print</span>(<span class="s">"--- 🏁 রেসিং গেম শুরু হওয়ার কাউন্টডাউন ---"</span>)
+
+<span class="c"># ৩. while লুপ এবং time মডিউলের খেলা শুরু</span>
+<span class="k">while</span> timer &gt; <span class="n">0</span>:
+    <span class="f">print</span>(<span class="s">"⏳"</span>, timer)
+
+    <span class="c"># এই লাইনের কারণে কম্পিউটার ঠিক ১ সেকেন্ড অপেক্ষা করবে বা ঘুমাবে</span>
+    time.<span class="f">sleep</span>(<span class="n">1</span>)
+
+    timer = timer - <span class="n">1</span>  <span class="c"># টাইমারের মান ১ কমিয়ে দিলাম</span>
+
+<span class="c"># ৪. কাউন্টডাউন শেষ</span><span class="cursor"></span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head"><span><span class="ico">🤖</span> AI Coding Companion</span><span class="chev">▼</span></button>
+        <div class="acc-body">
+          <div style="display:flex;gap:14px;align-items:center;padding:14px;border-radius:12px;background:#0a0b22;border:1px solid var(--border)">
+            <div style="font-size:46px;animation:bounce 2s ease-in-out infinite">🤖</div>
+            <div>
+              <div style="font-family:'Press Start 2P',cursive;font-size:10px;color:var(--neon)">PYBOT ONLINE</div>
+              <div style="color:var(--muted);font-size:14px;margin-top:6px">তোমার পাশে থাকা ছোট্ট হেল্পার রোবট — যেকোনো ধাপে আটকে গেলে হিন্টস বা সমাধান খুলে দেখো!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+      <!-- Practice in Python IDE -->
+      <div class="acc-item">
+        <button class="acc-head"><span><span class="ico">💻</span> Practice in Python IDE</span><span class="chev">▼</span></button>
+        <div class="acc-body">
+          <div style="display:flex;gap:14px;align-items:center;padding:14px;border-radius:12px;background:#0a0b22;border:1px solid var(--border)">
+            <div style="font-size:46px;animation:bounce 2s ease-in-out infinite">💻</div>
+            <div>
+              <div style="font-family:'Press Start 2P',cursive;font-size:10px;color:#65D1B2">IDE OPEN</div>
+              <div style="color:var(--muted);font-size:14px;margin-top:6px">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</div>
+              <a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;margin-top:8px">🚀 Open Python IDE</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+  <div class="footer">
+    <div class="robot">🤖</div>
+    <p>🌟 হ্যাপি কোডিং, লিটল হ্যাকার! 🌟</p>
+  </div>
+</div>
+
+<div class="toast" id="toast">🏆 ACHIEVEMENT UNLOCKED</div>
+
+<script>
+  (function(){
+    const symbols=['⏰','⏳','⏱️','🕐','🕑','🕒','💣','🏁','✨','{ }','</>'];
+    const root=document.getElementById('particles');
+    for(let i=0;i<28;i++){
+      const s=document.createElement('span');
+      s.className='particle';
+      s.textContent=symbols[Math.floor(Math.random()*symbols.length)];
+      s.style.left=Math.random()*100+'vw';
+      s.style.animationDuration=(10+Math.random()*18)+'s';
+      s.style.animationDelay=(-Math.random()*20)+'s';
+      s.style.fontSize=(12+Math.random()*22)+'px';
+      s.style.opacity=(.25+Math.random()*.5).toFixed(2);
+      root.appendChild(s);
+    }
+  })();
+
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:.12});
+  document.querySelectorAll('section').forEach(s=>io.observe(s));
+
+  document.querySelectorAll('.acc-head').forEach(b=>{
+    b.addEventListener('click',()=>b.parentElement.classList.toggle('open'));
+  });
+
+  const btn=document.getElementById('startBtn');
+  const disp=document.getElementById('display');
+  const toast=document.getElementById('toast');
+  let toastTimer;
+  function showToast(msg){
+    toast.textContent=msg;toast.classList.add('show');
+    clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),2600);
+  }
+
+  btn.addEventListener('click',()=>{
+    btn.disabled=true;disp.classList.remove('go');
+    let timer=3;
+    disp.textContent=timer;
+    const tick=setInterval(()=>{
+      timer--;
+      if(timer>0){
+        disp.textContent=timer;
+      } else {
+        clearInterval(tick);
+        disp.classList.add('go');
+        disp.textContent='GO!';
+        showToast('🏆 +150 XP · COUNTDOWN COMPLETE');
+        setTimeout(()=>{disp.classList.remove('go');disp.textContent='3';btn.disabled=false;},2200);
+      }
+    },1000);
+  });
+</script>
+</body>
+</html>

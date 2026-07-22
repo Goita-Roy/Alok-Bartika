@@ -1,0 +1,748 @@
+ <!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programming Overview</title>
+    <style>
+        /* বেসিক সেটআপ */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            line-height: 1.6;
+            transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
+        }
+
+        .overview-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* প্রগ্রেস বার স্টাইল */
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        #progress {
+            height: 100%;
+            background: linear-gradient(90deg, #4ce24a, #4A90E2);
+            width: 0%;
+            transition: width 0.1s;
+            border-radius: 0 3px 3px 0;
+        }
+
+        /* হেডার স্টাইল */
+        .header {
+            text-align: center;
+            padding: 50px 20px;
+            background: linear-gradient(135deg, #4A90E2, #63b3ed);
+            color: white;
+            border-radius: 0 0 30px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 20px rgba(74, 144, 226, 0.2);
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .mini-controls {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mini-btn {
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .mini-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .voice-off { background: #feb2b2; color: #9b2c2c; }
+        .voice-on { background: #9ae6b4; color: #22543d; }
+        .btn-dark-mini { background: #2d3748; color: white; }
+
+        /* কার্ড স্টাইল */
+        .overview-card {
+            background: #ffffff;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            border-left: 6px solid #4A90E2;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .overview-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.1);
+        }
+
+        h2 { 
+            color: #2C3E50; 
+            margin-bottom: 15px; 
+            font-size: 1.6em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* বাইনারি ডেমো */
+        .binary-demo {
+            background: #2c3e50;
+            color: #27ae60;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-family: monospace;
+            margin: 20px 0;
+            font-size: 1.2em;
+            box-shadow: inset 0 3px 6px rgba(0,0,0,0.2);
+        }
+
+        .binary-demo button {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-left: 15px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .binary-demo button:hover { background: #219653; }
+
+        /* ব্রিজ ভিজ্যুয়াল */
+        .bridge-visual {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            font-weight: bold;
+            color: #4A90E2;
+            border: 1px solid #e1e8ed;
+            margin-top: 20px;
+        }
+
+        .bridge-visual .circle {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        /* গ্রিড সিস্টেম */
+        .path-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .path-item {
+            background: #f1f8ff;
+            padding: 20px 10px;
+            text-align: center;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .path-item:hover {
+            transform: translateY(-5px);
+            background: #e1f0ff;
+            border-color: #4A90E2;
+        }
+
+        .path-item .icon { font-size: 2.5em; margin-bottom: 10px; }
+        .path-item h3 { font-size: 1.1em; color: #2C3E50; margin-bottom: 5px; }
+        .path-item p { font-size: 0.85em; color: #666; }
+
+        .info-box {
+            margin-top: 25px;
+            padding: 20px;
+            background: #e8f5e9;
+            border-radius: 10px;
+            border-left: 5px solid #4caf50;
+            animation: fadeIn 0.5s;
+            font-size: 1.1em;
+            color: #2e7d32;
+        }
+
+        .career-list { list-style: none; }
+        .career-list li { 
+            padding: 12px 0; 
+            border-bottom: 1px dashed #ccc; 
+            font-size: 1.1em;
+        }
+        .career-list li:last-child { border-bottom: none; }
+
+        .ai-note {
+            background: #fff3e0;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            border: 1px solid #ffe0b2;
+            color: #e65100;
+        }
+
+        /* কুইজ স্টাইল */
+        .quiz-step { animation: slideIn 0.5s ease; }
+        .quiz-question {
+            background: #f0f7ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            border-left: 4px solid #4A90E2;
+        }
+        
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .quiz-btn {
+            background: white;
+            border: 2px solid #4A90E2;
+            color: #4A90E2;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .quiz-btn:hover {
+            background: #4A90E2;
+            color: white;
+        }
+
+        #next-btn {
+            margin-top: 20px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1em;
+            width: 100%;
+            transition: 0.3s;
+            box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);
+        }
+
+        #next-btn:hover { background: #219653; transform: translateY(-2px); }
+
+        /* ইন্টারেক্টিভ বাইনারি */
+        .interactive-binary {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        #binaryInput {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px;
+            border: 2px solid #2c3e50;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1.1em;
+            letter-spacing: 2px;
+        }
+
+        .interactive-binary button {
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+            font-size: 1em;
+        }
+
+        .interactive-binary button:hover { background: #34495e; }
+
+        .binary-output {
+            background: #f1f8ff;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px dashed #4A90E2;
+            font-size: 1.3em;
+            margin-top: 15px;
+            animation: fadeIn 0.5s;
+        }
+
+        #resultDisplay { color: #e74c3c; font-weight: bold; font-size: 1.5em; }
+
+        .hint-box { margin-top: 15px; color: #666; font-size: 0.9em; text-align: center; }
+
+        /* নেক্সট লেভেল বাটন */
+        .next-level-container {
+            text-align: center;
+            margin: 40px 0 60px 0;
+        }
+
+        .next-level-btn {
+            background: linear-gradient(45deg, #FF512F, #DD2476);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.3em;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(221, 36, 118, 0.3);
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+
+        .next-level-btn:hover {
+            transform: scale(1.05) translateY(-3px);
+            box-shadow: 0 15px 25px rgba(221, 36, 118, 0.4);
+        }
+
+        /* অ্যানিমেশন ও ইউটিলিটি */
+        .hidden { display: none !important; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(221, 36, 118, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(221, 36, 118, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(221, 36, 118, 0); }
+        }
+
+        /* ডার্ক মোড সাপোর্ট */
+        body.dark-mode {
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .header { background: linear-gradient(135deg, #2d3748, #4a5568); }
+        body.dark-mode .overview-card { background-color: #2d3748; border-left-color: #63b3ed; }
+        body.dark-mode h2 { color: #63b3ed; }
+        body.dark-mode .path-item { background: #1a202c; border-color: #4a5568; }
+        body.dark-mode .path-item p { color: #a0aec0; }
+        body.dark-mode .path-item:hover { border-color: #63b3ed; }
+        body.dark-mode .bridge-visual { background: #1a202c; border-color: #4a5568; }
+        body.dark-mode .bridge-visual .circle { background: #2d3748; color: #e2e8f0; }
+        body.dark-mode .info-box { background: #22543d; color: #c6f6d5; border-left-color: #48bb78; }
+        body.dark-mode .quiz-question { background: #1a202c; color: #e2e8f0; border-left-color: #63b3ed;}
+        body.dark-mode #binaryInput { background: #1a202c; color: #fff; border-color: #63b3ed; }
+        body.dark-mode .binary-output { background: #1a202c; border-color: #63b3ed; }
+
+        /* মোবাইল রেস্পন্সিভ মিডিয়া কোয়েরি */
+        @media (max-width: 600px) {
+            .bridge-visual { flex-direction: column; gap: 10px; text-align: center; }
+            .header { padding: 40px 15px; border-radius: 0 0 20px 20px; }
+            .header h1 { font-size: 1.8em; }
+            .overview-card { padding: 20px; }
+            .interactive-binary button { width: 100%; }
+            .binary-demo { font-size: 1em; padding: 15px; }
+            .binary-demo button { display: block; width: 100%; margin: 15px 0 0 0; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- প্রগ্রেস বার -->
+<div class="progress-container">
+    <div id="progress"></div>
+</div>
+
+<div class="header">
+    <div class="mini-controls">
+        <!-- ভয়েস টগল বাটন -->
+        <button class="mini-btn voice-off" id="voiceToggleBtn" onclick="toggleVoiceMode()">
+            <span id="voiceIcon">🔇</span> <span id="voiceText">ভয়েস</span>
+        </button>
+
+        <!-- ডার্ক মোড বাটন -->
+        <button class="mini-btn btn-dark-mini" id="darkModeBtn" onclick="toggleDarkMode()">
+            🌙 মোড
+        </button>
+    </div>
+
+    <h1>Programming Overview</h1>
+    <p>চলো কোডিং জগতের সুপারপাওয়ার সম্পর্কে জানি!</p>
+</div>
+
+<div class="overview-container">
+    <!-- Section 1: Machine Language -->
+    <section class="overview-card" id="machine-lang">
+        <h2>🤖 The Language of Machines</h2>
+        <p>কম্পিউটার আমাদের ভাষা বোঝে না, সে শুধু বোঝে বিদ্যুতের উপস্থিতি (১) এবং অনুপস্থিতি (০)।</p>
+        
+        <div class="binary-demo">
+            <span id="binary-text">01001000 01001001</span>
+            <button onclick="toggleBinary()">Translate to Human</button>
+            <div id="human-text" class="hidden" style="margin-top: 10px; font-size: 1.2em; color: #f1c40f;">Hello! 👋</div>
+        </div>
+
+        <div class="bridge-visual">
+            <div class="circle">Bangla / English</div>
+            <div class="bridge">➔ Programming Language ➔</div>
+            <div class="circle">Binary (0 & 1)</div>
+        </div>
+    </section>
+
+    <!-- Section 2: Choose Your Path -->
+    <section class="overview-card">
+        <h2>🚀 Which One Should I Choose?</h2>
+        <p>তুমি কী তৈরি করতে চাও? সেই অনুযায়ী ভাষা বেছে নাও:</p>
+        
+        <div class="path-grid">
+            <div class="path-item" onclick="showInfo('web')">
+                <div class="icon">🌐</div>
+                <h3>Web Dev</h3>
+                <p>HTML, CSS, JS</p>
+            </div>
+            <div class="path-item" onclick="showInfo('app')">
+                <div class="icon">📱</div>
+                <h3>App Dev</h3>
+                <p>Java, Swift</p>
+            </div>
+            <div class="path-item" onclick="showInfo('game')">
+                <div class="icon">🎮</div>
+                <h3>Game Dev</h3>
+                <p>C#, C++</p>
+            </div>
+            <div class="path-item" onclick="showInfo('ai')">
+                <div class="icon">🧠</div>
+                <h3>AI & Data</h3>
+                <p>Python</p>
+            </div>
+        </div>
+        
+        <div id="detail-box" class="info-box hidden">
+            <p id="detail-text"></p>
+        </div>
+    </section>
+
+    <!-- Section 3: Career & Future -->
+    <section class="overview-card">
+        <h2>🌟 Future Careers</h2>
+        <ul class="career-list">
+            <li>💻 <strong>Software Engineer:</strong> নতুন সফটওয়্যার তৈরি করা।</li>
+            <li>🕹️ <strong>Game Developer:</strong> তোমার প্রিয় গেমের লজিক লেখা।</li>
+            <li>📊 <strong>Data Scientist:</strong> ডেটা দিয়ে ভবিষ্যৎ বলা।</li>
+            <li>🤖 <strong>AI Specialist:</strong> রোবট ও স্মার্ট মেশিন তৈরি।</li>
+        </ul>
+        <div class="ai-note">
+            <strong>Pro Tip:</strong> AI-এর যুগে কোডিং জানা মানে হলো সুপারপাওয়ার পাওয়া! 🦸‍♂️
+        </div>
+    </section>
+
+    <!-- Section 4: Try Binary -->
+    <section class="overview-card">
+        <h2>⌨️ Try it Yourself: Binary to Text</h2>
+        <p>নিজে কিছু বাইনারি কোড (০ এবং ১) লিখে দেখো সেটি কী হয়! (প্রতি ৮টি ডিজিট একটি অক্ষর তৈরি করে)</p>
+        
+        <div class="interactive-binary">
+            <input type="text" id="binaryInput" placeholder="উদা: 01000001" maxlength="64">
+            <button onclick="convertToText()">Convert ➔</button>
+        </div>
+
+        <div id="conversionResult" class="binary-output hidden">
+            <span>ফলাফল: </span><strong id="resultDisplay"></strong>
+        </div>
+
+        <div class="hint-box">
+            <small>💡 টিপস: <strong>01000001</strong> লিখে Convert বাটনে চাপ দাও, দেখো কি হয়!</small>
+        </div>
+    </section>
+
+    <!-- Section 5: Quiz -->
+    <section class="overview-card">
+        <h2>🎯 Think Like a Programmer!</h2>
+        <p>নিচের পরিস্থিতিগুলো পড়ো এবং একজন প্রোগ্রামার হিসেবে সিদ্ধান্ত নাও:</p> 
+        
+        <!-- Question 1 -->
+        <div class="quiz-step" id="q1">
+            <p class="quiz-question"><strong>১. পরিস্থিতি:</strong> তুমি একটি স্মার্ট চ্যাটবট বানাতে চাও যে মানুষের সব প্রশ্নের উত্তর দেবে। তুমি কোন ফিল্ডটি বেছে নেবে?</p>
+            <div class="quiz-options">
+                <button class="quiz-btn" onclick="handleQuiz(1, 'Game Dev', false)">Game Dev</button>
+                <button class="quiz-btn" onclick="handleQuiz(1, 'App Dev', false)">App Dev</button>
+                <button class="quiz-btn" onclick="handleQuiz(1, 'AI & Data Science', true)">AI & Data Science</button>
+            </div>
+        </div>
+
+        <!-- Question 2 -->
+        <div class="quiz-step hidden" id="q2">
+            <p class="quiz-question"><strong>২. পরিস্থিতি:</strong> তোমার বন্ধু একটি অনলাইন শপ খুলতে চায় যেখানে মানুষ মোবাইল বা কম্পিউটার থেকে পণ্য কিনবে। তোমার ফোকাস কোথায় হওয়া উচিত?</p>
+            <div class="quiz-options">
+                <button class="quiz-btn" onclick="handleQuiz(2, 'Web Development', true)">Web Development</button>
+                <button class="quiz-btn" onclick="handleQuiz(2, 'Machine Learning', false)">Machine Learning</button>
+                <button class="quiz-btn" onclick="handleQuiz(2, 'Low-level Code', false)">Low-level Code</button>
+            </div>
+        </div>
+
+        <!-- Question 3 -->
+        <div class="quiz-step hidden" id="q3">
+            <p class="quiz-question"><strong>৩. পরিস্থিতি:</strong> তুমি একটি নতুন 'Open World' গেম বানাতে চাও যেখানে অনেক ক্যারেক্টার আর লেভেল থাকবে। তুমি কোন ল্যাঙ্গুয়েজগুলো দেখবে?</p>
+            <div class="quiz-options">
+                <button class="quiz-btn" onclick="handleQuiz(3, 'HTML/CSS', false)">HTML/CSS</button>
+                <button class="quiz-btn" onclick="handleQuiz(3, 'C++ / C#', true)">C++ / C#</button>
+                <button class="quiz-btn" onclick="handleQuiz(3, 'Python Basics', false)">Python Basics</button>
+            </div>
+        </div>
+
+        <div id="quiz-feedback" class="info-box hidden"></div>
+        <button id="next-btn" class="hidden" onclick="nextQuestion()">পরের প্রশ্ন ➔</button>
+    </section>
+
+    <!-- Next Level Button -->
+    <div class="next-level-container">
+        <button class="next-level-btn" onclick="goToNextLevel()">Next Level এ যান 🚀</button>
+    </div>
+
+</div>
+
+<script>
+// --- প্রগ্রেস বার লজিক ---
+window.onscroll = function() {
+    let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+    let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    let scrolled = (winScroll / height) * 100;
+    document.getElementById("progress").style.width = scrolled + "%";
+};
+
+// --- ডার্ক মোড লজিক ---
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    const btn = document.getElementById('darkModeBtn');
+    if (document.body.classList.contains('dark-mode')) {
+        btn.innerHTML = '☀️ মোড';
+    } else {
+        btn.innerHTML = '🌙 মোড';
+    }
+}
+
+// --- নেক্সট লেভেল লজিক ---
+function goToNextLevel() {
+    // এখানে নেক্সট পেজের লিঙ্ক বা ফাংশন যুক্ত করতে পারো
+    alert("অভিনন্দন! তুমি সফলভাবে প্রথম ধাপ শেষ করেছো। চলো নেক্সট লেভেলে যাই!");
+    // window.location.href = 'next_page.html'; // লিঙ্ক এড করতে চাইলে এটি ব্যবহার করবে
+}
+
+// --- বাইনারি ডেমো টগল ---
+function toggleBinary() {
+    const humanText = document.getElementById('human-text');
+    humanText.classList.toggle('hidden');
+}
+
+// --- পাথ ইনফো দেখানো ---
+function showInfo(type) {
+    const box = document.getElementById('detail-box');
+    const text = document.getElementById('detail-text');
+    
+    const info = {
+        'web': '🌐 <strong>Web Development:</strong> ইন্টারনেট এবং ওয়েবসাইট তৈরির জগত। এখানে আমরা HTML, CSS এবং JavaScript শিখি।',
+        'app': '📱 <strong>App Development:</strong> তোমার ফোনের সব অ্যাপ (যেমন: YouTube, WhatsApp) তৈরির ভাষা হলো Java বা Swift।',
+        'game': '🎮 <strong>Game Development:</strong> Minecraft বা Roblox এর মতো গেম বানাতে ব্যবহার হয় C# বা C++।',
+        'ai': '🧠 <strong>AI & Data Science:</strong> চ্যাটবট বা রোবটকে বুদ্ধিমান বানানোর জন্য Python সবচেয়ে জনপ্রিয়।'
+    };
+    
+    text.innerHTML = info[type];
+    box.classList.remove('hidden');
+    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// --- কুইজ লজিক ---
+let currentStep = 1;
+
+function handleQuiz(step, choice, isCorrect) {
+    const feedback = document.getElementById('quiz-feedback');
+    const nextBtn = document.getElementById('next-btn');
+    const currentOptions = document.querySelector(`#q${step} .quiz-options`);
+    
+    currentOptions.style.pointerEvents = 'none';
+    currentOptions.style.opacity = '0.7';
+
+    feedback.classList.remove('hidden');
+    
+    if (isCorrect) {
+        feedback.innerHTML = `✅ <strong>সঠিক সিদ্ধান্ত!</strong> ${choice} এই কাজের জন্য একদম পারফেক্ট।`;
+        feedback.style.borderLeftColor = "#27ae60";
+    } else {
+        feedback.innerHTML = `❌ <strong>ভুল সিদ্ধান্ত!</strong> ${choice} ভালো, কিন্তু এই পরিস্থিতির জন্য অন্যটি বেশি উপযুক্ত ছিল।`;
+        feedback.style.borderLeftColor = "#e74c3c";
+    }
+
+    if (currentStep < 3) {
+        nextBtn.innerHTML = "পরের প্রশ্ন ➔";
+        nextBtn.classList.remove('hidden');
+    } else {
+        nextBtn.innerHTML = "🎉 কুইজ শেষ! তুমি একজন ভবিষ্যৎ প্রোগ্রামার!";
+        nextBtn.classList.remove('hidden');
+        nextBtn.onclick = null; 
+        nextBtn.style.background = "#4A90E2";
+    }
+}
+
+function nextQuestion() {
+    document.getElementById(`q${currentStep}`).classList.add('hidden');
+    document.getElementById('quiz-feedback').classList.add('hidden');
+    document.getElementById('next-btn').classList.add('hidden');
+
+    currentStep++;
+    document.getElementById(`q${currentStep}`).classList.remove('hidden');
+}
+
+// --- বাইনারি কনভার্টার ---
+function convertToText() {
+    const input = document.getElementById('binaryInput').value.trim();
+    const resultBox = document.getElementById('conversionResult');
+    const resultDisplay = document.getElementById('resultDisplay');
+
+    const cleanInput = input.replace(/\s/g, '');
+    
+    if (!/^[01]+$/.test(cleanInput)) {
+        alert("দয়া করে শুধু ০ এবং ১ ব্যবহার করো!");
+        return;
+    }
+
+    if (cleanInput.length % 8 !== 0) {
+        alert("সঠিক ফলাফলের জন্য ৮টি করে ডিজিট দাও (যেমন: 01000001)");
+        return;
+    }
+
+    let text = "";
+    for (let i = 0; i < cleanInput.length; i += 8) {
+        const byte = cleanInput.substring(i, i + 8);
+        text += String.fromCharCode(parseInt(byte, 2));
+    }
+
+    resultDisplay.innerText = text;
+    resultBox.classList.remove('hidden');
+}
+
+document.getElementById('binaryInput').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') { convertToText(); }
+});
+
+// --- ভয়েস ইন্টিগ্রেশন ---
+let isVoiceEnabled = false;
+const synth = window.speechSynthesis;
+let bengaliVoice = null;
+
+function loadVoices() {
+    const voices = synth.getVoices();
+    bengaliVoice = voices.find(v => 
+        v.name.includes('Microsoft Hemant') || 
+        v.name.includes('Microsoft Yunus') || 
+        v.name.includes('Google বাংলা') ||
+        v.lang === 'bn-BD' || 
+        v.lang === 'bn-IN'
+    );
+}
+
+if (synth.onvoiceschanged !== undefined) {
+    synth.onvoiceschanged = loadVoices;
+}
+loadVoices(); 
+
+function toggleVoiceMode() {
+    isVoiceEnabled = !isVoiceEnabled;
+    const btn = document.getElementById('voiceToggleBtn');
+    const icon = document.getElementById('voiceIcon');
+    const text = document.getElementById('voiceText');
+    
+    if (isVoiceEnabled) {
+        btn.className = "mini-btn voice-on";
+        if (icon) icon.innerText = "🔊";
+        if (text) text.innerText = "ভয়েস অন";
+        speakText("স্বাগতম! এখন যেকোনো কার্ডে ক্লিক করলে আমি সেটি পড়ে শোনাবো।");
+    } else {
+        btn.className = "mini-btn voice-off";
+        if (icon) icon.innerText = "🔇";
+        if (text) text.innerText = "ভয়েস অফ";
+        synth.cancel();
+    }
+}
+
+function speakText(text) {
+    if (!isVoiceEnabled || !text) return;
+    synth.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    if (bengaliVoice) {
+        utterance.voice = bengaliVoice;
+    } else {
+        utterance.lang = 'bn-BD';
+    }
+
+    utterance.rate = 0.85; 
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    synth.speak(utterance);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const cards = document.querySelectorAll('.overview-card');
+    cards.forEach(card => {
+        card.addEventListener('click', (e) => {
+            // ইনপুট বা বাটনে ক্লিক করলে যেন পুরো কার্ড রিড না করে
+            if(e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT' && isVoiceEnabled) {
+                const cardText = card.innerText;
+                speakText(cardText);
+            }
+        });
+    });
+});
+</script>
+
+</body>
+</html>

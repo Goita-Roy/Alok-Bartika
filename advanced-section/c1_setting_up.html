@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Setting Up - Coding Adventure</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Noto+Sans+Bengali:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans Bengali', 'Fira Code', monospace, sans-serif;
+            background: linear-gradient(135deg, #232946 0%, #3e497a 100%);
+            min-height: 100vh;
+            margin: 0;
+            color: #f4f4f4;
+            overflow-x: hidden;
+        }
+        .particles {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .particle {
+            position: absolute;
+            width: 6px; height: 6px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            animation: float 18s linear infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(100vh) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.2); opacity: 0; }
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 16px 80px 16px;
+            position: relative;
+            z-index: 2;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .mascot {
+            width: 90px; height: 90px;
+            margin-bottom: 10px;
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(-18px); }
+        }
+        h1 {
+            font-size: 2.5em;
+            margin: 0 0 10px 0;
+            color: #ffe066;
+            text-shadow: 2px 2px 8px #23294699;
+        }
+        .subtitle {
+            color: #a0a0ff;
+            font-size: 1.1em;
+            margin-bottom: 0;
+        }
+        .section {
+            background: rgba(30,41,59,0.85);
+            border-radius: 18px;
+            margin-bottom: 32px;
+            padding: 32px 24px 24px 24px;
+            box-shadow: 0 8px 32px #0002;
+            position: relative;
+            overflow: hidden;
+            animation: slideUp 0.7s cubic-bezier(.4,0,.2,1) both;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .section-icon {
+            font-size: 2em;
+            margin-right: 12px;
+            vertical-align: middle;
+            filter: drop-shadow(0 2px 4px #0006);
+        }
+        .section-title {
+            display: flex;
+            align-items: center;
+            font-size: 1.5em;
+            color: #ffe066;
+            margin-bottom: 18px;
+        }
+        .visual {
+            margin: 18px 0 0 0;
+            text-align: center;
+        }
+        .pixel-art {
+            display: inline-block;
+            margin: 0 8px;
+            vertical-align: middle;
+        }
+        .terminal {
+            background: #181c2f;
+            border-radius: 10px;
+            padding: 18px 18px 12px 18px;
+            margin: 18px 0 0 0;
+            font-family: 'Fira Code', monospace;
+            color: #90ee90;
+            font-size: 1.1em;
+            box-shadow: 0 2px 12px #0004;
+            position: relative;
+        }
+        .terminal .output {
+            color: #00ff99;
+        }
+        .terminal .cursor {
+            display: inline-block;
+            width: 10px;
+            background: #90ee90;
+            animation: blink 1s steps(1) infinite;
+            height: 1.1em;
+            vertical-align: bottom;
+        }
+        @keyframes blink {
+            0%,49% { opacity: 1; }
+            50%,100% { opacity: 0; }
+        }
+        .instructions {
+            background: #232946;
+            border-left: 5px solid #ffe066;
+            border-radius: 10px;
+            padding: 20px 18px 10px 18px;
+            margin: 18px 0 0 0;
+        }
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 18px;
+        }
+        .step-number {
+            background: linear-gradient(135deg,#ffe066,#a0a0ff);
+            color: #232946;
+            font-weight: bold;
+            border-radius: 50%;
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2em;
+            margin-right: 16px;
+            box-shadow: 0 2px 8px #0003;
+        }
+        .step-content {
+            flex: 1;
+        }
+        .achievement {
+            position: fixed;
+            bottom: 24px; right: 24px;
+            background: #ffe066;
+            color: #232946;
+            border-radius: 12px;
+            padding: 16px 28px;
+            font-weight: bold;
+            font-size: 1.1em;
+            box-shadow: 0 8px 32px #0005;
+            display: flex; align-items: center; gap: 12px;
+            z-index: 1001;
+            animation: slideIn 0.5s cubic-bezier(.4,0,.2,1);
+            display: none;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(80px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .accordion {
+            margin-top: 18px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px #0002;
+        }
+        .accordion-item {
+            background: #232946;
+            border-bottom: 1px solid #3e497a;
+            transition: background 0.3s;
+        }
+        .accordion-header {
+            padding: 18px 24px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #ffe066;
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 1.1em;
+            user-select: none;
+        }
+        .accordion-header:hover {
+            background: #3e497a;
+        }
+        .accordion-icon {
+            font-size: 1.3em;
+            transition: transform 0.3s;
+        }
+        .accordion-item.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            background: #181c2f;
+            color: #f4f4f4;
+            transition: max-height 0.4s cubic-bezier(.4,0,.2,1);
+            padding: 0 24px;
+        }
+        .accordion-item.active .accordion-content {
+            max-height: 300px;
+            padding: 18px 24px;
+        }
+        .accordion-content p {
+            margin: 0 0 10px 0;
+        }
+        .btns {
+            margin-top: 32px;
+            text-align: center;
+        }
+        .btn {
+            background: linear-gradient(135deg,#ffe066,#a0a0ff);
+            color: #232946;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 32px;
+            font-size: 1em;
+            font-weight: bold;
+            margin: 0 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px #0002;
+            transition: transform 0.2s;
+        }
+        .btn:hover { transform: translateY(-2px) scale(1.04); }
+        @media (max-width: 600px) {
+            .container { padding: 18px 2vw 60px 2vw; }
+            .section { padding: 18px 8px 12px 8px; }
+            .accordion-header, .accordion-content { padding-left: 10px; padding-right: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    <div class="container">
+        <div class="header">
+            <svg class="mascot" viewBox="0 0 100 100">
+                <ellipse cx="50" cy="60" rx="30" ry="25" fill="#ffe066"/>
+                <ellipse cx="50" cy="40" rx="25" ry="25" fill="#3e497a"/>
+                <ellipse cx="38" cy="35" rx="5" ry="5" fill="#fff"/>
+                <ellipse cx="62" cy="35" rx="5" ry="5" fill="#fff"/>
+                <ellipse cx="38" cy="35" rx="2.5" ry="2.5" fill="#232946"/>
+                <ellipse cx="62" cy="35" rx="2.5" ry="2.5" fill="#232946"/>
+                <path d="M 40 50 Q 50 60 60 50" stroke="#fff" stroke-width="2" fill="none"/>
+            </svg>
+            <h1>Python সেটআপ</h1>
+            <div class="subtitle">কোডিং অ্যাডভেঞ্চার শুরু করুন!</div>
+        </div>
+        <div class="section">
+            <div class="section-title"><span class="section-icon">🐍</span>Python পরিচিতি</div>
+            <div>Python এমনভাবে তৈরি করা হয়েছে যাতে এটি সহজে পড়া ও বোঝা যায়। এজন্য এটি নতুনদের জন্য দারুণ একটি প্রোগ্রামিং ভাষা। Python অনেক ধরনের কাজে ব্যবহার করা হয়, যেমন:</div>
+            <div class="visual">
+                <span class="pixel-art" title="Game">🎮</span>
+                <span class="pixel-art" title="AI Tools">🤖</span>
+                <span class="pixel-art" title="Website">🌐</span>
+                <span class="pixel-art" title="Fun Project">✨</span>
+            </div>
+            <div style="margin-top:10px;">Python দিয়ে <br>game, <br>AI tools <br>website<br>এবং বিভিন্ন fun project তৈরি করা যায়।</div>
+        </div>
+        <div class="section">
+            <div class="section-title"><span class="section-icon">🖥️</span>কোড এডিটর ও ফাইল</div>
+            <div>এই কোর্সে আমরা যে কোড লিখবো, সবগুলো .py এক্সটেনশনযুক্ত Python ফাইলে লেখা হবে এবং আমরা সেগুলো একটি কোড এডিটরের মধ্যে লিখবো।</div>
+            <div class="visual">
+                <span class="pixel-art" title="Code Editor"><svg width="60" height="40"><rect x="5" y="5" width="50" height="30" rx="6" fill="#232946" stroke="#ffe066" stroke-width="2"/><rect x="12" y="12" width="36" height="16" rx="3" fill="#a0a0ff"/><rect x="18" y="16" width="24" height="8" rx="2" fill="#232946"/></svg></span>
+                <span class="pixel-art" title="Python File">📄</span>
+            </div>
+            <div style="margin-top:10px;">কোড এডিটর হলো এমন একটি টেক্সট এডিটর যেখানে আমরা কোড লিখতে ও রান করতে পারি। ডান পাশে তোমার জন্য একটি কোড এডিটর দেওয়া আছে।</div>
+            <div class="visual" style="margin-top:10px;">
+                <span style="background:#232946;padding:8px 18px;border-radius:8px;color:#ffe066;font-size:1.1em;">👉 এবার চল এটি ব্যবহার করে দেখি!</span>
+            </div>
+        </div>
+        <div class="section">
+            <div class="section-title"><span class="section-icon">⚡</span>নির্দেশনা</div>
+            <div class="instructions">
+                <div class="step"><div class="step-number">1</div><div class="step-content">লাইন ৩-এ নিচের কোডটি কপি-পেস্ট করো:<br><span class="terminal">print('Hi')</span></div></div>
+                <div class="step"><div class="step-number">2</div><div class="step-content">তারপর Run বাটনে ক্লিক করো এবং ১–২ সেকেন্ড অপেক্ষা করো।</div></div>
+                <div class="step"><div class="step-number">3</div><div class="step-content">সবকিছু ঠিকভাবে করলে Terminal উইন্ডোতে নিচের আউটপুট দেখা যাবে:<br><span class="terminal">&gt;&gt; print('Hi')<br><span class="output">Hi</span><span class="cursor"></span></span></div></div>
+            </div>
+        </div>
+        <div class="section" style="background:linear-gradient(135deg,#ffe06633,#a0a0ff33);color:#232946;text-align:center;">
+            <div style="font-size:2.5em;">🎉</div>
+            <div style="font-size:1.3em;font-weight:bold;">এখন তুমি Python শেখার যাত্রা শুরু করার জন্য প্রস্তুত।</div>
+            <div style="margin-top:10px;font-size:1.5em;">(ﾉ ◕ ヮ ◕)ﾉ*:･ﾟ ✧</div>
+        </div>
+        <div class="section">
+            <div class="section-title"><span class="section-icon">🚀</span>পরবর্তী ধাপ</div>
+            <div>এরপর Submit Answer বাটনে ক্লিক করো এবং তারপর Next চাপো।<br>শুভকামনা রইলো তোমার কোডিং যাত্রার জন্য!</div>
+        </div>
+        <div class="section">
+            <div class="section-title"><span class="section-icon">🆘</span>সাহায্য</div>
+            <div class="accordion" id="helpAccordion">
+                <div class="accordion-item active">
+                    <div class="accordion-header">💡 Hint <span class="accordion-icon">▼</span></div>
+                    <div class="accordion-content"><p>কোর্স করার সময় কোথাও আটকে গেলে হিন্টস দেখে সাহায্য নিতে পারবে। তবে এই এক্সারসাইজে কোডটি কীভাবে কাজ করছে তা জানার প্রয়োজন নেই — শুধু কপি-পেস্ট করলেই হবে।</p></div>
+                </div>
+                <div class="accordion-item">
+                    <div class="accordion-header">🎥 Walkthrough Video <span class="accordion-icon">▼</span></div>
+                    <div class="accordion-content"><p>ভিডিওতে ধাপে ধাপে দেখানো হয়েছে কীভাবে কোডটি রান করতে হয়।</p></div>
+                </div>
+                <div class="accordion-item">
+                    <div class="accordion-header">✅ Solution <span class="accordion-icon">▼</span></div>
+                    <div class="accordion-content"><p>যদি আটকে যাও, এখানে সম্পূর্ণ সমাধান দেখতে পারো।</p></div>
+                </div>
+                <div class="accordion-item">
+                    <div class="accordion-header">🤖 AI Coding Companion <span class="accordion-icon">▼</span></div>
+                    <div class="accordion-content"><p>যেকোনো প্রশ্ন থাকলে AI কোডিং সহকারীকে জিজ্ঞাসা করো।</p></div>
+                </div>
+            </div>
+        </div>
+
+    <!-- Practice in Python IDE -->
+    <div class="accordion-item">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>💻 Practice in Python IDE</span>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-content">
+        <p style="margin:0;font-size:14px;line-height:1.6;color:#B8C5C1">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p>
+        <a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;align-self:flex-start;box-shadow:0 0 16px rgba(101,209,178,0.2);margin-top:8px">🚀 Open Python IDE</a>
+      </div>
+    </div>
+
+        <div class="btns">
+            <button class="btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">⬆️ উপরে যান</button>
+            <button class="btn" onclick="showAchievement()">✅ সাবমিট করুন</button>
+        </div>
+    </div>
+    <div class="achievement" id="achievement">
+        <span style="font-size:2em;">⭐</span> দুর্দান্ত! আপনি শুরু করার জন্য প্রস্তুত!
+    </div>
+    <script>
+        // Floating particles
+        function createParticles() {
+            const p = document.getElementById('particles');
+            for(let i=0;i<40;i++){
+                const el=document.createElement('div');
+                el.className='particle';
+                el.style.left=Math.random()*100+'vw';
+                el.style.animationDuration=(Math.random()*10+12)+'s';
+                el.style.animationDelay=(Math.random()*8)+'s';
+                p.appendChild(el);
+            }
+        }
+        // Accordion
+        function setupAccordion() {
+            document.querySelectorAll('.accordion-header').forEach(header=>{
+                header.onclick=function(){
+                    const item=this.parentElement;
+                    item.classList.toggle('active');
+                    document.querySelectorAll('.accordion-item').forEach(i=>{if(i!==item)i.classList.remove('active');});
+                };
+            });
+        }
+        // Achievement popup
+        function showAchievement() {
+            const a=document.getElementById('achievement');
+            a.style.display='flex';
+            setTimeout(()=>{a.style.display='none';},2200);
+        }
+        document.addEventListener('DOMContentLoaded',()=>{
+            createParticles();
+            setupAccordion();
+        });
+    </script>
+</body>
+</html>
+

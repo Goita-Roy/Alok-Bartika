@@ -1,0 +1,208 @@
+ <!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EduCode Pro - Magic Coding</title>
+    <style>
+        :root {
+            --bg: #0f172a; --panel: #1e293b; --accent: #22c55e;
+            --primary: #3b82f6; --danger: #ef4444; --text: #f8fafc;
+        }
+        body {
+            background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif;
+            margin: 0; display: flex; flex-direction: column; height: 100vh; touch-action: manipulation;
+        }
+
+        /* Header & Stats */
+        header {
+            padding: 10px 20px; background: var(--panel); display: flex;
+            justify-content: space-between; align-items: center; border-bottom: 2px solid #334155;
+        }
+        .badge-icon { font-size: 24px; filter: grayscale(1); transition: 0.5s; }
+        .badge-unlocked { filter: grayscale(0); transform: scale(1.2); }
+
+        /* Main Grid */
+        main {
+            display: grid; grid-template-columns: 280px 1fr 320px; gap: 10px; padding: 10px; flex: 1;
+            overflow: hidden;
+        }
+
+        /* Responsive for Mobile */
+        @media (max-width: 900px) {
+            main { grid-template-columns: 1fr; grid-template-rows: auto auto 300px; overflow-y: auto; }
+            .palette { order: 2; } .workspace { order: 3; } .stage { order: 1; }
+        }
+
+        .panel { background: var(--panel); border-radius: 12px; padding: 15px; display: flex; flex-direction: column; }
+        
+        /* Blocks */
+        .block {
+            background: var(--primary); padding: 12px; margin-bottom: 8px; border-radius: 8px;
+            cursor: grab; font-weight: bold; user-select: none; touch-action: none;
+            box-shadow: 0 4px #1d4ed8; position: relative;
+        }
+        .executing { background: var(--accent) !important; transform: scale(1.05); }
+
+        /* Workspace & Trash */
+        .drop-zone { flex: 1; border: 2px dashed #475569; border-radius: 8px; padding: 10px; min-height: 150px; }
+        .trash-area { 
+            margin-top: 10px; padding: 10px; border: 2px solid var(--danger); 
+            border-radius: 8px; text-align: center; color: var(--danger);
+        }
+
+        /* Stage & Maze */
+        .stage { position: relative; background: #334155; overflow: hidden; border: 4px solid #1e293b; }
+        #maze-wall {
+            position: absolute; background: #64748b;
+            width: 20px; height: 150px; left: 150px; top: 50px; border-radius: 5px;
+        }
+        #sprite {
+            position: absolute; left: 20px; top: 180px; font-size: 50px;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 10;
+        }
+        .target { position: absolute; right: 20px; top: 180px; font-size: 45px; }
+
+        /* UI Elements */
+        .btn { 
+            padding: 12px; border: none; border-radius: 8px; cursor: pointer; 
+            font-weight: bold; margin: 5px; color: white;
+        }
+        .btn-run { background: var(--accent); }
+        .btn-reset { background: var(--danger); }
+        
+        #msg-box {
+            position: absolute; top: 10px; left: 10px; right: 10px;
+            background: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>EduCode <span id="lvl-tag">Level 1</span></div>
+    <div id="badges">
+        <span class="badge-icon" id="badge1" title="Logic Master">🏆</span>
+        <span class="badge-icon" id="badge2" title="Bug Hunter">🐛</span>
+    </div>
+    <div>XP: <span id="xp-val">0</span></div>
+</header>
+
+<main>
+    <section class="panel palette">
+        <h3>কমান্ড ব্লক</h3>
+        <div class="block" draggable="true" data-type="move-x" data-val="60">ডানে যাও 🏃</div>
+        <div class="block" draggable="true" data-type="move-y" data-val="-60">উপরে যাও ⬆️</div>
+        <div class="block" draggable="true" data-type="move-y" data-val="60">নিচে যাও ⬇️</div>
+        <div class="trash-area" id="trash">🗑️ মুছতে এখানে ছাড়ুন</div>
+    </section>
+
+    <section class="panel workspace">
+        <h3>কোড এরিয়া</h3>
+        <div id="dropZone" class="drop-zone"></div>
+        <div style="display:flex;">
+            <button class="btn btn-run" onclick="runLogic()">রান কোড ▶️</button>
+            <button class="btn btn-reset" onclick="resetGame()">রিসেট 🔄</button>
+        </div>
+    </section>
+
+    <section class="panel stage" id="gameStage">
+        <div id="msg-box">মিশন: দেয়াল বাঁচিয়ে কেক পর্যন্ত পৌঁছাও! 🍰</div>
+        <div id="maze-wall"></div>
+        <div id="sprite">🤖</div>
+        <div class="target" id="cake">🍰</div>
+    </section>
+</main>
+
+<audio id="sfx-click" src="https://www.soundjay.com/buttons/button-3.mp3"></audio>
+<audio id="sfx-fail" src="https://www.soundjay.com/buttons/button-10.mp3"></audio>
+<audio id="sfx-win" src="https://www.soundjay.com/human/applause-01.mp3"></audio>
+
+<script>
+    /* --- Logic & Features --- */
+    let xp = localStorage.getItem('eduXp') || 0;
+    let unlockedBadges = JSON.parse(localStorage.getItem('eduBadges')) || [];
+    const sprite = document.getElementById('sprite');
+    const wall = document.getElementById('maze-wall');
+    const cake = document.getElementById('cake');
+    const dropZone = document.getElementById('dropZone');
+    const sfxClick = document.getElementById('sfx-click');
+
+    // Update XP and Badges on load
+    document.getElementById('xp-val').innerText = xp;
+    unlockedBadges.forEach(id => document.getElementById(id).classList.add('badge-unlocked'));
+
+    // Mobile Friendly Drag & Drop (Using simple click-to-add for better mobile UX)
+    document.querySelectorAll('.block').forEach(block => {
+        block.onclick = () => {
+            sfxClick.play();
+            const clone = block.cloneNode(true);
+            clone.onclick = function() { this.remove(); sfxClick.play(); };
+            dropZone.appendChild(clone);
+        };
+    });
+
+    // Collision Detection Logic
+    function isColliding(a, b) {
+        const rect1 = a.getBoundingClientRect();
+        const rect2 = b.getBoundingClientRect();
+        return !(rect1.right < rect2.left || rect1.left > rect2.right || 
+                 rect1.bottom < rect2.top || rect1.top > rect2.bottom);
+    }
+
+    async function runLogic() {
+        const blocks = dropZone.querySelectorAll('.block');
+        let posX = 20; let posY = 180;
+
+        for (let block of blocks) {
+            block.classList.add('executing');
+            const type = block.dataset.type;
+            const val = parseInt(block.dataset.val);
+
+            if (type === 'move-x') posX += val;
+            if (type === 'move-y') posY += val;
+
+            sprite.style.left = posX + "px";
+            sprite.style.top = posY + "px";
+
+            // Real-time Collision Check
+            await new Promise(r => setTimeout(r, 400));
+            
+            if (isColliding(sprite, wall)) {
+                document.getElementById('sfx-fail').play();
+                alert("ওপস! দেয়ালে ধাক্কা লেগেছে! 😵");
+                resetGame();
+                return;
+            }
+            
+            block.classList.remove('executing');
+        }
+
+        // Final Win Check
+        if (isColliding(sprite, cake)) {
+            document.getElementById('sfx-win').play();
+            saveProgress(50);
+            alert("চমৎকার! তুমি কেকটি পেয়েছো! 🏆");
+        }
+    }
+
+    function saveProgress(newXp) {
+        xp = parseInt(xp) + newXp;
+        localStorage.setItem('eduXp', xp);
+        document.getElementById('xp-val').innerText = xp;
+        
+        if (xp >= 50 && !unlockedBadges.includes('badge1')) {
+            unlockedBadges.push('badge1');
+            localStorage.setItem('eduBadges', JSON.stringify(unlockedBadges));
+            document.getElementById('badge1').classList.add('badge-unlocked');
+        }
+    }
+
+    function resetGame() {
+        sprite.style.left = "20px";
+        sprite.style.top = "180px";
+        dropZone.innerHTML = "";
+    }
+</script>
+</body>
+</html>

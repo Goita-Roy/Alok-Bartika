@@ -1,0 +1,652 @@
+ <style>
+    
+/* ১. কালার ভ্যারিয়েবল সেট করা */
+:root {
+    --bg: #f4f7f6;
+    --text: #333333;
+    --card: #ffffff;
+    --primary: #4caf50;
+    --shadow: rgba(0, 0, 0, 0.1);
+}
+
+/* ২. ডার্ক মোড কালার সেট করা */
+.dark-mode {
+    --bg: #121212;
+    --text: #e0e0e0;
+    --card: #1e1e1e;
+    --primary: #81c784;
+    --shadow: rgba(0, 0, 0, 0.5);
+}
+
+/* ৩. এলিমেন্টগুলোতে ভ্যারিয়েবল প্রয়োগ করা */
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    transition: background 0.3s, color 0.3s; /* স্মুথ ট্রানজিশন */
+}
+
+.edu-card, .card-front, .card-back, .symbol-card {
+    background-color: var(--card) !important; /* ভ্যারিয়েবল ব্যবহার বাধ্যতামূলক করা */
+    color: var(--text);
+    box-shadow: 0 4px 8px var(--shadow);
+}
+
+/* ফ্লাশকার্ডের উল্টো পিঠের জন্য আলাদা কালার (ডার্ক মোডেও যেন পরিষ্কার দেখা যায়) */
+.card-back {
+    background-color: var(--primary) !important;
+    color: white !important;
+}
+
+.progress-container { width: 100%; height: 10px; background: #ddd; border-radius: 5px; margin-bottom: 20px; }
+.progress-bar { height: 100%; background: var(--primary); transition: 0.5s; }
+
+/* Flowchart Shapes */
+.oval { width: 100px; height: 50px; border: 2px solid var(--text); border-radius: 25px; display: flex; align-items: center; justify-content: center; margin: auto; }
+.rectangle { width: 120px; height: 50px; border: 2px solid var(--text); display: flex; align-items: center; justify-content: center; margin: auto; }
+.parallelogram { width: 120px; height: 50px; border: 2px solid var(--text); transform: skew(-20deg); display: flex; align-items: center; justify-content: center; margin: auto; }
+.parallelogram span { transform: skew(20deg); }
+.diamond { width: 80px; height: 80px; border: 2px solid var(--text); transform: rotate(45deg); display: flex; align-items: center; justify-content: center; margin: 40px auto; }
+.diamond span { transform: rotate(-45deg); text-align: center; font-size: 12px; }
+
+.drop-zone { min-height: 50px; border: 2px dashed #aaa; margin: 10px auto; padding: 10px; color: #aaa; transition: 0.3s; }
+.drop-zone.filled { border-style: solid; color: var(--text); background: rgba(76, 175, 80, 0.1); }
+
+.drag-block { padding: 10px; background: var(--primary); color: white; cursor: grab; margin-bottom: 10px; border-radius: 5px; text-align: center; }
+.arrow { text-align: center; font-size: 20px; margin: 5px 0; }
+/* চিহ্নগুলোর কন্টেইনার */
+.symbols-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.symbol-card {
+    background: var(--card);
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.symbol-card p {
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+/* শেইপগুলোর ডিজাইন */
+.shape {
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #333;
+    border: 2px solid #4caf50;
+    font-size: 12px;
+}
+
+.oval-display {
+    width: 100px;
+    height: 50px;
+    border-radius: 25px;
+    background: #FFEB3B;
+}
+
+.parallelogram-display {
+    width: 100px;
+    height: 50px;
+    transform: skew(-20deg);
+    background: #81D4FA;
+}
+
+.rectangle-display {
+    width: 100px;
+    height: 50px;
+    background: #A5D6A7;
+}
+
+.diamond-display {
+    width: 60px;
+    height: 60px;
+    transform: rotate(45deg);
+    background: #FFAB91;
+    margin: 10px auto;
+}
+
+.diamond-display span {
+    transform: rotate(-45deg);
+}
+.symbol-card {
+    cursor: pointer; /* মাউস নিলে হাতের চিহ্ন আসবে */
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.symbol-card:hover {
+    transform: translateY(-5px); /* একটু উপরে উঠে আসবে */
+    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+    background-color: rgba(76, 175, 80, 0.05); /* হালকা সবুজ আভা */
+}
+.robot-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--card);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 2px solid var(--primary);
+}
+
+#robot-display {
+    font-size: 50px;
+    margin-right: 20px;
+    animation: float 2s infinite ease-in-out;
+}
+
+#robot-speech-bubble {
+    background: #e1f5fe;
+    padding: 10px;
+    border-radius: 10px;
+    color: #333;
+    font-size: 14px;
+    position: relative;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.drop-zone.correct-glow {
+    border-color: #4caf50;
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+    background-color: rgba(76, 175, 80, 0.1);
+    transform: scale(1.05);
+}
+
+.drag-block:active {
+    cursor: grabbing;
+    transform: scale(1.1);
+}
+/* ভিডিওর ওপর পপ-আপ স্টাইল */
+.video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.question-card {
+    background: var(--card);
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.quiz-options button {
+    display: block;
+    width: 100%;
+    margin: 10px 0;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: var(--primary);
+    color: white;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.quiz-options button:hover {
+    transform: scale(1.05);
+}
+.progress-wrapper {
+    width: 90%;
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 10px;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: var(--text);
+}
+
+.main-progress-bar {
+    width: 100%;
+    height: 15px;
+    background-color: #ddd; /* হালকা ধূসর ব্যাকগ্রাউন্ড */
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.progress-fill {
+    width: 0%; /* শুরুতে ০ থাকবে */
+    height: 100%;
+    background: linear-gradient(90deg, #4caf50, #81c784);
+    border-radius: 10px;
+    transition: width 0.5s ease-in-out; /* অ্যানিমেশন ইফেক্ট */
+}
+
+/* ডার্ক মোডে প্রগ্রেস বারের ব্যাকগ্রাউন্ড */
+.dark-mode .main-progress-bar {
+    background-color: #333;
+}
+#edubot-hint-box {
+    position: fixed;
+    bottom: 30px;
+    left: 30px; /* ড্যাশবোর্ডের বাম দিকে থাকবে */
+    display: flex;
+    align-items: center;
+    background: var(--card);
+    border: 2px solid var(--primary);
+    padding: 15px;
+    border-radius: 50px 50px 50px 5px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    z-index: 2000;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    max-width: 300px;
+}
+
+.edubot-hidden {
+    transform: translateX(-150%) scale(0); /* স্ক্রিনের বাইরে লুকিয়ে থাকবে */
+    opacity: 0;
+}
+
+.edubot-avatar {
+    width: 60px;
+    height: 60px;
+    position: relative;
+    cursor: pointer;
+}
+
+.edubot-avatar img { width: 100%; animation: bounce 2s infinite; }
+
+.bot-status-dot {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 12px;
+    height: 12px;
+    background: #4caf50;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.edubot-content { margin-left: 15px; }
+.edubot-content p { font-size: 14px; margin: 0 0 10px 0; color: var(--text); font-weight: bold; }
+.edubot-content button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+ </style>
+ <button class="theme-switch" onclick="toggleTheme()" aria-label="Toggle Dark Mode">🌓</button>
+ 
+<div class="dashboard-container">
+    <div class="progress-container">
+        <div class="progress-bar" id="user-progress" style="width: 25%"></div>
+    </div>
+
+    <section class="edu-card">
+        <header>
+            <h1 class="main-title">ক্লাস ০২: Flowchart (ফ্লোচার্ট) 📊</h1>
+            <div class="xp-bar">⭐ Score: <span id="xp-count">0</span></div>
+        </header>
+
+        <section class="theory-section">
+            <div class="voice-box" onclick="playMyVoice('flowchart_def.mp3')">
+                <h3>📖 ফ্লোচার্ট কী?</h3>
+                <p>অ্যালগরিদম যখন ছবির মাধ্যমে বা বিভিন্ন জ্যামিতিক আকৃতির (Shapes) মাধ্যমে প্রকাশ করা হয়, তখন তাকে ফ্লোচার্ট বলে। এটি আমাদের বুঝতে সাহায্য করে যে কোডটি কোন দিকে যাবে।</p>
+                <p>সহজ কথায়, অ্যালগরিদমের ধাপগুলোকে যখন বিভিন্ন জ্যামিতিক চিহ্নের মাধ্যমে ছবির মতো সাজানো হয়, তাকেই ফ্লোচার্ট বলে। এটি আমাদের লজিক বুঝতে সাহায্য করে।</p>
+                <small class="voice-hint">🔊 শোনার জন্য ক্লিক করো</small>
+            </div>
+            <div class="voice-box" onclick="speakText('ফ্লোচার্ট তৈরি করতে আমরা এই ৪টি প্রধান চিহ্ন ব্যবহার করি। বিস্তারিত শুনতে চিহ্নের ওপর ক্লিক করো।')">
+        <h3>🔍 প্রধান চিহ্নগুলো চিনে নাও (ক্লিক করো 🔊)</h3>
+        <p>নিচের চিহ্নগুলোর ওপর ক্লিক করলে তাদের কাজ বাংলায় শুনতে পাবে।</p>
+    </div>
+
+    <div class="symbols-container">
+        <div class="symbol-card" onclick="speakText('ওভাল বা ডিম্বাকৃতি চিহ্ন। এটি দিয়ে প্রোগ্রামের শুরু বা শেষ বোঝানো হয়।')">
+            <div class="shape oval-display">Start/End</div>
+            <p><strong>শুরু/শেষ (Oval):</strong> ওভাল বা ডিম্বাকৃতি চিহ্ন। এটি দিয়ে প্রোগ্রামের শুরু বা শেষ বোঝানো হয়।</p>
+        </div>
+
+        <div class="symbol-card" onclick="speakText('সামান্তরিক চিহ্ন। এটি দিয়ে কোনো তথ্য ইনপুট নেওয়া বা ফলাফল আউটপুট হিসেবে দেখানো হয়।')">
+            <div class="shape parallelogram-display">Input/Output</div>
+            <p><strong>ইনপুট/আউটপুট (Parallelogram):</strong>সামান্তরিক চিহ্ন। এটি দিয়ে কোনো তথ্য ইনপুট নেওয়া বা ফলাফল আউটপুট হিসেবে দেখানো হয়।</p>
+        </div>
+
+        <div class="symbol-card" onclick="speakText('আয়তক্ষেত্র চিহ্ন। এটি দিয়ে প্রোগ্রামের কাজ বা গাণিতিক হিসাব-নিকাশ করা হয়।')">
+            <div class="shape rectangle-display">Process</div>
+            <p><strong>প্রসেসিং (Rectangle):</strong>আয়তক্ষেত্র চিহ্ন। এটি দিয়ে প্রোগ্রামের কাজ বা গাণিতিক হিসাব-নিকাশ করা হয়।</p>
+        </div>
+
+        <div class="symbol-card" onclick="speakText('ডায়মন্ড বা রম্বস চিহ্ন। এটি দিয়ে হ্যাঁ অথবা না জাতীয় সিদ্ধান্ত নেওয়া হয়।')">
+            <div class="shape diamond-display"><span>Decision</span></div>
+            <p><strong>সিদ্ধান্ত (Diamond):</strong>ডায়মন্ড বা রম্বস চিহ্ন। এটি দিয়ে হ্যাঁ অথবা না জাতীয় সিদ্ধান্ত নেওয়া হয়।</p>
+        </div>
+    </div>
+
+        </section>
+        <section class="video-section">
+    <h3 class="section-title">📺 ইন্টারেক্টিভ ভিডিও লার্নিং</h3>
+    <div class="video-wrapper" style="position: relative; max-width: 600px; margin: auto;">
+        <video id="edu-video" width="100%" controls ontimeupdate="checkVideoTime()">
+            <source src="videos/flowchart_lesson.mp4" type="video/mp4">
+            আপনার ব্রাউজার ভিডিও সাপোর্ট করে না।
+        </video>
+
+        <div id="video-question" class="video-overlay" style="display: none;">
+            <div class="question-card">
+                <h4>🤔 কুইজ টাইম!</h4>
+                <p>সিদ্ধান্ত বা Decision বোঝাতে কোন চিহ্নটি ব্যবহার করা হয়?</p>
+                <div class="quiz-options">
+                    <button onclick="checkVideoQuiz(false)">আয়তক্ষেত্র (Rectangle)</button>
+                    <button onclick="checkVideoQuiz(true)">ডায়মন্ড (Diamond)</button>
+                    <button onclick="checkVideoQuiz(false)">ওভাল (Oval)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</div>
+<section class="activity-section">
+    <h3 id="activity-title">🧩 রোবট টি-মেকার পাজল</h3>
+    
+    <div id="robot-feedback-area" class="robot-container">
+        <div id="robot-display">🤖</div>
+        <div id="robot-speech-bubble">আমাকে সাহায্য করো! ব্লকগুলো সঠিক জায়গায় বসাও।</div>
+    </div>
+
+    <div class="puzzle-grid">
+        <div class="drop-zone-container">
+            <div class="drop-zone oval" data-answer="start" ondrop="drop(event)" ondragover="allowDrop(event)">১. শুরুর ধাপটি আনো</div>
+            <div class="arrow">↓</div>
+            <div class="drop-zone parallelogram" data-answer="input" ondrop="drop(event)" ondragover="allowDrop(event)">২. উপকরণ কী কী লাগবে?</div>
+            <div class="arrow">↓</div>
+            <div class="drop-zone diamond" data-answer="decision" ondrop="drop(event)" ondragover="allowDrop(event)">৩. পানি ফুটেছে কি না?</div>
+            <div class="arrow">↓</div>
+            <div class="drop-zone rectangle" data-answer="process" ondrop="drop(event)" ondragover="allowDrop(event)">৪. চা তৈরির মেইন কাজ</div>
+            <div class="arrow">↓</div>
+            <div class="drop-zone oval" data-answer="end" ondrop="drop(event)" ondragover="allowDrop(event)">৫. শেষের ধাপ</div>
+        </div>
+
+        <div class="blocks-pool" id="blocks-pool">
+            <div class="drag-block" draggable="true" ondragstart="drag(event)" id="process">কাপে ঢালো ☕</div>
+            <div class="drag-block" draggable="true" ondragstart="drag(event)" id="start">শুরু (Start) 🏁</div>
+            <div class="drag-block" draggable="true" ondragstart="drag(event)" id="decision">পানি ফুটেছে? ❓</div>
+            <div class="drag-block" draggable="true" ondragstart="drag(event)" id="end">শেষ (End) 🛑</div>
+            <div class="drag-block" draggable="true" ondragstart="drag(event)" id="input">পানি ও চা পাতা 🍃</div>
+        </div>
+    </div>
+
+    <button class="check-btn" onclick="validatePuzzle()">চা তৈরি করো! ☕✅</button>
+    <div id="puzzle-feedback" class="feedback"></div>
+</section>
+<div id="edubot-hint-box" class="edubot-hidden">
+    <div class="edubot-avatar" onclick="speakText(document.getElementById('edubot-text').innerText)">
+        <img src="https://cdn-icons-png.flaticon.com/512/4712/4712035.png" alt="EduBot">
+        <span class="bot-status-dot"></span>
+    </div>
+    <div class="edubot-content">
+        <p id="edubot-text">হ্যালো! আমি এডুবট। তোমাকে সাহায্য করতে পারি?</p>
+        <button onclick="closeEduBot()">বুঝতে পেরেছি!</button>
+    </div>
+</div>
+<script>
+    let currentScore = 0;
+let dragSrcEl = null;
+
+// ড্র্যাগ অ্যান্ড ড্রপ লজিক
+document.querySelectorAll('.drag-block').forEach(block => {
+    block.addEventListener('dragstart', function(e) {
+        dragSrcEl = this;
+        e.dataTransfer.setData('text', this.id);
+    });
+});
+
+document.querySelectorAll('.drop-zone').forEach(zone => {
+    zone.addEventListener('dragover', e => e.preventDefault());
+    zone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        const data = e.dataTransfer.getData('text');
+        const draggedElement = document.getElementById(data);
+        
+        this.innerText = draggedElement.innerText;
+        this.classList.add('filled');
+        this.setAttribute('data-user-answer', data);
+        
+        // ব্লকটি পুল থেকে সরিয়ে ফেলা
+        draggedElement.style.display = 'none';
+    });
+});
+
+function validatePuzzle() {
+    const zones = document.querySelectorAll('.drop-zone');
+    let correctCount = 0;
+    const feedback = document.getElementById('puzzle-feedback');
+
+    zones.forEach(zone => {
+        if (zone.getAttribute('data-answer') === zone.getAttribute('data-user-answer')) {
+            correctCount++;
+            zone.style.borderColor = "green";
+        } else {
+            zone.style.borderColor = "red";
+        }
+    });
+
+    if (correctCount === zones.length) {
+        currentScore += 100;
+        updateUI(true);
+        feedback.innerHTML = "🎉 এআই ফিডব্যাক: চমৎকার! তোমার লজিক্যাল ফ্লো একদম নিখুঁত। পরবর্তী লেভেল আনলক হয়েছে!";
+        feedback.style.color = "green";
+        playMyVoice('success.mp3');
+    } else {
+        feedback.innerHTML = "❌ কিছু ভুল হয়েছে। একটু ভেবে দেখো—প্রথমে কি চা ঢালা সম্ভব? আবার চেষ্টা করো।";
+        feedback.style.color = "red";
+        playMyVoice('error.mp3');
+    }
+}
+
+function updateUI(isWin) {
+    document.getElementById('xp-count').innerText = currentScore;
+    if(isWin) {
+        document.getElementById('user-progress').style.width = "50%";
+        celebrate();
+    }
+}
+function speakText(text) {
+    // আগের কোনো কথা চলতে থাকলে তা থামিয়ে দিবে
+    window.speechSynthesis.cancel();
+
+    const msg = new SpeechSynthesisUtterance(text);
+    
+    // ব্রাউজারে থাকা বাংলা ভয়েস সেট করা
+    const voices = window.speechSynthesis.getVoices();
+    const banglaVoice = voices.find(voice => voice.lang.includes('bn'));
+
+    if (banglaVoice) {
+        msg.voice = banglaVoice;
+    }
+
+    msg.lang = 'bn-BD'; // বাংলাদেশের বাংলা কোড
+    msg.pitch = 1;      // কণ্ঠস্বরের তীক্ষ্ণতা
+    msg.rate = 0.9;     // কথা বলার গতি (শিক্ষার্থীদের বোঝার জন্য কিছুটা ধীর)
+
+    window.speechSynthesis.speak(msg);
+}
+
+// ভয়েস লিস্ট লোড হতে সময় নেয়, তাই এই ইভেন্টটি যোগ করা নিরাপদ
+window.speechSynthesis.onvoiceschanged = () => {
+    console.log("Voices loaded successfully");
+};
+function toggleTheme() {
+    const body = document.body;
+    body.classList.toggle('dark-mode');
+    
+    // ইউজার কোন থিম পছন্দ করেছে তা সেভ করে রাখা
+    if (body.classList.contains('dark-mode')) {
+        localStorage.setItem('theme', 'dark');
+    } else {
+        localStorage.setItem('theme', 'light');
+    }
+}
+
+// পেজ লোড হওয়ার সময় আগের থিম চেক করা
+window.onload = function() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+    }
+    loadProgress(); // আপনার আগের ফাংশন
+};
+function drag(ev) {
+    ev.dataTransfer.setData("text", ev.target.id);
+    document.getElementById('robot-display').innerText = "🤔";
+    document.getElementById('robot-speech-bubble').innerText = "উমম... এটা কোথায় বসবে?";
+}
+
+function allowDrop(ev) {
+    ev.preventDefault();
+}
+
+function drop(ev) {
+    ev.preventDefault();
+    const data = ev.dataTransfer.getPlainData ? ev.dataTransfer.getPlainData("text") : ev.dataTransfer.getData("text");
+    const target = ev.target;
+
+    if (target.classList.contains('drop-zone')) {
+        target.innerText = document.getElementById(data).innerText;
+        target.setAttribute('data-user-answer', data);
+        target.classList.add('filled');
+        
+        // ব্লকটি পুল থেকে গায়েব করে দাও
+        document.getElementById(data).style.visibility = 'hidden';
+        
+        // রোবটের প্রশংসা
+        document.getElementById('robot-display').innerText = "🤖";
+        document.getElementById('robot-speech-bubble').innerText = "বেশ! পরেরটা বসাও।";
+        speakText("বেশ! এবার পরেরটা বসাও।");
+    }
+}
+
+function validatePuzzle() {
+    const zones = document.querySelectorAll('.drop-zone');
+    let correctCount = 0;
+    const robotDisplay = document.getElementById('robot-display');
+    const robotSpeech = document.getElementById('robot-speech-bubble');
+
+    zones.forEach(zone => {
+        if (zone.getAttribute('data-answer') === zone.getAttribute('data-user-answer')) {
+            correctCount++;
+            zone.classList.add('correct-glow');
+        } else {
+            zone.style.borderColor = "red";
+        }
+    });
+
+    if (correctCount === zones.length) {
+        xp += 100;
+        document.getElementById('xp-count').innerText = xp;
+        robotDisplay.innerText = "🤩";
+        robotSpeech.innerText = "ওয়াও! চা একদম তৈরি। আমি খুব খুশি!";
+        speakText("ওয়াও! চা একদম তৈরি। আমি খুব খুশি!");
+        celebrate(); // কনফেটি অ্যানিমেশন
+    } else {
+        robotDisplay.innerText = "😵";
+        robotSpeech.innerText = "আরে না! চা তো হলো না। লজিকটা আবার চেক করো!";
+        speakText("আরে না! চা তো হলো না। লজিকটা আবার চেক করো!");
+    }
+}
+const video = document.getElementById('edu-video');
+const questionOverlay = document.getElementById('video-question');
+let questionShown = false;
+
+// ভিডিওর সময় ট্র্যাক করা
+function checkVideoTime() {
+    // ধরুন ভিডিওর ১০ সেকেন্ড সময়ে আপনি প্রশ্নটি দেখাতে চান
+    if (Math.floor(video.currentTime) === 10 && !questionShown) {
+        video.pause(); // ভিডিও থামিয়ে দাও
+        video.controls = false; // কন্ট্রোল হাইড করো যাতে টেনে সামনে না যেতে পারে
+        questionOverlay.style.display = 'flex';
+        speakText("একটি প্রশ্ন এসেছে! সঠিক উত্তর দিয়ে ভিডিওটি সামনে বাড়াও।");
+    }
+}
+
+// কুইজ চেক করা
+function checkVideoQuiz(isCorrect) {
+    if (isCorrect) {
+        questionOverlay.style.display = 'none';
+        video.controls = true;
+        video.play();
+        questionShown = true; // যেন একই প্রশ্ন বারবার না আসে
+        xp += 30;
+        document.getElementById('xp-count').innerText = xp;
+        speakText("সঠিক হয়েছে! ভিডিওটি আবার শুরু হচ্ছে।");
+    } else {
+        speakText("ভুল হয়েছে, আবার চেষ্টা করো।");
+        alert("ভুল উত্তর! আবার চেষ্টা করো।");
+    }
+}
+let completedTasks = {
+    theory: false,
+    puzzle: false,
+    video: false
+};
+let consecutiveErrors = 0; // ভুল গণনার ভেরিয়েবল
+
+// ১. এডুবট শো করার ফাংশন
+function showEduBotHint(message) {
+    const botBox = document.getElementById('edubot-hint-box');
+    const botText = document.getElementById('edubot-text');
+    
+    botText.innerText = message;
+    botBox.classList.remove('edubot-hidden');
+    
+    // অটোমেটিক বাংলায় কথা বলবে
+    speakText(message);
+}
+
+// ২. এডুবট বন্ধ করার ফাংশন
+function closeEduBot() {
+    document.getElementById('edubot-hint-box').classList.add('edubot-hidden');
+}
+
+// ৩. ভুল ট্র্যাকিং লজিক (আপনার validatePuzzle বা কুইজ ফাংশনে এটি যুক্ত করুন)
+function trackError() {
+    consecutiveErrors++;
+    
+    if (consecutiveErrors === 2) {
+        showEduBotHint("মনে হচ্ছে একটু সমস্যা হচ্ছে? মনে রেখো, শুরু এবং শেষের জন্য ওভাল চিহ্ন ব্যবহার করা হয়।");
+    } else if (consecutiveErrors >= 4) {
+        showEduBotHint("চিন্তা করো না! পানি ফুটানোর কাজটা কিন্তু একটা প্রসেসিং, তাই এখানে আয়তক্ষেত্র হবে।");
+    }
+}
+
+// সঠিক উত্তর দিলে এরর কাউন্ট রিসেট করে দিন
+function resetErrors() {
+    consecutiveErrors = 0;
+    closeEduBot();
+}
+</script>

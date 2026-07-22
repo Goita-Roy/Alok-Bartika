@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Class ও Object — রেস্তোরাঁ অ্যাডভেঞ্চার 🍔</title>
+<meta name="description" content="Restaurant উদাহরণ দিয়ে Python Class এবং Object শেখার মজার অ্যাডভেঞ্চার!" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#1a1530; --fg:#f1ecff; --muted:#a499c9;
+    --card:#241a44; --border:rgba(140,120,200,.35);
+    --neon:#5ee9ff; --neon-pink:#ff6ad5; --neon-yellow:#ffe066; --neon-green:#7cffb0;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;border-color:var(--border);}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Hind Siliguri',sans-serif; color:var(--fg);
+    background:#15102b;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(255,106,213,.18), transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(94,233,255,.18), transparent 40%);
+    background-attachment:fixed; min-height:100vh; overflow-x:hidden;
+  }
+  code,pre{font-family:'JetBrains Mono',monospace;}
+  .font-pixel{font-family:'Press Start 2P',cursive;}
+  .text-neon{color:var(--neon);text-shadow:0 0 12px var(--neon);}
+  .text-neon-pink{color:var(--neon-pink);text-shadow:0 0 12px var(--neon-pink);}
+  .text-neon-yellow{color:var(--neon-yellow);text-shadow:0 0 10px var(--neon-yellow);}
+  .text-neon-green{color:var(--neon-green);text-shadow:0 0 10px var(--neon-green);}
+  .muted{color:var(--muted);}
+  .container{max-width:1100px;margin:0 auto;padding:0 24px;position:relative;z-index:10;}
+  .grid-bg{
+    position:fixed;inset:0;z-index:0;opacity:.3;pointer-events:none;
+    background-image:
+      linear-gradient(rgba(94,233,255,.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(94,233,255,.08) 1px, transparent 1px);
+    background-size:40px 40px;
+  }
+  .particles{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+  .particle{position:absolute;font-family:'JetBrains Mono',monospace;opacity:.4;animation:float-up linear infinite;}
+  @keyframes float-up{
+    0%{transform:translateY(100vh) translateX(0);opacity:0;}
+    10%{opacity:1;} 90%{opacity:1;}
+    100%{transform:translateY(-10vh) translateX(20px);opacity:0;}
+  }
+  @keyframes pulse-glow{
+    0%,100%{box-shadow:0 0 20px rgba(94,233,255,.3);}
+    50%{box-shadow:0 0 40px rgba(94,233,255,.6),0 0 60px rgba(255,106,213,.3);}
+  }
+  @keyframes bobbing{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+  @keyframes spin-slow{to{transform:rotate(360deg);}}
+  @keyframes sparkle{0%,100%{opacity:0;transform:scale(0);}50%{opacity:1;transform:scale(1);}}
+  @keyframes wiggle{0%,100%{transform:rotate(-3deg);}50%{transform:rotate(3deg);}}
+  @keyframes blink{50%{opacity:0;}}
+  @keyframes shimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
+  .bob{animation:bobbing 3s ease-in-out infinite;}
+  .spin-slow{display:inline-block;animation:spin-slow 20s linear infinite;}
+  .pulse-glow{animation:pulse-glow 3s ease-in-out infinite;}
+  .wiggle{display:inline-block;animation:wiggle 2s ease-in-out infinite;}
+  .blink-cursor::after{content:'▊';color:var(--neon-green);animation:blink 1s steps(2) infinite;margin-left:4px;}
+  .shimmer-text{
+    background:linear-gradient(90deg,var(--neon) 0%,var(--neon-pink) 25%,var(--neon-yellow) 50%,var(--neon-green) 75%,var(--neon) 100%);
+    background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:shimmer 4s linear infinite;
+  }
+  .card{background:linear-gradient(135deg,rgba(40,28,80,.8),rgba(50,30,90,.6));border-radius:var(--radius);border:1px solid var(--border);}
+  .glow-border{border:1px solid rgba(94,233,255,.4);box-shadow:inset 0 0 20px rgba(94,233,255,.1),0 0 20px rgba(94,233,255,.2);}
+  .chip{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;border:1px solid var(--neon);background:rgba(94,233,255,.1);color:var(--neon);font-size:11px;}
+  .reveal{opacity:0;transform:translateY(40px);transition:all .8s cubic-bezier(.2,.8,.2,1);}
+  .reveal.visible{opacity:1;transform:translateY(0);}
+  h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.15;margin:18px 0;font-weight:700;}
+  h2{font-size:1.85rem;font-weight:700;margin:0;}
+  section{padding:40px 0;}
+  .hero{display:flex;gap:40px;align-items:center;flex-wrap:wrap;padding-top:60px;}
+  .hero-left{flex:1;min-width:280px;}
+  .hero-mascot{width:240px;position:relative;}
+  .hero-mascot .glow{position:absolute;inset:0;border-radius:50%;background:rgba(94,233,255,.2);filter:blur(40px);}
+  .quote-bar{border-left:4px solid var(--neon-pink);padding-left:16px;color:var(--muted);font-size:1.05rem;line-height:1.7;margin-top:20px;}
+  .concept{padding:32px;position:relative;overflow:hidden;}
+  .dots{position:absolute;top:16px;right:16px;display:flex;gap:6px;}
+  .dot{width:10px;height:10px;border-radius:50%;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px;}
+  @media (max-width:640px){.grid2{grid-template-columns:1fr;}}
+  .mini{padding:18px;border-radius:12px;background:rgba(20,15,40,.5);border:2px dashed var(--neon);}
+  .mini.pink{border-color:var(--neon-pink);}
+  .mini .emoji{font-size:2rem;}
+  .resto-card{position:relative;padding:24px;border-radius:14px;border:2px solid var(--neon);overflow:hidden;animation:pulse-glow 3s ease-in-out infinite;}
+  .resto-card.pink{border-color:var(--neon-pink);}
+  .resto-card .bg-emoji{position:absolute;top:-20px;right:-20px;font-size:5rem;opacity:.15;transform:rotate(12deg);}
+  .accordion{display:flex;flex-direction:column;gap:14px;}
+  .acc-item{border:2px solid rgba(255,224,102,.4);border-radius:14px;overflow:hidden;background:linear-gradient(135deg,rgba(40,28,80,.8),rgba(50,30,90,.6));}
+  .acc-item.pink{border-color:rgba(255,106,213,.4);}
+  .acc-item.green{border-color:rgba(124,255,176,.4);}
+  .acc-item.cyan{border-color:rgba(94,233,255,.4);}
+  .acc-trigger{width:100%;padding:18px 24px;background:transparent;color:var(--fg);border:0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font:inherit;font-size:1.05rem;font-weight:700;}
+  .acc-trigger .left{display:flex;align-items:center;gap:12px;}
+  .acc-trigger .chev{transition:transform .3s;}
+  .acc-item[open] .chev{transform:rotate(180deg);}
+  .acc-body{padding:0 24px 24px;display:flex;flex-direction:column;gap:14px;}
+  .hint{display:flex;gap:12px;padding:14px;background:rgba(20,15,40,.5);border-radius:10px;border:1px solid var(--border);}
+  .hint .e{font-size:1.5rem;}
+  .ic{padding:4px 8px;border-radius:6px;background:#0d0f1c;color:var(--neon-green);font-size:.9em;}
+  .terminal{border-radius:14px;overflow:hidden;border:2px solid var(--neon-green);box-shadow:0 0 30px rgba(124,255,176,.3);background:rgba(0,0,0,.7);}
+  .terminal .bar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(0,0,0,.6);border-bottom:1px solid rgba(124,255,176,.3);}
+  .terminal .bar .lbl{margin-left:10px;font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--neon-green);}
+  .terminal-body{padding:24px;font-family:'JetBrains Mono',monospace;color:var(--neon-green);min-height:120px;}
+  .code-box{border-radius:12px;overflow:hidden;border:1px solid rgba(124,255,176,.4);background:#0d0f1c;}
+  .code-box .bar{background:rgba(0,0,0,.4);}
+  .code-box pre{margin:0;padding:18px;overflow-x:auto;font-size:.9rem;line-height:1.7;}
+  .ln{display:flex;}
+  .ln .num{user-select:none;color:rgba(255,255,255,.25);width:32px;text-align:right;padding-right:12px;}
+  .kw{color:var(--neon-pink);font-weight:700;}
+  .fn{color:var(--neon-yellow);}
+  .cls{color:var(--neon);}
+  .var{color:var(--neon-green);}
+  .attr{color:var(--neon-yellow);}
+  .str{color:#ffb37a;}
+  .cm{color:var(--muted);font-style:italic;}
+  .badge{display:inline-flex;align-items:center;gap:12px;padding:14px 24px;border-radius:16px;border:2px solid var(--neon-yellow);background:linear-gradient(135deg,rgba(40,28,80,.8),rgba(50,30,90,.6));animation:pulse-glow 3s ease-in-out infinite;}
+  .video-ph{aspect-ratio:16/9;border-radius:12px;border:2px dashed rgba(255,106,213,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(20,15,40,.5);color:var(--muted);}
+  .play-btn{width:64px;height:64px;border-radius:50%;background:rgba(255,106,213,.15);display:flex;align-items:center;justify-content:center;color:var(--neon-pink);font-size:2rem;animation:pulse-glow 3s ease-in-out infinite;}
+  footer{padding:30px 0;text-align:center;font-size:.7rem;color:var(--muted);border-top:1px solid var(--border);margin-top:40px;}
+  .sparkle{position:absolute;color:var(--neon-yellow);animation:sparkle 2s ease-in-out infinite;pointer-events:none;}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="particles" id="particles"></div>
+
+<div class="container">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-left">
+      <div class="reveal"><span class="chip font-pixel">🏆 LEVEL 7 · OOP QUEST</span></div>
+      <div class="reveal">
+        <h1>
+          <span class="shimmer-text">Class ও Object</span><br/>
+          রেস্তোরাঁ অ্যাডভেঞ্চার <span class="wiggle">🍔</span>
+        </h1>
+      </div>
+      <div class="reveal">
+        <p class="quote-bar">"যেখানে টাকা দিয়ে আমরা আমাদের পছন্দের মজার মজার খাবার যেমন—বার্গার, পিৎজা বা বিরিয়ানি কিনে টেবিলে বসে খেতে পারি, তাকেই Restaurant বা রেস্তোরাঁ বলে।"</p>
+      </div>
+    </div>
+    <div class="hero-mascot bob">
+      <div class="glow pulse-glow"></div>
+      <svg viewBox="0 0 120 140" style="position:relative;width:100%;">
+        <ellipse cx="60" cy="22" rx="34" ry="18" fill="#f8f8f8"/>
+        <ellipse cx="44" cy="18" rx="14" ry="14" fill="#f8f8f8"/>
+        <ellipse cx="76" cy="18" rx="14" ry="14" fill="#f8f8f8"/>
+        <rect x="28" y="36" width="64" height="8" fill="#e8e8e8"/>
+        <rect x="34" y="44" width="52" height="44" fill="#ffd9a8" stroke="#222" stroke-width="2"/>
+        <rect x="46" y="58" width="6" height="8" fill="#1a1a2e"/>
+        <rect x="68" y="58" width="6" height="8" fill="#1a1a2e"/>
+        <rect x="48" y="60" width="2" height="2" fill="#fff"/>
+        <rect x="70" y="60" width="2" height="2" fill="#fff"/>
+        <rect x="52" y="74" width="16" height="4" fill="#c44"/>
+        <rect x="30" y="88" width="60" height="44" fill="#fff" stroke="#222" stroke-width="2"/>
+        <circle cx="46" cy="100" r="3" fill="#1a1a2e"/>
+        <circle cx="46" cy="114" r="3" fill="#1a1a2e"/>
+        <circle cx="74" cy="100" r="3" fill="#1a1a2e"/>
+        <circle cx="74" cy="114" r="3" fill="#1a1a2e"/>
+        <rect x="20" y="110" width="80" height="6" fill="#a8a8a8"/>
+        <circle cx="38" cy="106" r="6" fill="#ff8855"/>
+        <circle cx="60" cy="104" r="7" fill="#d4a017"/>
+        <circle cx="82" cy="106" r="6" fill="#c44"/>
+      </svg>
+      <span class="spin-slow" style="position:absolute;top:-8px;right:-8px;font-size:1.8rem;">✨</span>
+    </div>
+  </section>
+
+  <!-- CONCEPT -->
+  <section>
+    <div class="reveal card concept glow-border">
+      <div class="dots"><span class="dot" style="background:#f87171"></span><span class="dot" style="background:#fbbf24"></span><span class="dot" style="background:#34d399"></span></div>
+      <p style="font-size:1.05rem;line-height:1.8;margin:0;">
+        তুমি যেকোনো রেস্তোরাঁয় যাও না কেন, তাদের একটি সাধারণ মিল বা নকশা থাকে। সব রেস্তোরাঁরই একটি নির্দিষ্ট <span class="text-neon" style="font-weight:600;">নাম (name)</span> থাকে আর একটি চমৎকার খাবারের <span class="text-neon-pink" style="font-weight:600;">মেনু (cuisine)</span> থাকে। প্রোগ্রামিংয়ের ভাষায় এই সাধারণ নকশাটিই হলো আমাদের <span class="text-neon-yellow" style="font-weight:700;">Class</span>। আর এই নকশা ব্যবহার করে তৈরি করা আসল একেকটি রেস্তোরাঁ (যেমন: <span class="text-neon-green">কাচ্চি ভাই</span> বা <span class="text-neon-green">কেএফসি</span>) হলো এক একটি <span class="text-neon-yellow" style="font-weight:700;">Object</span>!
+      </p>
+      <div class="grid2">
+        <div class="mini">
+          <div class="emoji">📐</div>
+          <p class="font-pixel text-neon" style="font-size:11px;margin:6px 0;">CLASS = নকশা</p>
+          <p class="muted" style="margin:0;font-size:.9rem;">একটি ব্লুপ্রিন্ট, খালি ছাঁচ।</p>
+        </div>
+        <div class="mini pink">
+          <div class="emoji">🏪</div>
+          <p class="font-pixel text-neon-pink" style="font-size:11px;margin:6px 0;">OBJECT = আসল দোকান</p>
+          <p class="muted" style="margin:0;font-size:.9rem;">নকশা দিয়ে বানানো জিনিস।</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSTRUCTION -->
+  <section>
+    <div class="reveal" style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <span style="font-size:2rem;" class="wiggle">🎯</span>
+      <h2 class="text-neon-yellow">নির্দেশনা</h2>
+    </div>
+    <div class="reveal card" style="padding:28px;border-color:rgba(255,224,102,.4);box-shadow:0 0 30px rgba(255,106,213,.2);">
+      <p style="font-size:1.05rem;line-height:1.8;margin:0;">
+        মনে করো, তুমি দুটি রেস্তোরাঁর নাম আর তাদের স্পেশাল খাবারের নাম কম্পিউটারে সেভ করে রাখতে চাও। আমরা <span class="text-neon" style="font-weight:700;">Restaurant</span> নামের একটি সহজ নকশা (Class) বানাবো, আর তা দিয়ে <span class="text-neon-pink" style="font-weight:700;">২টি রেস্তোরাঁ (Object)</span> তৈরি করব।
+      </p>
+      <div class="grid2" style="margin-top:24px;">
+        <div class="resto-card">
+          <div class="bg-emoji">🍔</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:2rem;">🏪</span>
+            <div>
+              <p class="font-pixel muted" style="font-size:10px;margin:0;">RESTAURANT</p>
+              <h3 class="text-neon" style="margin:4px 0 0;font-size:1.25rem;">Burger House</h3>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:.9rem;">
+            <span class="text-neon-yellow">.food</span><span class="muted">=</span><span class="text-neon-green">"Burger"</span>
+            <span style="margin-left:auto;font-size:1.8rem;">🍔</span>
+          </div>
+        </div>
+        <div class="resto-card pink">
+          <div class="bg-emoji">🍕</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:2rem;">🏪</span>
+            <div>
+              <p class="font-pixel muted" style="font-size:10px;margin:0;">RESTAURANT</p>
+              <h3 class="text-neon-pink" style="margin:4px 0 0;font-size:1.25rem;">Pizza Paradise</h3>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:.9rem;">
+            <span class="text-neon-yellow">.food</span><span class="muted">=</span><span class="text-neon-green">"Pizza"</span>
+            <span style="margin-left:auto;font-size:1.8rem;">🍕</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HELP -->
+  <section>
+    <div class="reveal" style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <span style="font-size:2rem;">🛟</span>
+      <h2 class="text-neon">সাহায্য</h2>
+    </div>
+
+    <div class="accordion reveal">
+      <details class="acc-item" open>
+        <summary class="acc-trigger"><span class="left"><span style="font-size:1.3rem;">💡</span><span class="text-neon-yellow">হিন্টস (Hints)</span></span><span class="chev">▾</span></summary>
+        <div class="acc-body">
+          <div class="hint"><span class="e">📦</span><p style="margin:0;"><span class="text-neon" style="font-weight:700;">খালি ছাঁচ (Class):</span> প্রথমে একটি খালি ক্লাস তৈরি করো: <code class="ic">class Restaurant: pass</code> (pass লিখলে ক্লাসটি তৈরি হয়ে যায়, কিন্তু ভেতরে কিছু থাকে না)।</p></div>
+          <div class="hint"><span class="e">🏪</span><p style="margin:0;"><span class="text-neon-pink" style="font-weight:700;">আসল দোকান (Object):</span> এরপর <code class="ic">shop1 = Restaurant()</code> লিখে আসল দোকান বা অবজেক্ট তৈরি করো।</p></div>
+          <div class="hint"><span class="e">🔗</span><p style="margin:0;"><span class="text-neon-yellow" style="font-weight:700;">ডট দিয়ে তথ্য যোগ:</span> অবজেক্টের নামের পাশে ডট (.) দিয়ে সরাসরি নাম আর খাবার লিখে দেওয়া যায়! যেমন: <code class="ic">shop1.name = "Burger House"</code>।</p></div>
+        </div>
+      </details>
+
+      <details class="acc-item pink">
+        <summary class="acc-trigger"><span class="left"><span style="font-size:1.3rem;">▶️</span><span class="text-neon-pink">Walkthrough Video</span></span><span class="chev">▾</span></summary>
+        <div class="acc-body">
+          <div class="video-ph">
+            <div class="play-btn">▶</div>
+            <p class="font-pixel" style="font-size:10px;margin:0;">▶ ভিডিও শীঘ্রই আসছে</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="acc-item green">
+        <summary class="acc-trigger"><span class="left"><span style="font-size:1.3rem;">✅</span><span class="text-neon-green">সমাধান ও সম্পূর্ণ কোড (Solution)</span></span><span class="chev">▾</span></summary>
+        <div class="acc-body">
+          <p class="muted" style="margin:0 0 6px;">সবচেয়ে সহজ উপায়ে লেখা কোডটি নিচে দেখো:</p>
+          <div class="code-box">
+            <div class="bar">
+              <span class="dot" style="background:#f87171"></span><span class="dot" style="background:#fbbf24"></span><span class="dot" style="background:#34d399"></span>
+              <span class="lbl" style="margin-left:auto;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.75rem;">restaurant.py 🐍</span>
+            </div>
+            <pre id="codeblock"></pre>
+          </div>
+        </div>
+      </details>
+
+      <details class="acc-item cyan">
+        <summary class="acc-trigger"><span class="left"><span style="font-size:1.3rem;" class="bob">🤖</span><span class="text-neon">AI Coding Companion</span></span><span class="chev">▾</span></summary>
+        <div class="acc-body">
+          <div class="hint"><span class="e bob">🤖</span><div><p class="font-pixel text-neon" style="font-size:10px;margin:0 0 6px;">HELPER · ONLINE</p><p style="margin:0;">তোমার ছোট্ট কোডিং বন্ধু যেকোনো সময় তোমাকে সাহায্য করতে প্রস্তুত!</p></div></div>
+        </div>
+      </details>
+    </div>
+  </section>
+
+
+  <details class="accordion">
+    <summary><span class="ico" style="background:rgba(101,209,178,.15);color:var(--cyan)">💻</span><span style="color:var(--cyan)">Practice in Python IDE</span></summary>
+    <div class="body"><p style="margin:0;color:#d1d5db">এখন নিজেই কোড লিখে অনুশীলন করুন। নিচের বাটনে ক্লিক করে Python IDE-তে গিয়ে এই পাঠের কোড নিজে লিখে দেখুন।</p><a href="/development" target="_parent" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;background:#65D1B2;color:#04342C;text-decoration:none;margin-top:8px">🚀 Open Python IDE</a></div>
+  </details>
+
+  <!-- TERMINAL -->
+  <section>
+    <div class="reveal" style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <span style="font-size:2rem;">🖥️</span>
+      <h2 class="text-neon-green">Output Terminal</h2>
+    </div>
+    <div class="reveal terminal">
+      <div class="bar">
+        <span class="dot" style="background:#f87171"></span><span class="dot" style="background:#fbbf24"></span><span class="dot" style="background:#34d399"></span>
+        <span class="lbl">~ / python restaurant.py</span>
+      </div>
+      <div class="terminal-body">
+        <div><span class="muted">$ </span><span id="tw1" class="blink-cursor"></span></div>
+        <div style="margin-top:8px;"><span class="muted">$ </span><span id="tw2"></span></div>
+      </div>
+    </div>
+    <div class="reveal" style="margin-top:32px;text-align:center;">
+      <div class="badge">
+        <span class="spin-slow text-neon-yellow">✦</span>
+        <span class="font-pixel text-neon-yellow" style="font-size:.8rem;">+50 XP · QUEST COMPLETE!</span>
+        <span class="spin-slow text-neon-yellow">✦</span>
+      </div>
+    </div>
+  </section>
+
+  <footer class="font-pixel">🎮 Coding Adventure · Level Complete 🎮</footer>
+</div>
+
+<script>
+  // Particles
+  const symbols=["{ }","</>","()","[]","#","::","λ","π","★","✦","▲","●"];
+  const colors=["text-neon","text-neon-pink","text-neon-yellow","text-neon-green"];
+  const p=document.getElementById('particles');
+  for(let i=0;i<30;i++){
+    const s=document.createElement('span');
+    s.className='particle '+colors[i%colors.length];
+    s.textContent=symbols[i%symbols.length];
+    s.style.left=Math.random()*100+'%';
+    s.style.fontSize=(10+Math.random()*18)+'px';
+    s.style.animationDelay=(Math.random()*15)+'s';
+    s.style.animationDuration=(12+Math.random()*18)+'s';
+    p.appendChild(s);
+  }
+
+  // Reveal on scroll
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');io.unobserve(e.target);}}),{threshold:.15});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  // Code highlighting
+  const code=`# ১. রেস্তোরাঁর একটি খালি নকশা বা ক্লাস তৈরি করলাম
+class Restaurant:
+    pass
+
+
+# ২. প্রথম রেস্তোরাঁর অবজেক্ট তৈরি এবং তথ্য যোগ করা
+shop1 = Restaurant()
+shop1.name = "Burger House"
+shop1.food = "Burger"
+
+
+# ৩. দ্বিতীয় রেস্তোরাঁর অবজেক্ট তৈরি এবং তথ্য যোগ করা
+shop2 = Restaurant()
+shop2.name = "Pizza Paradise"
+shop2.food = "Pizza"
+
+
+# ৪. এবার সরাসরি স্ক্রিনে প্রিন্ট করার পালা
+print("🏪 রেস্তোরাঁ ১:", shop1.name, "-> 🍔 খাবার:", shop1.food)
+print("🏪 রেস্তোরাঁ ২:", shop2.name, "-> 🍕 খাবার:", shop2.food)`;
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function hl(line){
+    if(line.trim().startsWith('#')) return '<span class="cm">'+esc(line)+'</span>';
+    let h=esc(line);
+    h=h.replace(/"([^"]*)"/g,'<span class="str">"$1"</span>');
+    h=h.replace(/\b(class|pass)\b/g,'<span class="kw">$1</span>');
+    h=h.replace(/\b(print)\b/g,'<span class="fn">$1</span>');
+    h=h.replace(/\b(Restaurant)\b/g,'<span class="cls">$1</span>');
+    h=h.replace(/\b(shop\d)\b/g,'<span class="var">$1</span>');
+    h=h.replace(/(\.name|\.food)/g,'<span class="attr">$1</span>');
+    return h;
+  }
+  document.getElementById('codeblock').innerHTML=code.split('\n').map((l,i)=>
+    '<div class="ln"><span class="num">'+(i+1)+'</span><span style="flex:1;">'+(hl(l)||'&nbsp;')+'</span></div>'
+  ).join('');
+
+  // Typewriter
+  function typewriter(el,text,delay=0){
+    let i=0;
+    setTimeout(()=>{
+      const id=setInterval(()=>{
+        i++;el.textContent=text.slice(0,i);
+        if(i>=text.length){clearInterval(id);el.classList.add('blink-cursor');}
+      },35);
+    },delay);
+  }
+  const t1=document.getElementById('tw1');
+  const t2=document.getElementById('tw2');
+  const tio=new IntersectionObserver(es=>es.forEach(e=>{
+    if(e.isIntersecting){
+      t1.classList.remove('blink-cursor');
+      typewriter(t1,"🏪 রেস্তোরাঁ ১: Burger House -> 🍔 খাবার: Burger");
+      typewriter(t2,"🏪 রেস্তোরাঁ ২: Pizza Paradise -> 🍕 খাবার: Pizza",2200);
+      tio.disconnect();
+    }
+  }),{threshold:.5});
+  tio.observe(t1);
+</script>
+</body>
+</html>
