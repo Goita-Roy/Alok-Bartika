@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import {
   Crown, Medal, Search, Trophy, GraduationCap, Briefcase, Star, Bell,
   RefreshCw, X, ChevronLeft, ChevronRight, Clock, Calendar,
-  FileText, Award, BarChart3, School, Zap,
+  FileText, Award, BarChart3, School,
 } from 'lucide-react'
 import { useLeaderboardData, type LeaderboardEntry } from '../hooks/useLeaderboardData'
 import { useAuth } from '../context/AuthContext'
@@ -207,7 +207,7 @@ function StudentModal({ entry, onClose }: { entry: LeaderboardEntry; onClose: ()
         {/* --- stats grid --- */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { icon: <Zap size={16} />, label: 'XP', value: toBnDigits(entry.xp.toLocaleString('en-US')), color: 'var(--color-accent)' },
+            { label: 'স্কোর', value: toBnDigits(entry.xp.toLocaleString('en-US')), color: 'var(--color-accent)' },
             { icon: <FileText size={16} />, label: 'পরীক্ষার স্কোর', value: `${toBnDigits(entry.examMarks)}/${toBnDigits(100)}`, color: '#6366F1' },
             { icon: <Award size={16} />, label: 'ব্যাজ', value: toBnDigits(entry.badgesCount), color: '#D97706' },
             { icon: <BarChart3 size={16} />, label: 'অগ্রগতি', value: `${toBnDigits(entry.progressPercentage)}%`, color: '#EC4899' },
@@ -449,7 +449,7 @@ export function LeaderboardPage() {
             {profileEntry && (
               <div className="flex items-center gap-5 mt-1.5">
                 <span className="text-sm flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.75)' }}>⭐ {getLevelLabel(profileEntry)}</span>
-                <span className="text-sm flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.75)' }}>🔥 {toBnDigits(profileEntry.xp.toLocaleString('en-US'))} XP</span>
+                <span className="text-sm flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.75)' }}>{toBnDigits(profileEntry.xp.toLocaleString('en-US'))} স্কোর</span>
               </div>
             )}
           </div>
@@ -474,7 +474,7 @@ export function LeaderboardPage() {
           { icon: <Trophy size={24} />, label: 'মোট শিক্ষার্থী', value: toBnDigits(totalCount.toLocaleString('en-US')), color: '#065F46', bg: '#ECFDF5' },
           { icon: <Medal size={24} />, label: 'আপনার র‍্যাঙ্ক', value: profileEntry ? `#${toBnDigits(profileEntry.rank)}` : '—', color: '#D97706', bg: '#FFFBEB' },
           { icon: <Award size={24} />, label: 'অর্জিত ব্যাজ', value: profileEntry ? toBnDigits(profileEntry.badgesCount) : toBnDigits(0), color: '#7C3AED', bg: '#F5F3FF' },
-          { icon: <Zap size={24} />, label: 'মোট XP', value: profileEntry ? toBnDigits(profileEntry.xp.toLocaleString('en-US')) : toBnDigits(0), color: '#0F766E', bg: '#F0FDF4' },
+          { label: 'মোট স্কোর', value: profileEntry ? toBnDigits(profileEntry.xp.toLocaleString('en-US')) : toBnDigits(0), color: '#0F766E', bg: '#F0FDF4' },
         ].map(card => (
           <div key={card.label}
             className="rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1.5 cursor-default"
@@ -582,7 +582,7 @@ export function LeaderboardPage() {
                 <p className="text-xs mt-0.5 truncate opacity-70">
                   {getLevelLabel(s)}{s.school ? ` · ${s.school}` : ''}
                 </p>
-                <p className="text-lg font-black mt-2">{toBnDigits(s.xp.toLocaleString('en-US'))} XP</p>
+                <p className="text-lg font-black mt-2">{toBnDigits(s.xp.toLocaleString('en-US'))} স্কোর</p>
               </div>
             )
           })}
