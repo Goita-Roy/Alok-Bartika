@@ -4,16 +4,21 @@ import { useTheme } from '../../context/ThemeContext'
 import { useAuth } from '../../context/AuthContext'
 import type { ReactNode } from 'react'
 import {
-  LayoutDashboard, Users, BookOpen, BarChart3, Settings,
+  LayoutDashboard, Users, BookOpen, FileText, ClipboardList,
+  MessageSquare, Megaphone, BarChart3, UserCog,
   LogOut, Menu, X, Moon, Sun, ChevronDown, Shield,
 } from 'lucide-react'
 
 const navItems = [
-  { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/admin/users',     label: 'Users',     icon: Users },
-  { to: '/admin/courses',   label: 'Courses',   icon: BookOpen },
-  { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
-  { to: '/admin/settings',  label: 'Settings',  icon: Settings },
+  { to: '/admin/dashboard',  label: 'Dashboard',                icon: LayoutDashboard },
+  { to: '/admin/students',   label: 'Student Management',       icon: Users },
+  { to: '/admin/courses',    label: 'Course Management',        icon: BookOpen },
+  { to: '/admin/lessons',    label: 'Lesson Management',        icon: FileText },
+  { to: '/admin/questions',  label: 'Question & Exam Management', icon: ClipboardList },
+  { to: '/admin/support',    label: 'Student Support',          icon: MessageSquare },
+  { to: '/admin/notices',    label: 'Notice Management',        icon: Megaphone },
+  { to: '/admin/analytics',  label: 'Analytics',                icon: BarChart3 },
+  { to: '/admin/settings',   label: 'Profile & Settings',       icon: UserCog },
 ]
 
 interface AdminLayoutProps {
