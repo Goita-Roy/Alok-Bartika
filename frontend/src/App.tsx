@@ -20,6 +20,14 @@ import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage'
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage'
 import { SuperAdminLoginPage } from './pages/super-admin/SuperAdminLoginPage'
 import { SuperAdminDashboardPage } from './pages/super-admin/SuperAdminDashboardPage'
+import { SuperAdminAdminsPage } from './pages/super-admin/SuperAdminAdminsPage'
+import { SuperAdminUsersPage } from './pages/super-admin/SuperAdminUsersPage'
+import { SuperAdminRolesPage } from './pages/super-admin/SuperAdminRolesPage'
+import { SuperAdminPlatformPage } from './pages/super-admin/SuperAdminPlatformPage'
+import { SuperAdminSecurityPage } from './pages/super-admin/SuperAdminSecurityPage'
+import { SuperAdminAnalyticsPage } from './pages/super-admin/SuperAdminAnalyticsPage'
+import { SuperAdminBackupPage } from './pages/super-admin/SuperAdminBackupPage'
+import { SuperAdminProfilePage } from './pages/super-admin/SuperAdminProfilePage'
 import { CourseListPage } from './pages/CourseListPage'
 import { LessonViewPage } from './pages/LessonViewPage'
 import { TestPage } from './pages/TestPage'
@@ -229,6 +237,14 @@ export default function App() {
         {/* Super admin routes - standalone, no student/admin Layout wrapper */}
         <Route path="/super-admin/login" element={<SuperAdminLoginPage />} />
         <Route path="/super-admin/dashboard" element={<SuperAdminDashboardPage />} />
+        <Route path="/super-admin/admins" element={<SuperAdminAdminsPage />} />
+        <Route path="/super-admin/users" element={<SuperAdminUsersPage />} />
+        <Route path="/super-admin/roles" element={<SuperAdminRolesPage />} />
+        <Route path="/super-admin/platform" element={<SuperAdminPlatformPage />} />
+        <Route path="/super-admin/security" element={<SuperAdminSecurityPage />} />
+        <Route path="/super-admin/analytics" element={<SuperAdminAnalyticsPage />} />
+        <Route path="/super-admin/backup" element={<SuperAdminBackupPage />} />
+        <Route path="/super-admin/profile" element={<SuperAdminProfilePage />} />
 
         {/* Everything else - wrapped in student Layout */}
         <Route path="/*" element={<Layout><StudentRoutes /></Layout>} />
