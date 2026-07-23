@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
-import axios from 'axios'
-import { API_BASE_URL } from '../config/api'
+import api from '../config/api'
 
 interface User {
   id: string
@@ -28,9 +27,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const setAuthHeader = useCallback((t: string | null) => {
     if (t) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${t}`
+      api.defaults.headers.common['Authorization'] = `Bearer ${t}`
     } else {
-      delete axios.defaults.headers.common['Authorization']
+      delete api.defaults.headers.common['Authorization']
     }
   }, [])
 
@@ -48,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const fetchUser = async () => {
       try {
-        const { data } = await axios.get(`${API_BASE_URL}/auth/me`)
+        const { data } = await api.get('/auth/me')
         setUser(data.user)
       } catch (error) {
         console.error('Failed to fetch user', error)

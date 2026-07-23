@@ -11,12 +11,12 @@ export function XPProgressCard({ totalXP, level, currentLevelXP, nextLevelXP }: 
       <div className="flex flex-col gap-5">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-sm font-bold text-white/70 mb-1" style={{ fontFamily: "'Hind Siliguri', sans-serif" }}>মোট Score</p>
+            <p className="text-sm font-bold text-white/70 mb-1" style={{ fontFamily: "'Hind Siliguri', sans-serif" }}>মোট স্কোর</p>
             <h2 className="text-5xl font-black text-white tracking-tight">{totalXP.toLocaleString()}</h2>
           </div>
           <div className="px-4 py-2 rounded-full text-sm font-black text-white"
             style={{ backgroundColor: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(4px)', border: '1.5px solid rgba(255,255,255,0.25)' }}>
-            Level {level}
+            লেভেল {level}
           </div>
         </div>
         <div className="space-y-2">
@@ -29,7 +29,7 @@ export function XPProgressCard({ totalXP, level, currentLevelXP, nextLevelXP }: 
               {Math.round(progress)}% সম্পন্ন
             </span>
             <span className="text-white/80 font-semibold" style={{ fontFamily: "'Hind Siliguri', sans-serif" }}>
-              {remaining.toLocaleString()} Score বাকি → Level {level + 1}
+              {remaining.toLocaleString()} স্কোর বাকি → লেভেল {level + 1}
             </span>
           </div>
         </div>

@@ -8,16 +8,7 @@ const {
   getAllUsers,
   deleteUserById,
 } = require('../controllers/userController')
-const { protect } = require('../middleware/auth')
-
-// Helper for role check
-const requireRole = (role) => (req, res, next) => {
-  if (req.user && req.user.role === role) {
-    next()
-  } else {
-    res.status(403).json({ message: 'Forbidden: Insufficient permissions' })
-  }
-}
+const { protect, requireAdmin } = require('../middleware/auth')
 
 // Protect all routes
 router.use(protect)
@@ -28,7 +19,7 @@ router.put('/me', updateProfile)
 router.delete('/me', deleteProfile)
 
 // Admin only routes
-router.get('/', requireRole('admin'), getAllUsers)
-router.delete('/:id', requireRole('admin'), deleteUserById)
+router.get('/', requireAdmin, getAllUsers)
+router.delete('/:id', requireAdmin, deleteUserById)
 
 module.exports = { userRouter: router }

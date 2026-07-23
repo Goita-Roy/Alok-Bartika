@@ -7,15 +7,15 @@ const {
   updateCourse,
   deleteCourse
 } = require('../controllers/courseController')
-const { protect, requireRole } = require('../middleware/auth')
+const { protect, requireAdmin } = require('../middleware/auth')
 
 // Public routes
 router.get('/', getAllCourses)
 router.get('/:id', getCourseById)
 
 // Admin only routes
-router.post('/', protect, requireRole('admin'), createCourse)
-router.put('/:id', protect, requireRole('admin'), updateCourse)
-router.delete('/:id', protect, requireRole('admin'), deleteCourse)
+router.post('/', protect, requireAdmin, createCourse)
+router.put('/:id', protect, requireAdmin, updateCourse)
+router.delete('/:id', protect, requireAdmin, deleteCourse)
 
 module.exports = { courseRouter: router }

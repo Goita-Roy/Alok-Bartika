@@ -547,7 +547,7 @@ export function CourseListPage() {
           { label: 'শিক্ষানবিশ',  key: 'beginner' as Level,     done: completedLevels.includes('beginner'),     unlocked: true },
           { label: 'মধ্যবর্তী',   key: 'intermediate' as Level, done: completedLevels.includes('intermediate'), unlocked: isIntermediateUnlocked },
           { label: 'উন্নত',       key: 'advanced' as Level,     done: completedLevels.includes('advanced'),     unlocked: isAdvancedUnlocked },
-          { label: 'IDE',         key: null,                    done: false,                                    unlocked: true },
+          { label: 'প্র্যাকটিস',         key: null,                    done: false,                                    unlocked: true },
         ].map((step, i, arr) => {
           const isActive = step.key !== null && activeTab === step.key
           const isClickable = step.key !== null && step.unlocked
@@ -597,7 +597,7 @@ export function CourseListPage() {
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             {beginnerLessons.map((lesson, idx) => {
-              const slugId = lessonClasses[idx]?.id ?? lesson._id
+              const slugId = lesson.slug || lessonClasses[idx]?.id || lesson._id
               return (
               <ClassCard
                 key={slugId} id={slugId} title={lesson.title}
@@ -637,7 +637,7 @@ export function CourseListPage() {
                   </div>
               ) : (
                 <Link
-                  to="/exam/beginner"
+                  to="/exam/beginner?autoStart=true"
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-sm transition-all hover:scale-105"
                   style={{ backgroundColor: C.accent, color: '#fff', boxShadow: '0 0 16px rgba(29,158,117,0.25)' }}
                 >

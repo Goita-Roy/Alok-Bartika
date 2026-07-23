@@ -11,7 +11,7 @@ const {
   createExam,
   updateExam,
 } = require('../controllers/examController')
-const { protect } = require('../middleware/auth')
+const { protect, requireAdmin } = require('../middleware/auth')
 
 // Student routes
 router.get('/level/:level', protect, getExamByLevel)
@@ -24,7 +24,7 @@ router.get('/:examId/attempts', protect, getUserExamAttempts)
 router.get('/:examId/review', protect, getExamReview)
 
 // Admin routes
-router.post('/', protect, createExam)
-router.put('/:examId', protect, updateExam)
+router.post('/', protect, requireAdmin, createExam)
+router.put('/:examId', protect, requireAdmin, updateExam)
 
 module.exports = { examRouter: router }

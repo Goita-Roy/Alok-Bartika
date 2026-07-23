@@ -3,7 +3,7 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen, ChevronRight,
-  ArrowLeft, X, Lock, FileText, Trash2, Download, Edit3, Search,
+  ArrowLeft, X, Lock, FileText, Trash2, Download, Edit3, Search, CheckCircle2,
 } from "lucide-react";
 import { lessonClasses } from "../../components/beginner-content/lessonConfig";
 import { classComponents } from "./BeginnerClassPage";
@@ -89,7 +89,7 @@ function saveNotes(notes: NotesMap) {
 }
 
 // ── Class Card ──
-function ClassCard({ cls, index, onSelect, isLocked, onLockedClick }: { cls: typeof lessonClasses[0]; index: number; onSelect: (id: string) => void; isLocked: boolean; onLockedClick: () => void }) {
+function ClassCard({ cls, index, onSelect, isLocked, isCompleted, onLockedClick }: { cls: typeof lessonClasses[0]; index: number; onSelect: (id: string) => void; isLocked: boolean; isCompleted?: boolean; onLockedClick: () => void }) {
   const P = useP();
   return (
     <motion.button
@@ -99,8 +99,8 @@ function ClassCard({ cls, index, onSelect, isLocked, onLockedClick }: { cls: typ
       transition={{ delay: index * 0.05 }}
       className="group relative w-full text-left overflow-hidden rounded-2xl border transition-all duration-300"
       style={{
-        background: "rgba(255,255,255,0.06)",
-        borderColor: P.border,
+        background: isCompleted ? "rgba(15, 118, 110, 0.22)" : "rgba(255,255,255,0.06)",
+        borderColor: isCompleted ? P.accent : P.border,
         backdropFilter: "blur(12px)",
         opacity: isLocked ? 0.5 : 1,
         cursor: isLocked ? "not-allowed" : "pointer",
@@ -112,7 +112,7 @@ function ClassCard({ cls, index, onSelect, isLocked, onLockedClick }: { cls: typ
         (e.currentTarget as HTMLElement).style.boxShadow = `0 0 24px ${P.accent}30`;
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.borderColor = P.border;
+        (e.currentTarget as HTMLElement).style.borderColor = isCompleted ? P.accent : P.border;
         (e.currentTarget as HTMLElement).style.boxShadow = "none";
       }}
     >
@@ -122,11 +122,15 @@ function ClassCard({ cls, index, onSelect, isLocked, onLockedClick }: { cls: typ
             <span
               className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black"
               style={{
-                background: isLocked ? "rgba(255,255,255,0.05)" : `linear-gradient(135deg, ${P.accent}33, ${P.light}22)`,
-                color: isLocked ? P.muted : P.accent,
+                background: isLocked
+                  ? "rgba(255,255,255,0.05)"
+                  : isCompleted
+                  ? P.accent
+                  : `linear-gradient(135deg, ${P.accent}33, ${P.light}22)`,
+                color: isLocked ? P.muted : isCompleted ? "#FFFFFF" : P.accent,
               }}
             >
-              {isLocked ? <Lock size={16} /> : index + 1}
+              {isLocked ? <Lock size={16} /> : isCompleted ? <CheckCircle2 size={18} /> : index + 1}
             </span>
             <h3 className="text-base font-bold leading-snug" style={{ color: isLocked ? P.muted : P.text }}>
               {cls.title}
@@ -751,6 +755,7 @@ export default function BeginnerCoursePage() {
                           index={idx}
                           onSelect={handleSelectClass}
                           isLocked={lessonStates[cls.id] === 'locked'}
+                          isCompleted={lessonStates[cls.id] === 'completed'}
                           onLockedClick={() => setShowLockedToast(true)}
                         />
                       ))}

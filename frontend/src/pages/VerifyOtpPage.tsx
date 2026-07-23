@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import axios from 'axios'
-import { API_BASE_URL } from '../config/api'
+import api from '../config/api'
 import { Shield, CheckCircle2, ArrowLeft, RefreshCw } from 'lucide-react'
 
 const inputCls = "block w-full text-center font-black outline-none transition-all duration-200 rounded-xl"
@@ -57,7 +56,7 @@ export function VerifyOtpPage() {
     if (otpCode.length !== 6) { setError('অনুগ্রহ করে সম্পূর্ণ 6-ডিজিটের OTP দিন'); return }
     setLoading(true); setError(''); setSuccess('')
     try {
-      const { data } = await axios.post(`${API_BASE_URL}/auth/verify-otp`, { email, otp: otpCode })
+      const { data } = await api.post('/auth/verify-otp', { email, otp: otpCode })
       sessionStorage.setItem('resetToken', data.resetToken)
       navigate(`/reset-password?email=${encodeURIComponent(email)}`)
     } catch (err: any) {
@@ -70,7 +69,7 @@ export function VerifyOtpPage() {
   const handleResend = async () => {
     setResending(true); setError(''); setSuccess('')
     try {
-      await axios.post(`${API_BASE_URL}/auth/forgot-password`, { email })
+      await api.post('/auth/forgot-password', { email })
       setSuccess('আপনার ইমেইলে একটি নতুন OTP পাঠানো হয়েছে।')
       setOtp(['', '', '', '', '', ''])
       inputRefs.current[0]?.focus()

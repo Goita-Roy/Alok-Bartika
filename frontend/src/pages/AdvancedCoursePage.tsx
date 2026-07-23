@@ -445,7 +445,7 @@ export function AdvancedCoursePage() {
   const advCourse = advCoursesData?.data?.find((c: any) => c.level === 'advanced')
 
   const {
-    completedClassIds, isLessonUnlocked, markClassComplete, completeLevel, getLevelProgress, saveLastVisited, apiLoaded,
+    completedClassIds, isLessonUnlocked, markClassComplete, completeLevel, getLevelProgress, saveLastVisited, apiLoaded, completedLevels,
   } = useCourseProgress(classesByLevel, lessonIds)
 
   const lessonStates: Record<string, 'locked' | 'unlocked' | 'completed'> = {}
@@ -818,7 +818,16 @@ export function AdvancedCoursePage() {
 
                       {/* Next */}
                       {isLastLesson ? (
-                        isAdvancedCompleted ? (
+                        completedLevels?.includes('advanced') ? (
+                          <Link
+                            to="/exam-review/advanced"
+                            className="flex flex-col items-end gap-1 px-5 py-3 rounded-xl font-bold text-sm transition-all duration-200 hover:scale-105"
+                            style={{ backgroundColor: 'rgba(101,209,178,0.10)', color: S.accent, border: `1px solid ${S.accent}` }}
+                          >
+                            <span>✅ পরীক্ষায় পাস করেছে</span>
+                            <span className="text-xs underline">পর্যালোচনা</span>
+                          </Link>
+                        ) : isAdvancedCompleted ? (
                           <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}

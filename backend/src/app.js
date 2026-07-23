@@ -20,6 +20,9 @@ const { examRouter } = require('./routes/examRoutes')
 const { projectRouter } = require('./routes/projectRoutes')
 const { notificationRouter } = require('./routes/notificationRoutes')
 const { practiceRouter } = require('./routes/practiceRoutes')
+const { adminRouter } = require('./routes/adminRoutes')
+const { studentRouter } = require('./routes/studentRoutes')
+const { adminDashboardRouter } = require('./routes/adminDashboardRoutes')
 
 function createApp() {
   const app = express()
@@ -65,6 +68,9 @@ function createApp() {
   app.use('/api/projects', projectRouter)
   app.use('/api/notifications', notificationRouter)
   app.use('/api/practice', practiceRouter)
+  app.use('/api/admins', adminRouter)
+  app.use('/api/students', studentRouter)
+  app.use('/api/admin/dashboard', adminDashboardRouter)
 
   app.use((_req, res) => {
     res.status(404).json({ message: 'Not found' })

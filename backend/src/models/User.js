@@ -119,7 +119,7 @@ const userSchema = new mongoose.Schema(
     // Platform State
     role: {
       type: String,
-      enum: ['student', 'teacher', 'parent', 'admin'],
+      enum: ['student', 'teacher', 'parent', 'admin', 'super-admin'],
       default: 'student',
     },
 
@@ -141,6 +141,10 @@ const userSchema = new mongoose.Schema(
     isVerified: {
       type: Boolean,
       default: false,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
     },
 
     // Password Reset (OTP)

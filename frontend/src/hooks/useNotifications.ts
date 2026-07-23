@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import axios from 'axios'
-import { API_BASE_URL } from '../config/api'
+import api from '../config/api'
 
 export interface NotificationItem {
   _id: string
@@ -42,8 +41,8 @@ export function useNotifications(enabled: boolean) {
       isLoadMore ? setLoadingMore(true) : setLoading(true)
       try {
         const skip = isLoadMore ? skipRef.current : 0
-        const { data } = await axios.get<NotificationsResponse>(
-          `${API_BASE_URL}/notifications?limit=${limit}&skip=${skip}`,
+        const { data } = await api.get<NotificationsResponse>(
+          `/notifications?limit=${limit}&skip=${skip}`,
         )
         if (isLoadMore) {
           setItems((prev) => [...prev, ...data.notifications])
@@ -66,7 +65,7 @@ export function useNotifications(enabled: boolean) {
   const markAsRead = useCallback(
     async (id: string) => {
       try {
-        await axios.patch(`${API_BASE_URL}/notifications/${id}/read`)
+        await api.patch(`/notifications/${id}/read`)
         setItems((prev) =>
           prev.map((n) => (n._id === id ? { ...n, read: true } : n)),
         )
@@ -80,7 +79,7 @@ export function useNotifications(enabled: boolean) {
 
   const markAllAsRead = useCallback(async () => {
     try {
-      await axios.patch(`${API_BASE_URL}/notifications/read-all`)
+      await api.patch('/notifications/read-all')
       setItems((prev) => prev.map((n) => ({ ...n, read: true })))
       setUnreadCount(0)
     } catch {
@@ -90,7 +89,7 @@ export function useNotifications(enabled: boolean) {
 
   const remove = useCallback(async (id: string) => {
     try {
-      await axios.delete(`${API_BASE_URL}/notifications/${id}`)
+      await api.delete(`/notifications/${id}`)
       setItems((prev) => {
         const target = prev.find((n) => n._id === id)
         if (target && !target.read) {

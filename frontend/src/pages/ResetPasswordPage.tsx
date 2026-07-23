@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import axios from 'axios'
-import { API_BASE_URL } from '../config/api'
+import api from '../config/api'
 import { Lock, Shield, CheckCircle2, Eye, EyeOff, ArrowLeft } from 'lucide-react'
 
 const inputCls = "block w-full py-3.5 rounded-xl font-medium transition-all duration-200 outline-none text-sm"
@@ -44,7 +43,7 @@ export function ResetPasswordPage() {
     if (!resetToken) { setError('সেশন শেষ হয়েছে। অনুগ্রহ করে পাসওয়ার্ড রিসেট প্রক্রিয়া আবার শুরু করুন।'); return }
     setLoading(true); setError(''); setSuccess('')
     try {
-      const { data } = await axios.post(`${API_BASE_URL}/auth/reset-password`, { email, resetToken, password })
+      const { data } = await api.post('/auth/reset-password', { email, resetToken, password })
       setSuccess(data.message)
       sessionStorage.removeItem('resetToken')
       setTimeout(() => navigate('/login'), 3000)

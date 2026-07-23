@@ -17,12 +17,12 @@ const generateUniqueUsername = async (base) => {
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret'
 
-const generateToken = (id) => {
-  return jwt.sign({ id }, JWT_SECRET, { expiresIn: '30d' })
+const generateToken = (user) => {
+  return jwt.sign({ id: user._id, userId: user._id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '30d' })
 }
 
 const userResponse = (user) => ({
-  token: generateToken(user._id),
+  token: generateToken(user),
   user: {
     id: user._id,
     fullName: user.fullName,
@@ -201,6 +201,7 @@ const loginUser = async (req, res) => {
   }
 }
 
+<<<<<<< HEAD
 // @desc    Authenticate (or auto-register) a user via Firebase Google ID token
 // @route   POST /api/auth/firebase
 const firebaseLogin = async (req, res) => {
@@ -257,11 +258,70 @@ const firebaseLogin = async (req, res) => {
         termsAccepted: true,
         role: 'student',
       })
+=======
+// @desc    Admin login — email+password with role check
+// @route   POST /api/auth/admin-login
+const adminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body
+
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' })
+    }
+
+    const identifier = String(email).trim().toLowerCase()
+    const user = await User.findOne({ email: identifier })
+
+    if (!user) {
+      return res.status(401).json({ message: 'No account found with this email' })
+    }
+
+    if (!(await user.comparePassword(password))) {
+      return res.status(401).json({ message: 'Incorrect password' })
+    }
+
+    if (user.role !== 'admin') {
+      return res.status(403).json({ code: 'NOT_ADMIN', message: 'Access denied. Admin privileges required.' })
     }
 
     res.json(userResponse(user))
   } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+// @desc    Super Admin login — email+password with role check
+// @route   POST /api/auth/super-admin-login
+const superAdminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body
+
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' })
+    }
+
+    const identifier = String(email).trim().toLowerCase()
+    const user = await User.findOne({ email: identifier })
+
+    if (!user) {
+      return res.status(401).json({ message: 'No account found with this email' })
+    }
+
+    if (!(await user.comparePassword(password))) {
+      return res.status(401).json({ message: 'Incorrect password' })
+    }
+
+    if (user.role !== 'super-admin') {
+      return res.status(403).json({ code: 'NOT_SUPER_ADMIN', message: 'Access denied. Super Admin privileges required.' })
+>>>>>>> 1dbee02a071ad2b0b2ad17a4c25a6069cc7011c1
+    }
+
+    res.json(userResponse(user))
+  } catch (error) {
+<<<<<<< HEAD
     console.error('[auth] firebase login failed:', error.message)
+=======
+>>>>>>> 1dbee02a071ad2b0b2ad17a4c25a6069cc7011c1
     res.status(500).json({ message: error.message })
   }
 }
@@ -528,7 +588,12 @@ module.exports = {
   checkAvailability,
   registerUser,
   loginUser,
+<<<<<<< HEAD
   firebaseLogin,
+=======
+  adminLogin,
+  superAdminLogin,
+>>>>>>> 1dbee02a071ad2b0b2ad17a4c25a6069cc7011c1
   getMe,
   forgotPassword,
   verifyOtp,

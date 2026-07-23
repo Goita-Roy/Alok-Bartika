@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { API_BASE_URL } from '../config/api'
 import { ArrowLeft, Award, BookOpen, CheckCircle, RefreshCw, User, Zap } from 'lucide-react'
@@ -43,12 +43,18 @@ function formatDate(dateStr: string | null): string {
   }
 }
 
+function toBnDigits(value: string | number): string {
+  const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
+  return String(value).replace(/[0-9]/g, d => bn[Number(d)])
+}
+
 function display(val: any, fallback = 'যোগ করা হয়নি'): string {
   if (val === null || val === undefined || val === '') return fallback
   return String(val)
 }
 
 export function ProfilePage() {
+  const navigate = useNavigate()
   const { token } = useAuth()
   const [data, setData] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -122,13 +128,13 @@ export function ProfilePage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-12">
-      <Link to="/dashboard"
-        className="inline-flex items-center gap-2 text-sm font-semibold transition-colors"
+      <button onClick={() => navigate('/dashboard')}
+        className="inline-flex items-center gap-2 text-sm font-semibold transition-colors cursor-pointer"
         style={{ color: 'var(--color-text-muted)' }}
         onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'var(--color-accent)'}
         onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'var(--color-text-muted)'}>
-        <ArrowLeft size={16} /> ড্যাশবোর্ডে ফিরুন
-      </Link>
+        <ArrowLeft size={16} /> ড্যাশবোর্ডে ফিরে যান
+      </button>
 
       {/* Header Card */}
       <div className="rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-5"
@@ -153,7 +159,7 @@ export function ProfilePage() {
         </div>
         <div className="sm:ml-auto flex items-center gap-3">
           <div className="text-center px-4 py-2 rounded-xl" style={{ backgroundColor: 'var(--color-accent-pale)' }}>
-            <p className="text-2xl font-black" style={{ color: 'var(--color-accent)' }}>{data.level}</p>
+            <p className="text-2xl font-black" style={{ color: 'var(--color-accent)' }}>{toBnDigits(data.level)}</p>
             <p className="text-xs font-semibold" style={{ color: 'var(--color-text-muted)' }}>লেভেল</p>
           </div>
         </div>
@@ -162,10 +168,10 @@ export function ProfilePage() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { icon: <Zap size={18} />, label: 'এক্সপি', value: data.xp?.toLocaleString() || '0' },
-          { icon: <Award size={18} />, label: 'কোর্স সম্পন্ন', value: data.completedCourses ?? 0 },
-          { icon: <BookOpen size={18} />, label: 'লেসন সম্পন্ন', value: data.completedLessons ?? 0 },
-          { icon: <User size={18} />, label: 'র‍্যাঙ্ক', value: data.leaderboardRank ? `#${data.leaderboardRank}` : '—' },
+          { icon: <Zap size={18} />, label: 'এক্সপি', value: toBnDigits(data.xp?.toLocaleString() || '0') },
+          { icon: <Award size={18} />, label: 'কোর্স সম্পন্ন', value: toBnDigits(data.completedCourses ?? 0) },
+          { icon: <BookOpen size={18} />, label: 'লেসন সম্পন্ন', value: toBnDigits(data.completedLessons ?? 0) },
+          { icon: <User size={18} />, label: 'র‍্যাঙ্ক', value: data.leaderboardRank ? `#${toBnDigits(data.leaderboardRank)}` : '—' },
         ].map(stat => (
           <div key={stat.label} className="rounded-xl p-4 text-center"
             style={{ backgroundColor: 'var(--color-surface)', border: '1.5px solid var(--color-border)' }}>

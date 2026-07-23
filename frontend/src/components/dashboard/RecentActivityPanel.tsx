@@ -21,7 +21,7 @@ export function RecentActivityPanel({ activities }: { activities: ActivityItem[]
                   <p className="text-xs" style={{ color: 'var(--color-text-muted)', fontFamily: "'Hind Siliguri', sans-serif" }}>{activity.time}</p>
                 </div>
               </div>
-              <span className="text-sm font-semibold shrink-0" style={{ color: 'var(--color-accent)' }}>+{activity.xp} XP</span>
+              <span className="text-sm font-semibold shrink-0" style={{ color: 'var(--color-accent)' }}>+{activity.xp} স্কোর</span>
             </article>
           )
         })}

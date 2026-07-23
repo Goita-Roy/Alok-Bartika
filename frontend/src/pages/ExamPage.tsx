@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { API_BASE_URL } from '../config/api'
 import { useAuth } from '../context/AuthContext'
@@ -111,7 +111,7 @@ function QuestionCard({
 }) {
   const [ideOpen, setIdeOpen] = useState(false)
   if (!q) return null
-  const tfOptions = ['সত্য (True)', 'মিথ্যা (False)']
+  const tfOptions = ['সত্য', 'মিথ্যা']
   const displayOptions = q.type === 'truefalse' ? tfOptions : (q.options ?? [])
 
   return (
@@ -132,7 +132,7 @@ function QuestionCard({
               className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded"
               style={{ backgroundColor: 'rgba(101,209,178,0.08)', color: S.muted }}
             >
-              {q.type === 'mcq' ? 'MCQ' : q.type === 'truefalse' ? 'True/False' : q.type === 'code-output' ? 'Code Output' : 'Coding'}
+              {q.type === 'mcq' ? 'এমসিকিউ' : q.type === 'truefalse' ? 'সত্য/মিথ্যা' : q.type === 'code-output' ? 'কোড আউটপুট' : 'কোডিং'}
             </span>
             <span className="text-[10px] font-bold" style={{ color: S.muted }}>{q.points} pts</span>
           </div>
@@ -180,12 +180,12 @@ function QuestionCard({
       {/* Code output — text input */}
       {q.type === 'code-output' && (
         <div>
-          <p className="text-xs font-bold mb-2" style={{ color: S.muted }}>কোডটি রান করলে কী output আসবে?</p>
+          <p className="text-xs font-bold mb-2" style={{ color: S.muted }}>কোডটি রান করলে কী আউটপুট আসবে?</p>
           <input
             type="text"
             value={answer || ''}
             onChange={e => onAnswer(e.target.value)}
-            placeholder="Output এখানে লিখুন..."
+            placeholder="আউটপুট এখানে লিখুন..."
             className="w-full px-4 py-3 rounded-xl text-sm font-mono outline-none"
             style={{
               backgroundColor: 'rgba(101,209,178,0.05)',
@@ -201,7 +201,7 @@ function QuestionCard({
         <div className="flex flex-col gap-3">
           {q.starterCode && (
             <div>
-              <p className="text-xs font-bold mb-2" style={{ color: S.muted }}>শুরুর কোড (Starter Code):</p>
+              <p className="text-xs font-bold mb-2" style={{ color: S.muted }}>শুরুর কোড:</p>
               <pre
                 className="p-4 rounded-xl text-sm font-mono overflow-x-auto"
                 style={{ backgroundColor: 'rgba(4,52,44,0.8)', color: S.accent, border: '1px solid rgba(101,209,178,0.12)' }}
@@ -361,7 +361,7 @@ function ResultScreen({
           </div>
 
           <p className="text-xs font-bold" style={{ color: S.muted }}>
-            পাসের নম্বর: {result.passingScore}% · +{result.xpAwarded} XP অর্জিত
+            পাসের নম্বর: {result.passingScore}% · +{result.xpAwarded} স্কোর অর্জিত
           </p>
         </div>
 
@@ -397,7 +397,7 @@ function ResultScreen({
               {LEVEL_LABELS[nextLevel]} লেভেল আনলক হয়েছে!
             </p>
             <Link
-              to="/courses"
+              to={`/courses?level=${nextLevel}`}
               className="inline-flex items-center gap-2 mt-3 px-6 py-2.5 rounded-xl font-black text-sm transition-all hover:scale-105"
               style={{ backgroundColor: S.accent, color: '#04342C' }}
             >
@@ -522,6 +522,7 @@ export function ExamPage() {
   const { level } = useParams<{ level: string }>()
   const navigate = useNavigate()
   const { token } = useAuth()
+  const [searchParams] = useSearchParams()
 
   // Wire into the shared progress system so passing the exam unlocks the next level
   const { completeLevel, markExamPassed } = useCourseProgress(
@@ -529,7 +530,7 @@ export function ExamPage() {
     []
   )
 
-  const [examStarted, setExamStarted] = useState(false)
+  const [examStarted, setExamStarted] = useState(searchParams.get('autoStart') === 'true')
   const [answers, setAnswers] = useState<Record<number, any>>({})
   const [currentQ, setCurrentQ] = useState(0)
   const [secondsLeft, setSecondsLeft] = useState(0)
@@ -556,27 +557,27 @@ export function ExamPage() {
     queryKey: ['exam-level', level],
     queryFn: async () => {
       if (!token) throw new Error('Not authenticated')
-      const res = await fetch(`${API_BASE_URL}/exams/level/${level}`, {
+      
+      const apiUrl = `${API_BASE_URL}/exams/level/${level}`;
+      
+      const res = await fetch(apiUrl, {
         headers: { Authorization: `Bearer ${token}` },
       })
+      
       if (!res.ok) {
-        // Surface a locked-exam signal (HTTP 403) to the UI so it can show a
-        // friendly message and redirect to the previous level.
         if (res.status === 403) {
-          let requiredLevel = null
-          try {
-            const body = await res.json()
-            requiredLevel = body.requiredLevel || null
-          } catch { /* ignore parse errors */ }
-          const err = new Error('পরীক্ষা লক করা') as Error & { code?: string; requiredLevel?: string | null }
-          err.code = 'EXAM_LOCKED'
-          err.requiredLevel = requiredLevel
+          let body: any = {}
+          try { body = await res.json() } catch { /* ignore parse errors */ }
+          const err = new Error(body.code === 'EXAM_ALREADY_PASSED' ? 'আপনি ইতিমধ্যেই এই পরীক্ষায় পাস করেছেন' : 'পরীক্ষা লক করা') as Error & { code?: string; requiredLevel?: string | null }
+          err.code = body.code || 'EXAM_LOCKED'
+          err.requiredLevel = body.requiredLevel || null
           throw err
         }
-          throw new Error('পরীক্ষা পাওয়া যায়নি')
+        throw new Error('পরীক্ষা পাওয়া যায়নি')
 
       }
-      return res.json()
+      const data = await res.json();
+      return data;
     },
     enabled: !!token && !!level,
   })
@@ -702,7 +703,38 @@ export function ExamPage() {
     // Distinguish a progression-locked exam (HTTP 403) from a genuine error.
     const lockedErr = error as (Error & { code?: string; requiredLevel?: string | null }) | null
     const isLocked = lockedErr?.code === 'EXAM_LOCKED'
+    const alreadyPassed = lockedErr?.code === 'EXAM_ALREADY_PASSED'
     const prevLevel = lockedErr?.requiredLevel
+
+    if (alreadyPassed) {
+      return (
+        <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: S.bg }}>
+          <div className="text-center space-y-5 max-w-md">
+            <div className="text-5xl">✅</div>
+            <p className="font-black text-lg" style={{ color: S.text }}>আপনি ইতিমধ্যেই এই চূড়ান্ত পরীক্ষায় পাস করেছেন</p>
+            <p className="text-sm font-semibold" style={{ color: S.muted }}>
+              আপনি ইতিমধ্যে এই লেভেলের চূড়ান্ত পরীক্ষায় উত্তীর্ণ হয়েছেন। আপনি পরবর্তী লেভেলে যেতে পারেন বা আপনার ফলাফল পর্যালোচনা করতে পারেন।
+            </p>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <Link
+                to={`/exam/${level}/review`}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl font-black text-sm"
+                style={{ backgroundColor: S.accent, color: '#04342C' }}
+              >
+                ফলাফল পর্যালোচনা করুন
+              </Link>
+              <Link
+                to="/courses"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm"
+                style={{ color: S.accent, border: `1px solid ${S.accent}` }}
+              >
+                কোর্সে ফিরে যান
+              </Link>
+            </div>
+          </div>
+        </div>
+      )
+    }
 
     if (isLocked) {
       const prevHref = prevLevel ? `/exam/${prevLevel}` : '/courses'

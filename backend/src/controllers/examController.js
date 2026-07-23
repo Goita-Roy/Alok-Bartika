@@ -33,8 +33,18 @@ async function checkExamAccess(user, level) {
     user.completedCourses || [],
   )
 
-  const accessible = unlockedLevels.includes(level) || completedLevels.includes(level)
-  if (!accessible) {
+  // ── Already passed → never retakable ─────────────────────────────────────
+  if (completedLevels.includes(level)) {
+    return {
+      ok: false,
+      status: 403,
+      code: 'EXAM_ALREADY_PASSED',
+      message: 'You have already passed this Final Exam.',
+    }
+  }
+
+  // ── Not yet unlocked → locked ────────────────────────────────────────────
+  if (!unlockedLevels.includes(level)) {
     const prev = LEVEL_ORDER[LEVEL_ORDER.indexOf(level) - 1]
     return {
       ok: false,
@@ -235,10 +245,18 @@ async function gradeExam(exam, answers, ctx = {}) {
 const getExamByLevel = async (req, res) => {
   try {
     const { level } = req.params
+    const isReview = req.query.review === 'true'  // bypass access check for review
 
-    const access = await checkExamAccess(req.user, level)
-    if (!access.ok) {
-      return res.status(access.status).json({ message: access.message, requiredLevel: access.requiredLevel })
+    // Only enforce access control when NOT in review mode
+    if (!isReview) {
+      const access = await checkExamAccess(req.user, level)
+      if (!access.ok) {
+        return res.status(access.status).json({
+          message: access.message,
+          requiredLevel: access.requiredLevel,
+          code: access.code,
+        })
+      }
     }
 
     const exam = await Exam.findOne({ level, isActive: true })
@@ -316,7 +334,7 @@ const submitExam = async (req, res) => {
 
     const access = await checkExamAccess(user, exam.level)
     if (!access.ok) {
-      return res.status(access.status).json({ message: access.message, requiredLevel: access.requiredLevel })
+      return res.status(access.status).json({ message: access.message, requiredLevel: access.requiredLevel, code: access.code })
     }
 
     const { earnedPoints, totalPoints, percentage, passed, questionResults } = await gradeExam(

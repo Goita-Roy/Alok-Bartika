@@ -52,10 +52,50 @@ type ProgressState = {
   } | null
 }
 
+// ── LocalStorage persistence helpers ────────────────────────────────────────
+// localStorage is a fast-load cache ONLY for the current browser session.
+// MongoDB (via the /progression API) is always the source of truth.
+// Rules:
+//  - On initial mount: load from localStorage so the UI is non-blank while the
+//    API request is in flight.
+//  - On server fetch success: REPLACE localStorage with the server list.
+//    Never union/merge — stale entries must not survive a server round-trip.
+//  - On markClassComplete: optimistically add to state + localStorage so the
+//    UI reacts immediately; the following server fetch will canonicalise it.
+//  - On login / user change: clear localStorage for the old user before
+//    re-fetching so cross-device or cross-account data never bleeds through.
+
+const STORAGE_KEY_COMPLETED = 'alokbartika_completed_classes'
+
+function getLocalCompletedClassIds(): string[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_COMPLETED)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) return parsed.map(String)
+    }
+  } catch {}
+  return []
+}
+
+function saveCompletedClassIdsToLocal(ids: string[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify(ids))
+  } catch {}
+}
+
+function clearLocalCompletedClassIds() {
+  try {
+    localStorage.removeItem(STORAGE_KEY_COMPLETED)
+  } catch {}
+}
+
 // ── Initial state ────────────────────────────────────────────────────────────
 
 const EMPTY_PROGRESS: ProgressState = {
-  completedClassIds: [],
+  // Hydrate from localStorage so the UI is non-blank before the API responds.
+  // This is always overwritten with the server's canonical list on first fetch.
+  completedClassIds: getLocalCompletedClassIds(),
   completedLevels: [],
   unlockedLevels: ['beginner'],
   completedCourseIds: [],
@@ -127,16 +167,25 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const res = await fetch(`${API_BASE_URL}/progression`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-      if (!res.ok) return
+      if (!res.ok) {
+        console.error(`[fetchProgress] GET ${API_BASE_URL}/progression → status: ${res.status}`)
+        return
+      }
       const data = await res.json()
       const examAttempts: Record<string, ExamAttempt[]> = {}
       const rawAttempts = data.examAttempts || {}
       for (const [k, v] of Object.entries(rawAttempts)) {
         if (Array.isArray(v)) examAttempts[k] = v as ExamAttempt[]
       }
-      console.log('[DEBUG:fetchProgress] raw completedLessons from server:', data.completedLessons)
+      console.log('[fetchProgress] raw completedLessons from server:', data.completedLessons)
+      // Server is source of truth — replace localStorage with the canonical list.
+      // Never union with stale local data; that would let deleted/incorrect
+      // entries survive indefinitely and break multi-device consistency.
+      const serverCompleted = (data.completedLessons || []).map(String)
+      saveCompletedClassIdsToLocal(serverCompleted)
+
       setState({
-        completedClassIds: (data.completedLessons || []).map(String),
+        completedClassIds: serverCompleted,
         completedLevels: (data.completedLevels || []) as LearningLevel[],
         unlockedLevels: (data.unlockedLevels || ['beginner']) as LearningLevel[],
         completedCourseIds: (data.completedCourses || []).map(String),
@@ -158,8 +207,8 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         continueLearning: data.continueLearning || null,
       })
       setApiLoaded(true)
-    } catch {
-      // Network error — keep whatever we have (empty for first load).
+    } catch (e) {
+      console.error('[fetchProgress] network error:', e)
     } finally {
       inFlight.current = false
     }
@@ -170,8 +219,13 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // 2. refreshProgress() (mutation completion)  → just re-fetch, keep apiLoaded
   //    so pages don't briefly flash to "loading" after markClassComplete etc.
 
-  // Login / logout — reset loading flag and re-fetch
+  // Login / logout — clear stale localStorage for the previous user, reset
+  // loading flag, and re-fetch. This ensures cross-device / cross-account
+  // data never bleeds into the new session. The initial state will briefly
+  // show an empty completedClassIds, but fetchProgress fills it immediately.
   useEffect(() => {
+    clearLocalCompletedClassIds()
+    setState(prev => ({ ...prev, completedClassIds: [] }))
     setApiLoaded(false)
     fetchProgress()
   }, [fetchProgress, user?.id])
@@ -198,11 +252,11 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify(body),
           })
-          console.log('[DEBUG:callApi] POST', url, '→ status:', res.status, 'body:', body)
           if (res.ok) break
+          console.error(`[callApi] POST ${url} → status: ${res.status}`)
           if (res.status >= 400 && res.status < 500) break
         } catch (e) {
-          console.log('[DEBUG:callApi] POST', url, '→ NETWORK ERROR:', e)
+          console.error(`[callApi] POST ${url} → NETWORK ERROR:`, e)
         }
         if (attempt < maxAttempts - 1) {
           await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)))
@@ -233,6 +287,13 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const markClassComplete = useCallback(
     (classId: string, courseId?: string, skipApi = false): Promise<void> => {
+      setState(prev => {
+        if (prev.completedClassIds.includes(classId)) return prev
+        const nextCompleted = [...prev.completedClassIds, classId]
+        saveCompletedClassIdsToLocal(nextCompleted)
+        return { ...prev, completedClassIds: nextCompleted }
+      })
+
       if (skipApi) {
         refreshProgress()
         return Promise.resolve()
@@ -243,10 +304,11 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   )
 
   const completeLevel = useCallback(
-    (_level: LearningLevel) => {
-      refreshProgress()
+    (level: LearningLevel) => {
+      console.log('[ProgressContext] completeLevel called for level:', level)
+      return callApi('/progression/complete-course', { level })
     },
-    [refreshProgress]
+    [callApi]
   )
 
   const markPracticeComplete = useCallback(

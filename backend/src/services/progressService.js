@@ -106,7 +106,28 @@ async function resolveLessonId(raw) {
 // canonical slug, or null if it cannot be resolved / is invalid.
 async function normalizeLessonId(raw) {
   if (!raw) return null
-  if (typeof raw === 'string' && SLUG_RE.test(raw)) return raw
+  if (typeof raw === 'string') {
+    if (SLUG_RE.test(raw)) return raw
+
+    const classMatch = raw.match(/^class-(\d+)$/i)
+    if (classMatch) {
+      const num = parseInt(classMatch[1], 10)
+      const formatted = `class-${String(num).padStart(2, '0')}`
+      if (SLUG_RE.test(formatted)) return formatted
+    }
+
+    const interMatch = raw.match(/^intermediate-(\d+)$/i)
+    if (interMatch) {
+      const idx = parseInt(interMatch[1], 10) - 1
+      if (INTERMEDIATE_LESSON_ORDER[idx]) return `intermediate-${INTERMEDIATE_LESSON_ORDER[idx]}`
+    }
+
+    const advMatch = raw.match(/^advanced-(\d+)$/i)
+    if (advMatch) {
+      const idx = parseInt(advMatch[1], 10) - 1
+      if (ADVANCED_LESSON_ORDER[idx]) return `advanced-${ADVANCED_LESSON_ORDER[idx]}`
+    }
+  }
   // Legacy or ObjectId form -> resolve to _id -> slug.
   const id = await resolveLessonId(raw)
   if (!id) return null

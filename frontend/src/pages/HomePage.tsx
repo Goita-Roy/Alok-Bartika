@@ -1,8 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useCallback } from 'react'
 import { ArrowRight, CheckCircle, Monitor, Mic, Trophy, Bot, Smartphone, Lock, ArrowDown } from 'lucide-react'
-import axios from 'axios'
-import { API_BASE_URL } from '../config/api'
+import api from '../config/api'
 import { useAuth } from '../context/AuthContext'
 import { useCourseProgress, type LearningLevel } from '../hooks/useCourseProgress'
 
@@ -79,14 +78,14 @@ export function HomePage() {
 
   const fetchStats = useCallback(() => {
     setStatsLoading(true)
-    axios.get<{
+    api.get<{
       students: number
       totalClasses: number
       totalLessons: number
       learningStages: number
       successRate: number
       successRateAvailable: boolean
-    }>(`${API_BASE_URL}/stats`)
+    }>('/stats')
       .then(res => setStats(res.data))
       .catch(() => setStats(null))
       .finally(() => setStatsLoading(false))
@@ -100,7 +99,7 @@ export function HomePage() {
   useEffect(() => {
     if (!user) { setContinueUrl(null); return }
     let cancelled = false
-    axios.get<{ continueLearning?: { continueUrl: string; title: string | null } }>(`${API_BASE_URL}/progression`)
+    api.get<{ continueLearning?: { continueUrl: string; title: string | null } }>('/progression')
       .then(res => { if (!cancelled && res.data?.continueLearning?.continueUrl) setContinueUrl(res.data.continueLearning.continueUrl) })
       .catch(() => { if (!cancelled) setContinueUrl(null) })
     return () => { cancelled = true }
