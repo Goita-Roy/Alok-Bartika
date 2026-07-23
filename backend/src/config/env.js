@@ -1,7 +1,16 @@
 const path = require('path')
+const fs = require('fs')
 const dotenv = require('dotenv')
 
-dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') })
+const envPath = path.resolve(__dirname, '..', '..', '.env')
+
+if (!fs.existsSync(envPath)) {
+  console.error(`[env] .env file not found at: ${envPath}`)
+  console.error('[env] Copy .env.example to .env and fill in the required values:')
+  console.error(`[env]   cp backend/.env.example backend/.env`)
+}
+
+dotenv.config({ path: envPath })
 
 const env = {
   nodeEnv: process.env.NODE_ENV || 'development',

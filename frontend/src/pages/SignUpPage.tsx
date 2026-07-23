@@ -3,8 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import axios from 'axios'
 import { API_BASE_URL } from '../config/api'
-import { User, Mail, Lock, Phone, Shield, CheckCircle2, Eye, EyeOff } from 'lucide-react'
 import { GoogleButton } from '../components/GoogleButton'
+import { User, Mail, Lock, Phone, Shield, CheckCircle2, Eye, EyeOff } from 'lucide-react'
 
 const inputCls = "block w-full py-3.5 rounded-xl font-medium transition-all duration-200 outline-none text-sm"
 const inputStyle: React.CSSProperties = { backgroundColor: 'var(--color-bg)', border: '1.5px solid var(--color-border)', color: 'var(--color-text)' }
@@ -177,15 +177,15 @@ export function SignUpPage() {
                 onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-accent)'}>
                 {loading ? <span className="loading loading-spinner loading-sm" /> : (<>অ্যাকাউন্ট তৈরি করুন <CheckCircle2 size={18} /></>)}
               </button>
-
-              <div className="flex items-center gap-3 my-2">
-                <div className="flex-1 h-px" style={{ backgroundColor: 'var(--color-border)' }} />
-                <span className="text-xs font-medium" style={{ color: 'var(--color-text-muted)', fontFamily: "'Hind Siliguri', sans-serif" }}>অথবা</span>
-                <div className="flex-1 h-px" style={{ backgroundColor: 'var(--color-border)' }} />
-              </div>
-
-              <GoogleButton mode="signup" />
             </form>
+
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex-1 h-px" style={{ backgroundColor: 'var(--color-border)' }} />
+            <span className="text-xs font-bold" style={{ color: 'var(--color-text-muted)', fontFamily: "'Hind Siliguri', sans-serif" }}>অথবা</span>
+            <div className="flex-1 h-px" style={{ backgroundColor: 'var(--color-border)' }} />
+          </div>
+
+          <GoogleButton mode="signup" />
 
           <p className="mt-8 text-center text-sm font-medium" style={{ color: 'var(--color-text-muted)', fontFamily: "'Hind Siliguri', sans-serif" }}>
             ইতিমধ্যে অ্যাকাউন্ট আছে?{' '}

@@ -1,6 +1,16 @@
 import dotenv from 'dotenv'
+import path from 'path'
+import fs from 'fs'
 
-dotenv.config()
+const envPath = path.resolve(process.cwd(), '.env')
+
+if (!fs.existsSync(envPath)) {
+  console.error(`[env] .env file not found at: ${envPath}`)
+  console.error('[env] Copy .env.example to .env and fill in the required values:')
+  console.error(`[env]   cp server/.env.example server/.env`)
+}
+
+dotenv.config({ path: envPath })
 
 function bool(value: string | undefined, fallback = false): boolean {
   if (value === undefined) return fallback
@@ -32,8 +42,6 @@ export const env = {
 
   cookieSecure: bool(process.env.COOKIE_SECURE, (process.env.NODE_ENV ?? 'development') === 'production'),
   cookieSameSite: (process.env.COOKIE_SAMESITE as 'lax' | 'strict' | 'none') ?? 'lax',
-
-  googleClientId: process.env.GOOGLE_CLIENT_ID ?? '',
 
   maxLoginAttempts: Number(process.env.MAX_LOGIN_ATTEMPTS ?? '5'),
   loginLockMs: Number(process.env.LOGIN_LOCK_MS ?? String(15 * 60 * 1000)),

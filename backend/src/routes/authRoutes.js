@@ -1,8 +1,8 @@
 const express = require('express')
 const router = express.Router()
 const {
-  checkAvailability, registerUser, loginUser, getMe,
-  forgotPassword, verifyOtp, resetPassword, googleLogin,
+  checkAvailability, registerUser, loginUser, firebaseLogin, getMe,
+  forgotPassword, verifyOtp, resetPassword,
   sendSignupOtp, resendSignupOtp, verifySignupOtp,
 } = require('../controllers/authController')
 const { protect } = require('../middleware/auth')
@@ -10,7 +10,7 @@ const { protect } = require('../middleware/auth')
 router.post('/check-availability', checkAvailability)
 router.post('/register', registerUser)
 router.post('/login', loginUser)
-router.post('/google', googleLogin)
+router.post('/firebase', firebaseLogin)
 router.post('/send-otp', sendSignupOtp)
 router.post('/resend-otp', resendSignupOtp)
 router.post('/verify-otp-signup', verifySignupOtp)

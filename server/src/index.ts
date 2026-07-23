@@ -4,7 +4,10 @@ import { createApp } from './app'
 
 async function bootstrap(): Promise<void> {
   if (!env.mongoUri) {
-    throw new Error('Missing MONGO_URI in environment')
+    throw new Error(
+      'MONGO_URI is not set. Create a server/.env file (copy from server/.env.example) ' +
+      'and set MONGO_URI to your MongoDB connection string.'
+    )
   }
 
   try {

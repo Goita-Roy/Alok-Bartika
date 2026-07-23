@@ -1,12 +1,10 @@
 const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
-const { OAuth2Client } = require('google-auth-library')
 const { User } = require('../models/User')
 const { sendOtpEmail } = require('../utils/email')
 const { sendOtp, verifyOtp: verifyOtpToken } = require('../services/otpService')
 const { OTP_TTL_MS } = require('../services/otpService')
-
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || ''
+const { admin, auth } = require('../config/firebase')
 
 const generateUniqueUsername = async (base) => {
   let username = base
@@ -203,6 +201,71 @@ const loginUser = async (req, res) => {
   }
 }
 
+// @desc    Authenticate (or auto-register) a user via Firebase Google ID token
+// @route   POST /api/auth/firebase
+const firebaseLogin = async (req, res) => {
+  try {
+    const { idToken } = req.body || {}
+    if (!idToken) {
+      return res.status(400).json({ message: 'Firebase ID token is required' })
+    }
+
+    let decoded
+    try {
+      decoded = await auth.verifyIdToken(idToken)
+    } catch (err) {
+      console.error('[auth] Firebase token verification failed:', err.message)
+      return res.status(401).json({ message: 'Invalid Firebase token' })
+    }
+
+    if (!decoded || !decoded.email) {
+      return res.status(400).json({ message: 'Firebase token has no email' })
+    }
+
+    const email = decoded.email.trim().toLowerCase()
+    const firebaseUid = decoded.uid
+    const fullName = (decoded.name || email.split('@')[0]).trim()
+    const picture = decoded.picture || ''
+
+    let user = await User.findOne({ firebaseUid })
+
+    if (!user) {
+      user = await User.findOne({ email })
+    }
+
+    if (user) {
+      if (!user.firebaseUid) {
+        user.firebaseUid = firebaseUid
+        if (picture && !user.picture) user.picture = picture
+        await user.save()
+      }
+    } else {
+      const base = (email.split('@')[0] || 'user')
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, '')
+        .slice(0, 40) || 'user'
+      const username = await generateUniqueUsername(base)
+
+      user = await User.create({
+        fullName,
+        username,
+        email,
+        password: `firebase-${crypto.randomBytes(16).toString('hex')}`,
+        phone: `fb-${crypto.randomBytes(6).toString('hex')}`,
+        firebaseUid,
+        picture,
+        termsAccepted: true,
+        role: 'student',
+      })
+    }
+
+    res.json(userResponse(user))
+  } catch (error) {
+    console.error('[auth] firebase login failed:', error.message)
+    res.status(500).json({ message: error.message })
+  }
+}
+
 // @desc    Get user profile
 // @route   GET /api/auth/me
 const getMe = async (req, res) => {
@@ -325,92 +388,6 @@ const resetPassword = async (req, res) => {
 
     res.json({ message: 'Password updated successfully. You can now log in with your new password.' })
   } catch (error) {
-    res.status(500).json({ message: error.message })
-  }
-}
-
-// @desc    Authenticate (or auto-register) a user via a Google ID token
-// @route   POST /api/auth/google
-const googleLogin = async (req, res) => {
-  try {
-    if (!GOOGLE_CLIENT_ID) {
-      return res.status(500).json({ message: 'Google login is not configured' })
-    }
-
-    const { credential } = req.body || {}
-    if (!credential) {
-      return res.status(400).json({ message: 'Google credential is required' })
-    }
-
-    const client = new OAuth2Client(GOOGLE_CLIENT_ID)
-    let payload
-    try {
-      const ticket = await client.verifyIdToken({
-        idToken: credential,
-        audience: GOOGLE_CLIENT_ID,
-      })
-      payload = ticket.getPayload()
-      // verifyIdToken validates audience, issuer and expiry. Defensive re-check:
-      if (!payload || payload.aud !== GOOGLE_CLIENT_ID) {
-        return res.status(401).json({ message: 'Invalid Google token audience' })
-      }
-      if (payload.iss !== 'accounts.google.com' && payload.iss !== 'https://accounts.google.com') {
-        return res.status(401).json({ message: 'Invalid Google token issuer' })
-      }
-      if (typeof payload.exp === 'number' && payload.exp * 1000 < Date.now()) {
-        return res.status(401).json({ message: 'Expired Google token' })
-      }
-    } catch (err) {
-      console.error('[auth] google token verify failed:', err.message)
-      return res.status(401).json({ message: 'Invalid Google token' })
-    }
-
-    if (!payload || !payload.email) {
-      return res.status(400).json({ message: 'Google account has no email' })
-    }
-
-    const email = payload.email.trim().toLowerCase()
-    const fullName = (payload.name || email.split('@')[0]).trim()
-    const googleId = payload.sub
-    const picture = payload.picture || ''
-
-    let user = await User.findOne({ email })
-
-    if (user) {
-      // Existing account: log in. Link Google identity if not already linked.
-      if (!user.googleId && googleId) {
-        user.googleId = googleId
-        if (!user.authProvider || user.authProvider === 'local') user.authProvider = 'google'
-        if (picture && !user.picture) user.picture = picture
-        await user.save()
-      }
-    } else {
-      // Auto-create a new student account (no password required).
-      const base =
-        (email.split('@')[0] || 'user')
-          .toLowerCase()
-          .replace(/[^a-z0-9_]/g, '')
-          .slice(0, 40) || 'user'
-      const username = await generateUniqueUsername(base)
-      user = await User.create({
-        fullName,
-        username,
-        email,
-        // Placeholder password so the required field is satisfied; Google users
-        // never authenticate with a password.
-        password: `google-${crypto.randomBytes(16).toString('hex')}`,
-        phone: `g-${crypto.randomBytes(6).toString('hex')}`,
-        authProvider: 'google',
-        googleId,
-        picture,
-        termsAccepted: true,
-        role: 'student',
-      })
-    }
-
-    res.json(userResponse(user))
-  } catch (error) {
-    console.error('[auth] google login failed:', error.message)
     res.status(500).json({ message: error.message })
   }
 }
@@ -551,11 +528,11 @@ module.exports = {
   checkAvailability,
   registerUser,
   loginUser,
+  firebaseLogin,
   getMe,
   forgotPassword,
   verifyOtp,
   resetPassword,
-  googleLogin,
   sendSignupOtp,
   resendSignupOtp,
   verifySignupOtp,

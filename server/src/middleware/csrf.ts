@@ -34,16 +34,32 @@ export function csrfTokenIssuer(req: Request, res: Response, next: NextFunction)
   next()
 }
 
+const CSRF_EXEMPT_PATHS = [
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/refresh',
+  '/api/auth/forgot-password',
+  '/api/auth/verify-otp',
+  '/api/auth/verify-otp-signup',
+  '/api/auth/reset-password',
+  '/api/auth/send-otp',
+  '/api/auth/resend-otp',
+]
+
+function isCsrfExempt(path: string): boolean {
+  return CSRF_EXEMPT_PATHS.some((p) => path === p || path.startsWith(p + '/'))
+}
+
 /**
  * Verifies the double-submit token for state-changing requests.
- * Excludes safe methods and the token-issuing endpoint itself.
+ * Excludes safe methods and authentication bootstrap endpoints (the user
+ * has no session yet when logging in / registering, so CSRF cannot apply).
  */
 export function csrfProtection(req: Request, res: Response, next: NextFunction): void {
   if (!env.csrfEnabled) return next()
   if (!CSRF_METHODS.includes(req.method)) return next()
-  // Allow unauthenticated, non-mutating bootstrap; endpoints that truly need to
-  // be excluded (e.g. webhooks) can set req.skipCsrf = true.
   if ((req as any).skipCsrf) return next()
+  if (isCsrfExempt(req.path)) return next()
 
   const headerToken = req.headers[CSRF_TOKEN_HEADER] as string | undefined
   const cookieToken = req.cookies?.[CSRF_COOKIE]

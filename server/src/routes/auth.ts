@@ -23,7 +23,6 @@ import {
 } from '../middleware/bruteForce'
 import { getClientIp, logSecurity } from '../middleware/securityLog'
 import { loginLimiter, registerLimiter, passwordResetLimiter } from '../middleware/rateLimit'
-import { OAuth2Client } from 'google-auth-library'
 
 const ACCESS_COOKIE_OPTS = {
   httpOnly: true,
@@ -134,7 +133,7 @@ function buildAuthRouter() {
 
       setAuthCookies(res, accessToken, refreshToken)
       logSecurity({ type: 'token_refresh', userId: String(user._id), detail: 'register issued tokens' })
-      return res.status(201).json({ user: publicUser(user) })
+      return res.status(201).json({ user: publicUser(user), accessToken })
     } catch (err) {
       if ((err as Error).name === 'ValidationError') {
         return res.status(400).json({ error: 'Validation failed', fieldErrors: (err as any).fieldErrors })
@@ -187,93 +186,9 @@ function buildAuthRouter() {
       const { accessToken, refreshToken } = await issueTokens(user, meta)
       setAuthCookies(res, accessToken, refreshToken)
       logSecurity({ type: 'token_refresh', userId: String(user._id), detail: 'login issued tokens' })
-      return res.json({ user: publicUser(user) })
+      return res.json({ user: publicUser(user), accessToken })
     } catch (err) {
       console.error('[auth] login failed:', err)
-      return res.status(500).json({ error: 'Server error' })
-    }
-  })
-
-  router.post('/google', loginLimiter, async (req, res) => {
-    try {
-      if (!env.googleClientId) {
-        console.error('[auth] GOOGLE_CLIENT_ID is not configured')
-        return res.status(500).json({ error: 'Google login is not configured' })
-      }
-
-      const idToken = asString(req.body?.credential, 2000)
-      if (!idToken) return res.status(400).json({ error: 'Google credential is required' })
-
-      const client = new OAuth2Client(env.googleClientId)
-      let payload: any
-      try {
-        const ticket = await client.verifyIdToken({
-          idToken,
-          audience: env.googleClientId,
-        })
-        payload = ticket.getPayload()
-        // verifyIdToken already validates audience, issuer (accounts.google.com)
-        // and expiration; re-check explicitly for defensive clarity.
-        if (!payload || payload.aud !== env.googleClientId) {
-          return res.status(401).json({ error: 'Invalid Google token audience' })
-        }
-        if (payload.iss !== 'accounts.google.com' && payload.iss !== 'https://accounts.google.com') {
-          return res.status(401).json({ error: 'Invalid Google token issuer' })
-        }
-        if (typeof payload.exp === 'number' && payload.exp * 1000 < Date.now()) {
-          return res.status(401).json({ error: 'Expired Google token' })
-        }
-      } catch (err) {
-        console.error('[auth] google token verify failed:', err)
-        return res.status(401).json({ error: 'Invalid Google token' })
-      }
-      if (!payload || !payload.email) {
-        return res.status(400).json({ error: 'Google account has no email' })
-      }
-
-      const email = String(payload.email).toLowerCase()
-      const fullName = asString(payload.name, 120) || email.split('@')[0]
-      const googleId = asString(payload.sub, 60)
-      const picture = asString(payload.picture, 500)
-
-      let user = await User.findOne({ email })
-
-      if (user) {
-        // Existing account: log in. Link google id if not already linked.
-        if (!user.googleId && googleId) {
-          user.googleId = googleId
-          if (!user.authProvider || user.authProvider === 'local') user.authProvider = 'google'
-          await user.save()
-        }
-      } else {
-        // Auto-create a new student account.
-        const base = (email.split('@')[0] || 'user')
-          .toLowerCase()
-          .replace(/[^a-z0-9_]/g, '')
-          .slice(0, 40) || 'user'
-        let username = base
-        // Ensure username uniqueness.
-        // eslint-disable-next-line no-await-in-loop
-        while (await User.findOne({ username })) {
-          username = `${base}_${Math.random().toString(36).slice(2, 8)}`
-        }
-        user = await User.create({
-          fullName,
-          email,
-          username,
-          authProvider: 'google',
-          googleId: googleId || undefined,
-          picture: picture || undefined,
-        } as any)
-      }
-
-      const meta = { device: String(req.headers['x-device-id'] ?? ''), userAgent: req.headers['user-agent'], ip: getClientIp(req) }
-      const { accessToken, refreshToken } = await issueTokens(user as IUser, meta)
-      setAuthCookies(res, accessToken, refreshToken)
-      logSecurity({ type: 'token_refresh', userId: String(user!._id), detail: 'google issued tokens' })
-      return res.json({ user: publicUser(user as IUser) })
-    } catch (err) {
-      console.error('[auth] google failed:', err)
       return res.status(500).json({ error: 'Server error' })
     }
   })

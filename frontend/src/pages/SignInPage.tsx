@@ -134,15 +134,15 @@ export function SignInPage() {
                 onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-accent)'}>
                 {loading ? <span className="loading loading-spinner loading-sm" /> : (<>লগইন করুন <ArrowRight size={18} /></>)}
               </button>
-
-              <div className="flex items-center gap-3 my-2">
-                <div className="flex-1 h-px" style={{ backgroundColor: 'var(--color-border)' }} />
-                <span className="text-xs font-medium" style={{ color: 'var(--color-text-muted)', fontFamily: "'Hind Siliguri', sans-serif" }}>অথবা</span>
-                <div className="flex-1 h-px" style={{ backgroundColor: 'var(--color-border)' }} />
-              </div>
-
-              <GoogleButton mode="login" />
             </form>
+
+            <div className="flex items-center gap-3 my-6">
+              <div className="flex-1 h-px" style={{ backgroundColor: 'var(--color-border)' }} />
+              <span className="text-xs font-bold" style={{ color: 'var(--color-text-muted)', fontFamily: "'Hind Siliguri', sans-serif" }}>অথবা</span>
+              <div className="flex-1 h-px" style={{ backgroundColor: 'var(--color-border)' }} />
+            </div>
+
+            <GoogleButton mode="login" />
 
             <p className="mt-8 text-center text-sm font-medium" style={{ color: 'var(--color-text-muted)', fontFamily: "'Hind Siliguri', sans-serif" }}>
               অ্যাকাউন্ট নেই?{' '}

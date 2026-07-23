@@ -10,6 +10,13 @@ const userSchema = new mongoose.Schema(
       sparse: true,
       index: true,
     },
+    firebaseUid: {
+      type: String,
+      trim: true,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
 
     // Student Information
     fullName: {
@@ -117,18 +124,6 @@ const userSchema = new mongoose.Schema(
     },
 
     // Google OAuth (optional — only present for Google-created accounts)
-    authProvider: {
-      type: String,
-      enum: ['local', 'google'],
-      default: 'local',
-    },
-    googleId: {
-      type: String,
-      trim: true,
-      unique: true,
-      sparse: true,
-      index: true,
-    },
     picture: {
       type: String,
       trim: true,

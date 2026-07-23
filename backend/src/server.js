@@ -4,7 +4,10 @@ const { connectDb } = require('./config/db')
 
 async function bootstrap() {
   if (!env.mongoUri) {
-    throw new Error('Missing MONGO_URI in environment')
+    throw new Error(
+      'MONGO_URI is not set. Create a backend/.env file (copy from backend/.env.example) ' +
+      'and set MONGO_URI to your MongoDB connection string.'
+    )
   }
 
   try {
