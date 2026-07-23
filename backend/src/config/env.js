@@ -21,6 +21,7 @@ const env = {
   port: Number(process.env.PORT || 5000),
   clientOrigin,
   mongoUri,
+  allowStartWithoutDb: process.env.ALLOW_START_WITHOUT_DB === 'true',
   clerkSecretKey: process.env.CLERK_SECRET_KEY || '',
   smsProvider: process.env.SMS_PROVIDER || '',
   smsApiKey: process.env.SMS_API_KEY || '',

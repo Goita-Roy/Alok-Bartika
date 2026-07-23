@@ -201,25 +201,30 @@ const loginUser = async (req, res) => {
   }
 }
 
-<<<<<<< HEAD
 // @desc    Authenticate (or auto-register) a user via Firebase Google ID token
 // @route   POST /api/auth/firebase
 const firebaseLogin = async (req, res) => {
   try {
+    console.log('[auth][firebase] login request received')
     const { idToken } = req.body || {}
     if (!idToken) {
+      console.warn('[auth][firebase] no idToken in request body')
       return res.status(400).json({ message: 'Firebase ID token is required' })
     }
+    console.log('[auth][firebase] idToken length:', idToken.length)
 
     let decoded
     try {
+      console.log('[auth][firebase] verifying Firebase ID token...')
       decoded = await auth.verifyIdToken(idToken)
+      console.log('[auth][firebase] token verified. uid:', decoded.uid, 'email:', decoded.email)
     } catch (err) {
-      console.error('[auth] Firebase token verification failed:', err.message)
+      console.error('[auth][firebase] token verification FAILED:', err.message)
       return res.status(401).json({ message: 'Invalid Firebase token' })
     }
 
     if (!decoded || !decoded.email) {
+      console.warn('[auth][firebase] decoded token has no email')
       return res.status(400).json({ message: 'Firebase token has no email' })
     }
 
@@ -227,20 +232,25 @@ const firebaseLogin = async (req, res) => {
     const firebaseUid = decoded.uid
     const fullName = (decoded.name || email.split('@')[0]).trim()
     const picture = decoded.picture || ''
+    console.log('[auth][firebase] looking up user by firebaseUid:', firebaseUid)
 
     let user = await User.findOne({ firebaseUid })
 
     if (!user) {
+      console.log('[auth][firebase] no user by firebaseUid, trying email:', email)
       user = await User.findOne({ email })
     }
 
     if (user) {
+      console.log('[auth][firebase] existing user found:', user._id, 'linking firebaseUid if needed')
       if (!user.firebaseUid) {
         user.firebaseUid = firebaseUid
         if (picture && !user.picture) user.picture = picture
         await user.save()
+        console.log('[auth][firebase] firebaseUid linked to existing account')
       }
     } else {
+      console.log('[auth][firebase] no existing user, creating new account for:', email)
       const base = (email.split('@')[0] || 'user')
         .toLowerCase()
         .replace(/[^a-z0-9_]/g, '')
@@ -258,7 +268,18 @@ const firebaseLogin = async (req, res) => {
         termsAccepted: true,
         role: 'student',
       })
-=======
+      console.log('[auth][firebase] new user created:', user._id, 'username:', username)
+    }
+
+    const response = userResponse(user)
+    console.log('[auth][firebase] login successful for user:', user._id)
+    res.json(response)
+  } catch (error) {
+    console.error('[auth][firebase] login FAILED:', error.message)
+    res.status(500).json({ message: error.message })
+  }
+}
+
 // @desc    Admin login — email+password with role check
 // @route   POST /api/auth/admin-login
 const adminLogin = async (req, res) => {
@@ -313,15 +334,10 @@ const superAdminLogin = async (req, res) => {
 
     if (user.role !== 'super-admin') {
       return res.status(403).json({ code: 'NOT_SUPER_ADMIN', message: 'Access denied. Super Admin privileges required.' })
->>>>>>> 1dbee02a071ad2b0b2ad17a4c25a6069cc7011c1
     }
 
     res.json(userResponse(user))
   } catch (error) {
-<<<<<<< HEAD
-    console.error('[auth] firebase login failed:', error.message)
-=======
->>>>>>> 1dbee02a071ad2b0b2ad17a4c25a6069cc7011c1
     res.status(500).json({ message: error.message })
   }
 }
@@ -588,12 +604,9 @@ module.exports = {
   checkAvailability,
   registerUser,
   loginUser,
-<<<<<<< HEAD
   firebaseLogin,
-=======
   adminLogin,
   superAdminLogin,
->>>>>>> 1dbee02a071ad2b0b2ad17a4c25a6069cc7011c1
   getMe,
   forgotPassword,
   verifyOtp,

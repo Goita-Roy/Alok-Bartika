@@ -1,13 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-<<<<<<< HEAD
-import axios from 'axios'
-import { API_BASE_URL } from '../config/api'
-=======
 import api from '../config/api'
-import { User, Mail, Lock, Phone, Shield, CheckCircle2, Eye, EyeOff } from 'lucide-react'
->>>>>>> 1dbee02a071ad2b0b2ad17a4c25a6069cc7011c1
 import { GoogleButton } from '../components/GoogleButton'
 import { User, Mail, Lock, Phone, Shield, CheckCircle2, Eye, EyeOff } from 'lucide-react'
 

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signInWithPopup } from 'firebase/auth'
@@ -6,13 +5,6 @@ import { auth, googleProvider } from '../config/firebase'
 import { useAuth } from '../context/AuthContext'
 import axios from 'axios'
 import { API_BASE_URL } from '../config/api'
-=======
-import { useState } from 'react'
-import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
-import api from '../config/api'
-import { useAuth } from '../context/AuthContext'
-import { useNavigate } from 'react-router-dom'
->>>>>>> 1dbee02a071ad2b0b2ad17a4c25a6069cc7011c1
 
 interface GoogleButtonProps {
   mode: 'login' | 'signup'
@@ -28,14 +20,10 @@ export function GoogleButton({ mode }: GoogleButtonProps) {
     setLoading(true)
     setError('')
     try {
-<<<<<<< HEAD
       const result = await signInWithPopup(auth, googleProvider)
       const idToken = await result.user.getIdToken()
 
       const { data } = await axios.post(`${API_BASE_URL}/auth/firebase`, { idToken })
-=======
-      const { data } = await api.post('/auth/google', { credential: response.credential })
->>>>>>> 1dbee02a071ad2b0b2ad17a4c25a6069cc7011c1
       login(data)
       navigate('/dashboard')
     } catch (err: any) {
