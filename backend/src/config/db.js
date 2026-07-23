@@ -1,28 +1,26 @@
 const mongoose = require('mongoose')
-let mongod = null
 
 async function connectDb(mongoUri) {
-  console.log(`attempting to connect to mongo at ${mongoUri}...`)
+  if (!mongoUri) {
+    throw new Error('MONGO_URI is required to connect to MongoDB Atlas.')
+  }
+
+  if (process.env.NODE_ENV === 'production' && (mongoUri.includes('127.0.0.1') || mongoUri.includes('localhost') || mongoUri.includes('memory'))) {
+    console.warn('[DB WARNING] NODE_ENV is production, but MONGO_URI appears to be local/in-memory.')
+  }
+
+  const safeUri = mongoUri.replace(/:([^@]+)@/, ':****@')
+  console.log(`attempting to connect to mongo at ${safeUri}...`)
+  
   try {
     await mongoose.connect(mongoUri, {
       autoIndex: false,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000,
     })
-    console.log('mongo connected')
+    console.log('mongo connected successfully')
   } catch (error) {
-    console.error(`connection failed: ${error.message}`)
-    // Only use memory server in development if specifically allowed or if local fails
-    if (process.env.NODE_ENV === 'production') {
-      throw error
-    }
-
-    console.log('starting in-memory database fallback...')
-    const { MongoMemoryServer } = require('mongodb-memory-server')
-    mongod = await MongoMemoryServer.create()
-    const uri = mongod.getUri()
-    console.log(`in-memory server created at ${uri}, connecting...`)
-    await mongoose.connect(uri)
-    console.log(`in-memory database connected: ${uri}`)
+    console.error('MongoDB Connection Failure:', error.message)
+    throw new Error(`Failed to connect to MongoDB Atlas database: ${error.message}`)
   }
 }
 

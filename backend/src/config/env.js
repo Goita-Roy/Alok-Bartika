@@ -3,12 +3,15 @@ const dotenv = require('dotenv')
 
 dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') })
 
+const nodeEnv = process.env.NODE_ENV || 'development'
+const mongoUri = process.env.MONGO_URI || ''
+const clientOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:5173,http://localhost:5174,https://alok-bartika-frontend.vercel.app,https://alokbartika.vercel.app'
+
 const env = {
-  nodeEnv: process.env.NODE_ENV || 'development',
+  nodeEnv,
   port: Number(process.env.PORT || 5000),
-  clientOrigin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
-  mongoUri: process.env.MONGO_URI || '',
-  allowStartWithoutDb: process.env.ALLOW_START_WITHOUT_DB !== 'false',
+  clientOrigin,
+  mongoUri,
   clerkSecretKey: process.env.CLERK_SECRET_KEY || '',
   smsProvider: process.env.SMS_PROVIDER || '',
   smsApiKey: process.env.SMS_API_KEY || '',

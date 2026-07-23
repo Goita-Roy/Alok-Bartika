@@ -127,14 +127,17 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const res = await fetch(`${API_BASE_URL}/progression`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-      if (!res.ok) return
+      if (!res.ok) {
+        console.error(`[fetchProgress] GET ${API_BASE_URL}/progression → status: ${res.status}`)
+        return
+      }
       const data = await res.json()
       const examAttempts: Record<string, ExamAttempt[]> = {}
       const rawAttempts = data.examAttempts || {}
       for (const [k, v] of Object.entries(rawAttempts)) {
         if (Array.isArray(v)) examAttempts[k] = v as ExamAttempt[]
       }
-      console.log('[DEBUG:fetchProgress] raw completedLessons from server:', data.completedLessons)
+      console.log('[fetchProgress] raw completedLessons from server:', data.completedLessons)
       setState({
         completedClassIds: (data.completedLessons || []).map(String),
         completedLevels: (data.completedLevels || []) as LearningLevel[],
@@ -158,8 +161,8 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         continueLearning: data.continueLearning || null,
       })
       setApiLoaded(true)
-    } catch {
-      // Network error — keep whatever we have (empty for first load).
+    } catch (e) {
+      console.error('[fetchProgress] network error:', e)
     } finally {
       inFlight.current = false
     }
@@ -198,11 +201,11 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify(body),
           })
-          console.log('[DEBUG:callApi] POST', url, '→ status:', res.status, 'body:', body)
           if (res.ok) break
+          console.error(`[callApi] POST ${url} → status: ${res.status}`)
           if (res.status >= 400 && res.status < 500) break
         } catch (e) {
-          console.log('[DEBUG:callApi] POST', url, '→ NETWORK ERROR:', e)
+          console.error(`[callApi] POST ${url} → NETWORK ERROR:`, e)
         }
         if (attempt < maxAttempts - 1) {
           await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)))

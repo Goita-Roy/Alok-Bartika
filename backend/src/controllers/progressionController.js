@@ -50,6 +50,7 @@ const getProgress = async (req, res) => {
 
     if (needsRepair) {
       await P.repairUser(req.user._id)
+      user = await User.findById(req.user._id)
     }
 
     console.log('[DEBUG:GET /progression] user.completedLessons:', user.completedLessons)
@@ -106,7 +107,7 @@ const getProgress = async (req, res) => {
     })
   } catch (error) {
     console.error('Get Progress Error:', error)
-    res.status(500).json({ message: 'Internal Server Error' })
+    res.status(500).json({ message: error.message || 'Internal Server Error', error: error.stack })
   }
 }
 
@@ -274,7 +275,7 @@ const completeLesson = async (req, res) => {
     })
   } catch (error) {
     console.error('Complete Lesson Error:', error)
-    res.status(500).json({ message: 'Internal Server Error' })
+    res.status(500).json({ message: error.message || 'Internal Server Error', error: error.stack })
   }
 }
 
@@ -322,7 +323,7 @@ const completeCourse = async (req, res) => {
     res.status(200).json({ message: 'Course completed', currentStage: snapshot.currentStage })
   } catch (error) {
     console.error('Complete Course Error:', error)
-    res.status(500).json({ message: 'Internal Server Error' })
+    res.status(500).json({ message: error.message || 'Internal Server Error', error: error.stack })
   }
 }
 
@@ -357,7 +358,7 @@ const unlockCourse = async (req, res) => {
     res.status(200).json({ message: 'Course unlocked', unlockedCourses: updated.unlockedCourses })
   } catch (error) {
     console.error('Unlock Course Error:', error)
-    res.status(500).json({ message: 'Internal Server Error' })
+    res.status(500).json({ message: error.message || 'Internal Server Error', error: error.stack })
   }
 }
 
@@ -413,7 +414,7 @@ const saveLastVisited = async (req, res) => {
     })
   } catch (error) {
     console.error('Save Last Visited Error:', error)
-    res.status(500).json({ message: 'Internal Server Error' })
+    res.status(500).json({ message: error.message || 'Internal Server Error', error: error.stack })
   }
 }
 
@@ -436,7 +437,7 @@ const saveNote = async (req, res) => {
     res.status(200).json({ message: 'Note saved successfully', notes: updated.notes })
   } catch (error) {
     console.error('Save Note Error:', error)
-    res.status(500).json({ message: 'Internal Server Error' })
+    res.status(500).json({ message: error.message || 'Internal Server Error', error: error.stack })
   }
 }
 
@@ -466,7 +467,7 @@ const completePractice = async (req, res) => {
     })
   } catch (error) {
     console.error('completePractice Error:', error)
-    res.status(500).json({ message: 'Internal Server Error' })
+    res.status(500).json({ message: error.message || 'Internal Server Error', error: error.stack })
   }
 }
 

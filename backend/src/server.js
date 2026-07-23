@@ -7,14 +7,7 @@ async function bootstrap() {
     throw new Error('Missing MONGO_URI in environment')
   }
 
-  try {
-    await connectDb(env.mongoUri)
-  } catch (error) {
-    if (env.nodeEnv === 'production' || !env.allowStartWithoutDb) {
-      throw error
-    }
-    console.warn('mongo unavailable, continuing in degraded mode')
-  }
+  await connectDb(env.mongoUri)
 
   const app = createApp()
 
