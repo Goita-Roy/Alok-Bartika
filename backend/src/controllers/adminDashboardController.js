@@ -7,6 +7,16 @@ const Notification = require('../models/Notification')
 // @desc    Get admin dashboard statistics
 // @route   GET /api/admin/dashboard
 // @access  Private/Admin
+const sanitizeStudent = (u) => ({
+  id: u._id,
+  fullName: u.fullName,
+  username: u.username,
+  email: u.email,
+  phone: u.phone,
+  isActive: u.isActive,
+  createdAt: u.createdAt,
+})
+
 const getDashboardStats = async (_req, res) => {
   try {
     const [
@@ -16,6 +26,7 @@ const getDashboardStats = async (_req, res) => {
       totalLessons,
       totalExams,
       totalNotices,
+      recentStudents,
     ] = await Promise.all([
       User.countDocuments({ role: 'student' }),
       User.countDocuments({ role: 'student', isActive: true }),
@@ -23,6 +34,10 @@ const getDashboardStats = async (_req, res) => {
       Lesson.countDocuments(),
       Exam.countDocuments(),
       Notification.countDocuments(),
+      User.find({ role: 'student' })
+        .select('-password -resetOtp -resetOtpExpire')
+        .sort({ createdAt: -1 })
+        .limit(10),
     ])
 
     res.json({
@@ -34,6 +49,7 @@ const getDashboardStats = async (_req, res) => {
         totalLessons,
         totalExams,
         totalNotices,
+        recentStudents: recentStudents.map(sanitizeStudent),
       },
     })
   } catch (error) {
