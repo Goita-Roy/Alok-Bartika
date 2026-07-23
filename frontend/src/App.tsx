@@ -97,7 +97,7 @@ function StudentRoutes() {
       <Route
         path="/courses"
         element={
-          <ProtectedRoute allowedRoles={['student', 'admin']}>
+          <ProtectedRoute allowedRoles={['student', 'admin', 'super-admin']}>
             <CourseListPage />
           </ProtectedRoute>
         }
@@ -105,7 +105,7 @@ function StudentRoutes() {
       <Route
         path="/courses/intermediate"
         element={
-          <ProtectedRoute allowedRoles={['student', 'admin']}>
+          <ProtectedRoute allowedRoles={['student', 'admin', 'super-admin']}>
             <IntermediateCoursePage />
           </ProtectedRoute>
         }
@@ -113,7 +113,7 @@ function StudentRoutes() {
       <Route
         path="/courses/advanced"
         element={
-          <ProtectedRoute allowedRoles={['student', 'admin']}>
+          <ProtectedRoute allowedRoles={['student', 'admin', 'super-admin']}>
             <AdvancedCoursePage />
           </ProtectedRoute>
         }
@@ -121,7 +121,7 @@ function StudentRoutes() {
       <Route
         path="/courses/:courseId"
         element={
-          <ProtectedRoute allowedRoles={['student', 'admin']}>
+          <ProtectedRoute allowedRoles={['student', 'admin', 'super-admin']}>
             <LessonViewPage />
           </ProtectedRoute>
         }
@@ -132,7 +132,7 @@ function StudentRoutes() {
       <Route
         path="/exam/:level"
         element={
-          <ProtectedRoute allowedRoles={['student', 'admin']}>
+          <ProtectedRoute allowedRoles={['student', 'admin', 'super-admin']}>
             <ExamPage />
           </ProtectedRoute>
         }
@@ -140,7 +140,7 @@ function StudentRoutes() {
       <Route
         path="/exam/:level/review"
         element={
-          <ProtectedRoute allowedRoles={['student', 'admin']}>
+          <ProtectedRoute allowedRoles={['student', 'admin', 'super-admin']}>
             <ExamReviewPage />
           </ProtectedRoute>
         }
@@ -148,7 +148,7 @@ function StudentRoutes() {
       <Route
         path="/courses/beginner"
         element={
-          <ProtectedRoute allowedRoles={['student', 'admin']}>
+          <ProtectedRoute allowedRoles={['student', 'admin', 'super-admin']}>
             <BeginnerCoursePage />
           </ProtectedRoute>
         }
@@ -156,7 +156,7 @@ function StudentRoutes() {
       <Route
         path="/courses/beginner/:classId"
         element={
-          <ProtectedRoute allowedRoles={['student', 'admin']}>
+          <ProtectedRoute allowedRoles={['student', 'admin', 'super-admin']}>
             <BeginnerCoursePage />
           </ProtectedRoute>
         }
@@ -164,7 +164,7 @@ function StudentRoutes() {
       <Route
         path="/dashboard/*"
         element={
-          <ProtectedRoute allowedRoles={['student', 'admin']}>
+          <ProtectedRoute allowedRoles={['student', 'admin', 'super-admin']}>
             <DashboardPage />
           </ProtectedRoute>
         }
@@ -184,7 +184,7 @@ function StudentRoutes() {
       <Route
         path="/ai-buddy"
         element={
-          <ProtectedRoute allowedRoles={['student', 'admin']}>
+          <ProtectedRoute allowedRoles={['student', 'admin', 'super-admin']}>
             <AIBuddyPage />
           </ProtectedRoute>
         }
@@ -200,7 +200,7 @@ function StudentRoutes() {
       <Route
         path="/profile"
         element={
-          <ProtectedRoute allowedRoles={['student', 'admin']}>
+          <ProtectedRoute allowedRoles={['student', 'admin', 'super-admin']}>
             <ProfilePage />
           </ProtectedRoute>
         }
@@ -208,7 +208,7 @@ function StudentRoutes() {
       <Route
         path="/settings"
         element={
-          <ProtectedRoute allowedRoles={['student', 'admin']}>
+          <ProtectedRoute allowedRoles={['student', 'admin', 'super-admin']}>
             <SettingsPage />
           </ProtectedRoute>
         }

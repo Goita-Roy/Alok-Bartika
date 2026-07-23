@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import type { ReactNode } from 'react'
 import {
   LayoutDashboard, Users, BookOpen, FileText, ClipboardList,
-  MessageSquare, Megaphone, BarChart3, UserCog,
+  MessageSquare, Megaphone,
   LogOut, Menu, X, Moon, Sun, ChevronDown, Shield,
 } from 'lucide-react'
 
@@ -17,8 +17,6 @@ const navItems = [
   { to: '/admin/questions',  label: 'Question & Exam Management', icon: ClipboardList },
   { to: '/admin/support',    label: 'Student Support',          icon: MessageSquare },
   { to: '/admin/notices',    label: 'Notice Management',        icon: Megaphone },
-  { to: '/admin/analytics',  label: 'Analytics',                icon: BarChart3 },
-  { to: '/admin/settings',   label: 'Profile & Settings',       icon: UserCog },
 ]
 
 interface AdminLayoutProps {
