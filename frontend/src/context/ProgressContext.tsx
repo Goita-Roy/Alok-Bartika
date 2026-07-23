@@ -52,10 +52,31 @@ type ProgressState = {
   } | null
 }
 
+// ── LocalStorage persistence helpers ────────────────────────────────────────
+
+const STORAGE_KEY_COMPLETED = 'alokbartika_completed_classes'
+
+function getInitialCompletedClassIds(): string[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_COMPLETED)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) return parsed.map(String)
+    }
+  } catch {}
+  return []
+}
+
+function saveCompletedClassIdsToLocal(ids: string[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify(ids))
+  } catch {}
+}
+
 // ── Initial state ────────────────────────────────────────────────────────────
 
 const EMPTY_PROGRESS: ProgressState = {
-  completedClassIds: [],
+  completedClassIds: getInitialCompletedClassIds(),
   completedLevels: [],
   unlockedLevels: ['beginner'],
   completedCourseIds: [],
@@ -138,8 +159,12 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (Array.isArray(v)) examAttempts[k] = v as ExamAttempt[]
       }
       console.log('[fetchProgress] raw completedLessons from server:', data.completedLessons)
+      const serverCompleted = (data.completedLessons || []).map(String)
+      const mergedCompleted = Array.from(new Set([...getInitialCompletedClassIds(), ...serverCompleted]))
+      saveCompletedClassIdsToLocal(mergedCompleted)
+
       setState({
-        completedClassIds: (data.completedLessons || []).map(String),
+        completedClassIds: mergedCompleted,
         completedLevels: (data.completedLevels || []) as LearningLevel[],
         unlockedLevels: (data.unlockedLevels || ['beginner']) as LearningLevel[],
         completedCourseIds: (data.completedCourses || []).map(String),
@@ -236,6 +261,13 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const markClassComplete = useCallback(
     (classId: string, courseId?: string, skipApi = false): Promise<void> => {
+      setState(prev => {
+        if (prev.completedClassIds.includes(classId)) return prev
+        const nextCompleted = [...prev.completedClassIds, classId]
+        saveCompletedClassIdsToLocal(nextCompleted)
+        return { ...prev, completedClassIds: nextCompleted }
+      })
+
       if (skipApi) {
         refreshProgress()
         return Promise.resolve()

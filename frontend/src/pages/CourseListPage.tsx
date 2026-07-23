@@ -597,7 +597,7 @@ export function CourseListPage() {
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             {beginnerLessons.map((lesson, idx) => {
-              const slugId = lessonClasses[idx]?.id ?? lesson._id
+              const slugId = lesson.slug || lessonClasses[idx]?.id || lesson._id
               return (
               <ClassCard
                 key={slugId} id={slugId} title={lesson.title}

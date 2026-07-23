@@ -161,7 +161,6 @@ export default function ClassPageLayout({ currentClassId, children }: Props) {
     const allConditions = {
       combinedProgress: combinedProgress >= 80,
       notAlreadyCompleted: !hasCompleted,
-      hasCourseId: !!begCourseId,
       hasScrolled: hasUserScrolled.current,
       notInitiated: !completionInitiatedRef.current,
     };
@@ -199,7 +198,7 @@ export default function ClassPageLayout({ currentClassId, children }: Props) {
         const nextId = lessonClasses[currentIndex + 1].id;
         if (pendingCompletionRef.current) {
           await pendingCompletionRef.current;
-        } else if (!completedClassIds.includes(currentClassId) && begCourseId) {
+        } else if (!completedClassIds.includes(currentClassId)) {
           await markClassComplete(currentClassId, begCourseId);
           setShowCompleteToast(true);
         }
