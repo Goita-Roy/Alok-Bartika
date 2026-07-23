@@ -304,10 +304,11 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   )
 
   const completeLevel = useCallback(
-    (_level: LearningLevel) => {
-      refreshProgress()
+    (level: LearningLevel) => {
+      console.log('[ProgressContext] completeLevel called for level:', level)
+      return callApi('/progression/complete-course', { level })
     },
-    [refreshProgress]
+    [callApi]
   )
 
   const markPracticeComplete = useCallback(

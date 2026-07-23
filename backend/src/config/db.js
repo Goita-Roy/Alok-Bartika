@@ -5,8 +5,8 @@ async function connectDb(mongoUri) {
     throw new Error('MONGO_URI is required to connect to MongoDB Atlas.')
   }
 
-  if (process.env.NODE_ENV === 'production' && (mongoUri.includes('127.0.0.1') || mongoUri.includes('localhost') || mongoUri.includes('memory'))) {
-    console.warn('[DB WARNING] NODE_ENV is production, but MONGO_URI appears to be local/in-memory.')
+  if (mongoUri.includes('127.0.0.1') || mongoUri.includes('localhost') || mongoUri.includes('memory')) {
+    throw new Error('Localhost/In-memory MongoDB is strictly forbidden. Please provide a valid MongoDB Atlas URI (mongodb+srv://...).')
   }
 
   const safeUri = mongoUri.replace(/:([^@]+)@/, ':****@')

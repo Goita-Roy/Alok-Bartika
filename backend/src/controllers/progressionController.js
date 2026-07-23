@@ -155,8 +155,9 @@ const completeLesson = async (req, res) => {
 
     let currentStage = user.currentStage
     let completedCourseToAdd = null
-    if (courseId) {
-      const normCourse = P.normalizeCourseId(courseId)
+    const effectiveCourseId = courseId || (currentLesson?.courseId ? currentLesson.courseId.toString() : null)
+    if (effectiveCourseId) {
+      const normCourse = P.normalizeCourseId(effectiveCourseId)
       if (normCourse) {
         const courseLessons = await Lesson.find({ courseId: normCourse }).sort({ order: 1 })
         const completedSet = alreadyCompleted
@@ -282,11 +283,13 @@ const completeLesson = async (req, res) => {
 // ── POST /api/progression/complete-course ──────────────────────────────────────
 const completeCourse = async (req, res) => {
   try {
-    const { courseId } = req.body
-    if (!courseId) return res.status(400).json({ message: 'courseId is required' })
-
-    const normCourse = P.normalizeCourseId(courseId)
-    if (!normCourse) return res.status(400).json({ message: 'Invalid courseId' })
+    const { courseId, level } = req.body
+    let normCourse = courseId ? P.normalizeCourseId(courseId) : null
+    if (!normCourse && level) {
+      const courseObj = await Course.findOne({ level })
+      if (courseObj) normCourse = courseObj._id.toString()
+    }
+    if (!normCourse) return res.status(400).json({ message: 'courseId or level is required' })
 
     const snapshot = await User.findById(req.user._id)
     if (!snapshot) return res.status(404).json({ message: 'User not found' })

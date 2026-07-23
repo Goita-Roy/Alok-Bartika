@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { API_BASE_URL } from '../config/api'
 import { useAuth } from '../context/AuthContext'
@@ -397,7 +397,7 @@ function ResultScreen({
               {LEVEL_LABELS[nextLevel]} লেভেল আনলক হয়েছে!
             </p>
             <Link
-              to="/courses"
+              to={`/courses?level=${nextLevel}`}
               className="inline-flex items-center gap-2 mt-3 px-6 py-2.5 rounded-xl font-black text-sm transition-all hover:scale-105"
               style={{ backgroundColor: S.accent, color: '#04342C' }}
             >
@@ -522,6 +522,7 @@ export function ExamPage() {
   const { level } = useParams<{ level: string }>()
   const navigate = useNavigate()
   const { token } = useAuth()
+  const [searchParams] = useSearchParams()
 
   // Wire into the shared progress system so passing the exam unlocks the next level
   const { completeLevel, markExamPassed } = useCourseProgress(
@@ -529,7 +530,7 @@ export function ExamPage() {
     []
   )
 
-  const [examStarted, setExamStarted] = useState(false)
+  const [examStarted, setExamStarted] = useState(searchParams.get('autoStart') === 'true')
   const [answers, setAnswers] = useState<Record<number, any>>({})
   const [currentQ, setCurrentQ] = useState(0)
   const [secondsLeft, setSecondsLeft] = useState(0)
@@ -556,9 +557,13 @@ export function ExamPage() {
     queryKey: ['exam-level', level],
     queryFn: async () => {
       if (!token) throw new Error('Not authenticated')
-      const res = await fetch(`${API_BASE_URL}/exams/level/${level}`, {
+      
+      const apiUrl = `${API_BASE_URL}/exams/level/${level}`;
+      
+      const res = await fetch(apiUrl, {
         headers: { Authorization: `Bearer ${token}` },
       })
+      
       if (!res.ok) {
         if (res.status === 403) {
           let body: any = {}
@@ -571,7 +576,8 @@ export function ExamPage() {
         throw new Error('পরীক্ষা পাওয়া যায়নি')
 
       }
-      return res.json()
+      const data = await res.json();
+      return data;
     },
     enabled: !!token && !!level,
   })
@@ -711,7 +717,7 @@ export function ExamPage() {
             </p>
             <div className="flex items-center justify-center gap-3 flex-wrap">
               <Link
-                to={`/exam-review/${level}`}
+                to={`/exam/${level}/review`}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl font-black text-sm"
                 style={{ backgroundColor: S.accent, color: '#04342C' }}
               >

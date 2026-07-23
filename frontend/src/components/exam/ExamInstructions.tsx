@@ -24,7 +24,7 @@ interface ExamInstructionsProps {
 export function ExamInstructions({
   level, examTitle, questionCount, timeLimitMinutes, passingScore, onStart, onBack,
 }: ExamInstructionsProps) {
-  const [agreed, setAgreed] = useState(false)
+  const [agreed, setAgreed] = useState(true)
 
   const instructions = [
     {

@@ -637,7 +637,7 @@ export function CourseListPage() {
                   </div>
               ) : (
                 <Link
-                  to="/exam/beginner"
+                  to="/exam/beginner?autoStart=true"
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-sm transition-all hover:scale-105"
                   style={{ backgroundColor: C.accent, color: '#fff', boxShadow: '0 0 16px rgba(29,158,117,0.25)' }}
                 >
