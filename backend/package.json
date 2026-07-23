@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "seed:exams": "node src/scripts/seedExams.js"
+    "seed:exams": "node src/scripts/seedExams.js",
+    "seed:super-admin": "node src/scripts/seedSuperAdmin.js"
   },
   "keywords": [
     "express",
