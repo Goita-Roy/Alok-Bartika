@@ -1,8 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import axios from 'axios'
-import { API_BASE_URL } from '../config/api'
+import api from '../config/api'
 import { User, Mail, Lock, Phone, Shield, CheckCircle2, Eye, EyeOff } from 'lucide-react'
 import { GoogleButton } from '../components/GoogleButton'
 
@@ -71,7 +70,7 @@ export function SignUpPage() {
     setLoading(true); setError('')
     try {
       // Pre-check availability of provided identifiers (non-blocking UX guard).
-      const availabilityRes = await axios.post(`${API_BASE_URL}/auth/check-availability`, {
+      const availabilityRes = await api.post('/auth/check-availability', {
         email: trimmedEmail,
         username: formData.username.trim().toLowerCase(),
       })
@@ -85,7 +84,7 @@ export function SignUpPage() {
       }
 
       // Send verification OTP (email if provided, otherwise phone/SMS).
-      const sendRes = await axios.post(`${API_BASE_URL}/auth/send-otp`, {
+      const sendRes = await api.post('/auth/send-otp', {
         email: trimmedEmail || undefined,
         phone: trimmedPhone || undefined,
       })

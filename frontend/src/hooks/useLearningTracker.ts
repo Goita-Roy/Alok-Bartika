@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { API_BASE_URL } from '../config/api'
 
 const SAVE_INTERVAL = 60_000
 const INACTIVITY_TIMEOUT = 5 * 60_000
@@ -43,9 +44,6 @@ export function useLearningTracker(): {
   const mountedRef = useRef(true)
   const awayCountedRef = useRef(false)
 
-  const getApiUrl = () =>
-    (import.meta as any).env?.VITE_API_URL || 'http://localhost:5000/api'
-
   const saveToBackend = useCallback(async () => {
     if (!runningRef.current) return
     const now = Date.now()
@@ -55,7 +53,7 @@ export function useLearningTracker(): {
     const minutes = Math.floor(ms / 60000)
     try {
       const token = localStorage.getItem('token')
-      await fetch(`${getApiUrl()}/learning/tick`, {
+      await fetch(`${API_BASE_URL}/learning/tick`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ minutes }),
@@ -73,7 +71,7 @@ export function useLearningTracker(): {
     if (ms >= 60000) {
       const minutes = Math.floor(ms / 60000)
       const token = localStorage.getItem('token')
-      fetch(`${getApiUrl()}/learning/tick`, {
+      fetch(`${API_BASE_URL}/learning/tick`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ minutes }),

@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import axios from 'axios'
-import { API_BASE_URL } from '../config/api'
+import api from '../config/api'
 import { useAuth } from '../context/AuthContext'
 import { Shield, CheckCircle2, ArrowLeft, RefreshCw } from 'lucide-react'
 
@@ -70,7 +69,7 @@ export function SignupOtpPage() {
   const callVerify = async (code: string) => {
     setLoading(true); setError(''); setSuccess('')
     try {
-      const { data: res } = await axios.post(`${API_BASE_URL}/auth/verify-otp-signup`, {
+      const { data: res } = await api.post('/auth/verify-otp-signup', {
         ...data,
         otp: code,
       })
@@ -97,7 +96,7 @@ export function SignupOtpPage() {
   const handleResend = async () => {
     setResending(true); setError(''); setSuccess('')
     try {
-      await axios.post(`${API_BASE_URL}/auth/resend-otp`, {
+      await api.post('/auth/resend-otp', {
         email: data.email, phone: data.phone,
       })
       setSecondsLeft(OTP_TTL_SECONDS)

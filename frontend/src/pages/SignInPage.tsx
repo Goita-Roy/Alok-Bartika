@@ -1,8 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import axios from 'axios'
-import { API_BASE_URL } from '../config/api'
+import api from '../config/api'
 import { GoogleButton } from '../components/GoogleButton'
 import { Eye, EyeOff, Lock, Mail, ArrowRight, BookOpen } from 'lucide-react'
 
@@ -45,7 +44,7 @@ export function SignInPage() {
     e.preventDefault()
     setLoading(true); setError('')
     try {
-      const { data } = await axios.post(`${API_BASE_URL}/auth/login`, { email, password })
+      const { data } = await api.post('/auth/login', { email, password })
       login(data); navigate('/dashboard')
     } catch (err: any) {
       setError(err.response?.data?.error || err.response?.data?.message || 'লগইন করতে সমস্যা হয়েছে।')

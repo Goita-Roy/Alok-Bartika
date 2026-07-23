@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
-import axios from 'axios'
-import { API_BASE_URL } from '../config/api'
+import api from '../config/api'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 
@@ -29,7 +28,7 @@ export function GoogleButton({ mode }: { mode: 'login' | 'signup' }) {
     setLoading(true)
     setError('')
     try {
-      const { data } = await axios.post(`${API_BASE_URL}/auth/google`, { credential: response.credential })
+      const { data } = await api.post('/auth/google', { credential: response.credential })
       login(data)
       navigate('/dashboard')
     } catch (err: any) {

@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import axios from 'axios'
-import { API_BASE_URL } from '../config/api'
+import api from '../config/api'
 import { Mail, ArrowLeft, Shield, CheckCircle2 } from 'lucide-react'
 
 const inputCls = "block w-full py-3.5 rounded-xl font-medium transition-all duration-200 outline-none text-sm"
@@ -31,7 +30,7 @@ export function ForgotPasswordPage() {
     e.preventDefault()
     setLoading(true); setError('')
     try {
-      await axios.post(`${API_BASE_URL}/auth/forgot-password`, { email })
+      await api.post('/auth/forgot-password', { email })
       navigate(`/verify-otp?email=${encodeURIComponent(email.trim())}`)
     } catch (err: any) {
       setError(err.response?.data?.message || 'কিছু ভুল হয়েছে। আবার চেষ্টা করুন।')
