@@ -7,15 +7,15 @@ const {
   updateLesson,
   deleteLesson
 } = require('../controllers/lessonController')
-const { protect, requireRole } = require('../middleware/auth')
+const { protect, requireAdmin } = require('../middleware/auth')
 
 // Public routes
 router.get('/course/:courseId', getLessonsByCourse)
 router.get('/:id', getLessonById)
 
 // Admin only routes
-router.post('/', protect, requireRole('admin'), createLesson)
-router.put('/:id', protect, requireRole('admin'), updateLesson)
-router.delete('/:id', protect, requireRole('admin'), deleteLesson)
+router.post('/', protect, requireAdmin, createLesson)
+router.put('/:id', protect, requireAdmin, updateLesson)
+router.delete('/:id', protect, requireAdmin, deleteLesson)
 
 module.exports = { lessonRouter: router }

@@ -16,7 +16,7 @@ router.get('/official', protect, getOfficialProjects)
 router.post('/', protect, projectUpload, submitProject)
 
 // Admin / instructor routes
-router.get('/counts', protect, requireRole('admin', 'instructor'), getProjectCounts)
-router.post('/official', protect, requireRole('admin', 'instructor'), projectUpload, createOfficialProject)
+router.get('/counts', protect, requireRole('admin', 'super-admin', 'instructor'), getProjectCounts)
+router.post('/official', protect, requireRole('admin', 'super-admin', 'instructor'), projectUpload, createOfficialProject)
 
 module.exports = { projectRouter: router }

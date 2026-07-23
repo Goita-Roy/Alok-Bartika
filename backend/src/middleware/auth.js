@@ -39,4 +39,8 @@ const requireRole = (...roles) => {
   }
 }
 
-module.exports = { protect, requireRole }
+const requireStudent = requireRole('student')
+const requireAdmin = requireRole('admin', 'super-admin')
+const requireSuperAdmin = requireRole('super-admin')
+
+module.exports = { protect, requireRole, requireStudent, requireAdmin, requireSuperAdmin }
