@@ -96,30 +96,9 @@ export function AdminStudentsPage() {
   }, [debouncedSearch, statusFilter, dateFrom, dateTo, token])
 
   useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        const params = new URLSearchParams()
-        params.set('page', '1')
-        params.set('limit', '25')
-        if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim())
-        if (statusFilter !== 'all') params.set('status', statusFilter)
-        if (dateFrom) params.set('dateFrom', dateFrom)
-        if (dateTo) params.set('dateTo', dateTo)
-
-        const res = await fetch(`${API_BASE_URL}/students?${params.toString()}`, { headers })
-        if (!res.ok) throw new Error('Failed to load students')
-        const json = await res.json()
-        setStudents(json.data || [])
-        setPagination(json.pagination || { page: 1, limit: 25, total: 0, pages: 0 })
-      } catch (e: unknown) {
-        setError(e instanceof Error ? e.message : 'Failed to load students')
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchStudents()
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadStudents(1)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch, statusFilter, dateFrom, dateTo, token])
 
   useEffect(() => {
@@ -159,7 +138,9 @@ export function AdminStudentsPage() {
       if (!res.ok) throw new Error(json.message || 'Request failed')
       showToast('Student deleted', 'success')
       setDeleteTarget(null)
-      loadStudents(pagination.page)
+      const remaining = pagination.total - 1
+      const maxPage = Math.max(1, Math.ceil(remaining / pagination.limit))
+      loadStudents(Math.min(pagination.page, maxPage))
     } catch (e: unknown) {
       showToast(e instanceof Error ? e.message : 'Request failed', 'error')
     } finally {
