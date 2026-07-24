@@ -273,6 +273,24 @@ async function canonicalize(rawUser) {
     .filter((id) => courseIdSet.has(id))
   const completedCourses = [...new Set(completedCoursesRaw)]
 
+  // BUG FIX: Reconstruct completedCourses from completedLessons.
+  // If ALL lessons of a course are in completedLessons, the course itself
+  // must be marked as completed — even if it was never added to
+  // completedCourses (the "missing completedCourses" bug).  Without this,
+  // canonicalize() would enter a circular deadlock: it needs completedCourses
+  // to derive completedLevels, but it needs completedLevels to populate
+  // completedCourses — leaving users permanently stuck.
+  const completedSlugSet = new Set(completedLessons)
+  for (const [cid, courseLessons] of Object.entries(byCourse)) {
+    if (
+      courseLessons.length > 0 &&
+      !completedCourses.includes(cid) &&
+      courseLessons.every((l) => completedSlugSet.has(slugForLesson(l)))
+    ) {
+      completedCourses.push(cid)
+    }
+  }
+
   const unlockedCoursesRaw = (rawUser.unlockedCourses || [])
     .map((v) => (v && typeof v === 'object' && v._id ? v._id.toString() : String(v)))
     .filter((id) => courseIdSet.has(id))

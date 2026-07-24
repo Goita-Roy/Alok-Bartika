@@ -5,6 +5,7 @@
  */
 require('dotenv').config()
 const mongoose = require('mongoose')
+const { connectDb } = require('../config/db')
 const { User } = require('../models/User')
 const { Lesson } = require('../models/Lesson')
 const { Course } = require('../models/Course')
@@ -14,7 +15,8 @@ const P = require('../services/progressService')
 const SLUG_RE = P.SLUG_RE
 
 async function main() {
-  await mongoose.connect(process.env.MONGO_URI)
+  await connectDb(process.env.MONGO_URI)
+  console.log('Connected to database:', mongoose.connection.name)
   const totalLessons = await Lesson.countDocuments()
   const courses = await Course.find({}).sort({ level: 1 })
   const exams = await Exam.find({ isActive: true })
