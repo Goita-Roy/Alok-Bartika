@@ -593,7 +593,7 @@ export function CourseListPage() {
             isCompleted={completedLevels.includes('beginner')}
             isLocked={false}
             canComplete={getLevelProgress('beginner') >= 100}
-            onComplete={() => completeLevel('beginner')}
+            onComplete={() => completeLevel('beginner', beginnerCourse?._id)}
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             {beginnerLessons.map((lesson, idx) => {
@@ -660,7 +660,7 @@ export function CourseListPage() {
             isCompleted={completedLevels.includes('intermediate')}
             isLocked={!isIntermediateUnlocked}
             canComplete={getLevelProgress('intermediate') >= 100}
-            onComplete={() => completeLevel('intermediate')}
+            onComplete={() => completeLevel('intermediate', intermediateCourse?._id)}
           />
           {isIntermediateUnlocked ? (
             <>
@@ -734,7 +734,7 @@ export function CourseListPage() {
             isCompleted={completedLevels.includes('advanced')}
             isLocked={!isAdvancedUnlocked}
             canComplete={getLevelProgress('advanced') >= 100}
-            onComplete={() => completeLevel('advanced')}
+            onComplete={() => completeLevel('advanced', advancedCourse?._id)}
             hideCompleteButton={getLevelProgress('advanced') >= 100}
           />
           {isAdvancedUnlocked ? (

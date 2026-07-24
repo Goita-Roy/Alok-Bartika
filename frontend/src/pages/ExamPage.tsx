@@ -573,10 +573,20 @@ export function ExamPage() {
           err.requiredLevel = body.requiredLevel || null
           throw err
         }
-        throw new Error('পরীক্ষা পাওয়া যায়নি')
+        if (res.status === 404) {
+          const err = new Error('পরীক্ষা পাওয়া যায়নি') as Error & { code?: string }
+          err.code = 'EXAM_NOT_FOUND'
+          throw err
+        }
+        throw new Error('পরীক্ষা পাওয়া যায়নি')
 
       }
       const data = await res.json();
+      if (!data.questions || data.questions.length === 0) {
+        const err = new Error('এই পরীক্ষায় এখনো প্রশ্ন যোগ করা হয়নি') as Error & { code?: string }
+        err.code = 'EXAM_NO_QUESTIONS'
+        throw err
+      }
       return data;
     },
     enabled: !!token && !!level,
@@ -774,7 +784,11 @@ export function ExamPage() {
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: S.bg }}>
         <div className="text-center space-y-4">
           <AlertTriangle size={48} style={{ color: S.danger }} className="mx-auto" />
-          <p className="font-black" style={{ color: S.text }}>এই লেভেলের পরীক্ষা পাওয়া যায়নি।</p>
+          <p className="font-black" style={{ color: S.text }}>
+            {lockedErr?.code === 'EXAM_NO_QUESTIONS'
+              ? 'এই পরীক্ষায় এখনো প্রশ্ন যোগ করা হয়নি।'
+              : 'এই লেভেলের পরীক্ষা পাওয়া যায়নি।'}
+          </p>
           <Link to="/courses" className="inline-flex items-center gap-2 text-sm font-bold" style={{ color: S.accent }}>
             <ArrowLeft size={14} /> কোর্সে ফিরে যান
           </Link>

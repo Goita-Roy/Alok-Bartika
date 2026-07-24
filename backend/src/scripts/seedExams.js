@@ -1,19 +1,21 @@
 /**
  * Seed script — populate sample exams for each level.
- * Run: node backend/src/scripts/seedExams.js
+ * Run: npm run seed:exams   (from backend/)
  *
- * Requires MONGO_URI in .env or passed as env var.
+ * Uses the same connectDb helper as the server so DNS/_srv quirks are handled.
  */
 require('dotenv').config({ path: require('path').resolve(__dirname, '..', '..', '.env') })
 const mongoose = require('mongoose')
+const { connectDb } = require('../config/db')
 const { Exam } = require('../models/Exam')
 const { Course } = require('../models/Course')
 
 async function seed() {
   const uri = process.env.MONGO_URI || process.env.DATABASE_URL
   if (!uri) throw new Error('MONGO_URI not set in .env')
-  await mongoose.connect(uri)
-  console.log('Connected to MongoDB')
+
+  await connectDb(uri)
+  console.log(`Connected to database: ${mongoose.connection.name}`)
 
   // Find one course per level to attach exam to
   const [begCourse, intCourse, advCourse] = await Promise.all([
@@ -22,9 +24,17 @@ async function seed() {
     Course.findOne({ level: 'advanced' }),
   ])
 
-  if (!begCourse) { console.warn('No beginner course found — skipping beginner exam'); }
-  if (!intCourse) { console.warn('No intermediate course found — skipping intermediate exam'); }
-  if (!advCourse) { console.warn('No advanced course found — skipping advanced exam'); }
+  // Fail loudly if a level has no Course document — the exam cannot be linked.
+  const missing = []
+  if (!begCourse) missing.push('beginner')
+  if (!intCourse) missing.push('intermediate')
+  if (!advCourse) missing.push('advanced')
+  if (missing.length) {
+    console.error(`\n✗ Cannot seed exams — missing Course documents for: ${missing.join(', ')}`)
+    console.error('  Create the missing courses first, then re-run this script.\n')
+    await mongoose.disconnect()
+    process.exit(1)
+  }
 
   const exams = []
 
@@ -37,7 +47,219 @@ async function seed() {
       description: 'কম্পিউটার বেসিক, লজিক ও ব্লক কোডিং-এর উপর ফাইনাল পরীক্ষা।',
       passingScore: 60,
       timeLimitMinutes: 20,
-      questions: [],
+      isActive: true,
+      questions: [
+        // 1 — কম্পিউটার পরিচিতি (class-01)
+        {
+          type: 'mcq',
+          questionText: 'কম্পিউটার মূলত কী করে?',
+          options: [
+            'শুধুমাত্র ছবি দেখায়',
+            'তথ্য প্রক্রিয়াকরণ (data processing) করে',
+            'শুধুমাত্র গান বাজায়',
+            'ইন্টারনেট চালায়',
+          ],
+          correctAnswer: 1,
+          explanation: 'কম্পিউটার হলো একটি ইলেকট্রনিক যন্ত্র যা input নিয়ে প্রক্রিয়াকরণ করে এবং output দেয়।',
+          points: 2,
+        },
+        // 2 — সিপিইউ (class-02)
+        {
+          type: 'mcq',
+          questionText: 'সিপিইউ (CPU) কম্পিউটারের কোন অংশের সাথে সবে বেশি মিল?',
+          options: [
+            'হৃদয়',
+            'মস্তিষ্ক',
+            'চোখ',
+            'হাত',
+          ],
+          correctAnswer: 1,
+          explanation: 'সিপিইউ হলো কম্পিউটারের "মস্তিষ্ক" — এটিই সব গণনা ও নির্দেশনা প্রক্রিয়াকরণ করে।',
+          points: 2,
+        },
+        // 3 — র‍্যাম (class-03)
+        {
+          type: 'mcq',
+          questionText: 'র‍্যাম (RAM) কোন ধরনের মেমোরি?',
+          options: [
+            'স্থায়ী (non-volatile)',
+            'অস্থায়ী (volatile)',
+            'বাইরের (external)',
+            'অপটিক্যাল',
+          ],
+          correctAnswer: 1,
+          explanation: 'র‍্যাম হলো অস্থায়ী মেমোরি — কম্পিউটার বন্ধ হলে তাতে থাকা তথ্য মিয়ে যায়।',
+          points: 2,
+        },
+        // 4 — স্টোরেজ (class-04)
+        {
+          type: 'mcq',
+          questionText: 'নিচের কোনটি স্থায়ী (non-volatile) স্টোরেজ?',
+          options: [
+            'র‍্যাম (RAM)',
+            'ক্যাশ মেমোরি',
+            'হার্ড ডিস্ক ড্রাইভ (HDD)',
+            'রেজিস্টার',
+          ],
+          correctAnswer: 2,
+          explanation: 'হার্ড ডিস্ক ড্রাইভ (HDD) একটি স্থায়ী স্টোরেজ — কম্পিউটার বন্ধ হলেও তথ্য থাকে।',
+          points: 2,
+        },
+        // 5 — ইনপুট ডিভাইস (class-05)
+        {
+          type: 'mcq',
+          questionText: 'নিচের কোনটি একটি ইনপুট ডিভাইস?',
+          options: [
+            'প্রিন্টার',
+            'মনিটর',
+            'কীবোর্ড',
+            'স্পিকার',
+          ],
+          correctAnswer: 2,
+          explanation: 'কীবোর্ড একটি ইনপুট ডিভাইস — এটি দিয়ে আমরা কম্পিউটারে তথ্য প্রবেশ করাই।',
+          points: 2,
+        },
+        // 6 — আউটপুট ডিভাইস (class-06)
+        {
+          type: 'mcq',
+          questionText: 'নিচের কোনটি একটি আউটপুট ডিভাইস?',
+          options: [
+            'মাউস',
+            'স্ক্যানার',
+            'মনিটর',
+            'মাইক্রোফোন',
+          ],
+          correctAnswer: 2,
+          explanation: 'মনিটর একটি আউটপুট ডিভাইস — এটি কম্পিউটারের ফলাফল দেখায়।',
+          points: 2,
+        },
+        // 7 — সফটওয়্যার (class-07)
+        {
+          type: 'mcq',
+          questionText: 'সফটওয়্যার বলতে কী বোঝায়?',
+          options: [
+            'কম্পিউটারের শারীরিক অংশ',
+            'নির্দেশনা ও প্রোগ্রামের সমন্বয়',
+            'ইলেকট্রিক সার্কিট',
+            'কম্পিউটারের তার',
+          ],
+          correctAnswer: 1,
+          explanation: 'সফটওয়্যার হলো প্রোগ্রাম ও নির্দেশনার সমন্বয় যা হার্ডওয়্যারকে চালায়।',
+          points: 2,
+        },
+        // 8 — অপারেটিং সিস্টেম (class-08)
+        {
+          type: 'mcq',
+          questionText: 'অপারেটিং সিস্টেম (OS) এর প্রধান কাজ কী?',
+          options: [
+            'গান প্লে করা',
+            'হার্ডওয়্যার ও সফটওয়্যারের মধ্যে সমন্বয় করা',
+            'ইমেইল পাঠানো',
+            'ছবি আঁকা',
+          ],
+          correctAnswer: 1,
+          explanation: 'অপারেটিং সিস্টেম হলো কম্পিউটারের "ম্যানেজার" — এটি হার্ডওয়্যার ও সফটওয়্যারের মধ্যে সমন্বয় করে।',
+          points: 2,
+        },
+        // 9 — ইন্টারনেট (class-09)
+        {
+          type: 'mcq',
+          questionText: 'ইন্টারনেট কী?',
+          options: [
+            'একটি হার্ডওয়্যার',
+            'বিশ্বব্যাপী কম্পিউটার নেটওয়ার্কের সংযোগ',
+            'একটি অপারেটিং সিস্টেম',
+            'একটি প্রিন্টার',
+          ],
+          correctAnswer: 1,
+          explanation: 'ইন্টারনেট হলো বিশ্বব্যাপী কম্পিউটার নেটওয়ার্ক যা বিভিন্ন ডিভাইসকে পরস্পর সংযুক্ত করে।',
+          points: 2,
+        },
+        // 10 — সাইবার নিরাপত্তা (class-10)
+        {
+          type: 'mcq',
+          questionText: 'পাসওয়ার্ড কেন শক্তিশালী রাখা উচিত?',
+          options: [
+            'কারণ এটি সুন্দর দেখায়',
+            'অননুমোদিত প্রবেশ থেকে অ্যাকাউন্ট রক্ষা করতে',
+            'কারণ সবাই এটি জানে',
+            'কারণ কম্পিউটার এটি চায়',
+          ],
+          correctAnswer: 1,
+          explanation: 'শক্তিশালী পাসওয়ার্ড আপনার অ্যাকাউন্টকে হ্যাকার ও অননুমোদিত প্রবেশ থেকে রক্ষা করে।',
+          points: 2,
+        },
+        // 11 — লজিক: বাইনারি
+        {
+          type: 'mcq',
+          questionText: 'কম্পিউটার মূলত কোন সংখ্যা পদ্ধতি ব্যবহার করে?',
+          options: [
+            'দশমিক (decimal)',
+            'দ্বিমিক (binary)',
+            'ষোড়শ (hexadecimal)',
+            'অক্টাল (octal)',
+          ],
+          correctAnswer: 1,
+          explanation: 'কম্পিউটার বিট (0 ও 1) দিয়ে কাজ করে, তাই দ্বিমিক (binary) সংখ্যা পদ্ধতি ব্যবহার করে।',
+          points: 2,
+        },
+        // 12 — লজিক: গেট
+        {
+          type: 'mcq',
+          questionText: 'AND গেটে উভয় ইনপুট true (1) হলে আউটপুট কী হবে?',
+          options: [
+            '0 (false)',
+            '1 (true)',
+            'undefined',
+            'null',
+          ],
+          correctAnswer: 1,
+          explanation: 'AND গেটে দুটি ইনপুটই true হলেই আউটপুট true হয়।',
+          points: 2,
+        },
+        // 13 — লজিক: অ্যালগরিদম
+        {
+          type: 'mcq',
+          questionText: 'অ্যালগরিদম বলতে কী বোঝায়?',
+          options: [
+            'একটি প্রোগ্রামিং ভাষা',
+            'কোনো সমস্যা সমাধানের পদ্ধতিগত ধাপ',
+            'একটি হার্ডওয়্যার ডিভাইস',
+            'একটি ওয়েবসাইট',
+          ],
+          correctAnswer: 1,
+          explanation: 'অ্যালগরিদম হলো কোনো কাজ সম্পন্ন করার পদ্ধতিগত ধাপের সমন্বয়।',
+          points: 2,
+        },
+        // 14 — লজিক: লুপ
+        {
+          type: 'mcq',
+          questionText: 'একটি loop (যেমন for loop) কখন ব্যবহার করা হয়?',
+          options: [
+            'একটি বার কাজ করতে হলে',
+            'একই কাজ বারবার করতে হলে',
+            'ডেটা মুছে ফেলতে হলে',
+            'নতুন ভেরিয়েবল তৈরি করতে হলে',
+          ],
+          correctAnswer: 1,
+          explanation: 'loop বা লুপ ব্যবহার করা হয় যখন একই কাজ একাধিক বার পুনরাবৃত্তি করতে হয়।',
+          points: 2,
+        },
+        // 15 — লজিক: ভেরিয়েবল
+        {
+          type: 'mcq',
+          questionText: 'একটি variable (ধ্রুবক) কীসের জন্য ব্যবহৃত হয়?',
+          options: [
+            'প্রোগ্রাম বন্ধ করার জন্য',
+            'মান বা তথ্য সাময়িকভাবে সংরক্ষণ করার জন্য',
+            'ইন্টারনেট সংযোগ স্থাপন করার জন্য',
+            'প্রিন্টার চালানোর জন্য',
+          ],
+          correctAnswer: 1,
+          explanation: 'variable হলো একটি নামযুক্ত জায়গা যেখানে মান (সংখ্যা, লেখা ইত্যাদি) সাময়িকভাবে সংরক্ষণ করা হয়।',
+          points: 2,
+        },
+      ],
     })
   }
 
@@ -282,30 +504,17 @@ async function seed() {
   }
 
   for (const examData of exams) {
-    // Advanced Final Exam is always kept up to date: if it already exists we
+    // Each level exam is always kept up to date: if it already exists we
     // replace its data (questions + timer) in place on the SAME document,
-    // otherwise it is created. This guarantees no duplicate advanced exams and
+    // otherwise it is created. This guarantees no duplicate exams and
     // removes the need to manually delete MongoDB documents before re-seeding.
-    if (examData.level === 'advanced') {
-      // Strip immutable/reserved fields so the payload is a pure replacement
-      // document (never interpreted as update modifiers).
-      const { _id, __v, ...replacement } = examData
-      const updated = await Exam.findOneAndReplace(
-        { level: 'advanced' },
-        replacement,
-        { upsert: true, returnDocument: 'after' }
-      )
-      console.log(`✓ Upserted "${examData.title}" (${updated._id})`)
-      continue
-    }
-
-    const existing = await Exam.findOne({ level: examData.level })
-    if (existing) {
-      console.log(`Exam for level "${examData.level}" already exists — skipping`)
-      continue
-    }
-    await Exam.create(examData)
-    console.log(`✓ Created "${examData.title}"`)
+    const { _id, __v, ...replacement } = examData
+    const updated = await Exam.findOneAndReplace(
+      { level: examData.level },
+      replacement,
+      { upsert: true, returnDocument: 'after' }
+    )
+    console.log(`✓ Upserted "${examData.title}" (${updated._id})`)
   }
 
   await mongoose.disconnect()

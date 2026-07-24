@@ -132,7 +132,7 @@ const completeLesson = async (req, res) => {
 
     const currentLesson = await Lesson.findById(lessonId)
     if (currentLesson) {
-      const courseLessons = await Lesson.find({ courseId: currentLesson.courseId }).sort({ order: 1 })
+      const courseLessons = await Lesson.find({ courseId: currentLesson.courseId }).populate('courseId', 'level').sort({ order: 1 })
       const idx = courseLessons.findIndex((l) => l._id.toString() === lessonId)
       if (idx >= 0 && idx < courseLessons.length - 1) {
         const nextLesson = courseLessons[idx + 1]
@@ -159,7 +159,7 @@ const completeLesson = async (req, res) => {
     if (effectiveCourseId) {
       const normCourse = P.normalizeCourseId(effectiveCourseId)
       if (normCourse) {
-        const courseLessons = await Lesson.find({ courseId: normCourse }).sort({ order: 1 })
+        const courseLessons = await Lesson.find({ courseId: normCourse }).populate('courseId', 'level').sort({ order: 1 })
         const completedSet = alreadyCompleted
           ? user.completedLessons
           : [...user.completedLessons, slug]
@@ -288,8 +288,9 @@ const completeCourse = async (req, res) => {
     if (!normCourse && level) {
       const courseObj = await Course.findOne({ level })
       if (courseObj) normCourse = courseObj._id.toString()
+      else console.warn(`[completeCourse] No Course document found for level="${level}"`)
     }
-    if (!normCourse) return res.status(400).json({ message: 'courseId or level is required' })
+    if (!normCourse) return res.status(400).json({ message: 'courseId or level is required and no Course document exists for this level' })
 
     const snapshot = await User.findById(req.user._id)
     if (!snapshot) return res.status(404).json({ message: 'User not found' })

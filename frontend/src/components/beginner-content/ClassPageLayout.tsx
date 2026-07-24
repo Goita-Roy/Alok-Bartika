@@ -177,9 +177,9 @@ export default function ClassPageLayout({ currentClassId, children }: Props) {
 
   useEffect(() => {
     if (isBeginnerCompleted) {
-      completeLevel('beginner');
+      completeLevel('beginner', begCourseId);
     }
-  }, [isBeginnerCompleted, completeLevel]);
+  }, [isBeginnerCompleted, completeLevel, begCourseId]);
 
   const isLastLesson = currentIndex === lessonClasses.length - 1;
   const nextLessonLabel = !isLastLesson ? lessonClasses[currentIndex + 1]?.label : undefined;

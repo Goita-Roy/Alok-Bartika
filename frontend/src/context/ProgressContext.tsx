@@ -127,7 +127,7 @@ export interface ProgressContextValue extends ProgressState {
   refreshProgress: () => void
   saveLastVisited: (lessonId: string, courseId?: string, stage?: LearningLevel) => Promise<void>
   markClassComplete: (classId: string, courseId?: string, skipApi?: boolean) => Promise<void>
-  completeLevel: (level: LearningLevel) => void
+  completeLevel: (level: LearningLevel, courseId?: string) => void
   markPracticeComplete: (lessonId: string) => Promise<void>
   markQuizComplete: (lessonId: string) => Promise<void>
   markActivityComplete: (id: string) => void
@@ -243,7 +243,11 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // ── Mutation helper: POST with retry, then re-read from server ──────────
   const callApi = useCallback(
     async (url: string, body: Record<string, unknown>) => {
-      if (!token) return
+      if (!token) {
+        console.warn(`[callApi] ${url} — skipped: no auth token`)
+        return
+      }
+      let succeeded = false
       const maxAttempts = 3
       for (let attempt = 0; attempt < maxAttempts; attempt++) {
         try {
@@ -252,8 +256,12 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify(body),
           })
-          if (res.ok) break
-          console.error(`[callApi] POST ${url} → status: ${res.status}`)
+          if (res.ok) {
+            succeeded = true
+            break
+          }
+          const errBody = await res.text().catch(() => '')
+          console.error(`[callApi] POST ${url} → status: ${res.status} body: ${errBody}`)
           if (res.status >= 400 && res.status < 500) break
         } catch (e) {
           console.error(`[callApi] POST ${url} → NETWORK ERROR:`, e)
@@ -262,7 +270,13 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)))
         }
       }
-      refreshProgress()
+      // Only re-fetch from server on success so we don't overwrite optimistic
+      // local state with stale server data when the write never landed.
+      if (succeeded) {
+        refreshProgress()
+      } else {
+        console.warn(`[callApi] ${url} — all ${maxAttempts} attempts failed; keeping local optimistic state`)
+      }
     },
     [token, refreshProgress]
   )
@@ -304,9 +318,9 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   )
 
   const completeLevel = useCallback(
-    (level: LearningLevel) => {
-      console.log('[ProgressContext] completeLevel called for level:', level)
-      return callApi('/progression/complete-course', { level })
+    (level: LearningLevel, courseId?: string) => {
+      console.log('[ProgressContext] completeLevel called for level:', level, 'courseId:', courseId)
+      return callApi('/progression/complete-course', { level, courseId })
     },
     [callApi]
   )
