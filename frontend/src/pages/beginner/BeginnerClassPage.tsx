@@ -1,3 +1,4 @@
+
 import { useParams, Navigate } from "react-router-dom";
 import ClassPageLayout from "../../components/beginner-content/ClassPageLayout";
 import Section1_Definition from "../../components/beginner-content/Section1_Definition";

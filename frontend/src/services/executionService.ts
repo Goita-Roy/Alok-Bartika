@@ -1,3 +1,4 @@
+import axios from 'axios'
 import api from '../config/api'
 import { simulateExecution } from '../utils/codeSimulator'
 import type { ExecutionStatus, RunResult } from '../utils/codeRunner'
@@ -42,8 +43,8 @@ export async function executeCodeOnBackend(
       guidance: null,
       status,
     }
-  } catch (err) {
-    if (api.isAxiosError(err) && err.code === 'ECONNABORTED') {
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err) && err.code === 'ECONNABORTED') {
       return {
         stdout: '',
         stderr: 'Execution timed out. Your code took too long to run.',
@@ -51,10 +52,10 @@ export async function executeCodeOnBackend(
         status: 'timeout',
       }
     }
-    if (api.isAxiosError(err) && !err.response) {
+    if (axios.isAxiosError(err) && !err.response) {
       return null
     }
-    if (api.isAxiosError(err) && err.response?.data) {
+    if (axios.isAxiosError(err) && err.response?.data) {
       return {
         stdout: '',
         stderr: err.response.data.message ?? err.response.data.stderr ?? 'Execution failed on server.',
