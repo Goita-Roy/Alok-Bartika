@@ -11,7 +11,8 @@ import { ExamTerminatedPage } from '../components/exam/ExamTerminatedPage'
 import {
   Timer, CheckCircle2, XCircle, Trophy, AlertTriangle,
   ChevronLeft, ChevronRight, ArrowLeft, RefreshCw, Star,
-  Code2, X,
+  Code2, X, Shield, Clock, Ban, Eye, Monitor, WifiOff,
+  Camera, FileText, MousePointerClick, Hourglass, Type,
 } from 'lucide-react'
 import { CodeEditor } from '../components/CodeEditor'
 
@@ -309,6 +310,194 @@ function IDEModal({
   )
 }
 
+// ── Exam Rules & Agreement modal ─────────────────────────────────────────────
+// Mandatory consent step before the exam begins.  Shown AFTER the instructions
+// page (or directly if autoStart).  The exam timer does NOT start until the
+// student checks the agreement and clicks "Start Exam".
+function ExamRulesModal({
+  level,
+  examTitle,
+  onCancel,
+  onAccept,
+}: {
+  level: string
+  examTitle: string
+  onCancel: () => void
+  onAccept: () => void
+}) {
+  const [agreed, setAgreed] = useState(false)
+
+  const rules = [
+    {
+      icon: <Clock size={16} style={{ color: S.warn }} />,
+      text: 'পরীক্ষা শুরু করার পর Timer বন্ধ হবে না।',
+    },
+    {
+      icon: <Hourglass size={16} style={{ color: S.warn }} />,
+      text: 'নির্ধারিত সময়ের মধ্যে পরীক্ষা শেষ করতে হবে।',
+    },
+    {
+      icon: <CheckCircle2 size={16} style={{ color: S.accent }} />,
+      text: 'সময় শেষ হলে উত্তর স্বয়ংক্রিয়ভাবে (Auto Submit) জমা হবে।',
+    },
+    {
+      icon: <Ban size={16} style={{ color: S.danger }} />,
+      text: 'Copy / Paste করা যাবে না।',
+    },
+    {
+      icon: <MousePointerClick size={16} style={{ color: S.danger }} />,
+      text: 'Right Click নিষিদ্ধ।',
+    },
+    {
+      icon: <Type size={16} style={{ color: S.danger }} />,
+      text: 'Text Select করা যাবে না।',
+    },
+    {
+      icon: <AlertTriangle size={16} style={{ color: S.warn }} />,
+      text: 'নতুন Tab বা Window খুললে Warning দেওয়া হবে।',
+    },
+    {
+      icon: <XCircle size={16} style={{ color: S.danger }} />,
+      text: 'বারবার Tab পরিবর্তন করলে পরীক্ষা স্বয়ংক্রিয়ভাবে বাতিল (Auto Submit) হবে।',
+    },
+    {
+      icon: <RefreshCw size={16} style={{ color: S.danger }} />,
+      text: 'Browser Refresh করলে পরীক্ষা সঙ্গে সঙ্গে শেষ হয়ে যাবে।',
+    },
+    {
+      icon: <WifiOff size={16} style={{ color: S.warn }} />,
+      text: 'Internet Disconnect হলে পুনরায় সংযোগ করার চেষ্টা করবে, তবে Timer চলতেই থাকবে।',
+    },
+    {
+      icon: <Monitor size={16} style={{ color: S.warn }} />,
+      text: 'Full Screen Mode থেকে বের হলে Warning দেখাবে।',
+    },
+    {
+      icon: <Camera size={16} style={{ color: S.muted }} />,
+      text: 'ভবিষ্যতে Webcam Monitoring চালু হতে পারে।',
+    },
+    {
+      icon: <FileText size={16} style={{ color: S.accent }} />,
+      text: 'সব প্রশ্নের উত্তর না দিলেও Submit করা যাবে।',
+    },
+    {
+      icon: <AlertTriangle size={16} style={{ color: S.danger }} />,
+      text: 'পরীক্ষা শুরু করার পর মাঝপথে বের হলে অগ্রগতি সংরক্ষণ নাও হতে পারে।',
+    },
+  ]
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}
+      onClick={onCancel}
+    >
+      <div
+        className="w-full max-w-lg max-h-[90vh] flex flex-col rounded-3xl overflow-hidden"
+        style={{
+          backgroundColor: 'rgba(10,74,63,0.85)',
+          border: '1.5px solid rgba(101,209,178,0.25)',
+          boxShadow: '0 0 60px rgba(101,209,178,0.12), 0 25px 50px rgba(0,0,0,0.4)',
+          backdropFilter: 'blur(20px)',
+          animation: 'rulesModalIn 0.3s ease-out',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div
+          className="shrink-0 px-6 pt-6 pb-4 text-center"
+          style={{ borderBottom: '1px solid rgba(101,209,178,0.12)' }}
+        >
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3"
+            style={{ backgroundColor: 'rgba(245,200,66,0.12)', border: '2px solid rgba(245,200,66,0.3)' }}
+          >
+            <Shield size={28} style={{ color: S.warn }} />
+          </div>
+          <h2 className="text-lg font-black" style={{ color: S.text }}>
+            📋 পরীক্ষার নিয়ম ও শর্তাবলী
+          </h2>
+          <p className="text-xs font-semibold mt-1" style={{ color: S.muted }}>
+            {LEVEL_LABELS[level]} ফাইনাল পরীক্ষা — {examTitle}
+          </p>
+        </div>
+
+        {/* Scrollable rules */}
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-0.5">
+          {rules.map((rule, i) => (
+            <div
+              key={i}
+              className="flex items-start gap-3 py-2.5 rounded-xl px-3 transition-colors"
+              style={{ backgroundColor: i % 2 === 0 ? 'rgba(101,209,178,0.03)' : 'transparent' }}
+            >
+              <span className="shrink-0 mt-0.5">{rule.icon}</span>
+              <p className="text-[13px] font-semibold leading-relaxed" style={{ color: S.text }}>
+                {rule.text}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Agreement checkbox */}
+        <div
+          className="shrink-0 mx-6 mb-4 rounded-xl p-3.5"
+          style={{ backgroundColor: 'rgba(101,209,178,0.06)', border: '1.5px solid rgba(101,209,178,0.15)' }}
+        >
+          <label className="flex items-start gap-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={e => setAgreed(e.target.checked)}
+              className="mt-0.5 w-5 h-5 rounded cursor-pointer shrink-0"
+              style={{ accentColor: S.accent }}
+            />
+            <span className="text-sm font-bold leading-relaxed" style={{ color: S.text }}>
+              আমি উপরোক্ত সকল নিয়ম পড়েছি এবং মেনে চলতে সম্মত।
+            </span>
+          </label>
+        </div>
+
+        {/* Buttons */}
+        <div
+          className="shrink-0 px-6 pb-6 flex gap-3"
+        >
+          <button
+            onClick={onCancel}
+            className="flex-1 py-3 rounded-xl font-bold text-sm transition-all hover:scale-105"
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.05)',
+              color: S.muted,
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onAccept}
+            disabled={!agreed}
+            className="flex-1 py-3 rounded-xl font-black text-sm transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+            style={{
+              backgroundColor: agreed ? S.accent : 'rgba(101,209,178,0.15)',
+              color: agreed ? '#04342C' : S.muted,
+              boxShadow: agreed ? '0 0 24px rgba(101,209,178,0.30)' : 'none',
+            }}
+          >
+            🚀 Start Exam
+          </button>
+        </div>
+      </div>
+
+      {/* Keyframe for modal entrance animation */}
+      <style>{`
+        @keyframes rulesModalIn {
+          from { opacity: 0; transform: scale(0.92) translateY(16px); }
+          to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+      `}</style>
+    </div>
+  )
+}
+
 // ── Result screen ────────────────────────────────────────────────────────────
 function ResultScreen({
   result, level, onRetry,
@@ -530,7 +719,8 @@ export function ExamPage() {
     []
   )
 
-  const [examStarted, setExamStarted] = useState(searchParams.get('autoStart') === 'true')
+  const [examStarted, setExamStarted] = useState(false)
+  const [showRulesModal, setShowRulesModal] = useState(searchParams.get('autoStart') === 'true')
   const [answers, setAnswers] = useState<Record<number, any>>({})
   const [currentQ, setCurrentQ] = useState(0)
   const [secondsLeft, setSecondsLeft] = useState(0)
@@ -804,16 +994,59 @@ export function ExamPage() {
 
   // ── Exam instructions (before start) ───────────────────────────────────
   if (!examStarted) {
+    // autoStart: skip instructions, show rules modal directly
+    const autoStart = searchParams.get('autoStart') === 'true'
+    if (autoStart) {
+      return (
+        <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: S.bg }}>
+          {showRulesModal && (
+            <ExamRulesModal
+              level={level!}
+              examTitle={exam.title}
+              onCancel={() => navigate('/courses')}
+              onAccept={() => {
+                setShowRulesModal(false)
+                setExamStarted(true)
+                try {
+                  const el = document.documentElement
+                  if (el.requestFullscreen) el.requestFullscreen().catch(() => {})
+                  else if ((el as any).webkitRequestFullscreen) (el as any).webkitRequestFullscreen()
+                } catch { /* fullscreen not supported */ }
+              }}
+            />
+          )}
+        </div>
+      )
+    }
+
     return (
-      <ExamInstructions
-        level={level!}
-        examTitle={exam.title}
-        questionCount={exam.questionCount || exam.questions.length}
-        timeLimitMinutes={exam.timeLimitMinutes}
-        passingScore={exam.passingScore}
-        onStart={() => setExamStarted(true)}
-        onBack={() => navigate('/courses')}
-      />
+      <>
+        <ExamInstructions
+          level={level!}
+          examTitle={exam.title}
+          questionCount={exam.questionCount || exam.questions.length}
+          timeLimitMinutes={exam.timeLimitMinutes}
+          passingScore={exam.passingScore}
+          onStart={() => setShowRulesModal(true)}
+          onBack={() => navigate('/courses')}
+        />
+        {showRulesModal && (
+          <ExamRulesModal
+            level={level!}
+            examTitle={exam.title}
+            onCancel={() => setShowRulesModal(false)}
+            onAccept={() => {
+              setShowRulesModal(false)
+              setExamStarted(true)
+              try {
+                const el = document.documentElement
+                if (el.requestFullscreen) el.requestFullscreen().catch(() => {})
+                else if ((el as any).webkitRequestFullscreen) (el as any).webkitRequestFullscreen()
+              } catch { /* fullscreen not supported */ }
+            }}
+          />
+        )}
+      </>
     )
   }
 
