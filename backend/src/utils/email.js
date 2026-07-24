@@ -33,7 +33,14 @@ async function sendOtpEmail(to, otp) {
     `,
   }
 
-  return transporter.sendMail(mailOptions)
+  try {
+  const info = await transporter.sendMail(mailOptions)
+  console.log("EMAIL SENT:", info)
+  return info
+} catch (err) { 
+  console.error("EMAIL ERROR:", err)
+  throw err
+}
 }
 
 module.exports = { sendOtpEmail }
