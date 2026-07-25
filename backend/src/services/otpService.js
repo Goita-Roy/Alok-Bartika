@@ -59,10 +59,18 @@ async function sendOtp({ email, phone, purpose = 'signup' }) {
   await Otp.findOneAndDelete({ identifier: target.identifier, type: target.type, purpose })
   await Otp.create({ identifier: target.identifier, type: target.type, purpose, otpHash, expiresAt, attempts: 0 })
 
-  if (target.channel === 'email') {
-    await sendOtpEmail(target.identifier, otp)
-  } else {
-    await sendSms({ to: target.identifier, message: `Your Alokbartika verification code is ${otp}. It expires in 5 minutes.` })
+  try {
+    if (target.channel === 'email') {
+      await sendOtpEmail(target.identifier, otp, purpose)
+    } else {
+      await sendSms({ to: target.identifier, message: `Your Alokbartika verification code is ${otp}. It expires in 5 minutes.` })
+    }
+  } catch (deliveryErr) {
+    await Otp.deleteOne({ identifier: target.identifier, type: target.type, purpose }).catch(() => {})
+    const err = new Error(`Failed to send OTP via ${target.channel}. Please try again.`)
+    err.status = 503
+    err.cause = deliveryErr
+    throw err
   }
 
   return { channel: target.channel, identifier: target.identifier, expiresInMs: OTP_TTL_MS, otp }

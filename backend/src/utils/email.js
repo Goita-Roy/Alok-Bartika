@@ -11,18 +11,24 @@ const transporter = nodemailer.createTransport({
   },
 })
 
-async function sendOtpEmail(to, otp) {
+async function sendOtpEmail(to, otp, purpose = 'password-reset') {
+  const isSignup = purpose === 'signup'
+  const title = isSignup ? 'Email Verification OTP' : 'Password Reset OTP'
+  const description = isSignup
+    ? 'Verify your email address using the OTP below. This code expires in <strong>5 minutes</strong>.'
+    : 'You requested a password reset. Use the OTP below to verify your identity. This code expires in <strong>10 minutes</strong>.'
+
   const mailOptions = {
     from: `"Alokbartika" <${env.emailFrom}>`,
     to,
-    subject: 'Your Password Reset OTP - Alokbartika',
+    subject: `${title} - Alokbartika`,
     html: `
       <div style="max-width:480px;margin:0 auto;padding:24px;font-family:Arial,sans-serif;background:#fff;border-radius:16px;border:1px solid #e5e7eb;">
         <div style="text-align:center;margin-bottom:24px;">
           <div style="width:48px;height:48px;margin:0 auto 12px;background:#1D9E75;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;font-weight:900;">AB</div>
-          <h1 style="font-size:20px;font-weight:800;color:#111827;margin:0;">Password Reset OTP</h1>
+          <h1 style="font-size:20px;font-weight:800;color:#111827;margin:0;">${title}</h1>
         </div>
-        <p style="font-size:14px;color:#4b5563;line-height:1.6;">You requested a password reset. Use the OTP below to verify your identity. This code expires in <strong>10 minutes</strong>.</p>
+        <p style="font-size:14px;color:#4b5563;line-height:1.6;">${description}</p>
         <div style="text-align:center;margin:24px 0;">
           <span style="display:inline-block;padding:16px 40px;font-size:32px;font-weight:900;letter-spacing:8px;color:#1D9E75;background:#f0fdf4;border-radius:12px;border:2px dashed #1D9E75;">${otp}</span>
         </div>
@@ -33,14 +39,9 @@ async function sendOtpEmail(to, otp) {
     `,
   }
 
-  try {
   const info = await transporter.sendMail(mailOptions)
-  console.log("EMAIL SENT:", info)
+  console.log('[email] sent:', info.messageId)
   return info
-} catch (err) { 
-  console.error("EMAIL ERROR:", err)
-  throw err
-}
 }
 
 module.exports = { sendOtpEmail }
