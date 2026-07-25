@@ -37,10 +37,11 @@ async function persistLevels(userId) {
 // ── GET /api/progression ──────────────────────────────────────────────────────
 const getProgress = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id)
+    let user = await User.findById(req.user._id)
     if (!user) return res.status(404).json({ message: 'User not found' })
 
-    // Runtime validation/repair: if stored progression is not canonical, fix it
+    // Runtime validation/repair: if stored progression is not canonical OR
+    // contains slugs that no longer map to real Lesson documents, fix it
     // before returning so the client always receives consistent data.
     const needsRepair =
       !Array.isArray(user.completedLessons) ||
@@ -48,19 +49,28 @@ const getProgress = async (req, res) => {
       !Array.isArray(user.unlockedLessons) ||
       user.unlockedLessons.some((s) => !P.SLUG_RE.test(s))
 
-    if (needsRepair) {
+    let needsLessonValidation = false
+    if (!needsRepair && user.completedLessons.length > 0) {
+      const slugMaps = await P.buildSlugMaps()
+      needsLessonValidation = user.completedLessons.some((s) => !slugMaps.slugToId[s])
+    }
+
+    if (needsRepair || needsLessonValidation) {
       await P.repairUser(req.user._id)
       user = await User.findById(req.user._id)
     }
 
-    console.log('[DEBUG:GET /progression] user.completedLessons:', user.completedLessons)
     const canon = await P.canonicalize(user)
-    console.log('[DEBUG:GET /progression] canon.completedLessons:', canon.completedLessons)
     // Persist derived facts so all consumers agree (single source of truth).
+    // completedCourses MUST be persisted too — canonicalize() reconstructs it
+    // from completedLessons, but persistLevels() and checkExamAccess() read
+    // completedCourses directly from the DB, not through canonicalize().
     await User.updateOne(
       { _id: req.user._id },
       {
         $set: {
+          completedCourses: canon.completedCourses.map(id => new mongoose.Types.ObjectId(id)),
+          unlockedCourses: canon.unlockedCourses.map(id => new mongoose.Types.ObjectId(id)),
           completedLevels: canon.completedLevels,
           unlockedLevels: canon.unlockedLevels,
           currentStage: canon.currentStage,
@@ -70,6 +80,11 @@ const getProgress = async (req, res) => {
     )
 
     const correctLevel = await P.syncLevel(req.user._id)
+
+    // ── Diagnostic log (structured, single line per GET) ──
+    const totalLessons = canon.completedLessons.length
+    const advLessons = canon.completedLessons.filter(s => s.startsWith('advanced-')).length
+    console.log(`[getProgress] user=${req.user._id} completedLessons=${totalLessons} advanced=${advLessons} completedCourses=${canon.completedCourses.length} completedLevels=${canon.completedLevels} unlockedLevels=${canon.unlockedLevels} pct=${canon.progressPercentage}`)
 
     // Canonical Continue Learning resolution (single source of truth, shared
     // with the dashboard) so every page resumes to the exact lesson.
@@ -200,6 +215,10 @@ const completeLesson = async (req, res) => {
       )
     }
 
+    if (completedCourseToAdd) {
+      await persistLevels(req.user._id)
+    }
+
     await User.updateOne(
       { _id: req.user._id },
       {
@@ -216,8 +235,10 @@ const completeLesson = async (req, res) => {
     )
 
     const finalUser = await User.findById(req.user._id)
-    console.log('[DEBUG:POST /complete-lesson] after write — finalUser.completedLessons:', finalUser.completedLessons)
     const correctLevel = await P.syncLevel(req.user._id)
+
+    // ── Diagnostic log (structured, single line per completion) ──
+    console.log(`[completeLesson] user=${req.user._id} slug=${slug} alreadyCompleted=${alreadyCompleted} courseCompleted=${!!completedCourseToAdd} completedLessons=${finalUser.completedLessons.length} completedCourses=${(finalUser.completedCourses || []).length} completedLevels=${(finalUser.completedLevels || [])} unlockedLevels=${(finalUser.unlockedLevels || [])}`)
 
     // ── Automatic notifications (one per real event, deduped) ──
     if (!alreadyCompleted) {
@@ -262,9 +283,13 @@ const completeLesson = async (req, res) => {
       message: 'Lesson completed',
       leveledUp: correctLevel > user.level,
       awardedBadges: alreadyCompleted ? [] : newBadges,
+      courseCompleted: !!completedCourseToAdd,
       data: {
         completedLessons: finalUser.completedLessons,
         unlockedLessons: finalUser.unlockedLessons,
+        completedCourses: (finalUser.completedCourses || []).map((c) => c.toString()),
+        completedLevels: finalUser.completedLevels || [],
+        unlockedLevels: finalUser.unlockedLevels || [],
         currentLessonId: finalUser.currentLessonId,
         lastActivityTime: finalUser.lastActivityTime,
         xp: finalUser.xp,

@@ -474,7 +474,6 @@ function Sidebar({
 // ── Main component ────────────────────────────────────────────────────
 export function IntermediateCoursePage() {
   useCopyProtection();
-  console.log('🔵 IntermediateCoursePage MOUNTED');
   const [searchParams] = useSearchParams()
   const hasLessonParam = Boolean(searchParams.get('lesson'))
   const initialLesson: LessonId = (() => {
@@ -839,9 +838,6 @@ export function IntermediateCoursePage() {
     ScaffoldComponent,
   } = lesson;
   const data = lesson.data;
-  console.log("Lesson:", lesson.id);
-  console.log("Story Steps:", data.storySteps?.length);
-  console.log("Definition:", data.definition?.fullText);
 
   const sidebarWidth = sidebarCollapsed ? 60 : 288
 

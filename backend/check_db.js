@@ -4,7 +4,12 @@ const { Lesson } = require('./src/models/Lesson')
 const { env } = require('./src/config/env')
 
 async function check() {
-  await mongoose.connect(env.mongoUri)
+  await mongoose.connect(env.mongoUri, {
+    autoIndex: false,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+    family: 4,
+  })
   const courses = await Course.find()
   console.log('Courses count:', courses.length)
   for (const c of courses) {

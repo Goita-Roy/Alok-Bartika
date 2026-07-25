@@ -5,7 +5,12 @@ const { env } = require('../config/env')
 
 async function seed() {
   console.log('Connecting to database...')
-  await mongoose.connect(env.mongoUri)
+  await mongoose.connect(env.mongoUri, {
+    autoIndex: false,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+    family: 4,
+  })
   console.log('Connected to database.')
 
   // 1. Create Beginner Course

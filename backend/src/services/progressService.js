@@ -245,9 +245,21 @@ async function canonicalize(rawUser) {
   const courses = await Course.find({}).sort({ level: 1 })
   const courseIdSet = new Set(courses.map((c) => c._id.toString()))
 
-  const completedLessons = await normalizeLessonIds(rawUser.completedLessons)
-  const unlockedLessons = await normalizeLessonIds(rawUser.unlockedLessons)
-  const practiceCompleted = await normalizeLessonIds(rawUser.practiceCompleted)
+  // Validate that every canonical slug in completedLessons actually maps to a
+  // real Lesson document. Stale / orphaned entries (e.g. from deleted lessons or
+  // data migrations) must be dropped so the UI never shows false completions.
+  const allSlugsRaw = await normalizeLessonIds([
+    ...rawUser.completedLessons,
+    ...rawUser.unlockedLessons,
+    ...rawUser.practiceCompleted,
+  ])
+  const validSlugSet = new Set(Object.values(slugMaps.slugToId).length ? Object.keys(slugMaps.slugToId) : [])
+  // If slugToId is populated, filter; otherwise fall through (empty DB edge case).
+  const validSlug = (s) => validSlugSet.size === 0 || validSlugSet.has(s)
+
+  const completedLessons = (await normalizeLessonIds(rawUser.completedLessons)).filter(validSlug)
+  const unlockedLessons = (await normalizeLessonIds(rawUser.unlockedLessons)).filter(validSlug)
+  const practiceCompleted = (await normalizeLessonIds(rawUser.practiceCompleted)).filter(validSlug)
 
   // lessons that are completed must also be unlocked
   const unlockedSet = new Set(unlockedLessons)
@@ -358,6 +370,35 @@ async function repairUser(userId) {
   // XP must never be negative.
   const xp = Math.max(0, user.xp || 0)
 
+  // Reconstruct completedCourses: if ALL lessons of a course are legitimately
+  // completed, add the course.  canon.completedLessons has already been filtered
+  // to real lessons by canonicalize(), so this is safe.
+  const slugMaps = await buildSlugMaps()
+  const allLessons = await Lesson.find({}).populate('courseId', 'level').sort({ order: 1 })
+  const byCourse = {}
+  allLessons.forEach((l) => {
+    const cid = l.courseId && l.courseId._id ? l.courseId._id.toString() : (l.courseId ? l.courseId.toString() : null)
+    if (!cid) return
+    ;(byCourse[cid] ||= []).push(l)
+  })
+  const completedSlugSet = new Set(canon.completedLessons)
+  const completedCoursesFromLessons = []
+  for (const [cid, courseLessons] of Object.entries(byCourse)) {
+    if (
+      courseLessons.length > 0 &&
+      courseLessons.every((l) => completedSlugSet.has(slugForLesson(l)))
+    ) {
+      completedCoursesFromLessons.push(cid)
+    }
+  }
+  // Merge with existing valid completedCourses
+  const courses = await Course.find({})
+  const courseIdSet = new Set(courses.map((c) => c._id.toString()))
+  const existingCompleted = (user.completedCourses || [])
+    .map((v) => (v && typeof v === 'object' && v._id ? v._id.toString() : String(v)))
+    .filter((id) => courseIdSet.has(id))
+  const finalCompletedCourses = [...new Set([...existingCompleted, ...completedCoursesFromLessons])]
+
   await User.updateOne(
     { _id: userId },
     {
@@ -365,7 +406,7 @@ async function repairUser(userId) {
         completedLessons: canon.completedLessons,
         unlockedLessons: canon.unlockedLessons,
         practiceCompleted: canon.practiceCompleted,
-        completedCourses: canon.completedCourses.map(id => new mongoose.Types.ObjectId(id)),
+        completedCourses: finalCompletedCourses.map(id => new mongoose.Types.ObjectId(id)),
         unlockedCourses: canon.unlockedCourses.map(id => new mongoose.Types.ObjectId(id)),
         completedExams: canon.completedExams.map(id => new mongoose.Types.ObjectId(id)),
         completedLevels: canon.completedLevels,

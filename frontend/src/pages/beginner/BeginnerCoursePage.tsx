@@ -327,8 +327,6 @@ export default function BeginnerCoursePage() {
 
   const { completedClassIds, isLessonUnlocked, apiLoaded, saveLastVisited } = useCourseProgress(classesByLevel, beginnerLessonIds);
 
-  console.log('[DEBUG:BeginnerCoursePage] render — selectedClass:', selectedClass, 'completedClassIds:', completedClassIds)
-
   const lessonStates = useMemo(() => {
     const states: Record<string, 'locked' | 'unlocked' | 'completed'> = {};
     for (const cls of lessonClasses) {

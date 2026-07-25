@@ -25,7 +25,9 @@ async function connectDb(mongoUri) {
   try {
     await mongoose.connect(mongoUri, {
       autoIndex: false,
-      serverSelectionTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      family: 4,
     })
     console.log('mongo connected successfully')
   } catch (error) {

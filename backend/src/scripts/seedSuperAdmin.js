@@ -25,7 +25,12 @@ function parseArg(flag, fallback) {
 async function seed() {
   const uri = process.env.MONGO_URI || process.env.DATABASE_URL
   if (!uri) throw new Error('MONGO_URI not set in .env')
-  await mongoose.connect(uri)
+  await mongoose.connect(uri, {
+    autoIndex: false,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+    family: 4,
+  })
   console.log('Connected to MongoDB')
 
   const name = parseArg('--name', 'Super Admin')

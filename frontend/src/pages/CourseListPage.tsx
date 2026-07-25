@@ -381,8 +381,6 @@ export function CourseListPage() {
     apiLoaded,
   } = useCourseProgress(classesByLevel, orderedLessonIds)
 
-  console.log('[DEBUG:CourseListPage] render — completedClassIds:', completedClassIds, 'apiLoaded:', apiLoaded, 'completedLevels:', completedLevels, 'completedClassCount:', completedClassCount)
-
   // Read-only: reuse the existing first-attempts endpoint to know whether the
   // student has ever attempted the Advanced final exam (drives Final Exam card UI only).
   const { results: firstAttemptResults } = useFirstAttemptResults()
@@ -391,13 +389,9 @@ export function CourseListPage() {
     [firstAttemptResults],
   )
 
-  console.log('[CourseListPage] classesByLevel:', JSON.stringify(classesByLevel))
-  console.log('[CourseListPage] completedClassIds:', completedClassIds, '| completedLevels:', completedLevels, '| completedClassCount:', completedClassCount, '| totalClassCount:', totalClassCount)
-  console.log('[CourseListPage] beginner ids:', classesByLevel.beginner.map(c => c.id), '| intermediate ids:', classesByLevel.intermediate.map(c => c.id), '| advanced ids:', classesByLevel.advanced.map(c => c.id))
   const overallProgress        = totalClassCount ? Math.round((completedClassCount / totalClassCount) * 100) : 0
   const isIntermediateUnlocked = isLevelUnlocked('intermediate')
   const isAdvancedUnlocked     = isLevelUnlocked('advanced')
-  console.log('[CourseListPage] overallProgress:', overallProgress, '| isIntermediateUnlocked:', isIntermediateUnlocked, '| isAdvancedUnlocked:', isAdvancedUnlocked)
 
   // ── Loading ────────────────────────────────────────────────────────────────
   if (coursesLoading || bLoading || iLoading || aLoading || !apiLoaded) {

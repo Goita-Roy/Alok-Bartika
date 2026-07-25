@@ -420,13 +420,11 @@ export function AdvancedCoursePage() {
   const totalSubLessons = currentSubLessons.length
   const allSubLessonsDone = completedSubCount === totalSubLessons
 
-  // Require at least one fresh completion during this session — restored
-  // localStorage state alone must never satisfy canComplete.
-  const hadFreshCompletion = currentSubLessons.some(
-    id => capstone[id] === 'completed' && capstoneSnapshotRef.current[id] !== 'completed',
-  )
-
-  const canComplete = allSubLessonsDone && hadFreshCompletion
+  // All sub-lessons done is sufficient. The hasUserScrolled guard in the
+  // effect below prevents firing on mount (when only localStorage is restored),
+  // so re-entering a fully-completed lesson will correctly complete the LMS
+  // lesson once the user scrolls through the content.
+  const canComplete = allSubLessonsDone
 
   // ── Progress tracking (Advanced level) ───────────────────────────
   const lessonIds = useMemo(() => LESSONS.map(l => LESSON_ID_TO_MOCK_ID[l.id]), [])
@@ -655,6 +653,8 @@ export function AdvancedCoursePage() {
         window.location.origin,
       )
     } catch {}
+
+    capstoneSnapshotRef.current = { ...current }
   }, [completedClassIds])
 
   return (

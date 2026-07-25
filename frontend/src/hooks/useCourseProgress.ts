@@ -54,10 +54,13 @@ export function useCourseProgress(
     () => totalFromLevels || orderedLessonIds.length,
     [totalFromLevels, orderedLessonIds]
   )
-  const completedClassCount = useMemo(
-    () => Math.min(ctx.completedClassIds.length, totalClassCount || Infinity),
-    [ctx.completedClassIds, totalClassCount]
-  )
+  const completedClassCount = useMemo(() => {
+    const allLevelIds = Object.values(classesByLevel).flatMap(list => list.map(c => c.id))
+    const count = allLevelIds.length > 0
+      ? allLevelIds.filter(id => ctx.completedClassIds.includes(id)).length
+      : Math.min(ctx.completedClassIds.length, totalClassCount || Infinity)
+    return count
+  }, [classesByLevel, ctx.completedClassIds, totalClassCount])
 
   // ── Return the exact same shape as before ──────────────────────────────────
 

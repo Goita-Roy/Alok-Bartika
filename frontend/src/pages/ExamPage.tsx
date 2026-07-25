@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { API_BASE_URL } from '../config/api'
 import { useAuth } from '../context/AuthContext'
 import { useCopyProtection } from '../hooks/useCopyProtection'
 import { useExamAntiCheat } from '../hooks/useExamAntiCheat'
 import { useCourseProgress, type LearningLevel } from '../hooks/useCourseProgress'
-import { ExamInstructions } from '../components/exam/ExamInstructions'
+
 import { ExamTerminatedPage } from '../components/exam/ExamTerminatedPage'
 import {
   Timer, CheckCircle2, XCircle, Trophy, AlertTriangle,
@@ -330,7 +330,7 @@ function ExamRulesModal({
   const rules = [
     {
       icon: <Clock size={16} style={{ color: S.warn }} />,
-      text: 'পরীক্ষা শুরু করার পর Timer বন্ধ হবে না।',
+      text: 'পরীক্ষা শুরু করার পর টাইমার বন্ধ হবে না।',
     },
     {
       icon: <Hourglass size={16} style={{ color: S.warn }} />,
@@ -338,47 +338,47 @@ function ExamRulesModal({
     },
     {
       icon: <CheckCircle2 size={16} style={{ color: S.accent }} />,
-      text: 'সময় শেষ হলে উত্তর স্বয়ংক্রিয়ভাবে (Auto Submit) জমা হবে।',
+      text: 'সময় শেষ হলে উত্তর স্বয়ংক্রিয়ভাবে জমা হবে।',
     },
     {
       icon: <Ban size={16} style={{ color: S.danger }} />,
-      text: 'Copy / Paste করা যাবে না।',
+      text: 'কপি বা পেস্ট করা যাবে না।',
     },
     {
       icon: <MousePointerClick size={16} style={{ color: S.danger }} />,
-      text: 'Right Click নিষিদ্ধ।',
+      text: 'ডান ক্লিক নিষিদ্ধ।',
     },
     {
       icon: <Type size={16} style={{ color: S.danger }} />,
-      text: 'Text Select করা যাবে না।',
+      text: 'লেখা নির্বাচন করা যাবে না।',
     },
     {
       icon: <AlertTriangle size={16} style={{ color: S.warn }} />,
-      text: 'নতুন Tab বা Window খুললে Warning দেওয়া হবে।',
+      text: 'নতুন ট্যাব বা উইন্ডো খুললে সতর্কবার্তা দেওয়া হবে।',
     },
     {
       icon: <XCircle size={16} style={{ color: S.danger }} />,
-      text: 'বারবার Tab পরিবর্তন করলে পরীক্ষা স্বয়ংক্রিয়ভাবে বাতিল (Auto Submit) হবে।',
+      text: 'বারবার ট্যাব পরিবর্তন করলে পরীক্ষা স্বয়ংক্রিয়ভাবে বাতিল হবে।',
     },
     {
       icon: <RefreshCw size={16} style={{ color: S.danger }} />,
-      text: 'Browser Refresh করলে পরীক্ষা সঙ্গে সঙ্গে শেষ হয়ে যাবে।',
+      text: 'ব্রাউজার রিফ্রেশ করলে পরীক্ষা সঙ্গে সঙ্গে শেষ হয়ে যাবে।',
     },
     {
       icon: <WifiOff size={16} style={{ color: S.warn }} />,
-      text: 'Internet Disconnect হলে পুনরায় সংযোগ করার চেষ্টা করবে, তবে Timer চলতেই থাকবে।',
+      text: 'ইন্টারনেট সংযোগ বিচ্ছিন্ন হলে পুনঃসংযোগ করার চেষ্টা করবেন, তবে টাইমার চলতেই থাকবে।',
     },
     {
       icon: <Monitor size={16} style={{ color: S.warn }} />,
-      text: 'Full Screen Mode থেকে বের হলে Warning দেখাবে।',
+      text: 'পূর্ণ পর্দা মোড থেকে বের হলে সতর্কবার্তা দেখাবে।',
     },
     {
       icon: <Camera size={16} style={{ color: S.muted }} />,
-      text: 'ভবিষ্যতে Webcam Monitoring চালু হতে পারে।',
+      text: 'ভবিষ্যতে ওয়েবক্যাম মনিটরিং চালু হতে পারে।',
     },
     {
       icon: <FileText size={16} style={{ color: S.accent }} />,
-      text: 'সব প্রশ্নের উত্তর না দিলেও Submit করা যাবে।',
+      text: 'সব প্রশ্নের উত্তর না দিলেও জমা দেওয়া যাবে।',
     },
     {
       icon: <AlertTriangle size={16} style={{ color: S.danger }} />,
@@ -470,7 +470,7 @@ function ExamRulesModal({
               border: '1px solid rgba(255,255,255,0.08)',
             }}
           >
-            Cancel
+            বাতিল
           </button>
           <button
             onClick={onAccept}
@@ -482,7 +482,7 @@ function ExamRulesModal({
               boxShadow: agreed ? '0 0 24px rgba(101,209,178,0.30)' : 'none',
             }}
           >
-            🚀 Start Exam
+            🚀 পরীক্ষা শুরু করুন
           </button>
         </div>
       </div>
@@ -711,7 +711,6 @@ export function ExamPage() {
   const { level } = useParams<{ level: string }>()
   const navigate = useNavigate()
   const { token } = useAuth()
-  const [searchParams] = useSearchParams()
 
   // Wire into the shared progress system so passing the exam unlocks the next level
   const { completeLevel, markExamPassed } = useCourseProgress(
@@ -720,7 +719,6 @@ export function ExamPage() {
   )
 
   const [examStarted, setExamStarted] = useState(false)
-  const [showRulesModal, setShowRulesModal] = useState(searchParams.get('autoStart') === 'true')
   const [answers, setAnswers] = useState<Record<number, any>>({})
   const [currentQ, setCurrentQ] = useState(0)
   const [secondsLeft, setSecondsLeft] = useState(0)
@@ -992,61 +990,24 @@ export function ExamPage() {
     return <ExamTerminatedPage level={level!} reason={antiCheatInfo.reason} />
   }
 
-  // ── Exam instructions (before start) ───────────────────────────────────
+  // ── Pre-exam: rules modal (the only pre-exam screen) ─────────────────────
   if (!examStarted) {
-    // autoStart: skip instructions, show rules modal directly
-    const autoStart = searchParams.get('autoStart') === 'true'
-    if (autoStart) {
-      return (
-        <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: S.bg }}>
-          {showRulesModal && (
-            <ExamRulesModal
-              level={level!}
-              examTitle={exam.title}
-              onCancel={() => navigate('/courses')}
-              onAccept={() => {
-                setShowRulesModal(false)
-                setExamStarted(true)
-                try {
-                  const el = document.documentElement
-                  if (el.requestFullscreen) el.requestFullscreen().catch(() => {})
-                  else if ((el as any).webkitRequestFullscreen) (el as any).webkitRequestFullscreen()
-                } catch { /* fullscreen not supported */ }
-              }}
-            />
-          )}
-        </div>
-      )
-    }
-
     return (
-      <>
-        <ExamInstructions
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: S.bg }}>
+        <ExamRulesModal
           level={level!}
           examTitle={exam.title}
-          questionCount={exam.questionCount || exam.questions.length}
-          timeLimitMinutes={exam.timeLimitMinutes}
-          passingScore={exam.passingScore}
-          onStart={() => setShowRulesModal(true)}
-          onBack={() => navigate('/courses')}
+          onCancel={() => navigate('/courses')}
+          onAccept={() => {
+            setExamStarted(true)
+            try {
+              const el = document.documentElement
+              if (el.requestFullscreen) el.requestFullscreen().catch(() => {})
+              else if ((el as any).webkitRequestFullscreen) (el as any).webkitRequestFullscreen()
+            } catch { /* fullscreen not supported */ }
+          }}
         />
-        {showRulesModal && (
-          <ExamRulesModal
-            level={level!}
-            examTitle={exam.title}
-            onCancel={() => setShowRulesModal(false)}
-            onAccept={() => {
-              setShowRulesModal(false)
-              setExamStarted(true)
-              try {
-                const el = document.documentElement
-                if (el.requestFullscreen) el.requestFullscreen().catch(() => {})
-                else if ((el as any).webkitRequestFullscreen) (el as any).webkitRequestFullscreen()
-              } catch { /* fullscreen not supported */ }
-            }}
-          />
-        )}
-      </>
+      </div>
     )
   }
 
