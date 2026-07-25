@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { ArrowRight, CheckCircle, Monitor, Mic, Trophy, Bot, Smartphone, Lock, ArrowDown } from 'lucide-react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import api from '../config/api'
@@ -228,14 +229,23 @@ function useCountUp(end: number, duration = 1600, startCounting: boolean) {
 }
 
 /* ── Milestone Section ─────────────────────────────────────────────── */
-const MILESTONES = [
-  { icon: '🎓', label: 'মোট শিক্ষার্থী', value: 26 },
-  { icon: '📚', label: 'মোট পাঠ', value: 37 },
-  { icon: '🚀', label: 'শেখার ধাপ', value: 3 },
-  { icon: '🏆', label: 'সফলতার হার', value: 0 },
-]
+interface StatsResponse {
+  students: number
+  totalClasses: number
+  totalLessons: number
+  learningStages: number
+  successRate: number
+  successRateAvailable: boolean
+}
 
-function MilestoneCard({ item, index, inView }: { item: typeof MILESTONES[number]; index: number; inView: boolean }) {
+interface MilestoneItem {
+  icon: string
+  label: string
+  value: number
+  suffix?: string
+}
+
+function MilestoneCard({ item, index, inView }: { item: MilestoneItem; index: number; inView: boolean }) {
   const count = useCountUp(item.value, 1400, inView)
 
   return (
@@ -280,7 +290,10 @@ function MilestoneCard({ item, index, inView }: { item: typeof MILESTONES[number
           WebkitTextFillColor: 'transparent',
           fontFamily: BN,
         }}>
-        {item.value === 0 ? '—' : toBn(count)}
+        {item.value === 0 && !item.suffix
+          ? '০'
+          : <>{toBn(count)}{item.suffix ? <span className="text-2xl lg:text-3xl">{item.suffix}</span> : null}</>
+        }
       </span>
 
       {/* Label */}
@@ -295,6 +308,23 @@ function MilestoneSection() {
   const prefersReduced = useReducedMotion() ?? false
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, amount: 0.25 })
+
+  const { data: stats } = useQuery<StatsResponse>({
+    queryKey: ['platform-stats'],
+    queryFn: async () => {
+      const res = await api.get<StatsResponse>('/stats')
+      return res.data
+    },
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  })
+
+  const milestones: MilestoneItem[] = [
+    { icon: '🎓', label: 'মোট শিক্ষার্থী', value: stats?.students ?? 0 },
+    { icon: '📚', label: 'মোট পাঠ', value: stats?.totalLessons ?? 0 },
+    { icon: '🚀', label: 'শেখার ধাপ', value: stats?.learningStages ?? 0 },
+    { icon: '🏆', label: 'সফলতার হার', value: stats?.successRate ?? 0, suffix: '%' },
+  ]
 
   return (
     <motion.section 
@@ -355,7 +385,7 @@ function MilestoneSection() {
 
           {/* Right Side — Milestone Cards */}
           <div className="w-full lg:w-[55%] grid grid-cols-1 sm:grid-cols-2 gap-5 lg:gap-6">
-            {MILESTONES.map((item, i) => (
+            {milestones.map((item, i) => (
               <MilestoneCard key={item.label} item={item} index={i} inView={isInView} />
             ))}
           </div>
