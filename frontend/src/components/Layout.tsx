@@ -194,7 +194,7 @@ export function Layout({ children }: LayoutProps) {
       </header>
 
       {/* ── Main ───────────────────────────────────────────────────── */}
-      <main className="flex-grow container mx-auto px-4 py-8 md:py-12 max-w-7xl">
+      <main className="flex-grow container mx-auto px-4 pt-0 max-w-7xl">
         <BackButton />
         {children}
       </main>
