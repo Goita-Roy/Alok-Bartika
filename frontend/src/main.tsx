@@ -6,6 +6,7 @@ import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { GlobalErrorBoundary } from './components/ErrorBoundary'
 import { OfflineBanner } from './components/OfflineBanner'
+import { ScrollToTop } from './components/ScrollToTop'
 import './index.css'
 // @ts-ignore
 import '@fontsource/noto-sans-bengali'
@@ -20,6 +21,7 @@ createRoot(document.getElementById('root')!).render(
         <AuthProvider>
           <ThemeProvider>
             <BrowserRouter>
+              <ScrollToTop />
               <OfflineBanner />
               <App />
             </BrowserRouter>
