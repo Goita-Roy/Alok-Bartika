@@ -23,9 +23,9 @@ import { API_BASE_URL } from '../config/api'
 import { CourseProvider, CourseView, courseData, LessonFontSizeControl } from '../courses/advanced022';
 import {
   Lock, X,
-  ArrowLeft, ArrowRight, FileText, Trash2, Download, Edit3, Search, Trophy,
-  Play, Square, Volume2, VolumeX,
+  ArrowLeft, ArrowRight, Trash2, Download, Edit3, Search, Trophy,
 } from 'lucide-react';
+import { LessonHeader } from '../components/lesson/LessonHeader';
 
 type LessonId =
   | 'hello-world'
@@ -658,7 +658,7 @@ export function AdvancedCoursePage() {
   }, [completedClassIds])
 
   return (
-    <div className="min-h-screen">
+    <div style={{ backgroundColor: S.bg }}>
       <LessonCompleteToast
         show={showCompleteToast}
         isLevelCompleted={isLastLesson}
@@ -670,92 +670,16 @@ export function AdvancedCoursePage() {
         {/* ── Main content area (full width — no sidebar) ── */}
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* ── Top toolbar ── */}
-          <div className="px-4 py-3 shrink-0"
-            style={{ backgroundColor: S.surface, borderBottom: '1px solid rgba(101,209,178,0.12)' }}>
-            {/* Top row: title + actions */}
-            <div className="flex items-center gap-3">
-              <h1 className="text-sm font-black truncate flex-1" style={{ color: S.text }}>{lesson.title}</h1>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {/* Lesson size (advanced022) — scales the entire embedded
-                    lesson container (.lesson-size-*) only; persists via the
-                    advanced022_lesson_size localStorage key. */}
-                <LessonFontSizeControl />
-                {/* Audio Learning cluster — inline on desktop, sticky bottom on mobile */}
-                <div
-                  className="flex flex-wrap items-center justify-center gap-1.5 fixed inset-x-0 bottom-0 left-0 right-0 z-40 px-2 pt-2 pb-[max(8px,env(safe-area-inset-bottom))] border-t shadow-[0_-6px_20px_rgba(0,0,0,0.2)] md:static md:inset-auto md:z-auto md:flex-nowrap md:justify-start md:border-0 md:shadow-none md:px-0 md:py-0 md:flex-none audio-player-bar"
-                  style={{ backgroundColor: S.surface, borderColor: 'rgba(101,209,178,0.12)' }}
-                >
-                  <button
-                    onClick={() => setAudioEnabledWithPersist(!audioEnabled)}
-                    aria-pressed={audioEnabled}
-                    aria-label={audioEnabled ? 'অডিও রিডিং বন্ধ করুন' : 'অডিও রিডিং চালু করুন'}
-                    title="অডিও রিডিং চালু/বন্ধ"
-                    className="flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#65D1B2] min-h-[44px] md:min-h-0"
-                    style={{
-                      borderColor: audioEnabled ? 'rgba(101,209,178,0.4)' : 'rgba(255,255,255,0.12)',
-                      backgroundColor: audioEnabled ? 'rgba(101,209,178,0.12)' : 'transparent',
-                      color: audioEnabled ? S.accent : S.muted,
-                    }}
-                  >
-                    {audioEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
-                    <span
-                      className="ml-1 inline-flex h-4 w-8 items-center rounded-full px-0.5 transition-colors"
-                      style={{ backgroundColor: audioEnabled ? S.accent : 'rgba(255,255,255,0.2)' }}
-                      aria-hidden="true"
-                    >
-                      <span
-                        className="block h-3 w-3 rounded-full bg-white transition-transform"
-                        style={{ transform: audioEnabled ? 'translateX(16px)' : 'translateX(0)' }}
-                      />
-                    </span>
-                  </button>
-                  {audioEnabled && tts.supported && (
-                    <div className="flex items-center gap-1 rounded-xl border px-1 py-0.5"
-                      style={{ borderColor: 'rgba(101,209,178,0.2)', backgroundColor: 'rgba(101,209,178,0.05)' }}>
-                      {!tts.isPlaying ? (
-                        <button
-                          onClick={tts.play}
-                          aria-label="পাঠ শুনুন"
-                          title="পাঠ শুনুন"
-                          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold min-h-[44px] md:min-h-0 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#65D1B2]"
-                          style={{ backgroundColor: 'rgba(101,209,178,0.08)', color: S.accent }}
-                        >
-                          <Play size={14} fill="currentColor" />
-                          <span className="hidden md:inline">পাঠ শুনুন</span>
-                        </button>
-                      ) : (
-                        <button
-                          onClick={tts.stop}
-                          aria-label="বন্ধ করুন"
-                          title="বন্ধ করুন"
-                          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-red-500 min-h-[44px] md:min-h-0 transition-all hover:bg-red-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                        >
-                          <Square size={12} fill="currentColor" />
-                          <span className="hidden md:inline">বন্ধ করুন</span>
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-                {/* Notes toggle */}
-                <button
-                  onClick={() => setNotesPanelOpen(!notesPanelOpen)}
-                  className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-all duration-200"
-                  style={{
-                    color: notesPanelOpen ? '#04342C' : S.muted,
-                    backgroundColor: notesPanelOpen ? S.accent : 'transparent',
-                  }}
-                >
-                  <FileText size={14} /> আমার নোট
-                </button>
-                {/* Exit — leave Advanced completely */}
-                <Link to="/courses?level=advanced" className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors hover:bg-white/5"
-                  style={{ color: S.muted }}>
-                  <X size={14} /> কোর্স থেকে বের হন
-                </Link>
-              </div>
-            </div>
-          </div>
+          <LessonHeader
+            title={lesson.title}
+            notesPanelOpen={notesPanelOpen}
+            onToggleNotes={() => setNotesPanelOpen(!notesPanelOpen)}
+            audioEnabled={audioEnabled}
+            onToggleAudio={() => setAudioEnabledWithPersist(!audioEnabled)}
+            tts={tts}
+            exitTo="/courses?level=advanced"
+            sizeSelector={<LessonFontSizeControl />}
+          />
 
           {/* ── Scrollable content ── */}
           <div ref={contentScrollRef} id="advanced-content-scroll" className="flex-1 overflow-y-auto overflow-x-hidden relative">
@@ -958,9 +882,8 @@ export function AdvancedCoursePage() {
 
         {/* ── My Notes Slide-in Panel ── */}
         <div
-          className="fixed top-16 right-0 bottom-0 flex flex-col z-[60] transition-transform duration-300"
+          className="fixed top-16 right-0 bottom-0 flex flex-col z-[60] transition-transform duration-300 w-[min(360px,100vw)]"
           style={{
-            width: '360px',
             transform: notesPanelOpen ? 'translateX(0)' : 'translateX(100%)',
             backgroundColor: '#04342C',
             borderLeft: '1px solid rgba(101,209,178,0.15)',

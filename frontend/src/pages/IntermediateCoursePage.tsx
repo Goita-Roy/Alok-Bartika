@@ -72,9 +72,10 @@ import { useQuery } from '@tanstack/react-query'
 import { API_BASE_URL } from '../config/api'
 import {
   BookOpen, CheckCircle2, Lock, ChevronRight, ChevronLeft, X, PanelLeftClose, PanelLeft,
-  ArrowLeft, ArrowRight, FileText, Trash2, Download, Edit3, Search, Clock, AlertCircle, Trophy,
-  Play, Square, Volume2, VolumeX,
+  ArrowLeft, ArrowRight, Clock, AlertCircle, Trophy,
 } from 'lucide-react';
+import { NotesPanel, type LessonMeta, type ThemeColors } from '../components/lesson/NotesPanel';
+import { LessonHeader } from '../components/lesson/LessonHeader';
 
 type LessonId =
   | 'algorithm'
@@ -244,10 +245,6 @@ const MOCK_ID_TO_LESSON_ID: Record<string, LessonId> = (
 }, {});
 
 const SIDEBAR_KEY = 'alokbartika_intermediate_sidebar_collapsed'
-const NOTES_STORAGE_KEY = 'alokbartika_intermediate_notes_v1'
-
-type NotesMap = Record<string, { content: string; updatedAt: string }>
-
 const S = {
   surface: '#0A4A3F', bg: '#04342C',
   accent: '#65D1B2', light: '#8FE3CC',
@@ -258,18 +255,6 @@ const S = {
 const BN_DIGITS = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
 function toBnDigits(value: string | number): string {
   return String(value).replace(/[0-9]/g, d => BN_DIGITS[Number(d)])
-}
-
-function loadNotes(): NotesMap {
-  try {
-    const raw = localStorage.getItem(NOTES_STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch {}
-  return {}
-}
-
-function saveNotes(notes: NotesMap) {
-  try { localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes)) } catch {}
 }
 
 // ── LessonHero ────────────────────────────────────────────────────────
@@ -511,13 +496,7 @@ export function IntermediateCoursePage() {
   });
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [notesPanelOpen, setNotesPanelOpen] = useState(false);
-  const [currentNoteText, setCurrentNoteText] = useState('');
-  const [notesMap, setNotesMap] = useState<NotesMap>(loadNotes);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle');
   const [completingId, setCompletingId] = useState<string | null>(null);
-
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Scroll container ref (used by TTS, selected-text reader, and scroll tracking) ──
   const contentScrollRef = useRef<HTMLDivElement>(null);
@@ -857,75 +836,6 @@ export function IntermediateCoursePage() {
     if (contentArea) contentArea.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
 
-  // ── Notes: load on lesson change ──────────────────────────────────
-  useEffect(() => {
-    setCurrentNoteText(notesMap[currentMockId]?.content || '')
-    setSaveStatus('idle')
-  }, [currentLesson, notesMap])
-
-  // ── Notes: auto-save on text change ──────────────────────────────
-  const handleNoteChange = (text: string) => {
-    setCurrentNoteText(text)
-    setSaveStatus('saving')
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
-    saveTimeoutRef.current = setTimeout(() => {
-      const updated = { ...notesMap, [currentMockId]: { content: text, updatedAt: new Date().toISOString() } }
-      setNotesMap(updated)
-      saveNotes(updated)
-      setSaveStatus('saved')
-    }, 600)
-  }
-
-  const handleSaveNote = () => {
-    const updated = { ...notesMap, [currentMockId]: { content: currentNoteText, updatedAt: new Date().toISOString() } }
-    setNotesMap(updated)
-    saveNotes(updated)
-    setSaveStatus('saved')
-  }
-
-  const handleClearNote = () => {
-    if (!currentNoteText.trim()) return
-    if (window.confirm('আসলই কি এই নোটটি ডিলিট করতে চান?')) {
-      setCurrentNoteText('')
-      const updated = { ...notesMap }
-      delete updated[currentMockId]
-      setNotesMap(updated)
-      saveNotes(updated)
-      setSaveStatus('saved')
-    }
-  }
-
-  const handleExportNotes = () => {
-    let text = `ইন্টারমিডিয়েট কোর্স নোট\nএক্সপোর্ট তারিখ: ${new Date().toLocaleDateString()}\n========================================\n\n`
-    Object.entries(notesMap).forEach(([lId, note]) => {
-      const l = LESSONS.find(lesson => LESSON_ID_TO_MOCK_ID[lesson.id] === lId)
-      text += `পাঠ: ${l?.label} — ${l?.title || 'অজানা'}\n`
-      text += `সর্বশেষ আপডেট: ${new Date(note.updatedAt).toLocaleString()}\n`
-      text += `----------------------------------------\n`
-      text += `${note.content}\n`
-      text += `========================================\n\n`
-    })
-    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `intermediate_notes.txt`
-    link.title = 'নোট এক্সপোর্ট করুন'
-    link.click()
-    URL.revokeObjectURL(url)
-  }
-
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return []
-    const q = searchQuery.toLowerCase()
-    return Object.entries(notesMap)
-      .map(([lId, note]) => {
-        const l = LESSONS.find(lesson => LESSON_ID_TO_MOCK_ID[lesson.id] === lId)
-        return { lessonId: lId, lessonTitle: l?.title || 'অজানা', content: note.content, updatedAt: note.updatedAt }
-      })
-      .filter(item => item.content.toLowerCase().includes(q) || item.lessonTitle.toLowerCase().includes(q))
-  }, [searchQuery, notesMap])
-
   // ── Complete lesson handler ───────────────────────────────────────
   const handleCompleteLesson = () => {
     if (isCurrentCompleted || completingId) return
@@ -948,7 +858,7 @@ export function IntermediateCoursePage() {
   }, [canComplete, isCurrentCompleted])
 
   return (
-    <div className="min-h-screen">
+    <div style={{ backgroundColor: S.bg }}>
       <LessonCompleteToast
         show={showCompleteToast}
         isLevelCompleted={isLastLesson}
@@ -960,98 +870,18 @@ export function IntermediateCoursePage() {
         {/* ── Main content area (full width — no sidebar) ── */}
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
                   {/* ── Top toolbar ── */}
-          <div className="px-4 py-3 shrink-0"
-            style={{ backgroundColor: S.surface, borderBottom: '1px solid rgba(101,209,178,0.12)' }}>
-            {/* Top row: title + actions */}
-            <div className="flex items-center gap-3">
-              <h1 className="text-sm font-black truncate flex-1" style={{ color: S.text }}>{lesson.title}</h1>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {/* Notes toggle */}
-                <button
-                  onClick={() => setNotesPanelOpen(!notesPanelOpen)}
-                  className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-all duration-200"
-                  style={{
-                    color: notesPanelOpen ? '#04342C' : S.muted,
-                    backgroundColor: notesPanelOpen ? S.accent : 'transparent',
-                  }}
-                >
-                  <FileText size={14} /> আমার নোট
-                </button>
-                {/* Reading size (ছোট / মাঝারি / বড়) — beside Notes */}
-                <IntermediateFontSizeControl />
-                {/* Audio Learning cluster — inline on desktop, sticky bottom on mobile */}
-                <div
-                  className="flex flex-wrap items-center justify-center gap-1.5 fixed inset-x-0 bottom-0 left-0 right-0 z-40 px-2 pt-2 pb-[max(8px,env(safe-area-inset-bottom))] border-t shadow-[0_-6px_20px_rgba(0,0,0,0.2)] md:static md:inset-auto md:z-auto md:flex-nowrap md:justify-start md:border-0 md:shadow-none md:px-0 md:py-0 md:flex-none audio-player-bar"
-                  style={{ backgroundColor: S.surface, borderColor: 'rgba(101,209,178,0.12)' }}
-                >
-                  <button
-                    onClick={() => setAudioEnabledWithPersist(!audioEnabled)}
-                    aria-pressed={audioEnabled}
-                    aria-label={audioEnabled ? 'অডিও রিডিং বন্ধ করুন' : 'অডিও রিডিং চালু করুন'}
-                    title="অডিও রিডিং চালু/বন্ধ"
-                    className="flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#65D1B2] min-h-[44px] md:min-h-0"
-                    style={{
-                      borderColor: audioEnabled ? 'rgba(101,209,178,0.4)' : 'rgba(255,255,255,0.12)',
-                      backgroundColor: audioEnabled ? 'rgba(101,209,178,0.12)' : 'transparent',
-                      color: audioEnabled ? S.accent : S.muted,
-                    }}
-                  >
-                    {audioEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
-                    <span
-                      className="ml-1 inline-flex h-4 w-8 items-center rounded-full px-0.5 transition-colors"
-                      style={{ backgroundColor: audioEnabled ? S.accent : 'rgba(255,255,255,0.2)' }}
-                      aria-hidden="true"
-                    >
-                      <span
-                        className="block h-3 w-3 rounded-full bg-white transition-transform"
-                        style={{ transform: audioEnabled ? 'translateX(16px)' : 'translateX(0)' }}
-                      />
-                    </span>
-                  </button>
-                  {audioEnabled && tts.supported && (
-                    <div className="flex items-center gap-1 rounded-xl border px-1 py-0.5"
-                      style={{ borderColor: 'rgba(101,209,178,0.2)', backgroundColor: 'rgba(101,209,178,0.05)' }}>
-                      {!tts.isPlaying ? (
-                        <button
-                          onClick={tts.play}
-                          aria-label="পাঠ শুনুন"
-                          title="পাঠ শুনুন"
-                          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold min-h-[44px] md:min-h-0 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#65D1B2]"
-                          style={{ backgroundColor: 'rgba(101,209,178,0.08)', color: S.accent }}
-                        >
-                          <Play size={14} fill="currentColor" />
-                          <span className="hidden md:inline">পাঠ শুনুন</span>
-                        </button>
-                      ) : (
-                        <button
-                          onClick={tts.stop}
-                          aria-label="বন্ধ করুন"
-                          title="বন্ধ করুন"
-                          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-red-500 min-h-[44px] md:min-h-0 transition-all hover:bg-red-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                        >
-                          <Square size={12} fill="currentColor" />
-                          <span className="hidden md:inline">বন্ধ করুন</span>
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-                {/* Back — return to lesson overview within Intermediate */}
-                {started && (
-                  <button onClick={() => setStarted(false)}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors hover:bg-white/5"
-                    style={{ color: S.muted }}>
-                    <ArrowLeft size={14} /> পেছনে
-                  </button>
-                )}
-                {/* Exit — leave Intermediate completely */}
-                <Link to="/courses?level=intermediate" className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors hover:bg-white/5"
-                  style={{ color: S.muted }}>
-                  <X size={14} /> কোর্স থেকে বের হন
-                </Link>
-              </div>
-            </div>
-          </div>
+          <LessonHeader
+            title={lesson.title}
+            showBackButton={Boolean(started)}
+            onBack={() => setStarted(false)}
+            notesPanelOpen={notesPanelOpen}
+            onToggleNotes={() => setNotesPanelOpen(!notesPanelOpen)}
+            audioEnabled={audioEnabled}
+            onToggleAudio={() => setAudioEnabledWithPersist(!audioEnabled)}
+            tts={tts}
+            exitTo="/courses?level=intermediate"
+            sizeSelector={<IntermediateFontSizeControl />}
+          />
 
           {/* ── Scrollable content ── */}
           <div ref={contentScrollRef} id="intermediate-content-scroll" className="flex-1 overflow-y-auto overflow-x-hidden relative">
@@ -1318,8 +1148,7 @@ export function IntermediateCoursePage() {
           <div className="flex items-center justify-between px-4 py-3 shrink-0"
             style={{ borderBottom: '1px solid rgba(101,209,178,0.12)' }}>
             <div className="flex items-center gap-2">
-              <Edit3 size={15} style={{ color: S.accent }} />
-              <span className="font-black text-sm" style={{ color: S.text }}>আমার নোট</span>
+              <span className="font-black text-sm" style={{ color: S.text }}>আমার নোট (old)</span>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full ml-1"
                 style={{ backgroundColor: 'rgba(101,209,178,0.12)', color: S.accent }}>
                 {Object.keys(notesMap).length}
