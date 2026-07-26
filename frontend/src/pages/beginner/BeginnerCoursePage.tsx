@@ -835,9 +835,8 @@ export default function BeginnerCoursePage() {
 
           {/* ── My Notes Slide-in Panel ── */}
           <div
-            className="fixed top-16 right-0 bottom-0 flex flex-col z-[60] transition-transform duration-300"
+            className="fixed top-16 right-0 bottom-0 flex flex-col z-[60] transition-transform duration-300 w-[min(360px,100vw)]"
             style={{
-              width: '360px',
               transform: notesPanelOpen ? 'translateX(0)' : 'translateX(100%)',
               backgroundColor: P.bg,
               borderLeft: `1px solid ${P.border}`,

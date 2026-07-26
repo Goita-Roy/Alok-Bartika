@@ -169,8 +169,8 @@ export function SignupOtpPage() {
             </button>
           </form>
 
-          <div className="mt-6 flex items-center justify-between">
-            <span className="text-sm" style={{ color: 'var(--color-text-muted)', fontFamily: "'Hind Siliguri', sans-serif" }}>
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <span className="text-sm text-center sm:text-left" style={{ color: 'var(--color-text-muted)', fontFamily: "'Hind Siliguri', sans-serif" }}>
               {secondsLeft > 0 ? `OTP মেয়াদ শেষ: ${timerLabel}` : 'OTP মেয়াদ শেষ হয়েছে'}
             </span>
             <button onClick={handleResend} disabled={resending || secondsLeft > 0}

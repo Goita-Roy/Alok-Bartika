@@ -225,7 +225,7 @@ export function BadgesPage({ badges }: { badges: BadgeItem[] }) {
       <ProgressRing earned={earned.length} total={totalBadges} />
 
       {/* Filter tabs */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {(['all', 'earned', 'locked'] as const).map(opt => (
           <button key={opt}
             onClick={() => setFilter(opt)}

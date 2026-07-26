@@ -103,23 +103,26 @@ export function SignInPage() {
                   placeholder="example@mail.com বা 01XXXXXXXXX" {...focus} />
               </Field>
 
-              <Field label="পাসওয়ার্ড" icon={<Lock size={17} />}>
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none" style={{ color: 'var(--color-text-muted)' }}>
-                  <Lock size={17} />
-                </div>
-                <div className="flex justify-end mb-1 absolute -top-7 right-0">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-black uppercase tracking-widest" style={{ color: 'var(--color-text-muted)', fontFamily: "'Hind Siliguri', sans-serif" }}>পাসওয়ার্ড</label>
                   <Link to="/forgot-password" className="text-xs font-bold transition-colors" style={{ color: 'var(--color-accent)', fontFamily: "'Hind Siliguri', sans-serif" }}>
                     পাসওয়ার্ড ভুলে গেছেন?
                   </Link>
                 </div>
-                <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required
-                  className={`${inputCls} pl-11 pr-12`} style={inputStyle}
-                  placeholder="••••••••" {...focus} />
-                <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center transition-colors" style={{ color: 'var(--color-text-muted)' }}>
-                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-                </button>
-              </Field>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none" style={{ color: 'var(--color-text-muted)' }}>
+                    <Lock size={17} />
+                  </div>
+                  <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required
+                    className={`${inputCls} pl-11 pr-12`} style={inputStyle}
+                    placeholder="••••••••" {...focus} />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center transition-colors" style={{ color: 'var(--color-text-muted)' }}>
+                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+              </div>
 
               <div className="flex items-center gap-2">
                 <input id="remember-me" type="checkbox" style={{ accentColor: 'var(--color-accent)' }} className="w-4 h-4 rounded" />

@@ -24,3 +24,20 @@ export function ProtectedRoute({ allowedRoles, children, redirectTo = '/login' }
   
   return children
 }
+
+type GuestRouteProps = {
+  children: ReactElement
+  redirectTo?: string
+}
+
+export function GuestRoute({ children, redirectTo = '/dashboard' }: GuestRouteProps) {
+  const { user, loading } = useAuth()
+
+  if (loading) return <div className="flex items-center justify-center min-h-[50vh]"><span className="loading loading-spinner loading-lg text-primary"></span></div>
+
+  if (user) {
+    return <Navigate to={redirectTo} replace />
+  }
+
+  return children
+}

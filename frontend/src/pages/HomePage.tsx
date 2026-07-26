@@ -770,7 +770,7 @@ export function HomePage() {
         viewport={{ once: true, amount: 0.25 }}
         variants={sectionReveal}
       >
-        <div className="rounded-3xl p-12 lg:p-20 text-center relative overflow-hidden"
+        <div className="rounded-3xl p-8 sm:p-12 lg:p-20 text-center relative overflow-hidden"
           style={{ backgroundColor: 'var(--color-home-card-bg)', border: '1.5px solid var(--color-home-card-border)', boxShadow: '0 8px 32px rgba(14,124,102,0.08)' }}>
           <motion.div className="relative z-10 space-y-6 max-w-3xl mx-auto" variants={staggerIn}>
             <motion.span className="inline-block px-5 py-2 rounded-full text-sm font-black uppercase tracking-widest"
@@ -807,7 +807,7 @@ export function HomePage() {
         viewport={{ once: true, amount: 0.25 }}
         variants={sectionReveal}
       >
-        <div className="rounded-3xl p-12 lg:p-20 text-center relative overflow-hidden"
+        <div className="rounded-3xl p-8 sm:p-12 lg:p-20 text-center relative overflow-hidden"
           style={{ backgroundColor: 'var(--color-home-cta-bg)', boxShadow: '0 12px 40px rgba(14,124,102,0.25)' }}>
           <motion.div className="absolute top-0 right-0 w-80 h-80 rounded-full pointer-events-none"
             style={{ background: 'radial-gradient(circle, rgba(253,248,241,0.10) 0%, transparent 70%)', transform: 'translate(30%,-30%)' }}

@@ -31,7 +31,7 @@ import { SuperAdminProfilePage } from './pages/super-admin/SuperAdminProfilePage
 import { CourseListPage } from './pages/CourseListPage'
 import { LessonViewPage } from './pages/LessonViewPage'
 import { TestPage } from './pages/TestPage'
-import { ProtectedRoute } from './components/ProtectedRoute'
+import { ProtectedRoute, GuestRoute } from './components/ProtectedRoute'
 import { API_BASE_URL } from './config/api'
 import { Layout } from './components/Layout'
 import { HomePage } from './pages/HomePage'
@@ -83,15 +83,15 @@ function StudentRoutes() {
       <Route path="/" element={<HomePage />} />
       <Route path="/health" element={<HealthPage />} />
       {/* Aliases: support conventional auth URLs */}
-      <Route path="/login/*" element={<SignInPage />} />
-      <Route path="/signup/*" element={<SignUpPage />} />
-      <Route path="/forgot-password/*" element={<ForgotPasswordPage />} />
-      <Route path="/verify-otp" element={<VerifyOtpPage />} />
-      <Route path="/verify-signup-otp" element={<SignupOtpPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/login/*" element={<GuestRoute><SignInPage /></GuestRoute>} />
+      <Route path="/signup/*" element={<GuestRoute><SignUpPage /></GuestRoute>} />
+      <Route path="/forgot-password/*" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
+      <Route path="/verify-otp" element={<GuestRoute><VerifyOtpPage /></GuestRoute>} />
+      <Route path="/verify-signup-otp" element={<GuestRoute><SignupOtpPage /></GuestRoute>} />
+      <Route path="/reset-password" element={<GuestRoute><ResetPasswordPage /></GuestRoute>} />
       {/* Backwards-compatible routes */}
-      <Route path="/sign-in/*" element={<SignInPage />} />
-      <Route path="/sign-up/*" element={<SignUpPage />} />
+      <Route path="/sign-in/*" element={<GuestRoute><SignInPage /></GuestRoute>} />
+      <Route path="/sign-up/*" element={<GuestRoute><SignUpPage /></GuestRoute>} />
       <Route path="/post-auth" element={<Navigate to="/dashboard" replace />} />
       <Route path="/onboarding" element={<Navigate to="/dashboard" replace />} />
       <Route

@@ -737,9 +737,8 @@ function LessonContent({
 
         {/* ── My Notes Slide-in Panel ─────────────────────────── */}
         <div
-          className="fixed top-16 right-0 bottom-0 flex flex-col z-[60] transition-transform duration-300"
+            className="fixed top-16 right-0 bottom-0 flex flex-col z-[60] transition-transform duration-300 w-[min(360px,100vw)]"
           style={{
-            width: '360px',
             transform: notesOpen ? 'translateX(0)' : 'translateX(100%)',
             backgroundColor: '#1E293B',
             borderLeft: '1px solid rgba(101,209,178,0.15)',

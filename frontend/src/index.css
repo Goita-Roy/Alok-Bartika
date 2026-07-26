@@ -135,6 +135,7 @@ html { transition: background-color 0.25s ease, color 0.25s ease; }
 /* ── Base ─────────────────────────────────────────────────────── */
 html {
   margin: 0;
+  overflow-x: hidden;
   font-family: 'Inter', 'Hind Siliguri', system-ui, sans-serif;
   background-color: var(--color-bg);
   color: var(--color-text);
@@ -143,11 +144,24 @@ html {
 }
 body {
   margin: 0;
+  overflow-x: hidden;
   font-family: inherit;
   background-color: var(--color-bg);
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Prevent any element from causing horizontal scroll */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img, video, svg, canvas, iframe {
+  max-width: 100%;
+  height: auto;
 }
 
 /* ── Scrollbar ────────────────────────────────────────────────── */

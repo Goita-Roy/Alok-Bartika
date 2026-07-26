@@ -27,7 +27,7 @@ export function SuperAdminPlatformPage() {
   return (
     <SuperAdminLayout>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <h1
               style={{
@@ -101,7 +101,7 @@ export function SuperAdminPlatformPage() {
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))',
                   gap: '24px',
                 }}
               >
@@ -197,7 +197,7 @@ export function SuperAdminPlatformPage() {
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))',
                   gap: '24px',
                 }}
               >
@@ -341,7 +341,7 @@ export function SuperAdminPlatformPage() {
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))',
                   gap: '24px',
                 }}
               >

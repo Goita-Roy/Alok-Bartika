@@ -218,7 +218,7 @@ export function AdminStudentsPage() {
             <option value="active">Active</option>
             <option value="suspended">Suspended</option>
           </select>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Calendar size={14} style={{ color: 'var(--color-text-muted)' }} />
             <input type="date" className="input input-sm"
               value={dateFrom} onChange={e => setDateFrom(e.target.value)}

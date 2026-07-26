@@ -102,14 +102,11 @@ export function SuperAdminProfilePage() {
 
         {/* Profile Card */}
         <div
+          className="flex flex-col sm:flex-row items-center gap-6 p-5 sm:p-8"
           style={{
             background: 'var(--color-surface)',
             border: '1px solid var(--color-border)',
             borderRadius: 12,
-            padding: 32,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 24,
           }}
         >
           <div
@@ -159,11 +156,11 @@ export function SuperAdminProfilePage() {
 
         {/* Form Card */}
         <div
+          className="p-5 sm:p-8"
           style={{
             background: 'var(--color-surface)',
             border: '1px solid var(--color-border)',
             borderRadius: 12,
-            padding: 32,
           }}
         >
           {/* Personal Information */}
@@ -183,7 +180,7 @@ export function SuperAdminProfilePage() {
               Personal Information
             </h2>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {/* Full Name */}
               <div>
                 <label style={labelStyle}>Full Name</label>
@@ -243,7 +240,7 @@ export function SuperAdminProfilePage() {
               Change Password
             </h2>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {(
                 [
                   { key: 'currentPassword', label: 'Current Password', show: showCurrent, toggle: () => setShowCurrent(!showCurrent) },

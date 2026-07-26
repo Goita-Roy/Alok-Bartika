@@ -54,8 +54,10 @@ export function SuperAdminBackupPage() {
             style={{
               position: 'fixed',
               top: '24px',
+              left: '24px',
               right: '24px',
               zIndex: 50,
+              maxWidth: 'calc(100vw - 48px)',
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
