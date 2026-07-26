@@ -23,7 +23,7 @@ import { API_BASE_URL } from '../config/api'
 import { CourseProvider, CourseView, courseData, LessonFontSizeControl } from '../courses/advanced022';
 import {
   Lock, X,
-  ArrowLeft, ArrowRight, Trash2, Download, Edit3, Search, Trophy,
+  ArrowLeft, ArrowRight, Trash2, Download, Edit3, Search, Trophy, Volume2, Play,
 } from 'lucide-react';
 import { LessonHeader } from '../components/lesson/LessonHeader';
 

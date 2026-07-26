@@ -15,7 +15,7 @@ import { useCopyProtection } from "../../hooks/useCopyProtection";
 import { useSpeechReader } from "../../hooks/useSpeechReader";
 import { useSelectedTextReader } from "../../hooks/useSelectedTextReader";
 import { useClickToRead } from "../../hooks/useClickToRead";
-import { Volume2, Play } from "lucide-react";
+import { Volume2, Play, X } from "lucide-react";
 import { useCourseProgress } from "../../hooks/useCourseProgress";
 import { LockedLessonToast } from "../../components/lesson/LockedLessonToast";
 import { speechService, normalizeBanglaLang } from "../../services/speechService";

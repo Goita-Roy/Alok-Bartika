@@ -72,9 +72,9 @@ import { useQuery } from '@tanstack/react-query'
 import { API_BASE_URL } from '../config/api'
 import {
   BookOpen, CheckCircle2, Lock, ChevronRight, ChevronLeft, X, PanelLeftClose, PanelLeft,
-  ArrowLeft, ArrowRight, Clock, AlertCircle, Trophy,
+  ArrowLeft, ArrowRight, Clock, AlertCircle, Trophy, Volume2, Play,
 } from 'lucide-react';
-import { NotesPanel, type LessonMeta, type ThemeColors } from '../components/lesson/NotesPanel';
+import { NotesPanel } from '../components/lesson/NotesPanel';
 import { LessonHeader } from '../components/lesson/LessonHeader';
 
 type LessonId =
@@ -1135,170 +1135,16 @@ export function IntermediateCoursePage() {
           </button>
         )}
 
-        {/* ── My Notes Slide-in Panel ── */}
-        <div
-          className="fixed top-16 right-0 bottom-0 flex flex-col z-[60] transition-transform duration-300 w-[min(360px,100vw)]"
-          style={{
-            transform: notesPanelOpen ? 'translateX(0)' : 'translateX(100%)',
-            backgroundColor: '#04342C',
-            borderLeft: '1px solid rgba(101,209,178,0.15)',
-            boxShadow: notesPanelOpen ? '-8px 0 32px rgba(0,0,0,0.4)' : 'none',
-          }}
-        >
-          <div className="flex items-center justify-between px-4 py-3 shrink-0"
-            style={{ borderBottom: '1px solid rgba(101,209,178,0.12)' }}>
-            <div className="flex items-center gap-2">
-              <span className="font-black text-sm" style={{ color: S.text }}>আমার নোট (old)</span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full ml-1"
-                style={{ backgroundColor: 'rgba(101,209,178,0.12)', color: S.accent }}>
-                {Object.keys(notesMap).length}
-              </span>
-            </div>
-            <div className="flex items-center gap-1">
-              {Object.keys(notesMap).length > 0 && (
-                <button onClick={handleExportNotes}
-                  className="p-1.5 rounded-lg transition-colors hover:bg-white/5" style={{ color: S.muted }} title="সকল নোট .txt হিসেবে এক্সপোর্ট করুন">
-                  <Download size={14} />
-                </button>
-              )}
-              <button onClick={() => setNotesPanelOpen(false)}
-                className="p-1.5 rounded-lg transition-colors hover:bg-white/5" style={{ color: S.muted }}>
-                <X size={15} />
-              </button>
-            </div>
-          </div>
-
-          {/* Search bar */}
-          <div className="px-3 py-2 shrink-0" style={{ borderBottom: '1px solid rgba(101,209,178,0.08)' }}>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
-              style={{ backgroundColor: 'rgba(101,209,178,0.05)', border: '1px solid rgba(101,209,178,0.10)' }}>
-              <Search size={13} style={{ color: S.muted }} />
-              <input
-                type="text" placeholder="নোট খুঁজুন..."
-                value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                className="flex-1 bg-transparent outline-none text-xs font-medium" style={{ color: S.text }}
-              />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery('')} style={{ color: S.muted }}><X size={12} /></button>
-              )}
-            </div>
-          </div>
-
-          {searchQuery ? (
-            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
-              {searchResults.length === 0 ? (
-                <div className="text-center py-8" style={{ color: S.muted, opacity: 0.5 }}>
-                  <Search size={24} className="mx-auto mb-2" />
-                  <p className="text-xs font-semibold">কোন মিল পাওয়া যায়নি</p>
-                </div>
-              ) : searchResults.map(result => (
-                <div key={result.lessonId}
-                  className="p-3 rounded-xl cursor-pointer transition-all hover:scale-[1.01]"
-                  style={{ backgroundColor: 'rgba(101,209,178,0.05)', border: '1px solid rgba(101,209,178,0.10)' }}
-                  onClick={() => {
-                    setSearchQuery('')
-                    const found = LESSONS.find(l => LESSON_ID_TO_MOCK_ID[l.id] === result.lessonId)
-                    if (found) navigateToLesson(found.id)
-                  }}
-                >
-                  <p className="text-[11px] font-black mb-1" style={{ color: S.accent }}>{result.lessonTitle}</p>
-                  <p className="text-xs line-clamp-3 font-medium" style={{ color: S.muted }}>{result.content}</p>
-                  <p className="text-[10px] mt-2 font-bold" style={{ color: 'rgba(101,209,178,0.4)' }}>
-                    {new Date(result.updatedAt).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex-1 flex flex-col min-h-0">
-              <div className="px-3 pt-3 pb-2 shrink-0">
-                <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: 'rgba(101,209,178,0.4)' }}>
-                  বর্তমান পাঠ
-                </p>
-                <p className="text-xs font-bold truncate" style={{ color: S.accent }}>
-                  {lesson.label}: {lesson.title}
-                </p>
-              </div>
-
-              <div className="flex-1 px-3 pb-2 min-h-0">
-                <textarea
-                  value={currentNoteText}
-                  onChange={e => handleNoteChange(e.target.value)}
-                  placeholder="এখানে নোট লিখুন... (Auto-save চালু আছে)"
-                  className="w-full h-full resize-none outline-none rounded-xl p-3 text-sm leading-relaxed font-medium"
-                  style={{
-                    backgroundColor: 'rgba(101,209,178,0.04)',
-                    border: '1px solid rgba(101,209,178,0.12)',
-                    color: S.text,
-                    fontFamily: "'Hind Siliguri', sans-serif",
-                    minHeight: '180px',
-                  }}
-                />
-              </div>
-
-              <div className="px-3 py-2 shrink-0 flex items-center justify-between gap-2 flex-wrap"
-                style={{ borderTop: '1px solid rgba(101,209,178,0.08)' }}>
-                <div className="flex items-center gap-2">
-                  <button onClick={handleSaveNote}
-                    className="text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all"
-                    style={{ color: S.accent, backgroundColor: 'rgba(101,209,178,0.10)' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(101,209,178,0.20)' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(101,209,178,0.10)' }}
-                  >
-                    নোট সংরক্ষণ করুন
-                  </button>
-                  <span className="text-[10px] font-bold"
-                    style={{ color: saveStatus === 'saved' ? S.accent : saveStatus === 'saving' ? '#f5c842' : 'transparent' }}>
-                    {saveStatus === 'saved' ? '✓ সংরক্ষিত' : saveStatus === 'saving' ? '⏳ সংরক্ষণ হচ্ছে…' : ''}
-                  </span>
-                </div>
-                {currentNoteText.trim() && (
-                  <button onClick={handleClearNote}
-                    className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg transition-all"
-                    style={{ color: '#f87171', backgroundColor: 'rgba(248,113,113,0.08)' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(248,113,113,0.18)' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(248,113,113,0.08)' }}
-                  >
-                    <Trash2 size={11} /> মুছুন
-                  </button>
-                )}
-              </div>
-
-              {/* All notes list */}
-              {Object.keys(notesMap).length > 0 && (
-                <div className="px-3 pb-3 shrink-0 overflow-y-auto" style={{ maxHeight: '200px', borderTop: '1px solid rgba(101,209,178,0.08)' }}>
-                  <p className="text-[10px] font-black uppercase tracking-widest pt-3 pb-2" style={{ color: 'rgba(101,209,178,0.4)' }}>
-                    সকল নোট ({Object.keys(notesMap).length})
-                  </p>
-                  <div className="space-y-2">
-                    {Object.entries(notesMap).map(([lId, note]) => {
-                      const l = LESSONS.find(lesson => LESSON_ID_TO_MOCK_ID[lesson.id] === lId)
-                      const isThisLesson = lId === currentMockId
-                      return (
-                        <div key={lId} onClick={() => { if (l) navigateToLesson(l.id) }}
-                          className="p-2.5 rounded-lg cursor-pointer transition-all"
-                          style={{
-                            backgroundColor: isThisLesson ? 'rgba(101,209,178,0.10)' : 'rgba(101,209,178,0.03)',
-                            border: `1px solid ${isThisLesson ? 'rgba(101,209,178,0.20)' : 'rgba(101,209,178,0.07)'}`,
-                          }}>
-                          <p className="text-[10px] font-black mb-0.5 truncate" style={{ color: isThisLesson ? S.accent : S.muted }}>
-                            {l?.title || 'অজানা'}
-                          </p>
-                          <p className="text-[10px] line-clamp-2 font-medium" style={{ color: 'rgba(184,197,193,0.6)' }}>
-                            {note.content}
-                          </p>
-                          <p className="text-[9px] mt-1 font-bold" style={{ color: 'rgba(101,209,178,0.3)' }}>
-                            {new Date(note.updatedAt).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short' })}
-                          </p>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+          {/* ── My Notes Slide-in Panel ── */}
+          <NotesPanel
+            open={notesPanelOpen}
+            onClose={() => setNotesPanelOpen(false)}
+            storageKey="alokbartika_intermediate_notes_v1"
+            theme={{ ...S, border: 'rgba(101,209,178,0.12)' }}
+            lessons={LESSONS.map(l => ({ mockId: LESSON_ID_TO_MOCK_ID[l.id], label: l.label, title: l.title }))}
+            currentMockId={currentMockId}
+            onNavigateToLesson={(meta) => navigateToLesson(meta.mockId as LessonId)}
+          />
       </div>
     </div>
   )
