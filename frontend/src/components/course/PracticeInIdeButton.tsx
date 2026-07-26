@@ -27,7 +27,7 @@ export function PracticeInIdeButton({ lessonId, courseId, className }: PracticeI
         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#8FE3CC' }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#65D1B2' }}
       >
-        <Cpu size={16} /> 🚀 IDE-তে Practice করুন
+        <Cpu size={16} /> 🚀 IDE-তে প্র্যাকটিস করুন
       </Link>
     </div>
   );

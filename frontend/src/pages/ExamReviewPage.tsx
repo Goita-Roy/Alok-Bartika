@@ -70,7 +70,7 @@ const tfOptions = ['সত্য', 'মিথ্যা']
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60)
   const s = seconds % 60
-  return `${m}m ${s}s`
+  return `${m}মি ${s}সে`
 }
 
 function formatDate(dateStr: string): string {
@@ -333,7 +333,7 @@ export function ExamReviewPage() {
                         className="text-[10px] font-black px-2 py-0.5 rounded"
                         style={{ backgroundColor: r.correct ? 'rgba(101,209,178,0.10)' : 'rgba(248,113,113,0.10)', color: r.correct ? S.accent : S.danger }}
                       >
-                        Q{idx + 1}
+                        প্র{idx + 1}
                       </span>
                       <span
                         className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
@@ -341,7 +341,7 @@ export function ExamReviewPage() {
                       >
                         {r.type === 'mcq' ? 'এমসিকিউ' : r.type === 'truefalse' ? 'সত্য/মিথ্যা' : r.type === 'code-output' ? 'কোড আউটপুট' : 'কোডিং'}
                       </span>
-                      <span className="text-[10px] font-bold" style={{ color: S.muted }}>{r.points} pts</span>
+                      <span className="text-[10px] font-bold" style={{ color: S.muted }}>{r.points} পয়েন্ট</span>
                     </div>
                     <p className="text-sm font-bold leading-relaxed" style={{ color: S.text }}>
                       {r.questionText}

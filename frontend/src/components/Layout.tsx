@@ -20,6 +20,7 @@ export function Layout({ children }: LayoutProps) {
   }, [location.pathname])
 
   const isLessonPage = location.pathname.startsWith('/courses/') && location.pathname.length > '/courses/'.length
+  const isIDEPage = location.pathname === '/development' || location.pathname === '/practice'
 
   const navLinks = [
     { to: '/',        label: 'হোম' },
@@ -227,7 +228,7 @@ export function Layout({ children }: LayoutProps) {
 
       {/* ── Main ───────────────────────────────────────────────────── */}
       <main className="flex-grow container mx-auto px-4 sm:px-6 pt-0 max-w-7xl">
-        <BackButton />
+        {!isIDEPage && <BackButton />}
         {children}
       </main>
 

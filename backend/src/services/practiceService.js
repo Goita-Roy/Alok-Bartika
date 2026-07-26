@@ -161,7 +161,7 @@ async function completePractice(userId, rawKey, data = {}) {
   }
 
   return {
-    message: alreadyCompleted ? 'Practice already marked complete' : 'Practice marked complete',
+    message: alreadyCompleted ? 'প্র্যাকটিস ইতিমধ্যে সম্পন্ন হিসেবে চিহ্নিত' : 'প্র্যাকটিস সম্পন্ন হিসেবে চিহ্নিত',
     completed: true,
     practiceCompleted: finalUser.practiceCompleted,
     xp: finalUser.xp,

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, BookOpen, PenTool, Cpu } from 'lucide-react'
+import { BookOpen, PenTool, Cpu } from 'lucide-react'
 import { ideLessonClasses, type IDELessonClass, type SupportedLanguage } from '../../data/ideLessonData'
 import { useIDEWorkspace } from '../../hooks/useIDEWorkspace'
 import { useIDEProgress } from '../../hooks/useIDEProgress'
@@ -73,10 +73,10 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
             instructions: practice?.instructions?.length
               ? practice.instructions
               : [
-                  `Open ${filename} in the editor.`,
-                  'Write your code to solve the practice task.',
-                  'Click Run Code to test your solution.',
-                  'Match any expected output and mark complete.'
+                  `এডিটরে ${filename} খুলুন।`,
+                  'প্র্যাকটিস টাস্ক সমাধানের জন্য আপনার কোড লিখুন।',
+                  'আপনার সমাধান পরীক্ষা করতে Run Code-এ ক্লিক করুন।',
+                  'প্রত্যাশিত আউটপুট মিলিয়ে সম্পন্ন হিসেবে চিহ্নিত করুন।'
                 ],
             hints: practice?.hints || [],
             expectedOutput: practice?.expectedOutput || lesson.expectedOutput || '',
@@ -336,19 +336,13 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
         }`}
       >
         <div className="flex items-center gap-3">
-          <Link
-            to={activeClass.isCourseLesson ? `/courses/${activeClass.courseId}?lesson=${activeClass.id}` : "/courses"}
-            className={`p-2 rounded-lg border transition ${isDark ? 'border-[#2d2a3f] hover:bg-[#1b1928]' : 'border-slate-200 hover:bg-white'}`}
-          >
-            <ArrowLeft size={18} />
-          </Link>
           <div>
             <h1 className="text-sm font-black flex items-center gap-2">
               <Cpu size={16} className="text-violet-400" />
-              {mode === 'learning' ? 'Development & Practice IDE' : 'Self Practice Sandbox'}
+              {mode === 'learning' ? 'ডেভেলপমেন্ট ও প্র্যাকটিস IDE' : 'নিজস্ব প্র্যাকটিস স্যান্ডবক্স'}
             </h1>
             <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">
-              Interactive Learning Environment
+              ইন্টারঅ্যাকটিভ লার্নিং এনভায়রনমেন্ট
             </p>
           </div>
         </div>
@@ -360,7 +354,7 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
               mode === 'learning' ? 'bg-violet-500 text-white shadow-sm' : isDark ? 'bg-[#1b1928] text-slate-400 hover:bg-[#252236]' : 'bg-white text-slate-600 border hover:bg-slate-50'
             }`}
           >
-            <BookOpen size={14} /> Class Learning
+            <BookOpen size={14} /> ক্লাস লার্নিং
           </button>
           <button
             type="button"
@@ -369,7 +363,7 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
               mode === 'sandbox' ? 'bg-emerald-500 text-black shadow-sm' : isDark ? 'bg-[#1b1928] text-slate-400 hover:bg-[#252236]' : 'bg-white text-slate-600 border hover:bg-slate-50'
             }`}
           >
-            <PenTool size={14} /> Free Practice
+            <PenTool size={14} /> ফ্রি প্র্যাকটিস
           </button>
         </div>
       </header>

@@ -651,7 +651,7 @@ function LessonContent({
                           >
                             <Trophy size={16} />
                             <span className="hidden sm:inline">চূড়ান্ত পরীক্ষা দিন</span>
-                            <span className="sm:hidden">Exam</span>
+                            <span className="sm:hidden">পরীক্ষা</span>
                           </Link>
                         ) : (
                           <div className="relative group">
@@ -665,7 +665,7 @@ function LessonContent({
                               }}
                             >
                               <span className="hidden sm:inline">চূড়ান্ত পরীক্ষা দিন (লক)</span>
-                              <span className="sm:hidden">Exam (লক)</span>
+                              <span className="sm:hidden">পরীক্ষা (লক)</span>
                               <Lock size={14} />
                             </button>
                             <span className="absolute bottom-full mb-2 right-0 w-56 text-center text-xs p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50"

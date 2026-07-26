@@ -35,7 +35,7 @@ export function LevelTabs({ activeLevel, tabs, onSelect }: LevelTabsProps) {
               <p className="font-bold capitalize text-slate-900">{tab.label}</p>
               {!tab.unlocked && <Lock size={16} className="text-slate-500" />}
             </div>
-            <p className="mb-2 text-xs text-slate-500">{tab.progress}% completed</p>
+            <p className="mb-2 text-xs text-slate-500">{tab.progress}% সম্পন্ন</p>
             <div className="h-2 rounded-full bg-slate-200">
               <div
                 className="h-2 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-700"

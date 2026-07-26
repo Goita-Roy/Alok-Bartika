@@ -125,7 +125,7 @@ function QuestionCard({
           className="shrink-0 text-[11px] font-black px-2.5 py-1 rounded-lg"
           style={{ backgroundColor: 'rgba(101,209,178,0.12)', color: S.accent }}
         >
-          Q{idx + 1}/{total}
+          প্র{idx + 1}/{total}
         </span>
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
@@ -135,7 +135,7 @@ function QuestionCard({
             >
               {q.type === 'mcq' ? 'এমসিকিউ' : q.type === 'truefalse' ? 'সত্য/মিথ্যা' : q.type === 'code-output' ? 'কোড আউটপুট' : 'কোডিং'}
             </span>
-            <span className="text-[10px] font-bold" style={{ color: S.muted }}>{q.points} pts</span>
+            <span className="text-[10px] font-bold" style={{ color: S.muted }}>{q.points} পয়েন্ট</span>
           </div>
           <p className="text-base font-bold leading-relaxed" style={{ color: S.text }}>{q.questionText}</p>
         </div>
@@ -543,7 +543,7 @@ function ResultScreen({
                   {result.score}%
                 </span>
                 <span className="text-[10px] font-bold" style={{ color: S.muted }}>
-                  {result.earnedPoints}/{result.totalPoints} pts
+                  {result.earnedPoints}/{result.totalPoints} পয়েন্ট
                 </span>
               </div>
             </div>

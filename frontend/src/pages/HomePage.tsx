@@ -57,7 +57,7 @@ const buttonReveal = {
 
 /* ── Static marketing copy (fully Bangla) ────────────────────────────── */
 const FEATURES = [
-  { icon: Bot, title: 'Python Learn', desc: 'ধাপে ধাপে Python শিখো। সহজ উদাহরণ, অনুশীলন এবং বাংলায় ব্যাখ্যার মাধ্যমে প্রোগ্রামিং দক্ষতা গড়ে তোলো।' },
+  { icon: Bot, title: 'পাইথন শিখুন', desc: 'ধাপে ধাপে Python শিখো। সহজ উদাহরণ, অনুশীলন এবং বাংলায় ব্যাখ্যার মাধ্যমে প্রোগ্রামিং দক্ষতা গড়ে তোলো।' },
   { icon: Monitor, title: 'ইনস্টল ছাড়াই IDE', desc: 'কোনো সফটওয়্যার ইনস্টল ছাড়াই সরাসরি ব্রাউজারে কোড লেখো ও চালাও। কম ক্ষমতার কম্পিউটারেও কাজ করে।' },
   { icon: Mic, title: 'বাংলা অডিও গাইড', desc: 'মাতৃভাষায় ধাপে ধাপে নির্দেশনা — ইংরেজির ভয় নেই! AI-চালিত তাৎক্ষণিক পরামর্শ বাংলাতেই পাওয়া যাবে।' },
   { icon: Trophy, title: 'খেলার ছলে শেখা', desc: 'স্কোর পয়েন্ট, ব্যাজ ও লিডারবোর্ড দিয়ে শেখাকে মজাদার করো। প্রতিটি সমস্যা সমাধানে পুরস্কার পাও।' },
@@ -376,7 +376,7 @@ function MilestoneSection() {
             >
               <img
                 src={milestoneImage}
-                alt="Milestone"
+                alt="মাইলফলক"
                 className="w-full h-auto"
                 style={{ objectFit: 'contain', objectPosition: 'center' }}
               />
@@ -558,7 +558,7 @@ export function HomePage() {
             variants={imageReveal}>
             <img
               src={homeBannerImage}
-              alt="Alok Bartika Hero Banner"
+              alt="আলোকবর্তিকা হিরো ব্যানার"
               className="w-full h-auto"
               style={{ objectFit: 'contain', objectPosition: 'center' }}
             />

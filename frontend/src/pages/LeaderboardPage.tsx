@@ -405,7 +405,7 @@ export function LeaderboardPage() {
 
   /* --- current user profile for greeting --- */
   const profileEntry = useMemo(() => leaderboard.find(e => e.isCurrentUser), [leaderboard])
-  const profileName = profileEntry?.name || user?.fullName || 'Student'
+  const profileName = profileEntry?.name || user?.fullName || 'শিক্ষার্থী'
   const profileAvatar = profileEntry?.avatar || ''
 
   /* --- loading --- */

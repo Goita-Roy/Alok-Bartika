@@ -539,9 +539,21 @@ async function evaluateCodingAnswer(question, answer) {
     let maxTime = 0
     let maxMem = 0
     let firstFailure = null
+    let capturedStdout = ''
+    let capturedStderr = ''
+    let firstTestStdout = ''
+    let firstTestStderr = ''
 
     for (const tc of allCases) {
       const r = await evaluateTestCase(prepared, tc, timeLimitMs, memoryLimitMb)
+      if (passed + failed === 0) {
+        firstTestStdout = r.stdout || ''
+        firstTestStderr = r.stderr || ''
+      }
+      if (capturedStdout === '' && !tc.__hidden) {
+        capturedStdout = r.stdout || ''
+        capturedStderr = r.stderr || ''
+      }
       maxTime = Math.max(maxTime, r.execMs || 0)
       maxMem = Math.max(maxMem, r.memoryMb || 0)
 
@@ -555,6 +567,8 @@ async function evaluateCodingAnswer(question, answer) {
           timeout: true,
           status: JUDGE_STATUS.TIME_LIMIT,
           feedback: 'Time limit exceeded — your code ran too long (possible infinite loop).',
+          stdout: capturedStdout || firstTestStdout,
+          stderr: capturedStderr || firstTestStderr,
         }
       }
       if (r.status === JUDGE_STATUS.RUNTIME_ERROR) {
@@ -567,6 +581,8 @@ async function evaluateCodingAnswer(question, answer) {
           runtimeError: r.runtimeError || r.stderr || 'Runtime error',
           status: JUDGE_STATUS.RUNTIME_ERROR,
           feedback: `Runtime error: ${r.runtimeError || r.stderr || ''}`,
+          stdout: capturedStdout || firstTestStdout,
+          stderr: capturedStderr || firstTestStderr,
         }
       }
 
@@ -615,6 +631,8 @@ async function evaluateCodingAnswer(question, answer) {
       antiCheat: '',
       visible: { passed: base.visible.passed, total: base.visible.total },
       hidden: { passed: base.hidden.passed, total: base.hidden.total },
+      stdout: capturedStdout || firstTestStdout,
+      stderr: capturedStderr || firstTestStderr,
     }
   } finally {
     try { fs.rmSync(workDir, { recursive: true, force: true }) } catch (_) {}

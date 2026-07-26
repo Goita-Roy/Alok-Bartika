@@ -350,7 +350,7 @@ function Sidebar({
         {!collapsed && (
           <div className="flex items-center gap-2 min-w-0">
             <BookOpen size={16} style={{ color: S.accent }} />
-            <h2 className="font-black text-sm truncate" style={{ color: S.text }} title="Intermediate Course">
+            <h2 className="font-black text-sm truncate" style={{ color: S.text }} title="মধ্যবর্তী কোর্স">
               মধ্যবর্তী
             </h2>
           </div>

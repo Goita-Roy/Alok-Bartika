@@ -63,12 +63,12 @@ export function IDEConsole({
   }, [stderr])
 
   const tabs: { id: ConsoleTab; label: string; icon: typeof Terminal }[] = [
-    { id: 'output', label: 'Output', icon: FileCode2 },
-    { id: 'terminal', label: 'Terminal', icon: Terminal },
-    { id: 'problems', label: 'Problems', icon: AlertTriangle },
-    { id: 'ai-analysis', label: 'AI Analysis', icon: Bot },
-    { id: 'execution', label: 'Execution', icon: Play },
-    { id: 'variables', label: 'Variables', icon: Variable },
+    { id: 'output', label: 'আউটপুট', icon: FileCode2 },
+    { id: 'terminal', label: 'টার্মিনাল', icon: Terminal },
+    { id: 'problems', label: 'সমস্যা', icon: AlertTriangle },
+    { id: 'ai-analysis', label: 'AI বিশ্লেষণ', icon: Bot },
+    { id: 'execution', label: 'এক্সিকিউশন', icon: Play },
+    { id: 'variables', label: 'ভেরিয়েবল', icon: Variable },
   ]
 
   return (
@@ -207,7 +207,7 @@ function OutputConsole({
   if (!hasRun) {
     return (
       <div className="flex items-center justify-center h-full">
-        <span className={`text-xs italic ${mutedCls}`}>Run code to see output</span>
+        <span className={`text-xs italic ${mutedCls}`}>আউটপুট দেখতে কোড রান করুন</span>
       </div>
     )
   }
@@ -243,7 +243,7 @@ function OutputConsole({
           </pre>
         </div>
       ) : stderr ? null : (
-        <span className={`italic ${mutedCls}`}>(no output)</span>
+        <span className={`italic ${mutedCls}`}>(কোনো আউটপুট নেই)</span>
       )}
     </div>
   )
@@ -274,7 +274,7 @@ function TerminalConsole({
   if (!hasRun) {
     return (
       <div className={`flex items-center justify-center h-full ${barCls}`}>
-        <span className="text-xs italic text-gray-500">$ Run your code to see terminal output</span>
+        <span className="text-xs italic text-gray-500">$ টার্মিনাল আউটপুট দেখতে আপনার কোড রান করুন</span>
       </div>
     )
   }
@@ -288,7 +288,7 @@ function TerminalConsole({
         {stdout !== '' ? (
           <span>{stdout}</span>
         ) : (
-          <span className="italic text-gray-500">(no output)</span>
+          <span className="italic text-gray-500">(কোনো আউটপুট নেই)</span>
         )}
         <span className="block mt-2 text-green-400">{'> '}_</span>
       </pre>
@@ -312,7 +312,7 @@ function ProblemsConsole({
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <AlertTriangle size={20} className={`mx-auto mb-2 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
-          <span className={`text-xs ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>No problems detected</span>
+          <span className={`text-xs ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>কোনো সমস্যা পাওয়া যায়নি</span>
         </div>
       </div>
     )
@@ -330,7 +330,7 @@ function ProblemsConsole({
           <AlertTriangle size={13} className="mt-0.5 shrink-0 text-red-400" />
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-[11px]">
-              <span className="font-bold text-red-400">Line {e.line}</span>
+              <span className="font-bold text-red-400">লাইন {e.line}</span>
               <span className={`text-[9px] font-bold px-1 py-0.5 rounded ${
                 isDark ? 'bg-red-500/20 text-red-300' : 'bg-red-100 text-red-700'
               }`}>
@@ -365,7 +365,7 @@ function AIAnalysisConsole({
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <Bot size={24} className={`mx-auto mb-2 ${mutedCls}`} />
-          <p className={`text-xs ${mutedCls}`}>Run your code to get AI analysis</p>
+          <p className={`text-xs ${mutedCls}`}>AI বিশ্লেষণ পেতে আপনার কোড রান করুন</p>
         </div>
       </div>
     )
@@ -377,10 +377,10 @@ function AIAnalysisConsole({
         <div className="text-center">
           <div className={`text-2xl mb-2 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>✓</div>
           <p className={`text-xs font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
-            No Error Detected. Code executed successfully!
+            কোনো ত্রুটি পাওয়া যায়নি। কোড সফলভাবে এক্সিকিউট হয়েছে!
           </p>
           <p className={`text-[11px] mt-1 ${mutedCls}`}>
-            Your code ran without any issues. Great job!
+            আপনার কোড কোনো সমস্যা ছাড়াই চলেছে। অসাধারণ!
           </p>
         </div>
       </div>
@@ -391,7 +391,7 @@ function AIAnalysisConsole({
     return (
       <div className="h-full overflow-y-auto p-3 space-y-3">
         <div className={`text-xs font-bold ${isDark ? 'text-red-400' : 'text-red-600'}`}>
-          Found {errors.length} error{errors.length > 1 ? 's' : ''}:
+          {errors.length}টি ত্রুটি পাওয়া গেছে:
         </div>
         {errors.map((e, i) => (
           <div
@@ -446,12 +446,12 @@ function ExecutionConsole({
   textCls: string
 }) {
   const statusConfig: Record<ExecutionStatus, { label: string; color: string; bg: string }> = {
-    idle: { label: 'Waiting...', color: 'text-gray-400', bg: isDark ? 'bg-gray-500/10' : 'bg-gray-100' },
-    running: { label: 'Running...', color: 'text-amber-400', bg: isDark ? 'bg-amber-500/10' : 'bg-amber-50' },
-    success: { label: 'Completed', color: 'text-emerald-400', bg: isDark ? 'bg-emerald-500/10' : 'bg-emerald-50' },
-    error: { label: 'Runtime Error', color: 'text-red-400', bg: isDark ? 'bg-red-500/10' : 'bg-red-50' },
-    timeout: { label: 'Execution Timeout', color: 'text-orange-400', bg: isDark ? 'bg-orange-500/10' : 'bg-orange-50' },
-    cancelled: { label: 'Cancelled', color: 'text-slate-400', bg: isDark ? 'bg-slate-500/10' : 'bg-slate-100' },
+    idle: { label: 'অপেক্ষা করছে...', color: 'text-gray-400', bg: isDark ? 'bg-gray-500/10' : 'bg-gray-100' },
+    running: { label: 'চলছে...', color: 'text-amber-400', bg: isDark ? 'bg-amber-500/10' : 'bg-amber-50' },
+    success: { label: 'সম্পন্ন', color: 'text-emerald-400', bg: isDark ? 'bg-emerald-500/10' : 'bg-emerald-50' },
+    error: { label: 'রানটাইম ত্রুটি', color: 'text-red-400', bg: isDark ? 'bg-red-500/10' : 'bg-red-50' },
+    timeout: { label: 'এক্সিকিউশন টাইমআউট', color: 'text-orange-400', bg: isDark ? 'bg-orange-500/10' : 'bg-orange-50' },
+    cancelled: { label: 'বাতিল', color: 'text-slate-400', bg: isDark ? 'bg-slate-500/10' : 'bg-slate-100' },
   }
 
   const config = statusConfig[executionStatus]
@@ -459,7 +459,7 @@ function ExecutionConsole({
   if (!hasRun) {
     return (
       <div className="flex items-center justify-center h-full">
-        <span className={`text-xs italic ${mutedCls}`}>Click Run to execute code</span>
+        <span className={`text-xs italic ${mutedCls}`}>কোড এক্সিকিউট করতে Run-এ ক্লিক করুন</span>
       </div>
     )
   }
@@ -472,12 +472,12 @@ function ExecutionConsole({
           <div>
             <p className={`text-sm font-bold ${config.color}`}>{config.label}</p>
             <p className={`text-[10px] ${mutedCls}`}>
-              {executionStatus === 'idle' && 'Ready to execute'}
-              {executionStatus === 'running' && 'Executing your code...'}
-              {executionStatus === 'success' && 'Code ran successfully with no errors'}
-              {executionStatus === 'error' && 'An error occurred during execution'}
-              {executionStatus === 'timeout' && 'Code took too long to execute (limit: 10s)'}
-              {executionStatus === 'cancelled' && 'Execution was cancelled'}
+              {executionStatus === 'idle' && 'এক্সিকিউট করার জন্য প্রস্তুত'}
+              {executionStatus === 'running' && 'আপনার কোড এক্সিকিউট হচ্ছে...'}
+              {executionStatus === 'success' && 'কোড কোনো ত্রুটি ছাড়াই সফলভাবে চলেছে'}
+              {executionStatus === 'error' && 'এক্সিকিউশনের সময় একটি ত্রুটি হয়েছে'}
+              {executionStatus === 'timeout' && 'কোড এক্সিকিউট করতে অনেক সময় লেগেছে (সীমা: ১০সে)'}
+              {executionStatus === 'cancelled' && 'এক্সিকিউশন বাতিল করা হয়েছে'}
             </p>
           </div>
         </div>

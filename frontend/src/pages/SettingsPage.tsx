@@ -36,7 +36,7 @@ export function SettingsPage() {
         const res = await fetch(`${API_BASE_URL}/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         })
-        if (!res.ok) throw new Error('Failed to fetch')
+        if (!res.ok) throw new Error('প্রোফাইল তথ্য আনতে ব্যর্থ হয়েছে')
         const d = await res.json()
         setSchoolName(d.profile?.schoolName || d.schoolName || '')
         setRoll(d.profile?.roll || '')
@@ -136,7 +136,7 @@ export function SettingsPage() {
         body: JSON.stringify({ currentPassword, newPassword }),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.message || 'Failed')
+      if (!res.ok) throw new Error(json.message || 'ব্যর্থ হয়েছে')
       setPassMessage({ type: 'success', text: 'পাসওয়ার্ড পরিবর্তন করা হয়েছে!' })
       setCurrentPassword('')
       setNewPassword('')

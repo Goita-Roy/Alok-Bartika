@@ -131,7 +131,7 @@ export function AIAssistantPanel({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (!SpeechRecognition) {
-      appendMessages(['এই browser-এ voice input সমর্থিত নয়।'])
+      appendMessages(['এই ব্রাউজারে ভয়েস ইনপুট সমর্থিত নয়।'])
       return
     }
     const recognition = new SpeechRecognition()
@@ -162,15 +162,15 @@ export function AIAssistantPanel({
             <Bot size={13} className="text-white" />
           </div>
           <div>
-            <span className="text-xs font-bold">AI Assistant</span>
-            <p className={`text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Code Analysis & Error Help</p>
+            <span className="text-xs font-bold">AI সহায়ক</span>
+            <p className={`text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>কোড বিশ্লেষণ ও ত্রুটি সহায়তা</p>
           </div>
         </div>
         <button
           type="button"
           onClick={() => setVoiceEnabled((v) => !v)}
           className={`p-1.5 rounded-lg border transition ${btnCls} ${voiceEnabled ? 'ring-1 ring-violet-500/30' : ''}`}
-          title={voiceEnabled ? 'Mute voice' : 'Enable voice'}
+          title={voiceEnabled ? 'ভয়েস মিউট করুন' : 'ভয়েস চালু করুন'}
         >
           {voiceEnabled ? <Volume2 size={13} /> : <VolumeX size={13} />}
         </button>
@@ -203,9 +203,9 @@ export function AIAssistantPanel({
                 : isDark ? 'text-slate-400' : 'text-slate-500'
             }`}>
               {m.role === 'assistant' ? (
-                <><Bot size={10} /> AI Assistant</>
+                <><Bot size={10} /> AI সহায়ক</>
               ) : (
-                <><MessageSquare size={10} /> You</>
+                <><MessageSquare size={10} /> আপনি</>
               )}
             </div>
             {m.text}
@@ -232,7 +232,7 @@ export function AIAssistantPanel({
               setQuestion('')
             }
           }}
-          placeholder='"আমার কোডে কী সমস্যা?" বা "Fix suggestion দাও"'
+          placeholder='"আমার কোডে কী সমস্যা?" বা "সমাধানের পরামর্শ দিন"'
           className={`flex-1 rounded-lg border px-3 py-2 text-xs outline-none transition ${
             isDark
               ? 'bg-[#0e0c13] border-[#2d2a3f] text-slate-200 focus:border-violet-500'

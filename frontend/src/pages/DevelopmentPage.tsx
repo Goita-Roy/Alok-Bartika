@@ -7,7 +7,8 @@ export function DevelopmentPage() {
   useLearningTracker()
   useDailyCodingTracker(true)
   return (
-    <div className="fixed inset-x-0 bottom-0 top-16 z-40 overflow-hidden p-2 sm:p-3 lg:p-4 animate-in fade-in duration-500">
+    <div className="fixed inset-x-0 bottom-0 top-16 z-40 overflow-hidden p-2 sm:p-3 lg:p-4 animate-in fade-in duration-500"
+      style={{ backgroundColor: 'var(--color-bg)' }}>
       <div className="absolute top-4 left-4 z-50">
         <BackButton />
       </div>

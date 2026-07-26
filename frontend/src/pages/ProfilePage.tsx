@@ -70,7 +70,7 @@ export function ProfilePage() {
       })
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}))
-        throw new Error(errBody.message || `Request failed (${res.status})`)
+        throw new Error(errBody.message || `অনুরোধ ব্যর্থ হয়েছে (${res.status})`)
       }
       const json = await res.json()
       setData(json)
