@@ -1,10 +1,11 @@
 import { Clock, Timer, RefreshCw, SwitchCamera } from 'lucide-react'
+import { formatBanglaNumber } from '../../utils/banglaNumbers'
 
 function formatMin(m: number): string {
-  if (m < 60) return `${Math.round(m)} মি`
+  if (m < 60) return `${formatBanglaNumber(Math.round(m))} মি`
   const h = Math.floor(m / 60)
   const min = Math.round(m % 60)
-  return min > 0 ? `${h}ঘ ${min}মি` : `${h}ঘ`
+  return min > 0 ? `${formatBanglaNumber(h)}ঘ ${formatBanglaNumber(min)}মি` : `${formatBanglaNumber(h)}ঘ`
 }
 
 function formatLastActive(iso: string | null): string {
@@ -13,9 +14,9 @@ function formatLastActive(iso: string | null): string {
   const now = new Date()
   const diffMin = Math.floor((now.getTime() - d.getTime()) / 1000 / 60)
   if (diffMin < 1) return 'এইমাত্র'
-  if (diffMin < 60) return `${diffMin} মি আগে`
+  if (diffMin < 60) return `${formatBanglaNumber(diffMin)} মি আগে`
   const hours = Math.floor(diffMin / 60)
-  if (hours < 24) return `${hours} ঘ আগে`
+  if (hours < 24) return `${formatBanglaNumber(hours)} ঘ আগে`
   return d.toLocaleDateString('bn-BD', { day: 'numeric', month: 'short' })
 }
 
@@ -23,7 +24,7 @@ function formatHms(totalSec: number): string {
   const h = Math.floor(totalSec / 3600)
   const m = Math.floor((totalSec % 3600) / 60)
   const s = totalSec % 60
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  return `${formatBanglaNumber(String(h).padStart(2, '0'))}:${formatBanglaNumber(String(m).padStart(2, '0'))}:${formatBanglaNumber(String(s).padStart(2, '0'))}`
 }
 
 const STAT_ICONS: Record<string, { icon: any; color: string; bgColor: string }> = {
@@ -106,7 +107,7 @@ export function LearningAnalyticsCards({
       <StatCard
         icon={STAT_ICONS.tab.icon}
         label="ট্যাব পরিবর্তন"
-        value={String(tabSwitchCount)}
+        value={formatBanglaNumber(tabSwitchCount)}
         color={STAT_ICONS.tab.color}
         bgColor={STAT_ICONS.tab.bgColor}
         suffix="বার"
@@ -129,20 +130,21 @@ export function WeeklyChart({
 }: {
   dailyLogs: Array<{ date: string; minutes: number }>
 }) {
-  const today = new Date()
-  const dayOfWeek = today.getDay()
+  const now = new Date()
+  const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+  const dayOfWeek = todayUTC.getUTCDay()
   const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
-  const monday = new Date(today)
-  monday.setDate(today.getDate() + mondayOffset)
+  const monday = new Date(todayUTC)
+  monday.setUTCDate(todayUTC.getUTCDate() + mondayOffset)
 
   const days: { label: string; minutes: number; isToday: boolean }[] = []
   for (let i = 0; i < 7; i++) {
     const d = new Date(monday)
-    d.setDate(monday.getDate() + i)
-    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    d.setUTCDate(monday.getUTCDate() + i)
+    const dateStr = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
     const log = dailyLogs.find(l => l.date === dateStr)
     days.push({
-      label: WEEKDAYS_SHORT[d.getDay() === 0 ? 6 : d.getDay() - 1] || '',
+      label: WEEKDAYS_SHORT[d.getUTCDay() === 0 ? 6 : d.getUTCDay() - 1] || '',
       minutes: log?.minutes || 0,
       isToday: i === dayOfWeek - 1 || (dayOfWeek === 0 && i === 6),
     })
@@ -164,7 +166,7 @@ export function WeeklyChart({
           return (
             <div key={i} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
               <span className="text-[10px] font-bold" style={{ color: '#94A3B8' }}>
-                {d.minutes > 0 ? `${Math.round(d.minutes)}মি` : ''}
+                {d.minutes > 0 ? `${formatBanglaNumber(Math.round(d.minutes))}মি` : ''}
               </span>
               <div
                 className="w-full rounded-[8px] transition-all duration-300"

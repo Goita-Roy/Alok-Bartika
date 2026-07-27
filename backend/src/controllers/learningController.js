@@ -1,17 +1,7 @@
 const { User } = require('../models/User')
 
 function todayStr() {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-function getWeekStart() {
-  const d = new Date()
-  const day = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
-  const monday = new Date(d.setDate(diff))
-  monday.setHours(0, 0, 0, 0)
-  return monday
+  return new Date().toISOString().slice(0, 10)
 }
 
 // PATCH /api/learning/tick — called every ~60s
@@ -33,7 +23,6 @@ async function tickMinutes(req, res) {
     // Mongoose VersionError on this same User document.
     const incBase = {
       'learningAnalytics.totalMinutes': m,
-      'learningAnalytics.weeklyMinutes': m,
     }
 
     const existing = await User.updateOne(

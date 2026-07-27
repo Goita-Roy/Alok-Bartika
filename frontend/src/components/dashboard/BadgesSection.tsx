@@ -1,5 +1,6 @@
 import { Lock, Award } from 'lucide-react'
 import { getDashboardIcon } from './icons'
+import { formatBanglaNumber } from '../../utils/banglaNumbers'
 import type { BadgeItem } from '../../data/dashboardData'
 
 export function BadgesSection({ badges }: { badges: BadgeItem[] }) {
@@ -40,7 +41,7 @@ export function BadgesSection({ badges }: { badges: BadgeItem[] }) {
               ব্যাজ
             </h3>
             <p className="text-xs font-medium mt-0.5 truncate" style={{ color: '#2d5a48' }}>
-              {earned.length}/{badges.length} অর্জিত
+              {formatBanglaNumber(earned.length)}/{formatBanglaNumber(badges.length)} অর্জিত
             </p>
           </div>
         </div>

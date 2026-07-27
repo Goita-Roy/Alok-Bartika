@@ -1,6 +1,7 @@
 import { X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { getDashboardIcon } from './icons'
+import { formatBanglaNumber } from '../../utils/banglaNumbers'
 import type { SidebarItem } from '../../data/dashboardData'
 
 type DashboardSidebarProps = {
@@ -56,15 +57,15 @@ function SidebarContent({ items, activeItemId, student, xp, badgesCount }: Omit<
           <div className="mt-3 pt-3" style={{ borderTop: '1.5px solid #B8D8CB' }}>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold" style={{ color: '#065F46', fontFamily: "'Hind Siliguri', sans-serif" }}>মোট স্কোর</span>
-              <span className="text-sm font-black" style={{ color: '#0F766E' }}>{xp.totalXP.toLocaleString()}</span>
+              <span className="text-sm font-black" style={{ color: '#0F766E' }}>{formatBanglaNumber(xp.totalXP)}</span>
             </div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold" style={{ color: '#065F46', fontFamily: "'Hind Siliguri', sans-serif" }}>লেভেল</span>
-              <span className="text-sm font-black" style={{ color: '#F59E0B' }}>{xp.level}</span>
+              <span className="text-sm font-black" style={{ color: '#F59E0B' }}>{formatBanglaNumber(xp.level)}</span>
             </div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold" style={{ color: '#065F46', fontFamily: "'Hind Siliguri', sans-serif" }}>ব্যাজ</span>
-              <span className="text-sm font-black" style={{ color: '#6366F1' }}>{badgesCount ?? 0}</span>
+              <span className="text-sm font-black" style={{ color: '#6366F1' }}>{formatBanglaNumber(badgesCount ?? 0)}</span>
             </div>
             <div className="h-2 rounded-full" style={{ backgroundColor: '#B8D8CB' }}>
               <div className="h-2 rounded-full transition-all duration-700" style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #22C55E, #0F766E)' }} />

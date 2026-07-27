@@ -1,4 +1,5 @@
 import { Menu } from 'lucide-react'
+import { formatBanglaNumber } from '../../utils/banglaNumbers'
 
 type DashboardTopHeaderProps = {
   studentName: string; onOpenSidebar: () => void
@@ -25,13 +26,13 @@ export function DashboardTopHeader({ studentName, onOpenSidebar, level, totalXP 
             {level && (
               <span className="inline-flex items-center gap-1.5 text-sm font-bold rounded-full px-3 py-1"
                 style={{ backgroundColor: '#FEF3C7', color: '#D97706' }}>
-                লেভেল {level}
+                লেভেল {formatBanglaNumber(level)}
               </span>
             )}
             {totalXP !== undefined && (
               <span className="inline-flex items-center gap-1.5 text-sm font-bold rounded-full px-3 py-1"
                 style={{ backgroundColor: '#D1FAE5', color: '#16A34A' }}>
-                {totalXP.toLocaleString()} স্কোর
+                {formatBanglaNumber(totalXP)} স্কোর
               </span>
             )}
           </div>

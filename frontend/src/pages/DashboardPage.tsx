@@ -58,6 +58,13 @@ export function DashboardPage() {
     return 'dashboard'
   }, [location.pathname])
 
+  const continueLearningHref = useMemo(() => {
+    if (!completedLevels.includes('beginner')) return '/courses/beginner'
+    if (!completedLevels.includes('intermediate')) return '/courses/intermediate'
+    if (!completedLevels.includes('advanced')) return '/courses/advanced'
+    return '/courses'
+  }, [completedLevels])
+
   const progressStats = useMemo(() => {
     const badgesStat = data.stats?.find(s => s.id === 'badges')
     return {
@@ -121,7 +128,7 @@ export function DashboardPage() {
 
               <WidgetErrorBoundary title="দৈনিক চ্যালেঞ্জ" onRetry={refetch}>
                 {data.challenge?.title ? (
-                  <DailyChallengeCard challenge={data.challenge} />
+                  <DailyChallengeCard challenge={{ ...data.challenge, continueHref: continueLearningHref, ctaText: 'শেখা চালিয়ে যান' }} />
                 ) : (
                   <WidgetSkeleton height="h-28" />
                 )}

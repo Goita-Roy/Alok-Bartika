@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { formatBanglaNumber } from '../../utils/banglaNumbers'
 
 type CourseItem = {
   id: string; title: string; level: string; progress: number; status: 'Completed' | 'Active' | 'Locked'
@@ -55,7 +56,7 @@ export function MyCoursesSection({ courses }: MyCoursesSectionProps) {
                 <span className="text-xs font-semibold" style={{
                   color: g.status === 'Completed' ? '#059669' : g.status === 'Locked' ? '#94A3B8' : 'var(--color-accent)',
                 }}>
-                  {g.status === 'Completed' ? 'সম্পন্ন' : g.status === 'Locked' ? 'লকড' : `${g.avgProgress}%`}
+                  {g.status === 'Completed' ? 'সম্পন্ন' : g.status === 'Locked' ? 'লকড' : `${formatBanglaNumber(g.avgProgress)}%`}
                 </span>
               </div>
               <div className="h-2 rounded-full" style={{ backgroundColor: 'var(--color-border)' }}>

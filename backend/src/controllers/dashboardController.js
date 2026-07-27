@@ -136,22 +136,18 @@ const getDashboard = async (req, res) => {
     const continueHref = continueLearning.continueUrl
 
     const la = user.learningAnalytics || {}
-    let weeklyMinutes = la.weeklyMinutes || 0
+    let weeklyMinutes = 0
     if (Array.isArray(la.dailyLogs) && la.dailyLogs.length > 0) {
-      const weekStart = new Date()
-      const day = weekStart.getDay()
-      const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1)
-      const monday = new Date(weekStart.setDate(diff))
-      monday.setHours(0, 0, 0, 0)
-      const mondayStr = `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, '0')}-${String(monday.getDate()).padStart(2, '0')}`
+      const now = new Date()
+      const day = now.getUTCDay()
+      const diff = now.getUTCDate() - day + (day === 0 ? -6 : 1)
+      const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), diff))
+      const mondayStr = `${monday.getUTCFullYear()}-${String(monday.getUTCMonth() + 1).padStart(2, '0')}-${String(monday.getUTCDate()).padStart(2, '0')}`
       const thisWeekLogs = la.dailyLogs.filter((d) => d.date >= mondayStr)
       weeklyMinutes = thisWeekLogs.reduce((sum, d) => sum + (d.minutes || 0), 0)
     }
 
-    const todayStr = () => {
-      const d = new Date()
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    }
+    const todayStr = () => new Date().toISOString().slice(0, 10)
     const todayLog = Array.isArray(la.dailyLogs) ? la.dailyLogs.find((d) => d.date === todayStr()) : null
 
     res.json({

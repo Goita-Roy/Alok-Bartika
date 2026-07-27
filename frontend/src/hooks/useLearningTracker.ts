@@ -19,6 +19,7 @@ function isTrackingPage(pathname: string): boolean {
 }
 
 const SS_TAB_KEY = 'alok_tab_switches'
+const SS_PENDING_KEY = 'alok_pending_ms'
 
 export function useLearningTracker(): {
   elapsedSeconds: number
@@ -43,23 +44,47 @@ export function useLearningTracker(): {
   const runningRef = useRef(false)
   const mountedRef = useRef(true)
   const awayCountedRef = useRef(false)
+  const pendingMsRef = useRef(0)
+  const tabSwitchRef = useRef(0)
 
-  const saveToBackend = useCallback(async () => {
+  useEffect(() => {
+    try {
+      pendingMsRef.current = Number(sessionStorage.getItem(SS_PENDING_KEY)) || 0
+      tabSwitchRef.current = Number(sessionStorage.getItem(SS_TAB_KEY)) || 0
+    } catch {}
+  }, [])
+
+  const saveMinutes = useCallback((minutes: number) => {
+    if (minutes <= 0) return
+    const token = localStorage.getItem('token')
+    fetch(`${API_BASE_URL}/learning/tick`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ minutes, tabSwitches: tabSwitchRef.current }),
+    }).catch(() => {})
+  }, [])
+
+  const flushPending = useCallback(() => {
+    const totalMs = pendingMsRef.current
+    if (totalMs < 60000) return
+    const minutes = Math.floor(totalMs / 60000)
+    pendingMsRef.current = totalMs % 60000
+    try { sessionStorage.setItem(SS_PENDING_KEY, String(pendingMsRef.current)) } catch {}
+    saveMinutes(minutes)
+  }, [saveMinutes])
+
+  const saveToBackend = useCallback(() => {
     if (!runningRef.current) return
     const now = Date.now()
     const ms = now - startTimeRef.current
-    startTimeRef.current = now
     if (ms < 60000) return
     const minutes = Math.floor(ms / 60000)
-    try {
-      const token = localStorage.getItem('token')
-      await fetch(`${API_BASE_URL}/learning/tick`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ minutes }),
-      })
-    } catch {}
-  }, [])
+    startTimeRef.current = now
+    pendingMsRef.current += ms % 60000
+    try { sessionStorage.setItem(SS_PENDING_KEY, String(pendingMsRef.current)) } catch {}
+    saveMinutes(minutes)
+    flushPending()
+  }, [saveMinutes, flushPending])
 
   const stop = useCallback(() => {
     if (!runningRef.current) return
@@ -67,17 +92,13 @@ export function useLearningTracker(): {
     if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null }
     if (saveIntervalRef.current) { clearInterval(saveIntervalRef.current); saveIntervalRef.current = null }
     setIsSessionRunning(false)
-    const ms = Date.now() - startTimeRef.current
-    if (ms >= 60000) {
-      const minutes = Math.floor(ms / 60000)
-      const token = localStorage.getItem('token')
-      fetch(`${API_BASE_URL}/learning/tick`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ minutes }),
-      }).catch(() => {})
-    }
-  }, [])
+    const now = Date.now()
+    const ms = now - startTimeRef.current
+    startTimeRef.current = now
+    pendingMsRef.current += ms
+    try { sessionStorage.setItem(SS_PENDING_KEY, String(pendingMsRef.current)) } catch {}
+    flushPending()
+  }, [flushPending])
 
   const start = useCallback(() => {
     if (runningRef.current) return
@@ -91,7 +112,8 @@ export function useLearningTracker(): {
     if (saveIntervalRef.current) clearInterval(saveIntervalRef.current)
     saveIntervalRef.current = setInterval(() => { saveToBackend() }, SAVE_INTERVAL)
     setIsSessionRunning(true)
-  }, [location.pathname, saveToBackend])
+    flushPending()
+  }, [location.pathname, saveToBackend, flushPending])
 
   const resetInactivity = useCallback(() => {
     if (inactivityRef.current) clearTimeout(inactivityRef.current)
@@ -104,6 +126,7 @@ export function useLearningTracker(): {
   const incrementTabSwitch = useCallback(() => {
     setTabSwitchCount(prev => {
       const next = prev + 1
+      tabSwitchRef.current = next
       try { sessionStorage.setItem(SS_TAB_KEY, String(next)) } catch {}
       return next
     })
@@ -112,8 +135,13 @@ export function useLearningTracker(): {
   // Reset on logout
   useEffect(() => {
     if (!user) {
-      try { sessionStorage.removeItem(SS_TAB_KEY) } catch {}
+      try {
+        sessionStorage.removeItem(SS_TAB_KEY)
+        sessionStorage.removeItem(SS_PENDING_KEY)
+      } catch {}
       setTabSwitchCount(0)
+      tabSwitchRef.current = 0
+      pendingMsRef.current = 0
       setElapsedSeconds(0)
       setIsSessionRunning(false)
       stop()

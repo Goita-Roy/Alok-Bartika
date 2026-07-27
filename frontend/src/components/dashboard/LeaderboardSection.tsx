@@ -1,9 +1,5 @@
 import { Crown, Medal, Trophy } from 'lucide-react'
-
-function toBnDigits(value: string | number): string {
-  const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
-  return String(value).replace(/[0-9]/g, d => bn[Number(d)])
-}
+import { formatBanglaNumber } from '../../utils/banglaNumbers'
 
 interface LeaderboardEntry {
   rank: number; id: string; name: string; avatar: string
@@ -15,7 +11,7 @@ function RankIcon({ rank }: { rank: number }) {
   if (rank === 1) return <span className="text-xl">🥇</span>
   if (rank === 2) return <span className="text-xl">🥈</span>
   if (rank === 3) return <span className="text-xl">🥉</span>
-  return <span className="w-6 text-center text-sm font-bold" style={{ color: 'var(--color-text-muted)' }}>#{toBnDigits(rank)}</span>
+  return <span className="w-6 text-center text-sm font-bold" style={{ color: 'var(--color-text-muted)' }}>#{formatBanglaNumber(rank)}</span>
 }
 
 export function LeaderboardSection({ leaderboard }: { leaderboard: LeaderboardEntry[] }) {
@@ -67,11 +63,11 @@ export function LeaderboardSection({ leaderboard }: { leaderboard: LeaderboardEn
                   {student.name}
                 </p>
                 <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                  {toBnDigits(student.level)} · {toBnDigits(student.examMarks)} marks · {toBnDigits(student.completedCourses)} courses
+                  {formatBanglaNumber(student.level)} · {formatBanglaNumber(student.examMarks)} marks · {formatBanglaNumber(student.completedCourses)} courses
                 </p>
               </div>
             </div>
-            <span className="text-sm font-semibold shrink-0" style={{ color: 'var(--color-text-muted)' }}>{toBnDigits(student.xp.toLocaleString())} স্কোর</span>
+            <span className="text-sm font-semibold shrink-0" style={{ color: 'var(--color-text-muted)' }}>{formatBanglaNumber(student.xp)} স্কোর</span>
           </article>
         ))}
       </div>

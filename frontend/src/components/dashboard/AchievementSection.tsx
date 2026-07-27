@@ -1,14 +1,10 @@
+import { formatBanglaNumber } from '../../utils/banglaNumbers'
+
 type AchievementStats = {
   lessons: number
   courses: number
   badges: number
   streak?: number
-}
-
-// Convert English digits to Bengali digits (display only)
-function toBnDigits(value: string | number): string {
-  const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
-  return String(value).replace(/[0-9]/g, d => bn[Number(d)])
 }
 
 const ACHIEVEMENTS = [
@@ -33,7 +29,7 @@ export function AchievementSection({ stats }: { stats: AchievementStats }) {
           return (
             <div key={a.key} className="rounded-[16px] p-4 text-center transition-all duration-200 hover:-translate-y-1"
               style={{ backgroundColor: a.bgColor, border: '1.5px solid transparent' }}>
-              <p className="text-2xl font-black" style={{ color: a.color }}>{toBnDigits(value)}</p>
+              <p className="text-2xl font-black" style={{ color: a.color }}>{formatBanglaNumber(value)}</p>
               <p className="text-xs font-bold mt-1" style={{ color: '#64748B', fontFamily: "'Hind Siliguri', sans-serif" }}>
                 {a.label}
               </p>

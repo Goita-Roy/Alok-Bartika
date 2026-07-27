@@ -1,5 +1,6 @@
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
 import { getDashboardIcon } from './icons'
+import { formatBanglaNumber } from '../../utils/banglaNumbers'
 import type { DashboardStat } from '../../data/dashboardData'
 
 export function StatCard({ stat }: { stat: DashboardStat }) {
@@ -20,7 +21,7 @@ export function StatCard({ stat }: { stat: DashboardStat }) {
         </div>
       </div>
       <p className="text-sm mb-1" style={{ color: 'var(--color-text-muted)', fontFamily: "'Hind Siliguri', sans-serif" }}>{stat.title}</p>
-      <p className="text-3xl font-black mb-1" style={{ color: 'var(--color-text)' }}>{stat.value}</p>
+      <p className="text-3xl font-black mb-1" style={{ color: 'var(--color-text)' }}>{formatBanglaNumber(stat.value)}</p>
       <p className="text-xs" style={{ color: 'var(--color-text-muted)', fontFamily: "'Hind Siliguri', sans-serif" }}>{stat.description}</p>
     </article>
   )

@@ -1,3 +1,4 @@
+import { formatBanglaNumber } from '../../utils/banglaNumbers'
 import type { FirstAttemptResult } from '../../hooks/useFirstAttemptResults'
 
 const BN = "'Hind Siliguri', sans-serif"
@@ -54,19 +55,13 @@ const BN_MONTHS = [
   'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর',
 ]
 
-// Convert any English digits in a value to Bengali digits (display only)
-function toBnDigits(value: string | number): string {
-  const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
-  return String(value).replace(/[0-9]/g, d => bn[Number(d)])
-}
-
 function formatDate(iso: string | null): string {
   if (!iso) return '—'
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return '—'
-  const day = toBnDigits(d.getDate())
+  const day = formatBanglaNumber(d.getDate())
   const month = BN_MONTHS[d.getMonth()]
-  const year = toBnDigits(d.getFullYear())
+  const year = formatBanglaNumber(d.getFullYear())
   return `${day} ${month} ${year}`
 }
 
@@ -138,11 +133,11 @@ export function FirstAttemptResultsSection({ results }: { results: FirstAttemptR
                 <div className="flex items-center gap-4 shrink-0">
                   <div className="text-right">
                     <p className="text-xl font-black leading-none" style={{ color: r.passed ? '#0F766E' : '#DC2626', fontFamily: BN }}>
-                      {toBnDigits(r.score)}%
+                      {formatBanglaNumber(r.score)}%
                     </p>
                     {r.earnedPoints !== null && r.totalPoints !== null && (
                       <p className="text-[10px] font-bold mt-1" style={{ color: '#94A3B8', fontFamily: BN }}>
-                        প্রাপ্ত নম্বর: {toBnDigits(r.earnedPoints)}/{toBnDigits(r.totalPoints)}
+                        প্রাপ্ত নম্বর: {formatBanglaNumber(r.earnedPoints)}/{formatBanglaNumber(r.totalPoints)}
                       </p>
                     )}
                   </div>
