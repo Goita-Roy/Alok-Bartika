@@ -16,9 +16,9 @@ export function ForbiddenPage() {
         </div>
         <div className="space-y-2">
           <h1 className="text-6xl font-black" style={{ color: 'var(--color-text)', opacity: 0.15 }}>403</h1>
-          <h2 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>Access Denied</h2>
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>প্রবেশাধিকার অস্বীকৃত</h2>
           <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-            You don't have permission to access this page.
+            এই পৃষ্ঠায় অ্যাক্সেস করার অনুমতি আপনার নেই।
           </p>
         </div>
         <button
@@ -26,7 +26,7 @@ export function ForbiddenPage() {
           className="btn btn-sm gap-2"
           style={{ border: '1px solid var(--color-border)', color: 'var(--color-text)' }}>
           <ArrowLeft size={16} />
-          Go Home
+          হোম পেজ
         </button>
       </div>
     </div>

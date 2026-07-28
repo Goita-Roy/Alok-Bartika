@@ -47,11 +47,11 @@ function WhileFlowAnimation() {
   const [step, setStep] = useState(-1);
 
   const steps = [
-    { icon: "🏧", label: "Enter PIN", color: "text-blue-400", bg: "bg-blue-900/30 border-blue-500/50" },
-    { icon: "❌", label: "Wrong PIN", color: "text-red-400", bg: "bg-red-900/30 border-red-500/50" },
-    { icon: "🔄", label: "Try Again", color: "text-amber-400", bg: "bg-amber-900/30 border-amber-500/50" },
-    { icon: "✅", label: "Correct PIN", color: "text-green-400", bg: "bg-green-900/30 border-green-500/50" },
-    { icon: "🔓", label: "Access Granted!", color: "text-emerald-400", bg: "bg-emerald-900/30 border-emerald-500/50" },
+    { icon: "🏧", label: "PIN লিখুন", color: "text-blue-400", bg: "bg-blue-900/30 border-blue-500/50" },
+    { icon: "❌", label: "ভুল PIN", color: "text-red-400", bg: "bg-red-900/30 border-red-500/50" },
+    { icon: "🔄", label: "পুনরায় চেষ্টা", color: "text-amber-400", bg: "bg-amber-900/30 border-amber-500/50" },
+    { icon: "✅", label: "সঠিক PIN", color: "text-green-400", bg: "bg-green-900/30 border-green-500/50" },
+    { icon: "🔓", label: "প্রবেশ Granted!", color: "text-emerald-400", bg: "bg-emerald-900/30 border-emerald-500/50" },
   ];
 
   return (
@@ -60,7 +60,7 @@ function WhileFlowAnimation() {
         onClick={() => setStep(step < steps.length - 1 ? step + 1 : -1)}
         className="w-full px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl transition-all shadow-md"
       >
-        {step < steps.length - 1 ? "▶ Next Step" : "🔄 Restart Animation"}
+        {step < steps.length - 1 ? "▶ পরবর্তী ধাপ" : "🔄 পুনরায় শুরু করুন"}
       </button>
 
       <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
@@ -129,7 +129,7 @@ function ATMSimulation() {
         
         <div className="bg-gray-950 rounded-xl p-4 border border-gray-700">
           <div className="text-center mb-4">
-            <p className="text-xs text-gray-500 mb-2">Enter your PIN</p>
+            <p className="text-xs text-gray-500 mb-2">আপনার PIN লিখুন</p>
             <div className="flex justify-center gap-2">
               {[0, 1, 2, 3].map(i => (
                 <motion.div key={i}
@@ -160,10 +160,10 @@ function ATMSimulation() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-2">
               <input type="text" value={currentInput} onChange={e => setCurrentInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
                 onKeyDown={e => e.key === "Enter" && handleSubmit()}
-                placeholder="Enter 4-digit PIN"
+                placeholder="৪-অঙ্কের PIN লিখুন"
                 className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm font-mono outline-none focus:border-cyan-500" maxLength={4} />
               <button onClick={handleSubmit}
-                className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-bold rounded-lg transition-colors">Enter</button>
+                className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-bold rounded-lg transition-colors">প্রবেশ করুন</button>
             </motion.div>
           )}
 
@@ -171,7 +171,7 @@ function ATMSimulation() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
               <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                 className="w-6 h-6 border-2 border-cyan-400 border-t-transparent rounded-full mx-auto" />
-              <p className="text-xs text-cyan-400 mt-2">Checking...</p>
+              <p className="text-xs text-cyan-400 mt-2">পরীক্ষা করা হচ্ছে...</p>
             </motion.div>
           )}
 
@@ -187,7 +187,7 @@ function ATMSimulation() {
       </div>
 
       <button onClick={reset} className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-bold rounded-xl transition-colors">
-        🔄 Reset ATM
+        🔄 ATM রিসেট
       </button>
     </div>
   );
@@ -232,7 +232,7 @@ function ExampleSection() {
     <div className="space-y-4">
       <button onClick={startDemo} disabled={phase === "looping"}
         className="w-full px-4 py-3 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold rounded-xl transition-all shadow-md">
-        {phase === "idle" || phase === "done" ? "▶ Run Demo" : "⏳ Looping..."}
+        {phase === "idle" || phase === "done" ? "▶ ডেমো চালান" : "⏳ লুপ চলছে..."}
       </button>
 
       {/* Code Editor */}
@@ -559,7 +559,7 @@ export function Ch4EnterPin({
                   <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }} className="px-4 py-3 bg-green-900/30 border border-green-500/30 rounded-xl">
                     <p className="text-green-400 font-mono text-sm">"1234"</p>
                   </motion.div>
-                  <p className="text-xs text-gray-500 mt-2">✅ Correct!</p>
+                  <p className="text-xs text-gray-500 mt-2">✅ সঠিক!</p>
                 </div>
               </div>
             </div>
@@ -710,7 +710,7 @@ export function Ch4EnterPin({
             <AnimatePresence>
               {videoComplete && (
                 <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-3 left-3 px-3 py-1 bg-green-500 rounded-full text-white text-xs font-bold flex items-center gap-1.5 shadow-lg">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>Completed
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>সম্পন্ন
                 </motion.div>
               )}
             </AnimatePresence>
@@ -778,11 +778,11 @@ export function Ch4EnterPin({
               <div className="flex gap-2">
                 <motion.button whileTap={{ scale: 0.95 }} onClick={handleRun} disabled={isRunning}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
-                  {isRunning ? (<><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-4 h-4 border-2 border-white border-t-transparent rounded-full" />Running...</>)
-                    : (<><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Run</>)}
+                  {isRunning ? (<><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-4 h-4 border-2 border-white border-t-transparent rounded-full" />চলছে...</>)
+                    : (<><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>রান</>)}
                 </motion.button>
-                <motion.button whileTap={{ scale: 0.95 }} onClick={handleReset} className="px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-bold rounded-xl transition-colors">Reset</motion.button>
-                <button disabled className="px-4 py-3 bg-gray-100 text-gray-400 text-sm font-bold rounded-xl border border-gray-200 cursor-not-allowed">Check</button>
+                <motion.button whileTap={{ scale: 0.95 }} onClick={handleReset} className="px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-bold rounded-xl transition-colors">রিসেট</motion.button>
+                <button disabled className="px-4 py-3 bg-gray-100 text-gray-400 text-sm font-bold rounded-xl border border-gray-200 cursor-not-allowed">পরীক্ষা করুন</button>
               </div>
 
               <AnimatePresence>
@@ -917,12 +917,12 @@ export function Ch4EnterPin({
         className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
         <button onClick={onComplete.bind(null, LESSON_ID)}
           className={`w-full sm:w-auto px-8 py-4 rounded-2xl font-extrabold text-lg transition-all duration-300 shadow-lg ${isCompleted ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white" : "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"}`}>
-          {isCompleted ? "✅ Completed!" : "🏁 Mark Complete"}
+          {isCompleted ? "✅ সম্পন্ন!" : "🏁 সম্পন্ন চিহ্নিত করুন"}
         </button>
         {hasNext && (
           <button onClick={onNext}
             className="w-full sm:w-auto px-8 py-4 rounded-2xl font-extrabold text-lg bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white transition-all duration-300 shadow-lg flex items-center justify-center gap-2">
-            Next Lesson <span className="text-xl">→</span>
+            পরবর্তী পাঠ <span className="text-xl">→</span>
           </button>
         )}
       </motion.div>

@@ -84,10 +84,10 @@ const AmaderPorichoy: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-6">
             {[
-              { val: '6–8', label: 'Target grade levels' },
-              { val: '3', label: 'Curriculum stages (Logic → Visual → Python)' },
-              { val: 'AI', label: 'Real-time Bengali hints & guidance' },
-              { val: 'SDG 4', label: 'UN Quality Education goal aligned' },
+              { val: '৬–৮', label: 'টার্গেট শ্রেণি স্তর' },
+              { val: '৩', label: 'কারিকুলাম (লজিক → ভিজুয়াল → পাইথন)' },
+              { val: 'AI', label: 'রিয়েল-টাইম বাংলা নির্দেশনা' },
+              { val: 'SDG ৪', label: 'UN গুণগত শিক্ষা লক্ষ্য' },
             ].map((stat, i) => (
               <div
                 key={i}
@@ -129,7 +129,7 @@ const AmaderPorichoy: React.FC = () => {
             <div className="flex flex-wrap justify-center gap-6 mt-10">
               <div className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold"
                 style={{ backgroundColor: 'var(--color-home-cta-soft)', color: 'var(--color-accent)' }}>
-                <GraduationCap size={18} /> SDG 4 — Quality Education
+                <GraduationCap size={18} /> SDG ৪ — গুণগত শিক্ষা
               </div>
             </div>
           </div>

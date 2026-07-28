@@ -269,7 +269,7 @@ export function Ch1Basic({ onComplete, onNext, isCompleted, hasNext }: Ch1BasicP
             </div>
             <div className="flex items-center gap-3 p-3 bg-orange-50 border border-orange-100 rounded-xl">
               <span className="flex-shrink-0 w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm font-bold">3</span>
-              <p className="text-sm text-gray-800"><span className="font-bold">Run</span> বাটনে ক্লিক করো।</p>
+              <p className="text-sm text-gray-800"><span className="font-bold">রান</span> বাটনে ক্লিক করো।</p>
             </div>
             <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-100 rounded-xl">
               <span className="flex-shrink-0 w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-bold">✓</span>
@@ -381,7 +381,7 @@ export function Ch1Basic({ onComplete, onNext, isCompleted, hasNext }: Ch1BasicP
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
-                Completed
+                সম্পন্ন
               </div>
             )}
           </div>
@@ -493,7 +493,7 @@ export function Ch1Basic({ onComplete, onNext, isCompleted, hasNext }: Ch1BasicP
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                       </svg>
-                      Running...
+                      চলছে...
                     </>
                   ) : (
                     <>
@@ -501,7 +501,7 @@ export function Ch1Basic({ onComplete, onNext, isCompleted, hasNext }: Ch1BasicP
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Run
+                      রান
                     </>
                   )}
                 </button>
@@ -509,14 +509,14 @@ export function Ch1Basic({ onComplete, onNext, isCompleted, hasNext }: Ch1BasicP
                   onClick={handleReset}
                   className="px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-semibold rounded-lg transition-colors"
                 >
-                  Reset
+                  রিসেট
                 </button>
                 <button
                   disabled
                   className="px-4 py-2.5 bg-gray-100 text-gray-400 text-sm font-semibold rounded-lg border border-gray-200 cursor-not-allowed"
-                  title="Check functionality coming soon"
+                  title="পরীক্ষা ফিচার শীঘ্রই আসছে"
                 >
-                  Check
+                  পরীক্ষা করুন
                 </button>
               </div>
 
@@ -754,14 +754,14 @@ export function Ch1Basic({ onComplete, onNext, isCompleted, hasNext }: Ch1BasicP
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
-            Mark as Complete
+            সম্পন্ন হিসেবে চিহ্নিত করুন
           </button>
         ) : (
           <span className="flex items-center gap-2 px-6 py-3 bg-green-50 text-green-700 text-sm font-semibold rounded-xl border border-green-200">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
-            Completed!
+            সম্পন্ন!
           </span>
         )}
 
@@ -770,7 +770,7 @@ export function Ch1Basic({ onComplete, onNext, isCompleted, hasNext }: Ch1BasicP
             onClick={onNext}
             className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-sm hover:shadow-md"
           >
-            Next Lesson
+            পরবর্তী পাঠ
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>

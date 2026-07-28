@@ -31,13 +31,13 @@ export function PostAuthRedirectPage() {
         } else if (res.status === 404) {
           setProfileExists(false)
         } else {
-          setError('Could not verify profile status')
+          setError('প্রোফাইল যাচাই করা যায়নি')
           // Fallback: if we can't verify, let them go to onboarding to be safe
           setProfileExists(false)
         }
       } catch (err) {
         console.error('Check Profile Error:', err)
-        setError('Network error')
+        setError('নেটওয়ার্ক ত্রুটি')
         setProfileExists(false)
       }
     }
@@ -47,11 +47,11 @@ export function PostAuthRedirectPage() {
     }
   }, [loading, token])
 
-  if (loading) return <p className="p-4">Loading session...</p>
+  if (loading) return <p className="p-4">সেশন লোড হচ্ছে...</p>
   if (!token) return <Navigate to="/login" replace />
   
   if (profileExists === null) {
-    return <p className="p-4">Verifying account details...</p>
+    return <p className="p-4">অ্যাকাউন্ট যাচাই করা হচ্ছে...</p>
   }
 
   if (error) {

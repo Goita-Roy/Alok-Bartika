@@ -47,12 +47,12 @@ function GuessFlowAnimation() {
   const [step, setStep] = useState(-1);
 
   const steps = [
-    { icon: "🎲", label: "Secret Number", color: "text-blue-400", bg: "bg-blue-900/30 border-blue-500/50" },
-    { icon: "🙋", label: "Guess", color: "text-cyan-400", bg: "bg-cyan-900/30 border-cyan-500/50" },
-    { icon: "❌", label: "Wrong Guess", color: "text-red-400", bg: "bg-red-900/30 border-red-500/50" },
-    { icon: "🔁", label: "Try Again", color: "text-amber-400", bg: "bg-amber-900/30 border-amber-500/50" },
-    { icon: "✅", label: "Correct!", color: "text-green-400", bg: "bg-green-900/30 border-green-500/50" },
-    { icon: "🎉", label: "You Win!", color: "text-purple-400", bg: "bg-purple-900/30 border-purple-500/50" },
+    { icon: "🎲", label: "গোপন সংখ্যা", color: "text-blue-400", bg: "bg-blue-900/30 border-blue-500/50" },
+    { icon: "🙋", label: "অনুমান", color: "text-cyan-400", bg: "bg-cyan-900/30 border-cyan-500/50" },
+    { icon: "❌", label: "ভুল অনুমান", color: "text-red-400", bg: "bg-red-900/30 border-red-500/50" },
+    { icon: "🔁", label: "পুনরায় চেষ্টা", color: "text-amber-400", bg: "bg-amber-900/30 border-amber-500/50" },
+    { icon: "✅", label: "সঠিক!", color: "text-green-400", bg: "bg-green-900/30 border-green-500/50" },
+    { icon: "🎉", label: "তুমি জিতেছ!", color: "text-purple-400", bg: "bg-purple-900/30 border-purple-500/50" },
   ];
 
   return (
@@ -61,7 +61,7 @@ function GuessFlowAnimation() {
         onClick={() => setStep(step < steps.length - 1 ? step + 1 : -1)}
         className="w-full px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl transition-all shadow-md"
       >
-        {step < steps.length - 1 ? "▶ Next Step" : "🔄 Restart Animation"}
+        {step < steps.length - 1 ? "▶ পরবর্তী ধাপ" : "🔄 পুনরায় শুরু করুন"}
       </button>
 
       <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
@@ -86,7 +86,7 @@ function GuessFlowAnimation() {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-900/30 border border-green-500/30 rounded-xl">
               <span className="text-lg">🎉</span>
-              <p className="text-sm font-bold text-green-400">You found the secret number!</p>
+              <p className="text-sm font-bold text-green-400">তুমি গোপন সংখ্যা খুঁজে পেয়েছ!</p>
             </div>
           </motion.div>
         )}
@@ -131,7 +131,7 @@ function GuessNumberGame() {
     <div className="space-y-4">
       {/* Game Screen */}
       <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5">
-        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-4 text-center">🎲 Guess the Number (1-10)</p>
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-4 text-center">🎲 সংখ্যা অনুমান করুন (১-১০)</p>
         
         <div className="bg-gray-950 rounded-xl p-4 border border-gray-700">
           <div className="text-center mb-4">
@@ -139,7 +139,7 @@ function GuessNumberGame() {
               className="inline-flex items-center gap-2">
               <span className="text-2xl">{phase === "won" ? "🎉" : "🤔"}</span>
               <p className={`text-lg font-bold ${phase === "won" ? "text-green-400" : "text-white"}`}>
-                {phase === "won" ? `You got it in ${guesses.length} tries!` : "I'm thinking of a number..."}
+                {phase === "won" ? `${guesses.length} চেষ্টায় পেয়েছ!` : "একটি সংখ্যা নিয়ে ভাবছি..."}
               </p>
             </motion.div>
           </div>
@@ -171,10 +171,10 @@ function GuessNumberGame() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-2">
               <input type="number" value={currentGuess} onChange={e => setCurrentGuess(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && handleSubmit()}
-                placeholder="1-10"
+                placeholder="১-১০"
                 className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm font-mono outline-none focus:border-cyan-500" min={1} max={10} />
               <button onClick={handleSubmit}
-                className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-bold rounded-lg transition-colors">Guess!</button>
+                className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-bold rounded-lg transition-colors">অনুমান!</button>
             </motion.div>
           )}
 
@@ -182,7 +182,7 @@ function GuessNumberGame() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
               <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                 className="w-6 h-6 border-2 border-cyan-400 border-t-transparent rounded-full mx-auto" />
-              <p className="text-xs text-cyan-400 mt-2">Checking...</p>
+              <p className="text-xs text-cyan-400 mt-2">পরীক্ষা করা হচ্ছে...</p>
             </motion.div>
           )}
 
@@ -190,7 +190,7 @@ function GuessNumberGame() {
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-900/30 border border-green-500/30 rounded-xl">
                 <span className="text-lg">🎉</span>
-                <p className="text-sm font-bold text-green-400">Correct! The number was {secret}!</p>
+                <p className="text-sm font-bold text-green-400">সঠিক! সংখ্যাটি ছিল {secret}!</p>
               </div>
             </motion.div>
           )}
@@ -198,7 +198,7 @@ function GuessNumberGame() {
       </div>
 
       <button onClick={reset} className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-bold rounded-xl transition-colors">
-        🔄 New Game
+        🔄 নতুন খেলা
       </button>
     </div>
   );
@@ -243,7 +243,7 @@ function ExampleSection() {
     <div className="space-y-4">
       <button onClick={startDemo} disabled={phase === "looping"}
         className="w-full px-4 py-3 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold rounded-xl transition-all shadow-md">
-        {phase === "idle" || phase === "done" ? "▶ Run Demo" : "⏳ Guessing..."}
+        {phase === "idle" || phase === "done" ? "▶ ডেমো চালান" : "⏳ অনুমান করছে..."}
       </button>
 
       {/* Code Editor */}
@@ -333,7 +333,7 @@ function ExampleSection() {
             className="bg-green-50 border border-green-200 rounded-2xl p-4">
             <div className="flex items-center gap-2">
               <span className="text-xl">✅</span>
-              <p className="text-sm font-bold text-green-700">The while Loop keeps asking until guess equals secret!</p>
+              <p className="text-sm font-bold text-green-700">while লুপ যতক্ষণ না guess সমান হয় secret ততক্ষণ জিজ্ঞাসা করতে থাকে!</p>
             </div>
           </motion.div>
         )}
@@ -554,14 +554,14 @@ export function Ch4GuessNumber({
                   <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="px-4 py-3 bg-red-900/30 border border-red-500/30 rounded-xl">
                     <p className="text-red-400 font-mono text-sm">Guess: 3</p>
                   </motion.div>
-                  <p className="text-xs text-gray-500 mt-2">❌ Wrong!</p>
+                  <p className="text-xs text-gray-500 mt-2">❌ ভুল!</p>
                 </div>
                 <motion.div animate={{ x: [0, 8, 0] }} transition={{ duration: 1.5, repeat: Infinity }} className="text-gray-400 text-xl">→</motion.div>
                 <div className="text-center">
                   <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }} className="px-4 py-3 bg-green-900/30 border border-green-500/30 rounded-xl">
                     <p className="text-green-400 font-mono text-sm">Guess: 7</p>
                   </motion.div>
-                  <p className="text-xs text-gray-500 mt-2">🎉 Found!</p>
+                  <p className="text-xs text-gray-500 mt-2">🎉 পেয়েছ!</p>
                 </div>
               </div>
             </div>
@@ -714,7 +714,7 @@ export function Ch4GuessNumber({
             <AnimatePresence>
               {videoComplete && (
                 <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-3 left-3 px-3 py-1 bg-green-500 rounded-full text-white text-xs font-bold flex items-center gap-1.5 shadow-lg">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>Completed
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>সম্পন্ন
                 </motion.div>
               )}
             </AnimatePresence>
@@ -783,11 +783,11 @@ export function Ch4GuessNumber({
               <div className="flex gap-2">
                 <motion.button whileTap={{ scale: 0.95 }} onClick={handleRun} disabled={isRunning}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
-                  {isRunning ? (<><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-4 h-4 border-2 border-white border-t-transparent rounded-full" />Running...</>)
-                    : (<><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Run</>)}
+                  {isRunning ? (<><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-4 h-4 border-2 border-white border-t-transparent rounded-full" />চলছে...</>)
+                    : (<><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>রান</>)}
                 </motion.button>
-                <motion.button whileTap={{ scale: 0.95 }} onClick={handleReset} className="px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-bold rounded-xl transition-colors">Reset</motion.button>
-                <button disabled className="px-4 py-3 bg-gray-100 text-gray-400 text-sm font-bold rounded-xl border border-gray-200 cursor-not-allowed">Check</button>
+                <motion.button whileTap={{ scale: 0.95 }} onClick={handleReset} className="px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-bold rounded-xl transition-colors">রিসেট</motion.button>
+                <button disabled className="px-4 py-3 bg-gray-100 text-gray-400 text-sm font-bold rounded-xl border border-gray-200 cursor-not-allowed">পরীক্ষা করুন</button>
               </div>
 
               <AnimatePresence>
@@ -923,12 +923,12 @@ export function Ch4GuessNumber({
         className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
         <button onClick={onComplete.bind(null, LESSON_ID)}
           className={`w-full sm:w-auto px-8 py-4 rounded-2xl font-extrabold text-lg transition-all duration-300 shadow-lg ${isCompleted ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white" : "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"}`}>
-          {isCompleted ? "✅ Completed!" : "🏁 Mark Complete"}
+          {isCompleted ? "✅ সম্পন্ন!" : "🏁 সম্পন্ন চিহ্নিত করুন"}
         </button>
         {hasNext && (
           <button onClick={onNext}
             className="w-full sm:w-auto px-8 py-4 rounded-2xl font-extrabold text-lg bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white transition-all duration-300 shadow-lg flex items-center justify-center gap-2">
-            Next Lesson <span className="text-xl">→</span>
+            পরবর্তী পাঠ <span className="text-xl">→</span>
           </button>
         )}
       </motion.div>

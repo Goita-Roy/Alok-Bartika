@@ -253,7 +253,7 @@ function HeroIllustration() {
               <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
               <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
             </div>
-            <span className="text-[10px] text-white/30 font-mono ml-2">main.py — AlokBartika IDE</span>
+            <span className="text-[10px] text-white/30 font-mono ml-2">main.py — আলোকবর্তিকা IDE</span>
           </div>
           {/* Code area */}
           <div className="p-3 font-mono text-[11px] leading-relaxed" style={{ minHeight: 100 }}>
@@ -461,7 +461,7 @@ export function HeroSection() {
             <motion.div variants={itemVariants} className="flex flex-wrap gap-2.5">
               <GlassBadge>সম্পূর্ণ বাংলায়</GlassBadge>
               <GlassBadge>AI সহায়ক</GlassBadge>
-              <GlassBadge>Beginner Friendly</GlassBadge>
+              <GlassBadge>শিক্ষানবিশ বান্ধব</GlassBadge>
             </motion.div>
 
             {/* CTA buttons */}

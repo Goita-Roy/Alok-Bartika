@@ -244,7 +244,7 @@ export function SuperAdminAdminsPage() {
           <input
             type="text"
             className="input input-sm w-full pl-9"
-            placeholder="Search by name, email, or phone..."
+            placeholder="নাম, ইমেইল অথবা ফোন দ্বারা অনুসন্ধান..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
@@ -270,7 +270,7 @@ export function SuperAdminAdminsPage() {
             <div className="card-body items-center text-center py-16">
               <Shield size={40} style={{ color: 'var(--color-text-muted)', opacity: 0.4 }} />
               <p className="text-sm mt-2" style={{ color: 'var(--color-text-muted)' }}>
-                {search ? 'No admins match your search' : 'No admin accounts yet'}
+                {search ? 'আপনার অনুসন্ধানের সাথে মিলে এমন কোনো অ্যাডমিন নেই' : 'এখনো কোনো অ্যাডমিন অ্যাকাউন্ট নেই'}
               </p>
             </div>
           ) : (
@@ -280,7 +280,7 @@ export function SuperAdminAdminsPage() {
                 <table className="table table-sm w-full">
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                      {['Name', 'Email', 'Phone', 'Status', 'Created', 'Actions'].map(h => (
+                      {['নাম', 'ইমেইল', 'ফোন', 'স্ট্যাটাস', 'তৈরির তারিখ', 'অ্যাকশন'].map(h => (
                         <th key={h} className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
                           style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>
                           {h}
@@ -305,7 +305,7 @@ export function SuperAdminAdminsPage() {
                         <td className="px-4 py-3">
                           <span className={`badge badge-sm font-semibold ${admin.isActive ? 'badge-success' : 'badge-error'}`}
                             style={{ border: 'none' }}>
-                            {admin.isActive ? 'Active' : 'Suspended'}
+{admin.isActive ? 'সক্রিয়' : 'সাসপেন্ডেড'}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>{formatDate(admin.createdAt)}</td>
@@ -314,19 +314,19 @@ export function SuperAdminAdminsPage() {
                             <button onClick={() => openEdit(admin)}
                               className="btn btn-ghost btn-xs"
                               style={{ color: 'var(--color-accent)' }}
-                              title="Edit">
-                              <Pencil size={14} />
+title="এডিট">
+                    <Pencil size={14} />
                             </button>
                             <button onClick={() => setSuspendTarget(admin)}
                               className="btn btn-ghost btn-xs"
                               style={{ color: admin.isActive ? 'var(--color-warning, #f59e0b)' : '#22c55e' }}
-                              title={admin.isActive ? 'Suspend' : 'Reactivate'}>
+                              title={admin.isActive ? 'সাসপেন্ড' : 'পুনরায় সক্রিয়'}>
                               {admin.isActive ? <UserX size={14} /> : <UserCheck size={14} />}
                             </button>
                             <button onClick={() => setDeleteTarget(admin)}
                               className="btn btn-ghost btn-xs"
                               style={{ color: 'var(--color-error)' }}
-                              title="Delete">
+                              title="ডিলিট">
                               <Trash2 size={14} />
                             </button>
                           </div>
@@ -393,7 +393,7 @@ export function SuperAdminAdminsPage() {
             <div className="flex items-center justify-between px-6 py-4"
               style={{ borderBottom: '1px solid var(--color-border)' }}>
               <h3 className="text-lg font-bold" style={{ color: 'var(--color-text)' }}>
-                {editingId ? 'Edit Admin' : 'Create Admin'}
+                {editingId ? 'অ্যাডমিন এডিট করুন' : 'অ্যাডমিন তৈরি করুন'}
               </h3>
               <button onClick={() => setModalOpen(false)} className="btn btn-ghost btn-xs"
                 style={{ color: 'var(--color-text-muted)' }}>
@@ -405,10 +405,10 @@ export function SuperAdminAdminsPage() {
             <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
               {/* Full Name */}
               <fieldset className="fieldset">
-                <legend className="fieldset-legend">Full Name *</legend>
+                <legend className="fieldset-legend">পূর্ণ নাম *</legend>
                 <input
                   type="text" className={`input w-full ${formErrors.fullName ? 'input-error' : ''}`}
-                  placeholder="Admin name"
+                  placeholder="অ্যাডমিনের নাম"
                   value={form.fullName}
                   onChange={e => setForm({ ...form, fullName: e.target.value })}
                   style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
@@ -418,7 +418,7 @@ export function SuperAdminAdminsPage() {
 
               {/* Email */}
               <fieldset className="fieldset">
-                <legend className="fieldset-legend">Email *</legend>
+                <legend className="fieldset-legend">ইমেইল *</legend>
                 <input
                   type="email" className={`input w-full ${formErrors.email ? 'input-error' : ''}`}
                   placeholder="admin@example.com"
@@ -431,7 +431,7 @@ export function SuperAdminAdminsPage() {
 
               {/* Phone */}
               <fieldset className="fieldset">
-                <legend className="fieldset-legend">Phone (optional)</legend>
+                <legend className="fieldset-legend">ফোন (ঐচ্ছিক)</legend>
                 <input
                   type="tel" className={`input w-full ${formErrors.phone ? 'input-error' : ''}`}
                   placeholder="+880..."
@@ -445,13 +445,13 @@ export function SuperAdminAdminsPage() {
               {/* Password */}
               <fieldset className="fieldset">
                 <legend className="fieldset-legend">
-                  Password {!editingId ? '*' : '(leave blank to keep current)'}
+                  পাসওয়ার্ড {!editingId ? '*' : '(বর্তমান রাখতে ফাঁকা রাখুন)'}
                 </legend>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     className={`input w-full pr-10 ${formErrors.password ? 'input-error' : ''}`}
-                    placeholder={editingId ? '••••••••' : 'Min 6 characters'}
+                    placeholder={editingId ? '••••••••' : 'ন্যূনতম ৬ অক্ষর'}
                     value={form.password}
                     onChange={e => setForm({ ...form, password: e.target.value })}
                     style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
@@ -467,11 +467,11 @@ export function SuperAdminAdminsPage() {
 
               {/* Confirm Password */}
               <fieldset className="fieldset">
-                <legend className="fieldset-legend">Confirm Password {!editingId ? '*' : ''}</legend>
+                <legend className="fieldset-legend">পাসওয়ার্ড নিশ্চিত করুন {!editingId ? '*' : ''}</legend>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   className={`input w-full ${formErrors.confirmPassword ? 'input-error' : ''}`}
-                  placeholder="Repeat password"
+                  placeholder="পুনরায় পাসওয়ার্ড লিখুন"
                   value={form.confirmPassword}
                   onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
                   style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
@@ -481,7 +481,7 @@ export function SuperAdminAdminsPage() {
 
               {/* Role badge */}
               <div className="flex items-center gap-2 px-1">
-                <span className="text-xs font-semibold" style={{ color: 'var(--color-text-muted)' }}>Role:</span>
+                <span className="text-xs font-semibold" style={{ color: 'var(--color-text-muted)' }}>ভূমিকা:</span>
                 <span className="badge badge-sm font-bold" style={{ backgroundColor: 'var(--color-accent-pale)', color: 'var(--color-accent)', border: 'none' }}>
                   admin
                 </span>

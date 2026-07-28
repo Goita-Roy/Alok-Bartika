@@ -124,10 +124,10 @@ export function SuperAdminBackupPage() {
               }}
             >
               {creating ? <Loader2 size={16} className="spin" /> : <Database size={16} />}
-              {creating ? 'Creating...' : 'Create Backup'}
+              {creating ? 'তৈরি হচ্ছে...' : 'ব্যাকআপ তৈরি করুন'}
             </button>
 
-            <div style={{ position: 'relative' }} title="Coming soon">
+            <div style={{ position: 'relative' }} title="শীঘ্রই আসছে">
               <button
                 disabled
                 style={{
@@ -146,7 +146,7 @@ export function SuperAdminBackupPage() {
                 }}
               >
                 <Upload size={16} />
-                Restore Backup
+                ব্যাকআপ পুনরুদ্ধার
               </button>
             </div>
           </div>
@@ -164,7 +164,7 @@ export function SuperAdminBackupPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Clock size={18} color="var(--color-accent)" />
               <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--color-text)', margin: 0 }}>
-                Backup History
+                ব্যাকআপ ইতিহাস
               </h2>
             </div>
           </div>
@@ -173,11 +173,11 @@ export function SuperAdminBackupPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
               <thead>
                 <tr style={{ backgroundColor: 'var(--color-bg)' }}>
-                  <th style={thStyle}>Date</th>
-                  <th style={thStyle}>Size</th>
-                  <th style={thStyle}>Type</th>
-                  <th style={thStyle}>Status</th>
-                  <th style={{ ...thStyle, textAlign: 'center' }}>Actions</th>
+                  <th style={thStyle}>তারিখ</th>
+                  <th style={thStyle}>আকার</th>
+                  <th style={thStyle}>ধরন</th>
+                  <th style={thStyle}>অবস্থা</th>
+                  <th style={{ ...thStyle, textAlign: 'center' }}>অ্যাকশন</th>
                 </tr>
               </thead>
               <tbody>
@@ -201,7 +201,7 @@ export function SuperAdminBackupPage() {
                           color: backup.type === 'manual' ? 'var(--color-accent)' : 'var(--color-text-muted)',
                         }}
                       >
-                        {backup.type === 'manual' ? 'Manual' : 'Scheduled'}
+                        {backup.type === 'manual' ? 'ম্যানুয়াল' : 'স্বয়ংক্রিয়'}
                       </span>
                     </td>
                     <td style={tdStyle}>
@@ -225,12 +225,12 @@ export function SuperAdminBackupPage() {
                         ) : (
                           <AlertTriangle size={12} />
                         )}
-                        {backup.status === 'completed' ? 'Completed' : 'Failed'}
+                        {backup.status === 'completed' ? 'সম্পন্ন' : 'ব্যর্থ'}
                       </span>
                     </td>
                     <td style={{ ...tdStyle, textAlign: 'center' }}>
                       <button
-                        title="Download backup"
+                        title="ব্যাকআপ ডাউনলোড"
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',

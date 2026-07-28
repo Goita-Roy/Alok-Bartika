@@ -207,27 +207,27 @@ export function AdminStudentsPage() {
           <div className="relative flex-1 max-w-sm">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }} />
             <input type="text" className="input input-sm w-full pl-9"
-              placeholder="Search name, email, username, phone..."
+              placeholder="নাম, ইমেইল, ইউজারনেম অথবা ফোন দ্বারা অনুসন্ধান..."
               value={search} onChange={e => setSearch(e.target.value)}
               style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
           </div>
           <select className="select select-sm"
             value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
             style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}>
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="suspended">Suspended</option>
+            <option value="all">সব স্ট্যাটাস</option>
+            <option value="active">সক্রিয়</option>
+            <option value="suspended">সাসপেন্ডেড</option>
           </select>
           <div className="flex flex-wrap items-center gap-2">
             <Calendar size={14} style={{ color: 'var(--color-text-muted)' }} />
             <input type="date" className="input input-sm"
               value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-              placeholder="From"
+              placeholder="থেকে"
               style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
-            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>to</span>
+            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>পর্যন্ত</span>
             <input type="date" className="input input-sm"
               value={dateTo} onChange={e => setDateTo(e.target.value)}
-              placeholder="To"
+              placeholder="পর্যন্ত"
               style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
           </div>
         </div>
@@ -252,7 +252,7 @@ export function AdminStudentsPage() {
               <Users size={40} style={{ color: 'var(--color-text-muted)', opacity: 0.4 }} />
               <p className="text-sm mt-2" style={{ color: 'var(--color-text-muted)' }}>
                 {debouncedSearch || statusFilter !== 'all' || dateFrom || dateTo
-                  ? 'No students match your filters' : 'No students registered yet'}
+                  ? 'আপনার ফিল্টারের সাথে মিলে এমন কোনো শিক্ষার্থী নেই' : 'এখনো কোনো শিক্ষার্থী নিবন্ধিত হয়নি'}
               </p>
             </div>
           ) : (
@@ -262,7 +262,7 @@ export function AdminStudentsPage() {
                 <table className="table table-sm w-full">
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                      {['Student', 'Email', 'Username', 'Phone', 'Stage', 'Status', 'Joined', 'Actions'].map(h => (
+                      {['শিক্ষার্থী', 'ইমেইল', 'ইউজারনেম', 'ফোন', 'স্টেজ', 'স্ট্যাটাস', 'যোগদান', 'অ্যাকশন'].map(h => (
                         <th key={h} className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
                           style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>
                           {h}
@@ -281,7 +281,7 @@ export function AdminStudentsPage() {
                             </div>
                             <div>
                               <span className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{s.fullName}</span>
-                              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Lv.{s.level} · {s.xp} XP</p>
+                              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>লেভেল {s.level} · {s.xp} স্কোর</p>
                             </div>
                           </div>
                         </td>
@@ -300,7 +300,7 @@ export function AdminStudentsPage() {
                         <td className="px-4 py-3">
                           <span className={`badge badge-sm font-semibold ${s.isActive ? 'badge-success' : 'badge-error'}`}
                             style={{ border: 'none' }}>
-                            {s.isActive ? 'Active' : 'Suspended'}
+{s.isActive ? 'সক্রিয়' : 'সাসপেন্ডেড'}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>{formatDate(s.createdAt)}</td>
@@ -309,20 +309,20 @@ export function AdminStudentsPage() {
                             <button onClick={() => setDetailTarget(s)}
                               className="btn btn-ghost btn-xs"
                               style={{ color: 'var(--color-accent)' }}
-                              title="View details">
-                              <Eye size={14} />
+title="বিস্তারিত দেখুন">
+                    <Eye size={14} />
                             </button>
                             <button onClick={() => setSuspendTarget(s)}
                               className="btn btn-ghost btn-xs"
                               style={{ color: s.isActive ? 'var(--color-warning, #f59e0b)' : '#22c55e' }}
-                              title={s.isActive ? 'Suspend' : 'Reactivate'}>
+                              title={s.isActive ? 'সাসপেন্ড' : 'পুনরায় সক্রিয়'}>
                               {s.isActive ? <UserX size={14} /> : <UserCheck size={14} />}
                             </button>
                             <button onClick={() => setDeleteTarget(s)}
                               className="btn btn-ghost btn-xs"
                               style={{ color: 'var(--color-error)' }}
-                              title="Delete">
-                              <Trash2 size={14} />
+title="ডিলিট">
+                    <Trash2 size={14} />
                             </button>
                           </div>
                         </td>

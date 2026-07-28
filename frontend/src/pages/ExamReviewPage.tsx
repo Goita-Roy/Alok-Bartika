@@ -401,7 +401,7 @@ export function ExamReviewPage() {
                               className="px-3 py-2 rounded-xl text-sm font-semibold flex items-center gap-2"
                               style={optStyle}
                             >
-                              <span className="font-black shrink-0">{String.fromCharCode(65 + oi)}.</span>
+                              <span className="font-black shrink-0">{['ক', 'খ', 'গ', 'ঘ', 'ঙ', 'চ'][oi]}.</span>
                               <span className="flex-1">{opt}</span>
                               {isSelected && <span className="text-[10px] font-bold shrink-0">আপনার উত্তর</span>}
                               {isCorrectAns && !isSelected && <span className="text-[10px] font-bold shrink-0">সঠিক উত্তর</span>}

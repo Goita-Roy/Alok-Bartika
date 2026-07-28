@@ -87,14 +87,14 @@ interface LessonConfig {
 }
 
 const LESSONS: LessonConfig[] = [
-  { id: 'hello-world', label: 'Class 01', title: 'Hello World (হ্যালো ওয়ার্ল্ড)', duration: '45 min' },
-  { id: 'variables', label: 'Class 02', title: 'Variables (ভ্যারিয়েবলস)', duration: '45 min' },
-  { id: 'errors', label: 'Class 03', title: 'Errors & Debugging (ত্রুটি ও সনাক্তকরণ)', duration: '45 min' },
-  { id: 'loops', label: 'Class 04', title: 'Loops (লুপস)', duration: '45 min' },
-  { id: 'lists', label: 'Class 05', title: 'Lists (লিস্টস)', duration: '45 min' },
-  { id: 'functions', label: 'Class 06', title: 'Functions (ফাংশনস)', duration: '45 min' },
-  { id: 'class-object', label: 'Class 07', title: 'Class & Object (ক্লাস ও অবজেক্ট)', duration: '45 min' },
-  { id: 'modules', label: 'Class 08', title: 'Modules (মডিউলস)', duration: '45 min' },
+  { id: 'hello-world', label: 'ক্লাস ০১', title: 'Hello World (হ্যালো ওয়ার্ল্ড)', duration: '৪৫ মিনিট' },
+  { id: 'variables', label: 'ক্লাস ০২', title: 'Variables (ভ্যারিয়েবলস)', duration: '৪৫ মিনিট' },
+  { id: 'errors', label: 'ক্লাস ০৩', title: 'Errors & Debugging (ত্রুটি ও সনাক্তকরণ)', duration: '৪৫ মিনিট' },
+  { id: 'loops', label: 'ক্লাস ০৪', title: 'Loops (লুপস)', duration: '৪৫ মিনিট' },
+  { id: 'lists', label: 'ক্লাস ০৫', title: 'Lists (লিস্টস)', duration: '৪৫ মিনিট' },
+  { id: 'functions', label: 'ক্লাস ০৬', title: 'Functions (ফাংশনস)', duration: '৪৫ মিনিট' },
+  { id: 'class-object', label: 'ক্লাস ০৭', title: 'Class & Object (ক্লাস ও অবজেক্ট)', duration: '৪৫ মিনিট' },
+  { id: 'modules', label: 'ক্লাস ০৮', title: 'Modules (মডিউলস)', duration: '৪৫ মিনিট' },
 ];
 
 const LESSON_ID_TO_MOCK_ID: Record<LessonId, string> = {

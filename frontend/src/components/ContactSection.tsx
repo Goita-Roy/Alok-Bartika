@@ -9,7 +9,7 @@ import {
 const contactInfo = {
   email: 'royjenious@gmail.com',
   whatsapp: '01831890053',
-  address: 'Gazipur, Kaliakoir, University of Frontier Technology, Bangladesh',
+  address: 'গাজীপুর, কালিয়াকৈর, ইউনিভার্সিটি অফ ফ্রন্টিয়ার টেকনোলজি, বাংলাদেশ',
   mapLink: 'https://www.google.com/maps/search/?api=1&query=University+of+Frontier+Technology+Kaliakoir+Gazipur+Bangladesh',
 }
 
@@ -99,7 +99,7 @@ const ContactSection: React.FC = () => {
                     <MessageCircle className="w-5 h-5 text-[#1D9E75] group-hover:text-white transition-all" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--color-text-muted)' }}>WhatsApp</p>
+                    <p className="text-sm font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--color-text-muted)' }}>হোয়াটসঅ্যাপ</p>
                     <a
                       href={`https://wa.me/${contactInfo.whatsapp.startsWith('88') ? '' : '88'}${contactInfo.whatsapp.replace(/[^0-9]/g, '')}`}
                       target="_blank"
@@ -148,7 +148,7 @@ const ContactSection: React.FC = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-12 h-12 bg-[#04342C] text-[#5DCAA5] rounded-2xl flex items-center justify-center hover:bg-[#1877F2] hover:text-white transition-all shadow-lg"
-                    title="Facebook"
+                    title="ফেসবুক"
                   >
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
@@ -191,7 +191,7 @@ const ContactSection: React.FC = () => {
                   <label className="text-sm font-bold ml-2" style={{ color: 'var(--color-text-muted)' }}>ইমেইল ঠিকানা</label>
                   <input 
                     type="email" 
-                    placeholder="email@example.com"
+                    placeholder="ইমেইল@উদাহরণ.কম"
                     className="w-full px-6 py-4 border rounded-2xl focus:outline-none focus:border-[#1D9E75] focus:ring-4 focus:ring-[#1D9E75]/5 transition-all"
                     style={{ backgroundColor: 'var(--color-bg)', borderColor: 'rgba(255,201,60,0.3)', color: 'var(--color-text)' }}
                   />
@@ -250,7 +250,7 @@ const ContactSection: React.FC = () => {
                 style={{ border: 0, borderRadius: '12px' }}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title="University of Frontier Technology Location"
+                title="ইউনিভার্সিটি অফ ফ্রন্টিয়ার টেকনোলজির অবস্থান"
               />
             </div>
           )}

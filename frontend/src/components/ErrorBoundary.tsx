@@ -92,7 +92,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false, message: '' }
 
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, message: error?.message || 'Unknown error' }
+    return { hasError: true, message: error?.message || 'অজানা ত্রুটি' }
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {

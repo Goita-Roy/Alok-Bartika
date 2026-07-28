@@ -103,7 +103,7 @@ export function ProfileModal({ isOpen, onClose, currentProfile, currentAvatar, c
           <div className="relative w-20 h-20 rounded-xl overflow-hidden"
             style={{ backgroundColor: 'var(--color-accent-pale)', border: '2px solid var(--color-border)' }}>
             {avatarPreview ? (
-              <img src={avatarPreview} alt="avatar" className="w-full h-full object-cover" />
+              <img src={avatarPreview} alt="প্রোফাইল ছবি" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-2xl font-black"
                 style={{ color: 'var(--color-accent)' }}>

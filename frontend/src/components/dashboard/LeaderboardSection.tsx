@@ -82,7 +82,7 @@ function XPProgressBar({ xp, level }: { xp: number; level: number }) {
         />
       </div>
       <span className="text-[11px] font-bold shrink-0" style={{ color: '#64748B' }}>
-        Lv.{formatBanglaNumber(level)}
+        লেভেল {formatBanglaNumber(level)}
       </span>
     </div>
   )
@@ -122,7 +122,7 @@ function TopThreeCard({ student, isYou }: { student: LeaderboardEntry; isYou: bo
             className="text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
             style={{ backgroundColor: '#DCFCE7', color: '#16A34A' }}
           >
-            You
+            আপনি
           </span>
         )}
       </div>
@@ -168,12 +168,12 @@ function RegularRow({ student, isYou, index }: { student: LeaderboardEntry; isYo
               className="text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
               style={{ backgroundColor: '#DCFCE7', color: '#16A34A' }}
             >
-              You
+              আপনি
             </span>
           )}
         </div>
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 mt-0.5">
-          <MiniStat icon={Zap} label="" value={`${formatBanglaNumber(student.xp)} XP`} color="#F59E0B" />
+          <MiniStat icon={Zap} label="" value={`${formatBanglaNumber(student.xp)} স্কোর`} color="#F59E0B" />
           <MiniStat icon={BookOpen} label="" value={`${formatBanglaNumber(student.completedCourses)} কোর্স`} color="#0F766E" />
           <MiniStat icon={Award} label="" value={`${formatBanglaNumber(student.badgesCount)} ব্যাজ`} color="#6366F1" />
           <MiniStat icon={Flame} label="" value={`${formatBanglaNumber(student.streak)} দি`} color="#F97316" />
@@ -188,7 +188,7 @@ function RegularRow({ student, isYou, index }: { student: LeaderboardEntry; isYo
       </div>
       <div className="sm:hidden flex flex-col items-end shrink-0">
         <span className="text-xs font-bold" style={{ color: '#64748B' }}>
-          {formatBanglaNumber(student.xp)} XP
+          {formatBanglaNumber(student.xp)} স্কোর
         </span>
         <span className="text-[10px]" style={{ color: '#94A3B8' }}>
           {formatLastActive(student.lastActiveAt)}

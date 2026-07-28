@@ -291,14 +291,14 @@ const MOCK_INTERMEDIATE_LESSONS: Lesson[] = [
 ]
 
 const MOCK_ADVANCED_LESSONS: Lesson[] = [
-  { _id: 'advanced-hello-world',  title: 'Class 01: অধ্যায় ১ — হ্যালো ওয়ার্ল্ড', slug: 'advanced-hello-world' },
-  { _id: 'advanced-variables',    title: 'Class 02: অধ্যায় ২ — ভ্যারিয়েবলস', slug: 'advanced-variables' },
-  { _id: 'advanced-errors',       title: 'Class 03: অধ্যায় ৩ — ত্রুটি ও সনাক্তকরণ', slug: 'advanced-errors' },
-  { _id: 'advanced-loops',        title: 'Class 04: অধ্যায় ৪ — লুপস (Loops)', slug: 'advanced-loops' },
-  { _id: 'advanced-lists',        title: 'Class 05: অধ্যায় ৫ — লিস্টস (Lists)', slug: 'advanced-lists' },
-  { _id: 'advanced-functions',    title: 'Class 06: অধ্যায় ৬ — ফাংশনস (Functions)', slug: 'advanced-functions' },
-  { _id: 'advanced-class-object', title: 'Class 07: অধ্যায় ৭ — ক্লাস ও অবজেক্ট', slug: 'advanced-class-object' },
-  { _id: 'advanced-modules',      title: 'Class 08: অধ্যায় ৮ — মডিউলস (Modules)', slug: 'advanced-modules' },
+  { _id: 'advanced-hello-world',  title: 'ক্লাস ০১: অধ্যায় ১ — হ্যালো ওয়ার্ল্ড', slug: 'advanced-hello-world' },
+  { _id: 'advanced-variables',    title: 'ক্লাস ০২: অধ্যায় ২ — ভ্যারিয়েবলস', slug: 'advanced-variables' },
+  { _id: 'advanced-errors',       title: 'ক্লাস ০৩: অধ্যায় ৩ — ত্রুটি ও সনাক্তকরণ', slug: 'advanced-errors' },
+  { _id: 'advanced-loops',        title: 'ক্লাস ০৪: অধ্যায় ৪ — লুপস', slug: 'advanced-loops' },
+  { _id: 'advanced-lists',        title: 'ক্লাস ০৫: অধ্যায় ৫ — লিস্টস', slug: 'advanced-lists' },
+  { _id: 'advanced-functions',    title: 'ক্লাস ০৬: অধ্যায় ৬ — ফাংশনস', slug: 'advanced-functions' },
+  { _id: 'advanced-class-object', title: 'ক্লাস ০৭: অধ্যায় ৭ — ক্লাস ও অবজেক্ট', slug: 'advanced-class-object' },
+  { _id: 'advanced-modules',      title: 'ক্লাস ০৮: অধ্যায় ৮ — মডিউলস', slug: 'advanced-modules' },
 ]
 
 // ── Main page ─────────────────────────────────────────────────────────────────

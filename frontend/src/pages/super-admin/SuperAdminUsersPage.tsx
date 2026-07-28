@@ -84,7 +84,7 @@ export function SuperAdminUsersPage() {
 
         <div className="relative max-w-sm">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }} />
-          <input type="text" className="input input-sm w-full pl-9" placeholder="Search by name, email, phone, or role..."
+          <input type="text" className="input input-sm w-full pl-9" placeholder="নাম, ইমেইল, ফোন অথবা ভূমিকা দ্বারা অনুসন্ধান..."
             value={search} onChange={e => setSearch(e.target.value)}
             style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
         </div>

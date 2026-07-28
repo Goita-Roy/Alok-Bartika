@@ -61,7 +61,7 @@ function HouseBlueprintAnimation() {
         onClick={() => setStep(step < steps.length - 1 ? step + 1 : -1)}
         className="w-full px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl transition-all shadow-md"
       >
-        {step < steps.length - 1 ? "▶ Next Step" : "🔄 Restart Animation"}
+        {step < steps.length - 1 ? "▶ পরবর্তী ধাপ" : "🔄 পুনরায় শুরু করুন"}
       </button>
 
       <div className="flex flex-col items-center gap-2">
@@ -117,7 +117,7 @@ function ClassKeywordIntro() {
         onClick={() => setShow(!show)}
         className="w-full px-4 py-3 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white font-bold rounded-xl transition-all shadow-md"
       >
-        {show ? "🔄 Replay" : "▶ Show class Keyword"}
+        {show ? "🔄 পুনরায় দেখুন" : "▶ class Keyword দেখান"}
       </button>
 
       <div className="flex items-center justify-center gap-3">
@@ -214,7 +214,7 @@ function LearningFlowAnimation() {
         onClick={() => setStep(step < steps.length - 1 ? step + 1 : -1)}
         className="w-full px-4 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold rounded-xl transition-all shadow-md"
       >
-        {step < steps.length - 1 ? "▶ Next Step" : "🔄 Restart Animation"}
+        {step < steps.length - 1 ? "▶ পরবর্তী ধাপ" : "🔄 পুনরায় শুরু করুন"}
       </button>
 
       <div className="flex flex-col items-center gap-2">
@@ -306,7 +306,7 @@ function ExampleSection() {
     <div className="space-y-4">
       <button onClick={startDemo} disabled={phase === "typing" || phase === "running"}
         className="w-full px-4 py-3 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold rounded-xl transition-all shadow-md">
-        {phase === "idle" || phase === "done" ? "▶ Run Demo" : phase === "typing" ? "⌨️ Typing..." : "⚡ Running..."}
+        {phase === "idle" || phase === "done" ? "▶ ডেমো চালান" : phase === "typing" ? "⌨️ টাইপ করা হচ্ছে..." : "⚡ চলছে..."}
       </button>
 
       {/* Code Editor */}
@@ -374,7 +374,7 @@ function ExampleSection() {
             <svg className="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Terminal</span>
+            <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">টার্মিনাল</span>
           </div>
           <div className="font-mono text-xs space-y-0.5">
             {outputLines.length === 0 ? (
@@ -770,7 +770,7 @@ export function Ch7Basic({
             <AnimatePresence>
               {videoComplete && (
                 <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-3 left-3 px-3 py-1 bg-green-500 rounded-full text-white text-xs font-bold flex items-center gap-1.5 shadow-lg">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>Completed
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>সম্পূর্ণ
                 </motion.div>
               )}
             </AnimatePresence>
@@ -829,7 +829,7 @@ export function Ch7Basic({
                 <div className="px-4 py-2 bg-gray-800 border-b border-gray-700 flex items-center gap-2">
                   <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                   <span className="text-gray-400 text-[10px] font-semibold uppercase tracking-wider">Console</span>
-                  {isRunning && (<span className="ml-auto text-[10px] text-yellow-400 flex items-center gap-1"><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-2.5 h-2.5 border-2 border-yellow-400 border-t-transparent rounded-full" />Running...</span>)}
+                  {isRunning && (<span className="ml-auto text-[10px] text-yellow-400 flex items-center gap-1"><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-2.5 h-2.5 border-2 border-yellow-400 border-t-transparent rounded-full" />চলছে...</span>)}
                 </div>
                 <div ref={consoleRef} className="p-4 font-mono text-sm min-h-[160px] overflow-y-auto max-h-[220px]">
                   {consoleLines.length === 0 ? (<p className="text-gray-600 text-xs italic">Output এখানে দেখা যাবে...</p>)
@@ -840,11 +840,11 @@ export function Ch7Basic({
               <div className="flex gap-2">
                 <motion.button whileTap={{ scale: 0.95 }} onClick={handleRun} disabled={isRunning}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
-                  {isRunning ? (<><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-4 h-4 border-2 border-white border-t-transparent rounded-full" />Running...</>)
-                    : (<><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Run</>)}
+                  {isRunning ? (<><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-4 h-4 border-2 border-white border-t-transparent rounded-full" />চলছে...</>)
+                    : (<><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>চালান</>)}
                 </motion.button>
-                <motion.button whileTap={{ scale: 0.95 }} onClick={handleReset} className="px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-bold rounded-xl transition-colors">Reset</motion.button>
-                <button disabled className="px-4 py-3 bg-gray-100 text-gray-400 text-sm font-bold rounded-xl border border-gray-200 cursor-not-allowed">Check</button>
+                <motion.button whileTap={{ scale: 0.95 }} onClick={handleReset} className="px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-bold rounded-xl transition-colors">রিসেট</motion.button>
+                <button disabled className="px-4 py-3 bg-gray-100 text-gray-400 text-sm font-bold rounded-xl border border-gray-200 cursor-not-allowed">চেক</button>
               </div>
 
               <AnimatePresence>
@@ -864,12 +864,12 @@ export function Ch7Basic({
       {/* ═══ SECTION 8: Solution ═══ */}
       <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={FADE_UP} className="bg-white rounded-3xl border border-gray-100 shadow-lg overflow-hidden">
         <div className="px-6 py-5 bg-gradient-to-r from-amber-500 to-orange-600">
-          <div className="flex items-center gap-3"><span className="text-3xl">✅</span><h2 className="text-xl font-extrabold text-white tracking-tight">Solution</h2></div>
+          <div className="flex items-center gap-3"><span className="text-3xl">✅</span><h2 className="text-xl font-extrabold text-white tracking-tight">সমাধান</h2></div>
         </div>
         <div className="px-6 py-5">
           <button onClick={() => setSolutionOpen(!solutionOpen)} className="w-full flex items-center justify-between px-5 py-4 bg-amber-50 hover:bg-amber-100 border-2 border-amber-200 rounded-2xl transition-all duration-200">
             <span className="flex items-center gap-2.5 text-sm font-bold text-amber-800">
-              <span className="text-xl">{solutionOpen ? "👁️" : "🔒"}</span>{solutionOpen ? "Hide Solution" : "Show Solution"}
+              <span className="text-xl">{solutionOpen ? "👁️" : "🔒"}</span>{solutionOpen ? "সমাধান লুকান" : "সমাধান দেখান"}
             </span>
             <motion.svg animate={{ rotate: solutionOpen ? 180 : 0 }} transition={{ duration: 0.3 }} className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
@@ -962,12 +962,12 @@ export function Ch7Basic({
       <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={FADE_UP} className="flex items-center justify-between pt-4">
         <button onClick={onComplete.bind(null, LESSON_ID)}
           className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-colors shadow-md">
-          {isCompleted ? "✓ Completed" : "Mark Complete"}
+          {isCompleted ? "✓ সম্পূর্ণ" : "সম্পূর্ণ চিহ্নিত করুন"}
         </button>
         {hasNext && (
           <button onClick={onNext}
             className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-xl transition-colors shadow-md">
-            Next Lesson →
+            পরবর্তী পাঠ →
           </button>
         )}
       </motion.div>

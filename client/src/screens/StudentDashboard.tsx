@@ -23,6 +23,12 @@ type DashboardData = {
   performance: { streakDays: number; accuracy: number; avgSessionMin: number }
 }
 
+function levelLabel(level: DashboardData['recommended']['level']) {
+  if (level === 'Beginner') return 'শিক্ষানবিশ'
+  if (level === 'Intermediate') return 'মাঝারি'
+  return 'উন্নত'
+}
+
 function levelColor(level: DashboardData['recommended']['level']) {
   if (level === 'Beginner') return 'bg-green-500/15 text-green-200 border-green-500/30'
   if (level === 'Intermediate') return 'bg-amber-500/15 text-amber-200 border-amber-500/30'
@@ -52,7 +58,7 @@ export function StudentDashboard() {
         if (mounted) setData(res.data)
       })
       .catch((e) => {
-        if (mounted) setError(e?.response?.data?.error ?? e?.message ?? 'Failed to load dashboard')
+        if (mounted) setError(e?.response?.data?.error ?? e?.message ?? 'ড্যাশবোর্ড লোড করা যায়নি')
       })
       .finally(() => {
         if (mounted) setLoading(false)
@@ -62,10 +68,10 @@ export function StudentDashboard() {
     }
   }, [])
 
-  const greetingName = user?.fullName ?? 'Student'
+  const greetingName = user?.fullName ?? 'শিক্ষার্থী'
   const progressText = useMemo(() => {
     if (!data) return null
-    return `${data.progress.lessonsCompleted}/${data.progress.totalLessons} lessons`
+    return `${data.progress.lessonsCompleted}/${data.progress.totalLessons} টি পাঠ`
   }, [data])
 
   if (loading && !data) {
@@ -88,19 +94,19 @@ export function StudentDashboard() {
       <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-sky-500/15 via-emerald-500/10 to-violet-500/15 p-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="text-2xl font-semibold">Welcome, {greetingName}!</h2>
+            <h2 className="text-2xl font-semibold">{greetingName}! স্বাগতম!</h2>
             <p className="mt-1 text-sm text-zinc-200/90">
-              Let’s learn something fun today.
+              আজ কিছু মজার জিনিস শিখুন।
             </p>
           </div>
 
           {data ? (
             <div className="flex flex-wrap items-center gap-3">
               <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-200">
-                XP: <span className="font-semibold">{data.xp.xp}</span>
+                স্কোর: <span className="font-semibold">{data.xp.xp}</span>
               </div>
               <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-200">
-                Level <span className="font-semibold">{data.xp.level}</span>
+                লেভেল <span className="font-semibold">{data.xp.level}</span>
               </div>
             </div>
           ) : null}
@@ -115,7 +121,7 @@ export function StudentDashboard() {
         {data ? (
           <div className="mt-5">
             <div className="flex items-center justify-between text-xs text-zinc-200/90">
-              <span className="font-semibold">Progress</span>
+              <span className="font-semibold">অগ্রগতি</span>
               <span>{progressText}</span>
             </div>
             <div className="mt-2 h-3 rounded-full bg-white/10">
@@ -125,9 +131,9 @@ export function StudentDashboard() {
               />
             </div>
             <div className="mt-2 flex items-center justify-between text-[11px] text-zinc-200/80">
-              <span>{data.progress.percent}% complete</span>
+              <span>{data.progress.percent}% সম্পন্ন</span>
               <span>
-                Next level at <span className="font-semibold">{data.xp.nextLevelXp}</span> XP
+                পরবর্তী লেভেল <span className="font-semibold">{data.xp.nextLevelXp}</span> স্কোর
               </span>
             </div>
           </div>
@@ -138,11 +144,11 @@ export function StudentDashboard() {
         <div className="grid gap-4 lg:grid-cols-3">
           <section className="rounded-2xl border border-white/10 bg-white/5 p-5 lg:col-span-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Recommended lesson</h3>
+              <h3 className="text-sm font-semibold">প্রস্তাবিত পাঠ</h3>
               <span
                 className={`rounded-full border px-2 py-0.5 text-[11px] ${levelColor(data.recommended.level)}`}
               >
-                {data.recommended.level}
+                {levelLabel(data.recommended.level)}
               </span>
             </div>
             <div className="mt-3 rounded-xl border border-white/10 bg-zinc-950/40 p-4">
@@ -153,13 +159,13 @@ export function StudentDashboard() {
                 </div>
                 <div className="text-xs text-zinc-300">
                   <div>
-                    Duration: <span className="font-semibold text-zinc-100">{data.recommended.durationMin} min</span>
+                    সময়: <span className="font-semibold text-zinc-100">{data.recommended.durationMin} মিনিট</span>
                   </div>
                   <Link
                     to="/courses"
                     className="mt-2 inline-block w-full rounded-lg bg-sky-500 px-4 py-2 text-center text-xs font-semibold text-zinc-950 hover:bg-sky-400 md:w-auto"
                   >
-                    Start
+                    শুরু করুন
                   </Link>
                 </div>
               </div>
@@ -167,22 +173,22 @@ export function StudentDashboard() {
           </section>
 
           <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <h3 className="text-sm font-semibold">Quiz</h3>
+            <h3 className="text-sm font-semibold">কুইজ</h3>
             <div className="mt-3 space-y-3 text-sm">
               <div className="rounded-xl border border-white/10 bg-zinc-950/40 p-4">
                 <div className="font-semibold">{data.quiz.next.title}</div>
                 <div className="mt-1 text-xs text-zinc-300">
-                  {data.quiz.next.questions} questions · ~{data.quiz.next.estMin} min
+                  {data.quiz.next.questions} টি প্রশ্ন · ~{data.quiz.next.estMin} মিনিট
                 </div>
                 <button
                   type="button"
                   className="mt-3 w-full rounded-lg bg-emerald-400 px-4 py-2 text-xs font-semibold text-zinc-950 hover:bg-emerald-300"
                 >
-                  Take quiz
+                  কুইজ দিন
                 </button>
               </div>
               <div className="rounded-xl border border-white/10 bg-zinc-950/40 p-4 text-xs text-zinc-300">
-                Last score: <span className="font-semibold text-zinc-100">{data.quiz.lastScore}%</span>
+                শেষ স্কোর: <span className="font-semibold text-zinc-100">{data.quiz.lastScore}%</span>
               </div>
             </div>
           </section>
@@ -193,8 +199,8 @@ export function StudentDashboard() {
         <div className="grid gap-4 lg:grid-cols-3">
           <section className="rounded-2xl border border-white/10 bg-white/5 p-5 lg:col-span-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Courses</h3>
-              <span className="text-xs text-zinc-300">Pick a level</span>
+              <h3 className="text-sm font-semibold">কোর্সসমূহ</h3>
+              <span className="text-xs text-zinc-300">একটি লেভেল বেছে নিন</span>
             </div>
 
             <div className="mt-4 grid gap-4 md:grid-cols-3">
@@ -203,7 +209,7 @@ export function StudentDashboard() {
                   key={group.level}
                   className={`rounded-2xl border border-white/10 bg-gradient-to-b ${courseAccent(group.color)} p-4`}
                 >
-                  <div className="text-sm font-semibold">{group.level}</div>
+                  <div className="text-sm font-semibold">{levelLabel(group.level)}</div>
                   <div className="mt-3 space-y-3">
                     {group.items.map((c) => {
                       const percent = c.lessons ? Math.round((c.done / c.lessons) * 100) : 0
@@ -214,7 +220,7 @@ export function StudentDashboard() {
                             <div className="h-2 rounded-full bg-white/70" style={{ width: `${percent}%` }} />
                           </div>
                           <div className="mt-2 text-[11px] text-zinc-200/80">
-                            {c.done}/{c.lessons} lessons
+                            {c.done}/{c.lessons} টি পাঠ
                           </div>
                         </div>
                       )
@@ -226,19 +232,19 @@ export function StudentDashboard() {
           </section>
 
           <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <h3 className="text-sm font-semibold">Performance summary</h3>
+            <h3 className="text-sm font-semibold">কর্মক্ষমতার সারাংশ</h3>
             <div className="mt-4 grid gap-3 text-sm">
               <div className="rounded-xl border border-white/10 bg-zinc-950/40 p-4">
-                <div className="text-xs text-zinc-300">Streak</div>
-                <div className="mt-1 text-lg font-semibold">{data.performance.streakDays} days</div>
+                <div className="text-xs text-zinc-300">ধারাবাহিকতা</div>
+                <div className="mt-1 text-lg font-semibold">{data.performance.streakDays} দিন</div>
               </div>
               <div className="rounded-xl border border-white/10 bg-zinc-950/40 p-4">
-                <div className="text-xs text-zinc-300">Accuracy</div>
+                <div className="text-xs text-zinc-300">নির্ভুলতা</div>
                 <div className="mt-1 text-lg font-semibold">{Math.round(data.performance.accuracy * 100)}%</div>
               </div>
               <div className="rounded-xl border border-white/10 bg-zinc-950/40 p-4">
-                <div className="text-xs text-zinc-300">Avg session</div>
-                <div className="mt-1 text-lg font-semibold">{data.performance.avgSessionMin} min</div>
+                <div className="text-xs text-zinc-300">গড় সেশন</div>
+                <div className="mt-1 text-lg font-semibold">{data.performance.avgSessionMin} মিনিট</div>
               </div>
             </div>
           </section>
@@ -247,4 +253,3 @@ export function StudentDashboard() {
     </div>
   )
 }
-

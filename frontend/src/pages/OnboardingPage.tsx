@@ -59,7 +59,7 @@ export function OnboardingPage() {
 
       if (!res.ok) {
         const errorData = await res.json()
-        throw new Error(errorData.message || 'Failed to create profile')
+        throw new Error(errorData.message || 'প্রোফাইল তৈরি করা যায়নি')
       }
       return res.json()
     },

@@ -47,11 +47,11 @@ function SyntaxFlowAnimation() {
   const [step, setStep] = useState(-1);
 
   const steps = [
-    { icon: "✍️", label: "Write Code", color: "text-blue-400", bg: "bg-blue-900/30 border-blue-500/50" },
-    { icon: "❌", label: "Syntax Error", color: "text-red-400", bg: "bg-red-900/30 border-red-500/50" },
-    { icon: "🔍", label: "Read Message", color: "text-amber-400", bg: "bg-amber-900/30 border-amber-500/50" },
-    { icon: "🛠️", label: "Fix Mistake", color: "text-purple-400", bg: "bg-purple-900/30 border-purple-500/50" },
-    { icon: "✅", label: "Run Again", color: "text-green-400", bg: "bg-green-900/30 border-green-500/50" },
+    { icon: "✍️", label: "কোড লেখো", color: "text-blue-400", bg: "bg-blue-900/30 border-blue-500/50" },
+    { icon: "❌", label: "সিনট্যাক্স ত্রুটি", color: "text-red-400", bg: "bg-red-900/30 border-red-500/50" },
+    { icon: "🔍", label: "বার্তা পড়ো", color: "text-amber-400", bg: "bg-amber-900/30 border-amber-500/50" },
+    { icon: "🛠️", label: "ভুল সংশোধন করো", color: "text-purple-400", bg: "bg-purple-900/30 border-purple-500/50" },
+    { icon: "✅", label: "পুনরায় চালাও", color: "text-green-400", bg: "bg-green-900/30 border-green-500/50" },
   ];
 
   return (
@@ -60,7 +60,7 @@ function SyntaxFlowAnimation() {
         onClick={() => setStep(step < steps.length - 1 ? step + 1 : -1)}
         className="w-full px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl transition-all shadow-md"
       >
-        {step < steps.length - 1 ? "▶ Next Step" : "🔄 Restart Animation"}
+        {step < steps.length - 1 ? "▶ পরবর্তী ধাপ" : "🔄 পুনরায় শুরু করুন"}
       </button>
 
       <div className="flex items-center justify-center gap-1.5 sm:gap-3 flex-wrap">
@@ -140,7 +140,7 @@ function ExampleSection() {
         disabled={phase !== "idle" && phase !== "done"}
         className="w-full px-4 py-3 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold rounded-xl transition-all shadow-md"
       >
-        {phase === "idle" || phase === "done" ? "▶ Run Demo" : "⏳ Running..."}
+        {phase === "idle" || phase === "done" ? "▶ ডেমো চালান" : "⏳ চলছে..."}
       </button>
 
       <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-md">
@@ -791,7 +791,7 @@ export function Ch3SyntaxError({
               {videoComplete && (
                 <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-3 left-3 px-3 py-1 bg-green-500 rounded-full text-white text-xs font-bold flex items-center gap-1.5 shadow-lg">
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-                  Completed
+                  সম্পন্ন
                 </motion.div>
               )}
             </AnimatePresence>
@@ -893,13 +893,13 @@ export function Ch3SyntaxError({
               <div className="flex gap-2">
                 <motion.button whileTap={{ scale: 0.95 }} onClick={handleRun} disabled={isRunning} className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
                   {isRunning ? (
-                    <><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-4 h-4 border-2 border-white border-t-transparent rounded-full" />Running...</>
+                    <><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-4 h-4 border-2 border-white border-t-transparent rounded-full" />চলছে...</>
                   ) : (
-                    <><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Run</>
+                    <><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>রান</>
                   )}
                 </motion.button>
-                <motion.button whileTap={{ scale: 0.95 }} onClick={handleReset} className="px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-bold rounded-xl transition-colors">Reset</motion.button>
-                <button disabled className="px-4 py-3 bg-gray-100 text-gray-400 text-sm font-bold rounded-xl border border-gray-200 cursor-not-allowed">Check</button>
+                <motion.button whileTap={{ scale: 0.95 }} onClick={handleReset} className="px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-bold rounded-xl transition-colors">রিসেট</motion.button>
+                <button disabled className="px-4 py-3 bg-gray-100 text-gray-400 text-sm font-bold rounded-xl border border-gray-200 cursor-not-allowed">পরীক্ষা করুন</button>
               </div>
 
               <AnimatePresence>
@@ -1073,18 +1073,18 @@ export function Ch3SyntaxError({
         {!isCompleted ? (
           <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={() => onComplete(LESSON_ID)} className="flex items-center gap-2.5 px-7 py-3.5 bg-green-600 text-white text-sm font-extrabold rounded-2xl hover:bg-green-700 transition-all shadow-md hover:shadow-lg">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-            Mark as Complete
+            সম্পন্ন হিসেবে চিহ্নিত করুন
           </motion.button>
         ) : (
           <span className="flex items-center gap-2.5 px-7 py-3.5 bg-green-50 text-green-700 text-sm font-extrabold rounded-2xl border-2 border-green-200">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-            Completed!
+            সম্পন্ন!
           </span>
         )}
 
         {hasNext && (
           <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={onNext} className="flex items-center gap-2.5 px-7 py-3.5 bg-indigo-600 text-white text-sm font-extrabold rounded-2xl hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg">
-            Next Lesson
+            পরবর্তী পাঠ
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
           </motion.button>
         )}

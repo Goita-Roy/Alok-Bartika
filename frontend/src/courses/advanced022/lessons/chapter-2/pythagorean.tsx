@@ -1062,7 +1062,7 @@ export function Ch2Pythagorean({
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                   </svg>
-                  Completed
+                  সম্পন্ন
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1224,7 +1224,7 @@ export function Ch2Pythagorean({
                         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                         className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
                       />
-                      Running...
+                      চলছে...
                     </>
                   ) : (
                     <>
@@ -1232,7 +1232,7 @@ export function Ch2Pythagorean({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Run
+                      রান
                     </>
                   )}
                 </motion.button>
@@ -1241,13 +1241,13 @@ export function Ch2Pythagorean({
                   onClick={handleReset}
                   className="px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-bold rounded-xl transition-colors"
                 >
-                  Reset
+                  রিসেট
                 </motion.button>
                 <button
                   disabled
                   className="px-4 py-3 bg-gray-100 text-gray-400 text-sm font-bold rounded-xl border border-gray-200 cursor-not-allowed"
                 >
-                  Check
+                  পরীক্ষা করুন
                 </button>
               </div>
 
@@ -1579,14 +1579,14 @@ export function Ch2Pythagorean({
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
             </svg>
-            Mark as Complete
+            সম্পন্ন হিসেবে চিহ্নিত করুন
           </motion.button>
         ) : (
           <span className="flex items-center gap-2.5 px-7 py-3.5 bg-green-50 text-green-700 text-sm font-extrabold rounded-2xl border-2 border-green-200">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
             </svg>
-            Completed!
+            সম্পন্ন!
           </span>
         )}
 
@@ -1597,7 +1597,7 @@ export function Ch2Pythagorean({
             onClick={onNext}
             className="flex items-center gap-2.5 px-7 py-3.5 bg-indigo-600 text-white text-sm font-extrabold rounded-2xl hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg"
           >
-            Next Lesson
+            পরবর্তী পাঠ
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
             </svg>

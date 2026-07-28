@@ -6,7 +6,7 @@ import { VisualPreview } from './VisualPreview';
 import { simulateExecution } from '../../utils/codeSimulator';
 
 export const PracticeIDE: React.FC = () => {
-  const [code, setCode] = useState('# Welcome to Self Practice!\n# You can write and test your Python code here.\n\nprint("Hello, Alokbartika!")\n\nname = input("Enter your name: ")\nprint(f"Welcome to the world of coding, {name}!")');
+  const [code, setCode] = useState('# Self Practice তে স্বাগতম!\n# আপনি এখানে Python কোড লিখে পরীক্ষা করতে পারেন।\n\nprint("Hello, Alokbartika!")\n\nname = input("What is your name? ")\nprint(f"Welcome to the world of coding, {name}!")');
   const [stdin, setStdin] = useState('Explorer');
   const [output, setOutput] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

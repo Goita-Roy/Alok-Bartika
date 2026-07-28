@@ -169,7 +169,7 @@ function QuestionCard({
                 }}
               >
                 <span className="font-black mr-2" style={{ color: S.accent }}>
-                  {String.fromCharCode(65 + oi)}.
+                  {['ক', 'খ', 'গ', 'ঘ', 'ঙ', 'চ'][oi]}.
                 </span>
                 {opt}
               </button>

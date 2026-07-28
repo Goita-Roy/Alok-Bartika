@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { API_BASE_URL } from '../config/api'
 import { useAuth } from '../context/AuthContext'
+import { formatBanglaNumber } from '../utils/banglaNumbers'
 
 interface Question {
   questionText: string
@@ -121,7 +122,7 @@ export function TestPage() {
             <h1 className="text-3xl font-black text-base-content uppercase tracking-tight leading-tight">{test.type}</h1>
             <p className="text-sm font-medium opacity-50 uppercase tracking-widest">বিষয়ভিত্তিক মূল্যায়ন</p>
           </div>
-          <div className="badge badge-lg font-black">{test.questions.length} Qs</div>
+          <div className="badge badge-lg font-black">{formatBanglaNumber(test.questions.length)} প্রশ্ন</div>
         </div>
       </header>
 
