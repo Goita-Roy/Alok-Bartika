@@ -30,10 +30,7 @@ const getDashboard = async (req, res) => {
     const completedCourseIds = (user.completedCourses || []).map((c) => c._id?.toString() || c.toString())
     const unlockedCourseIds = (user.unlockedCourses || []).map((c) => c._id?.toString() || c.toString())
 
-    const completedLevels = LEVEL_ORDER.filter((lvl) => {
-      const courseIds = courses.filter((c) => c.level === lvl).map((c) => c._id.toString())
-      return courseIds.length > 0 && courseIds.every((id) => completedCourseIds.includes(id))
-    })
+    const completedLevels = user.completedLevels || []
 
     let currentStage = user.currentStage || 'beginner'
     if (completedLevels.includes('beginner') && currentStage === 'beginner') currentStage = 'intermediate'

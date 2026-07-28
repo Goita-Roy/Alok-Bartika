@@ -10,6 +10,7 @@ import { WorkspacePanel } from './WorkspacePanel'
 import { runWorkspaceCode, validateAgainstExpected, type ExecutionStatus } from '../../utils/codeRunner'
 import { analyzeCode, mergeErrors, parseRuntimeError, type CodeErrorDetail } from '../../utils/codeAnalyzer'
 import { API_BASE_URL } from '../../config/api'
+import { useProgressContext } from '../../context/ProgressContext'
 import type { editor } from 'monaco-editor'
 
 type IDELearningEnvironmentProps = {
@@ -26,23 +27,8 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
 
   const [dynamicClass, setDynamicClass] = useState<any | null>(null)
   const [isLoadingDynamic, setIsLoadingDynamic] = useState(!!lessonIdParam)
-  const [completedDynamicIds, setCompletedDynamicIds] = useState<string[]>([])
-
-  useEffect(() => {
-    const token = localStorage.getItem('token')
-    if (!token) return
-    fetch(`${API_BASE_URL}/progression`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.completedLessons) {
-          const ids = data.completedLessons.map((l: any) => l._id || l)
-          setCompletedDynamicIds(ids)
-        }
-      })
-      .catch(err => console.error(err))
-  }, [])
+  
+  const { completedClassIds: contextCompletedIds, markClassComplete: contextMarkComplete } = useProgressContext()
 
   useEffect(() => {
     if (!lessonIdParam) return
@@ -277,13 +263,7 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
 
     if (passed && mode === 'learning') {
       if (activeClass.isCourseLesson) {
-        setCompletedDynamicIds(prev => prev.includes(activeClass.id) ? prev : [...prev, activeClass.id])
-        const token = localStorage.getItem('token')
-        fetch(`${API_BASE_URL}/progression/complete-lesson`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ lessonId: activeClass.id, courseId: activeClass.courseId }),
-        }).catch(err => console.error('Error completing lesson:', err))
+        contextMarkComplete(activeClass.id, activeClass.courseId).catch(err => console.error('Error completing lesson:', err))
         // Also persist the practice working state to MongoDB.
         markComplete(100).catch(() => {})
       } else {
@@ -375,8 +355,8 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
               classes={activeClass.isCourseLesson ? [activeClass] : ideLessonClasses}
               activeClass={activeClass}
               onSelectClass={setActiveClassId}
-              completedClassIds={activeClass.isCourseLesson ? completedDynamicIds : completedClassIds}
-              overallPercent={activeClass.isCourseLesson ? (completedDynamicIds.includes(activeClass.id) ? 100 : 0) : overallPercent}
+              completedClassIds={activeClass.isCourseLesson ? contextCompletedIds : completedClassIds}
+              overallPercent={activeClass.isCourseLesson ? (contextCompletedIds.includes(activeClass.id) ? 100 : 0) : overallPercent}
               theme={workspace.theme}
             />
           </div>
@@ -433,13 +413,7 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
             onScrollChange={(scrollTop) => { scrollRef.current = scrollTop }}
             onMarkComplete={() => {
               if (activeClass.isCourseLesson) {
-                setCompletedDynamicIds(prev => prev.includes(activeClass.id) ? prev : [...prev, activeClass.id])
-                const token = localStorage.getItem('token')
-                fetch(`${API_BASE_URL}/progression/complete-lesson`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                  body: JSON.stringify({ lessonId: activeClass.id, courseId: activeClass.courseId }),
-                }).catch(err => console.error('Error completing lesson:', err))
+                contextMarkComplete(activeClass.id, activeClass.courseId).catch(err => console.error('Error completing lesson:', err))
               } else {
                 markClassComplete(activeClass.id)
               }
@@ -447,7 +421,7 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
               const score = runSuccess ? 100 : 0
               markComplete(score).catch(() => {})
             }}
-            isComplete={activeClass.isCourseLesson ? completedDynamicIds.includes(activeClass.id) : isClassComplete(activeClass.id)}
+            isComplete={activeClass.isCourseLesson ? contextCompletedIds.includes(activeClass.id) : isClassComplete(activeClass.id)}
             mode={mode}
           />
         </div>
