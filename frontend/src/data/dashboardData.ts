@@ -44,7 +44,16 @@ export type LeaderboardItem = {
   id: string
   rank: number
   name: string
+  avatar: string
+  level: number
   xp: number
+  completedCourses: number
+  completedLessons: number
+  badgesCount: number
+  totalMinutes: number
+  lastActiveAt: string | null
+  streak: number
+  progressPercentage: number
   isCurrentUser?: boolean
 }
 
@@ -156,11 +165,11 @@ export const studentDashboardMock: StudentDashboardData = {
     { id: 'b6', name: 'টপ র্যাঙ্কার', icon: 'Crown', earned: false },
   ],
   leaderboard: [
-    { id: 'l1', rank: 1, name: 'Ayesha Karim', xp: 9120 },
-    { id: 'l2', rank: 2, name: 'Noyon Rahman', xp: 7840, isCurrentUser: true },
-    { id: 'l3', rank: 3, name: 'Tanvir Hasan', xp: 7510 },
-    { id: 'l4', rank: 4, name: 'Maliha Noor', xp: 7100 },
-    { id: 'l5', rank: 5, name: 'Rahim Ahmed', xp: 6880 },
+    { id: 'l1', rank: 1, name: 'Ayesha Karim', avatar: '', level: 9, xp: 9120, completedCourses: 5, completedLessons: 48, badgesCount: 7, totalMinutes: 3420, lastActiveAt: new Date().toISOString(), streak: 14, progressPercentage: 85 },
+    { id: 'l2', rank: 2, name: 'Noyon Rahman', avatar: '', level: 8, xp: 7840, completedCourses: 4, completedLessons: 42, badgesCount: 6, totalMinutes: 2880, lastActiveAt: new Date().toISOString(), streak: 10, progressPercentage: 72, isCurrentUser: true },
+    { id: 'l3', rank: 3, name: 'Tanvir Hasan', avatar: '', level: 8, xp: 7510, completedCourses: 4, completedLessons: 39, badgesCount: 5, totalMinutes: 2650, lastActiveAt: new Date(Date.now() - 3600000).toISOString(), streak: 8, progressPercentage: 68 },
+    { id: 'l4', rank: 4, name: 'Maliha Noor', avatar: '', level: 7, xp: 7100, completedCourses: 3, completedLessons: 35, badgesCount: 5, totalMinutes: 2400, lastActiveAt: new Date(Date.now() - 7200000).toISOString(), streak: 6, progressPercentage: 60 },
+    { id: 'l5', rank: 5, name: 'Rahim Ahmed', avatar: '', level: 7, xp: 6880, completedCourses: 3, completedLessons: 33, badgesCount: 4, totalMinutes: 2100, lastActiveAt: new Date(Date.now() - 86400000).toISOString(), streak: 5, progressPercentage: 55 },
   ],
   challenge: {
     title: 'দৈনিক চ্যালেঞ্জ: প্রাইম পাথ',

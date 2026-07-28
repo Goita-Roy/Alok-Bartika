@@ -5,6 +5,21 @@ const P = require('../services/progressService')
 
 const LEVEL_ORDER = ['beginner', 'intermediate', 'advanced']
 
+function computeStreak(dailyLogs) {
+  if (!Array.isArray(dailyLogs) || dailyLogs.length === 0) return 0
+  const logMap = new Map(dailyLogs.map(d => [d.date, d.minutes || 0]))
+  let streak = 0
+  const today = new Date()
+  for (let i = 0; ; i++) {
+    const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - i))
+    const ds = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+    const mins = logMap.get(ds)
+    if (mins && mins > 0) streak++
+    else break
+  }
+  return streak
+}
+
 // @desc    Get dashboard data for the logged-in user
 // @route   GET /api/dashboard
 // @access  Private
@@ -95,35 +110,81 @@ const getDashboard = async (req, res) => {
     // Build leaderboard
     const allStudents = await User.find({ role: 'student' })
       .populate('completedCourses')
-      .select('fullName profilePicture profile xp level examMarks completedCourses')
+      .select('fullName profilePicture profile xp level completedLessons badges learningAnalytics lastActivityTime progressPercentage')
+      .lean()
 
-    const leaderboard = allStudents
-      .map((u) => ({
+    const mapped = allStudents.map((u) => {
+      const la = u.learningAnalytics || {}
+      return {
         _id: u._id,
         fullName: u.fullName,
         avatar: u.profilePicture || u.profile?.avatar || '',
-        level: `Level ${u.level}`,
-        xp: u.xp,
-        examMarks: u.examMarks || 0,
+        level: u.level,
+        xp: u.xp || 0,
         completedCourses: u.completedCourses?.length || 0,
-      }))
-      .sort((a, b) => {
-        if (b.examMarks !== a.examMarks) return b.examMarks - a.examMarks
-        if (b.xp !== a.xp) return b.xp - a.xp
-        return b.completedCourses - a.completedCourses
-      })
-      .slice(0, 10)
-      .map((entry, i) => ({
-        rank: i + 1,
-        id: entry._id,
-        name: entry.fullName,
-        avatar: entry.avatar,
-        level: entry.level,
-        xp: entry.xp,
-        examMarks: entry.examMarks,
-        completedCourses: entry.completedCourses,
-        isCurrentUser: entry._id.toString() === req.user._id.toString(),
-      }))
+        completedLessons: u.completedLessons?.length || 0,
+        badgesCount: u.badges?.length || 0,
+        totalMinutes: la.totalMinutes || 0,
+        lastActiveAt: la.lastActiveAt || u.lastActivityTime || null,
+        streak: computeStreak(la.dailyLogs),
+        progressPercentage: u.progressPercentage || 0,
+      }
+    })
+
+    mapped.sort((a, b) => {
+      if (b.xp !== a.xp) return b.xp - a.xp
+      if (b.completedCourses !== a.completedCourses) return b.completedCourses - a.completedCourses
+      if (b.completedLessons !== a.completedLessons) return b.completedLessons - a.completedLessons
+      if (b.totalMinutes !== a.totalMinutes) return b.totalMinutes - a.totalMinutes
+      const aTime = a.lastActiveAt ? new Date(a.lastActiveAt).getTime() : 0
+      const bTime = b.lastActiveAt ? new Date(b.lastActiveAt).getTime() : 0
+      return bTime - aTime
+    })
+
+    const top10 = mapped.slice(0, 10)
+    const currentUserIdStr = req.user._id.toString()
+    const currentInTop10 = top10.find(e => e._id.toString() === currentUserIdStr)
+
+    const leaderboard = top10.map((entry, i) => ({
+      rank: i + 1,
+      id: entry._id,
+      name: entry.fullName,
+      avatar: entry.avatar,
+      level: entry.level,
+      xp: entry.xp,
+      completedCourses: entry.completedCourses,
+      completedLessons: entry.completedLessons,
+      badgesCount: entry.badgesCount,
+      totalMinutes: entry.totalMinutes,
+      lastActiveAt: entry.lastActiveAt,
+      streak: entry.streak,
+      progressPercentage: entry.progressPercentage,
+      isCurrentUser: entry._id.toString() === currentUserIdStr,
+    }))
+
+    // If current user is outside top-10, append their data
+    if (!currentInTop10) {
+      const me = mapped.find(e => e._id.toString() === currentUserIdStr)
+      if (me) {
+        const myGlobalRank = mapped.findIndex(e => e._id.toString() === currentUserIdStr) + 1
+        leaderboard.push({
+          rank: myGlobalRank,
+          id: me._id,
+          name: me.fullName,
+          avatar: me.avatar,
+          level: me.level,
+          xp: me.xp,
+          completedCourses: me.completedCourses,
+          completedLessons: me.completedLessons,
+          badgesCount: me.badgesCount,
+          totalMinutes: me.totalMinutes,
+          lastActiveAt: me.lastActiveAt,
+          streak: me.streak,
+          progressPercentage: me.progressPercentage,
+          isCurrentUser: true,
+        })
+      }
+    }
 
     const greetingHour = new Date().getHours()
     let greeting

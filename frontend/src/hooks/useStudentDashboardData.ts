@@ -34,8 +34,11 @@ export interface StudentDashboardData {
   recentlyCompleted: Array<{ _id: string; title: string; level: string; progress: number; status: string }>
   leaderboard: Array<{
     rank: number; id: string; name: string; avatar: string
-    level: string; xp: number; examMarks: number
-    completedCourses: number; isCurrentUser: boolean
+    level: number; xp: number; completedCourses: number
+    completedLessons: number; badgesCount: number
+    totalMinutes: number; lastActiveAt: string | null
+    streak: number; progressPercentage: number
+    isCurrentUser: boolean
   }>
   lastVisitedCourse?: string
   lastVisitedLesson?: string
@@ -158,10 +161,15 @@ export function parseDashboard(json: any): StudentDashboardData {
     id: toStr(it?.id, ''),
     name: toStr(it?.name, ''),
     avatar: toStr(it?.avatar, ''),
-    level: toStr(it?.level, ''),
+    level: toNumber(it?.level, 1),
     xp: toNumber(it?.xp, 0),
-    examMarks: toNumber(it?.examMarks, 0),
     completedCourses: toNumber(it?.completedCourses, 0),
+    completedLessons: toNumber(it?.completedLessons, 0),
+    badgesCount: toNumber(it?.badgesCount, 0),
+    totalMinutes: toNumber(it?.totalMinutes, 0),
+    lastActiveAt: it?.lastActiveAt || null,
+    streak: toNumber(it?.streak, 0),
+    progressPercentage: toNumber(it?.progressPercentage, 0),
     isCurrentUser: !!it?.isCurrentUser,
   }))
   d.lastVisitedCourse = get(json, 'lastVisitedCourse', undefined)
