@@ -91,11 +91,15 @@ function clearLocalCompletedClassIds() {
 }
 
 // ── Initial state ────────────────────────────────────────────────────────────
+// EMPTY_PROGRESS must NOT read from localStorage at module-load time. Doing so
+// would bake stale cross-session/cross-user data into the constant and cause a
+// race: on login/user-change the Provider clears completedClassIds to [], but
+// EMPTY_PROGRESS would still hold the old user's data. Instead, localStorage
+// hydration happens inside the Provider after mount, and is always overwritten
+// by the server's canonical response.
 
 const EMPTY_PROGRESS: ProgressState = {
-  // Hydrate from localStorage so the UI is non-blank before the API responds.
-  // This is always overwritten with the server's canonical list on first fetch.
-  completedClassIds: getLocalCompletedClassIds(),
+  completedClassIds: [],
   completedLevels: [],
   unlockedLevels: ['beginner'],
   completedCourseIds: [],
@@ -126,7 +130,7 @@ export interface ProgressContextValue extends ProgressState {
   // Mutations
   refreshProgress: () => void
   saveLastVisited: (lessonId: string, courseId?: string, stage?: LearningLevel) => Promise<void>
-  markClassComplete: (classId: string, courseId?: string, skipApi?: boolean) => Promise<void>
+  markClassComplete: (classId: string, courseId?: string) => Promise<void>
   completeLevel: (level: LearningLevel, courseId?: string) => void
   markPracticeComplete: (lessonId: string) => Promise<void>
   markQuizComplete: (lessonId: string) => Promise<void>
@@ -154,15 +158,33 @@ const ProgressContext = createContext<ProgressContextValue | undefined>(undefine
 export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, user } = useAuth()
 
-  const [state, setState] = useState<ProgressState>(EMPTY_PROGRESS)
+  // Hydrate from localStorage INSIDE the Provider so it's per-mount, not per-module.
+  // This is a temporary cache only — always overwritten by the server response.
+  const [state, setState] = useState<ProgressState>(() => ({
+    ...EMPTY_PROGRESS,
+    completedClassIds: getLocalCompletedClassIds(),
+  }))
   const [apiLoaded, setApiLoaded] = useState(false)
-  const [refreshKey, setRefreshKey] = useState(0)
+
+  // ── Queued fetch — never silently drops a re-fetch request ──────────────
+  // Instead of a boolean inFlight that drops concurrent calls, we use a
+  // counter: if fetchProgress is requested while one is in-flight, we record
+  // that a re-fetch is needed and trigger it after the current one finishes.
+  // This guarantees that post-mutation refreshes always execute.
   const inFlight = useRef(false)
+  const pendingRefetch = useRef(false)
 
   // ── Fetch progress from server ───────────────────────────────────────────
   const fetchProgress = useCallback(async () => {
-    if (!token || inFlight.current) return
+    if (!token) return
+    if (inFlight.current) {
+      // A fetch is already running — schedule a re-fetch after it completes
+      // instead of silently dropping this request.
+      pendingRefetch.current = true
+      return
+    }
     inFlight.current = true
+    pendingRefetch.current = false
     try {
       const res = await fetch(`${API_BASE_URL}/progression`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -177,68 +199,77 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       for (const [k, v] of Object.entries(rawAttempts)) {
         if (Array.isArray(v)) examAttempts[k] = v as ExamAttempt[]
       }
-      console.log('[fetchProgress] raw completedLessons from server:', data.completedLessons)
       // Server is source of truth — replace localStorage with the canonical list.
       // Never union with stale local data; that would let deleted/incorrect
       // entries survive indefinitely and break multi-device consistency.
       const serverCompleted = (data.completedLessons || []).map(String)
       saveCompletedClassIdsToLocal(serverCompleted)
 
-      setState({
-        completedClassIds: serverCompleted,
-        completedLevels: (data.completedLevels || []) as LearningLevel[],
-        unlockedLevels: (data.unlockedLevels || ['beginner']) as LearningLevel[],
-        completedCourseIds: (data.completedCourses || []).map(String),
-        unlockedCourseIds: (data.unlockedCourses || []).map(String),
-        completedExamIds: (data.completedExams || []).map(String),
-        examAttempts,
-        practiceCompletedIds: (data.practiceCompleted || []).map(String),
-        completedActivityIds: [],
-        completedQuizIds: [],
-        achievements: data.achievements || [],
-        unlockedLessonIds: (data.unlockedLessons || []).map(String),
-        lastVisitedLessonId: data.lastVisitedLesson ? String(data.lastVisitedLesson) : null,
-        xp: typeof data.xp === 'number' ? data.xp : 0,
-        level: typeof data.level === 'number' ? data.level : 1,
-        currentStage: (data.currentStage as LearningLevel) || 'beginner',
-        progressPercentage: typeof data.progressPercentage === 'number' ? data.progressPercentage : 0,
-        badges: data.badges || [],
-        currentLessonId: data.currentLessonId ? String(data.currentLessonId) : null,
-        continueLearning: data.continueLearning || null,
+      // IMPORTANT: Use functional updater so optimistic additions from
+      // markClassComplete that arrived WHILE this fetch was in-flight are
+      // preserved if they aren't yet in the server response (write may not
+      // have been committed by the time GET /progression runs).
+      setState(prev => {
+        // Merge: server list is canonical, but keep any optimistic id that
+        // the server hasn't acknowledged yet (it will on the next fetch).
+        const merged = new Set(serverCompleted)
+        for (const id of prev.completedClassIds) {
+          merged.add(id)
+        }
+        const mergedIds = [...merged]
+        // Only persist the server's canonical list (not the optimistic ids)
+        // so a hard refresh will get the right data.
+        return {
+          completedClassIds: mergedIds,
+          completedLevels: (data.completedLevels || []) as LearningLevel[],
+          unlockedLevels: (data.unlockedLevels || ['beginner']) as LearningLevel[],
+          completedCourseIds: (data.completedCourses || []).map(String),
+          unlockedCourseIds: (data.unlockedCourses || []).map(String),
+          completedExamIds: (data.completedExams || []).map(String),
+          examAttempts,
+          practiceCompletedIds: (data.practiceCompleted || []).map(String),
+          completedActivityIds: prev.completedActivityIds,
+          completedQuizIds: prev.completedQuizIds,
+          achievements: data.achievements || [],
+          unlockedLessonIds: (data.unlockedLessons || []).map(String),
+          lastVisitedLessonId: data.lastVisitedLesson ? String(data.lastVisitedLesson) : null,
+          xp: typeof data.xp === 'number' ? data.xp : 0,
+          level: typeof data.level === 'number' ? data.level : 1,
+          currentStage: (data.currentStage as LearningLevel) || 'beginner',
+          progressPercentage: typeof data.progressPercentage === 'number' ? data.progressPercentage : 0,
+          badges: data.badges || [],
+          currentLessonId: data.currentLessonId ? String(data.currentLessonId) : null,
+          continueLearning: data.continueLearning || null,
+        }
       })
       setApiLoaded(true)
     } catch (e) {
       console.error('[fetchProgress] network error:', e)
     } finally {
       inFlight.current = false
+      // If a re-fetch was requested while we were busy, run it now.
+      if (pendingRefetch.current) {
+        pendingRefetch.current = false
+        fetchProgress()
+      }
     }
   }, [token])
 
   // ── Fetch triggers ────────────────────────────────────────────────────────
-  // 1. Login / logout (token or user id changes) → reset apiLoaded and fetch
-  // 2. refreshProgress() (mutation completion)  → just re-fetch, keep apiLoaded
-  //    so pages don't briefly flash to "loading" after markClassComplete etc.
-
   // Login / logout — clear stale localStorage for the previous user, reset
-  // loading flag, and re-fetch. This ensures cross-device / cross-account
-  // data never bleeds into the new session. The initial state will briefly
-  // show an empty completedClassIds, but fetchProgress fills it immediately.
+  // loading flag, and re-fetch. Uses a full state reset (not just clearing
+  // completedClassIds) so cross-device/cross-account data never bleeds.
   useEffect(() => {
     clearLocalCompletedClassIds()
-    setState(prev => ({ ...prev, completedClassIds: [] }))
+    setState(EMPTY_PROGRESS)
     setApiLoaded(false)
     fetchProgress()
   }, [fetchProgress, user?.id])
 
-  // After mutations — re-fetch without resetting apiLoaded (avoids flash)
-  useEffect(() => {
-    if (refreshKey > 0) fetchProgress()
-  }, [refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Refresh (bumps refreshKey to trigger re-fetch) ──────────────────────
+  // ── Refresh — directly calls fetchProgress (queuing handles concurrency) ─
   const refreshProgress = useCallback(() => {
-    setRefreshKey(k => k + 1)
-  }, [])
+    fetchProgress()
+  }, [fetchProgress])
 
   // ── Mutation helper: POST with retry, then re-read from server ──────────
   const callApi = useCallback(
@@ -300,7 +331,8 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   )
 
   const markClassComplete = useCallback(
-    (classId: string, courseId?: string, skipApi = false): Promise<void> => {
+    (classId: string, courseId?: string): Promise<void> => {
+      // Optimistic update — immediately reflect in UI + localStorage.
       setState(prev => {
         if (prev.completedClassIds.includes(classId)) return prev
         const nextCompleted = [...prev.completedClassIds, classId]
@@ -308,13 +340,12 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return { ...prev, completedClassIds: nextCompleted }
       })
 
-      if (skipApi) {
-        refreshProgress()
-        return Promise.resolve()
-      }
+      // Always call the API. The callApi helper handles retries and
+      // triggers refreshProgress on success, which fetches the server's
+      // canonical state (the queued-fetch mechanism ensures it runs).
       return callApi('/progression/complete-lesson', { lessonId: classId, courseId })
     },
-    [callApi, refreshProgress]
+    [callApi]
   )
 
   const completeLevel = useCallback(

@@ -214,7 +214,7 @@ function LessonContent({
   mobileSidebarOpen, setMobileSidebarOpen, readingWidth, setReadingWidth: _setReadingWidth,
   isDragging, setIsDragging: _setIsDragging, dragStartRef: _dragStartRef, readingWidthRef: _readingWidthRef,
   handlePresetClick, handleDragStart, activePreset,
-  completeLessonMutation, lessonStates,
+  isCompleting, handleCompleteLesson, lessonStates,
   showCompleteToast, setShowCompleteToast, markClassComplete, completedClassIds,
   lessonIds: _lessonIds, courseId: _courseId, token, isAllLessonsCompleted, onLockedClick, completedLevels,
 }: {
@@ -234,7 +234,8 @@ function LessonContent({
   handlePresetClick: (w: number) => void
   handleDragStart: (e: React.MouseEvent) => void
   activePreset: { label: string; width: number; name: string } | undefined
-  completeLessonMutation: any
+  isCompleting: boolean
+  handleCompleteLesson: (lessonId: string) => void
   lessonStates: Record<string, 'locked' | 'unlocked' | 'completed'>
   showCompleteToast: boolean
   setShowCompleteToast: (v: boolean) => void
@@ -594,14 +595,14 @@ function LessonContent({
                     {/* ── Complete Lesson Button ──────────────────────── */}
                     {!isCurrentCompleted && (
                       <div className="flex justify-center">
-                        <button onClick={() => activeLesson && completeLessonMutation.mutate((activeLesson as any).slug)}
-                          disabled={completeLessonMutation.isPending}
+                        <button onClick={() => activeLesson && handleCompleteLesson((activeLesson as any).slug)}
+                          disabled={isCompleting}
                           className="inline-flex items-center gap-3 px-10 py-4 rounded-2xl font-black text-base transition-all duration-200 hover:scale-105 disabled:opacity-60 disabled:hover:scale-100"
                           style={{ backgroundColor: S.accent, color: '#04342C', boxShadow: '0 0 24px rgba(101,209,178,0.25)' }}
-                          onMouseEnter={e => { if (!completeLessonMutation.isPending) (e.currentTarget as HTMLElement).style.backgroundColor = S.light }}
+                          onMouseEnter={e => { if (!isCompleting) (e.currentTarget as HTMLElement).style.backgroundColor = S.light }}
                           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = S.accent }}>
                           <CheckCircle2 size={20} />
-                          {completeLessonMutation.isPending ? 'শেষ হচ্ছে...' : 'পাঠ শেষ করুন'}
+                          {isCompleting ? 'শেষ হচ্ছে...' : 'পাঠ শেষ করুন'}
                         </button>
                       </div>
                     )}
@@ -696,7 +697,7 @@ function LessonContent({
                       )}
                     </div>
 
-                    {completeLessonMutation.isSuccess && (
+                    {showCompleteToast && (
                       <div className="toast toast-top toast-center z-[100]">
                         <div className="px-8 py-5 rounded-2xl font-black text-lg animate-bounce"
                           style={{ backgroundColor: S.accent, color: '#04342C', boxShadow: '0 0 32px rgba(101,209,178,0.40)' }}>
@@ -1012,24 +1013,23 @@ export function LessonViewPage() {
 
   const initialLessonParam = useRef(searchParams.get('lesson'))
 
-  const completeLessonMutation = useMutation({
-    mutationFn: async (lessonId: string) => {
-      if (!token) throw new Error('Missing auth token')
-      const res = await fetch(`${API_BASE_URL}/progression/complete-lesson`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ lessonId, courseId }),
-      })
-      if (!res.ok) throw new Error('Failed to complete lesson')
-      return res.json()
-    },
-    onSuccess: (_, lessonId) => {
+  const [isCompleting, setIsCompleting] = useState(false)
+
+  const handleCompleteLesson = async (lessonId: string) => {
+    if (isCompleting) return
+    setIsCompleting(true)
+    try {
+      await markClassComplete(lessonId, courseId)
+      
       queryClient.invalidateQueries({ queryKey: ['profile'] })
-      markClassComplete(lessonId, courseId, true)
+      setShowCompleteToast(true)
+      setTimeout(() => setShowCompleteToast(false), 3000)
+
       if (safeCourse && safeCourse.lessons.length > 0) {
         const last = safeCourse.lessons[safeCourse.lessons.length - 1]
         if (last.slug === lessonId && safeCourse.level) completeLevel(safeCourse.level)
       }
+      
       // Auto-advance to next lesson after completion
       if (safeCourse) {
         const idx = safeCourse.lessons.findIndex((l: any) => l.slug === lessonId)
@@ -1038,8 +1038,10 @@ export function LessonViewPage() {
           setTimeout(() => setActiveLessonId(nextId), 1200)
         }
       }
-    },
-  })
+    } finally {
+      setIsCompleting(false)
+    }
+  }
 
   // Set active lesson: URL param > last visited > first lesson
   useEffect(() => {
@@ -1152,7 +1154,8 @@ export function LessonViewPage() {
       handlePresetClick={handlePresetClick}
       handleDragStart={handleDragStart}
       activePreset={activePreset}
-      completeLessonMutation={completeLessonMutation}
+      isCompleting={isCompleting}
+      handleCompleteLesson={handleCompleteLesson}
       lessonStates={lessonStates}
       showCompleteToast={showCompleteToast}
       setShowCompleteToast={setShowCompleteToast}
