@@ -1,6 +1,7 @@
 const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
 const { User } = require('../models/User')
+const { Exam } = require('../models/Exam')
 const { sendOtpEmail } = require('../utils/email')
 const { sendOtp, verifyOtp: verifyOtpToken } = require('../services/otpService')
 const { OTP_TTL_MS } = require('../services/otpService')
@@ -33,6 +34,7 @@ const userResponse = (user) => ({
     emailVerified: !!user.emailVerified,
     phoneVerified: !!user.phoneVerified,
     authProvider: user.authProvider || 'local',
+    pendingFeedback: user.pendingFeedback || null,
   },
 })
 
@@ -344,10 +346,39 @@ const superAdminLogin = async (req, res) => {
 
 // @desc    Get user profile
 // @route   GET /api/auth/me
+// ── Auto-recover pendingFeedback state ─────────────────────────────────────
+// A user who passed an exam but never submitted feedback (due to a crash,
+// page refresh, logout, or migration from an older version) will have
+// pendingFeedback auto-filled so they are redirected to the feedback form.
+async function autoRecoverPendingFeedback(user) {
+  const levels = ['beginner', 'intermediate', 'advanced']
+  for (const level of levels) {
+    // Skip if feedback was already submitted for this level
+    if ((user.feedbackSubmittedLevels || []).includes(level)) continue
+    // Skip if user already has a pendingFeedback (don't overwrite)
+    if (user.pendingFeedback) break
+    // Check if the exam for this level was passed
+    const exam = await Exam.findOne({ level, isActive: true })
+    if (!exam) continue
+    const examIdStr = exam._id.toString()
+    const hasPassed = (user.completedExams || []).some(id => id.toString() === examIdStr)
+    if (hasPassed) {
+      user.pendingFeedback = level
+      await user.save()
+      console.log(`[auth] auto-recovered pendingFeedback=${level} for user ${user._id}`)
+      break
+    }
+  }
+}
+
 const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('-password')
     if (user) {
+      // Auto-recover pending feedback for users who passed an exam but never
+      // submitted feedback (e.g. existing users, crash after exam, etc.)
+      await autoRecoverPendingFeedback(user)
+
       res.json({
         ok: true,
         user: {
@@ -357,6 +388,7 @@ const getMe = async (req, res) => {
           email: user.email,
           role: user.role,
           phone: user.phone,
+          pendingFeedback: user.pendingFeedback || null,
         },
       })
     } else {

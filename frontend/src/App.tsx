@@ -15,6 +15,7 @@ import { AdminCoursesPage } from './pages/admin/AdminCoursesPage'
 import { AdminLessonsPage } from './pages/admin/AdminLessonsPage'
 import { AdminQuestionsPage } from './pages/admin/AdminQuestionsPage'
 import { AdminSupportPage } from './pages/admin/AdminSupportPage'
+import { AdminFeedbackPage } from './pages/admin/AdminFeedbackPage'
 import { AdminNoticesPage } from './pages/admin/AdminNoticesPage'
 import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage'
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage'
@@ -45,6 +46,8 @@ import { SettingsPage } from './pages/SettingsPage'
 import { AIBuddyPage } from './pages/AIBuddyPage'
 import { ExamPage } from './pages/ExamPage'
 import { ExamReviewPage } from './pages/ExamReviewPage'
+import { FeedbackPage } from './pages/FeedbackPage'
+import { FeedbackSuccessPage } from './pages/FeedbackSuccessPage'
 import BeginnerCoursePage from './pages/beginner/BeginnerCoursePage'
 import { AdvancedCoursePage } from './pages/AdvancedCoursePage'
 import { ProgressProvider } from './context/ProgressContext'
@@ -146,6 +149,22 @@ function StudentRoutes() {
         }
       />
       <Route
+        path="/feedback/:level"
+        element={
+          <ProtectedRoute allowedRoles={['student', 'admin', 'super-admin']}>
+            <FeedbackPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/feedback/:level/success"
+        element={
+          <ProtectedRoute allowedRoles={['student', 'admin', 'super-admin']}>
+            <FeedbackSuccessPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/courses/beginner"
         element={
           <ProtectedRoute allowedRoles={['student', 'admin', 'super-admin']}>
@@ -229,6 +248,7 @@ export default function App() {
         <Route path="/admin/courses" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminCoursesPage /></ProtectedRoute>} />
         <Route path="/admin/lessons" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminLessonsPage /></ProtectedRoute>} />
         <Route path="/admin/questions" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminQuestionsPage /></ProtectedRoute>} />
+        <Route path="/admin/feedback" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminFeedbackPage /></ProtectedRoute>} />
         <Route path="/admin/support" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminSupportPage /></ProtectedRoute>} />
         <Route path="/admin/notices" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminNoticesPage /></ProtectedRoute>} />
         <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminAnalyticsPage /></ProtectedRoute>} />

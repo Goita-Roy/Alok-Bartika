@@ -3,6 +3,7 @@ const express = require('express')
 const cors = require('cors')
 const { env } = require('./config/env')
 const { errorHandler } = require('./middleware/errorHandler')
+const { protect, checkPendingFeedback } = require('./middleware/auth')
 const { authRouter } = require('./routes/authRoutes')
 const { userRouter } = require('./routes/userRoutes')
 const { courseRouter } = require('./routes/courseRoutes')
@@ -23,6 +24,7 @@ const { practiceRouter } = require('./routes/practiceRoutes')
 const { adminRouter } = require('./routes/adminRoutes')
 const { studentRouter } = require('./routes/studentRoutes')
 const { adminDashboardRouter } = require('./routes/adminDashboardRoutes')
+const { feedbackRouter } = require('./routes/feedbackRoutes')
 
 function createApp() {
   const app = express()
@@ -51,23 +53,46 @@ function createApp() {
   app.get('/api/health', (_req, res) => {
     res.status(200).json({ status: 'ok' })
   })
+  // ── Route registration ───────────────────────────────────────────────────
+  //
+  //  ROUTES NEVER SUBJECT TO THE PENDING-FEEDBACK CHECK
+  //  ────────────────────────────────────────────────
+  //  These are needed for app initialization, auth, and feedback submission.
+  //  The frontend handles the redirect via ProtectedRoute.
   app.use('/api/auth', authRouter)
-  app.use('/api/users', userRouter)
-  app.use('/api/courses', courseRouter)
-  app.use('/api/lessons', lessonRouter)
+  app.use('/api/feedback', feedbackRouter)
+  app.use('/api/progression', progressionRouter)     // frontend loads progress on mount
+  app.use('/api/notifications', notificationRouter)   // notification badge counts
+  app.use('/api/profile', profileRouter)               // user profile page
+  app.use('/api/users', userRouter)                    // user CRUD
+
+  //  ROUTES WITH MIXED PUBLIC / PRIVATE ENDPOINTS
+  //  ──────────────────────────────────────────────
+  //  These have public GET routes (no `protect`).  Don't blanket-apply
+  //  `protect` here or those public routes break with 401.  The frontend
+  //  ProtectedRoute handles redirect when feedback is pending.
+  app.use('/api/courses', courseRouter)   // GET / and /:id are public
+  app.use('/api/lessons', lessonRouter)   // GET /course/:courseId and /:id are public
+
+  //  ROUTES THAT SHOULD BE BLOCKED WHEN FEEDBACK IS PENDING
+  //  ────────────────────────────────────────────────────────
+  //  All routes in these routers already have `protect` applied per-route.
+  //  We add `checkPendingFeedback` as a secondary security layer.  The
+  //  `protect` middleware here skips if `req.user` is already set (avoiding
+  //  redundant DB queries), and `checkPendingFeedback` blocks the request.
+  const blockOnPending = [protect, checkPendingFeedback]
+  app.use('/api/exams', ...blockOnPending, examRouter)
+  app.use('/api/practice', ...blockOnPending, practiceRouter)
+  app.use('/api/dashboard', ...blockOnPending, dashboardRouter)
+  app.use('/api/learning', ...blockOnPending, learningRouter)
+  app.use('/api/ai', ...blockOnPending, aiRouter)
+
+  //  REMAINING ROUTES — no pending-feedback block needed
   app.use('/api/execute', executionRouter)
-  app.use('/api/ai', aiRouter)
-  app.use('/api/progression', progressionRouter)
   app.use('/api/tests', testRouter)
   app.use('/api/stats', statsRouter)
-  app.use('/api/dashboard', dashboardRouter)
-  app.use('/api/profile', profileRouter)
   app.use('/api/leaderboard', leaderboardRouter)
-  app.use('/api/learning', learningRouter)
-  app.use('/api/exams', examRouter)
   app.use('/api/projects', projectRouter)
-  app.use('/api/notifications', notificationRouter)
-  app.use('/api/practice', practiceRouter)
   app.use('/api/admins', adminRouter)
   app.use('/api/students', studentRouter)
   app.use('/api/admin/dashboard', adminDashboardRouter)

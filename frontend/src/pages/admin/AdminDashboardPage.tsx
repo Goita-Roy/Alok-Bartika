@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { API_BASE_URL } from '../../config/api'
 import {
   LayoutDashboard, Users, UserCheck, BookOpen, FileText,
-  ClipboardList, Megaphone, Loader2, RefreshCw,
+  ClipboardList, Megaphone, Star, Loader2, RefreshCw,
 } from 'lucide-react'
 
 interface DashboardStats {
@@ -15,6 +15,8 @@ interface DashboardStats {
   totalLessons: number
   totalExams: number
   totalNotices: number
+  totalFeedback: number
+  averageRating: number
 }
 
 export function AdminDashboardPage() {
@@ -55,6 +57,8 @@ export function AdminDashboardPage() {
     { label: 'Total Lessons', value: stats.totalLessons, icon: FileText, color: '#f59e0b', bg: 'rgba(245,158,11,0.10)' },
     { label: 'Total Exams', value: stats.totalExams, icon: ClipboardList, color: '#06b6d4', bg: 'rgba(6,182,212,0.10)' },
     { label: 'Total Notices', value: stats.totalNotices, icon: Megaphone, color: '#ec4899', bg: 'rgba(236,72,153,0.10)' },
+    { label: 'Student Feedback', value: stats.totalFeedback, icon: Star, color: '#F59E0B', bg: 'rgba(245,158,11,0.10)' },
+    { label: 'Avg Rating', value: stats.averageRating, icon: Star, color: '#F97316', bg: 'rgba(249,115,22,0.10)' },
   ] : []
 
   return (

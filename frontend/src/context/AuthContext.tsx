@@ -7,6 +7,7 @@ interface User {
   fullName: string
   email: string
   phone?: string
+  pendingFeedback?: string | null
 }
 
 interface AuthContextType {
@@ -15,6 +16,7 @@ interface AuthContextType {
   loading: boolean
   login: (userData: any) => void
   logout: () => void
+  updateUser: (updates: Partial<User>) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -48,7 +50,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchUser = async () => {
       try {
         const { data } = await api.get('/auth/me')
-        setUser(data.user)
+        // Merge pendingFeedback from the server response into the user object.
+        // The backend returns it alongside user data so the AuthContext can
+        // enforce the mandatory feedback redirect on every navigation.
+        const serverUser = data.user || {}
+        setUser({
+          id: serverUser.id || serverUser._id,
+          role: serverUser.role,
+          fullName: serverUser.fullName,
+          email: serverUser.email,
+          phone: serverUser.phone,
+          pendingFeedback: serverUser.pendingFeedback || null,
+        })
       } catch (error) {
         console.error('Failed to fetch user', error)
         localStorage.removeItem('token')
@@ -64,12 +77,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = useCallback((userData: any) => {
     const token = userData?.token || userData?.accessToken || null
-    const normalizedUser = userData?.user ?? {
-      id: userData?._id || userData?.id,
-      role: userData?.role,
-      fullName: userData?.fullName,
-      email: userData?.email,
-      phone: userData?.phone,
+    const rawUser = userData?.user ?? userData
+    const normalizedUser = {
+      id: rawUser?._id || rawUser?.id,
+      role: rawUser?.role,
+      fullName: rawUser?.fullName,
+      email: rawUser?.email,
+      phone: rawUser?.phone,
+      pendingFeedback: rawUser?.pendingFeedback || null,
     }
 
     if (!token) {
@@ -91,8 +106,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null)
   }, [setAuthHeader])
 
+  const updateUser = useCallback((updates: Partial<User>) => {
+    setUser(prev => prev ? { ...prev, ...updates } : null)
+  }, [])
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   )

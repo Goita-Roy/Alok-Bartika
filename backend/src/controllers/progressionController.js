@@ -19,75 +19,20 @@ async function toClientLessonId(slug) {
   return slug || null
 }
 
-// Recompute & persist derived level state from canonical completedExams/courses.
-async function persistLevels(userId) {
-  const user = await User.findById(userId).select('completedExams completedCourses')
-  if (!user) return null
-  const { completedLevels, unlockedLevels } = await P.computeLevels(
-    user.completedExams.map((e) => e.toString()),
-    user.completedCourses.map((c) => c.toString()),
-  )
-  await User.updateOne(
-    { _id: userId },
-    { $set: { completedLevels, unlockedLevels } },
-  )
-  return { completedLevels, unlockedLevels }
-}
-
 // ── GET /api/progression ──────────────────────────────────────────────────────
 const getProgress = async (req, res) => {
   try {
-    let user = await User.findById(req.user._id)
+    const user = await User.findById(req.user._id)
     if (!user) return res.status(404).json({ message: 'User not found' })
 
-    // Runtime validation/repair: if stored progression is not canonical OR
-    // contains slugs that no longer map to real Lesson documents, fix it
-    // before returning so the client always receives consistent data.
-    const needsRepair =
-      !Array.isArray(user.completedLessons) ||
-      user.completedLessons.some((s) => !P.SLUG_RE.test(s)) ||
-      !Array.isArray(user.unlockedLessons) ||
-      user.unlockedLessons.some((s) => !P.SLUG_RE.test(s))
-
-    let needsLessonValidation = false
-    if (!needsRepair && user.completedLessons.length > 0) {
-      const slugMaps = await P.buildSlugMaps()
-      needsLessonValidation = user.completedLessons.some((s) => !slugMaps.slugToId[s])
-    }
-
-    if (needsRepair || needsLessonValidation) {
-      await P.repairUser(req.user._id)
-      user = await User.findById(req.user._id)
-    }
-
-    const canon = await P.canonicalize(user)
-    // Persist derived facts so all consumers agree (single source of truth).
-    // completedCourses MUST be persisted too — canonicalize() reconstructs it
-    // from completedLessons, but persistLevels() and checkExamAccess() read
-    // completedCourses directly from the DB, not through canonicalize().
-    await User.updateOne(
-      { _id: req.user._id },
-      {
-        $set: {
-          completedCourses: canon.completedCourses.map(id => new mongoose.Types.ObjectId(id)),
-          unlockedCourses: canon.unlockedCourses.map(id => new mongoose.Types.ObjectId(id)),
-          completedLevels: canon.completedLevels,
-          unlockedLevels: canon.unlockedLevels,
-          currentStage: canon.currentStage,
-          progressPercentage: canon.progressPercentage,
-        },
-      },
-    )
+    // computeUserProgression is THE single source of truth: it validates,
+    // canonicalizes, persists ALL derived fields, and returns the canonical state.
+    const canon = await P.computeUserProgression(req.user._id)
+    if (!canon) return res.status(500).json({ message: 'Failed to compute progression' })
 
     const correctLevel = await P.syncLevel(req.user._id)
 
-    // ── Diagnostic log (structured, single line per GET) ──
-    const totalLessons = canon.completedLessons.length
-    const advLessons = canon.completedLessons.filter(s => s.startsWith('advanced-')).length
-    console.log(`[getProgress] user=${req.user._id} completedLessons=${totalLessons} advanced=${advLessons} completedCourses=${canon.completedCourses.length} completedLevels=${canon.completedLevels} unlockedLevels=${canon.unlockedLevels} pct=${canon.progressPercentage}`)
-
-    // Canonical Continue Learning resolution (single source of truth, shared
-    // with the dashboard) so every page resumes to the exact lesson.
+    // Canonical Continue Learning resolution
     const continueLearning = await P.getContinueLearning(user)
 
     res.json({
@@ -165,10 +110,6 @@ const completeLesson = async (req, res) => {
     if (projectedCount === 5) newBadges.push({ name: 'Striver', icon: '🔥' })
     if (projectedCount === 10) newBadges.push({ name: 'Code Master', icon: '🏆' })
 
-    const total = await P.getTotalLessons()
-    const progressPercentage = P.progressFromCounts(projectedCount, total)
-
-    let currentStage = user.currentStage
     let completedCourseToAdd = null
     const effectiveCourseId = courseId || (currentLesson?.courseId ? currentLesson.courseId.toString() : null)
     if (effectiveCourseId) {
@@ -184,11 +125,6 @@ const completeLesson = async (req, res) => {
         const alreadyCourseDone = (user.completedCourses || []).some((c) => c.toString() === normCourse)
         if (allCourseLessonsDone && !alreadyCourseDone) {
           completedCourseToAdd = normCourse
-        } else if (courseLessons.length > 0) {
-          const firstUnfinished = courseLessons.find((l) => !completedSet.includes(P.slugForLesson(l)))
-          if (firstUnfinished) {
-            currentStage = (await Course.findById(normCourse))?.level || currentStage
-          }
         }
       }
     }
@@ -215,20 +151,27 @@ const completeLesson = async (req, res) => {
       )
     }
 
-    if (completedCourseToAdd) {
-      await persistLevels(req.user._id)
-    }
+    // Unlock the current lesson (if not already) and the next sequential lesson
+    // BEFORE the canonical recompute, so computeUserProgression sees them in the
+    // user document and preserves them through its own $set of unlockedLessons.
+    await User.updateOne(
+      { _id: req.user._id },
+      { $addToSet: { unlockedLessons: { $each: unlockedToAdd } } },
+    )
+
+    // Always recompute & persist the full canonical state after EVERY lesson
+    // completion — this ensures completedLevels, unlockedLevels, currentStage,
+    // completedCourses, etc. are always in sync, whether or not a course boundary
+    // was crossed.
+    await P.computeUserProgression(req.user._id)
 
     await User.updateOne(
       { _id: req.user._id },
       {
-        $addToSet: { unlockedLessons: { $each: unlockedToAdd } },
         $set: {
           currentLessonId: slug,
           lastVisitedLesson: slug,
           lastActivityTime: now,
-          progressPercentage,
-          currentStage,
           'learningAnalytics.lastActiveAt': now,
         },
       },
@@ -325,18 +268,16 @@ const completeCourse = async (req, res) => {
     }
 
     const course = await Course.findById(normCourse)
-    const total = await P.getTotalLessons()
-    const progressPercentage = P.progressFromCounts(snapshot.completedLessons.length, total)
 
     await User.updateOne(
       { _id: req.user._id },
       {
         $addToSet: { completedCourses: new mongoose.Types.ObjectId(normCourse) },
-        $set: { progressPercentage, 'learningAnalytics.lastActiveAt': new Date() },
+        $set: { 'learningAnalytics.lastActiveAt': new Date() },
       },
     )
 
-    await persistLevels(req.user._id)
+    await P.computeUserProgression(req.user._id)
 
     notify({
       userId: req.user._id,

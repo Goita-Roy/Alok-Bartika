@@ -71,6 +71,7 @@ interface SubmitResult {
   newAchievement: { name: string; icon: string; description: string } | null
   nextLevelUnlocked: boolean
   nextLevel: string | null
+  feedbackRequired: boolean
   questionResults: QuestionResult[]
 }
 
@@ -575,6 +576,29 @@ function ResultScreen({
           </div>
         )}
 
+        {/* Feedback required before next level unlock */}
+        {result.passed && result.feedbackRequired && (
+          <div
+            className="rounded-2xl p-5 text-center"
+            style={{ backgroundColor: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.25)' }}
+          >
+            <div className="text-3xl mb-2">📝</div>
+            <p className="font-black text-sm mb-1" style={{ color: '#F97316' }}>
+              আপনার মতামত প্রয়োজন
+            </p>
+            <p className="text-xs font-semibold" style={{ color: S.muted }}>
+              পরবর্তী লেভেল আনলক করতে আপনার মূল্যবান মতামত দিন
+            </p>
+            <Link
+              to={`/feedback/${level}`}
+              className="inline-flex items-center gap-2 mt-3 px-6 py-2.5 rounded-xl font-black text-sm transition-all hover:scale-105"
+              style={{ backgroundColor: '#F97316', color: '#fff' }}
+            >
+              মতামত দিন
+            </Link>
+          </div>
+        )}
+
         {/* Next level unlocked */}
         {result.nextLevelUnlocked && nextLevel && (
           <div
@@ -710,7 +734,7 @@ export function ExamPage() {
   useCopyProtection()
   const { level } = useParams<{ level: string }>()
   const navigate = useNavigate()
-  const { token } = useAuth()
+  const { token, updateUser } = useAuth()
 
   // Wire into the shared progress system so passing the exam unlocks the next level
   const { completeLevel, markExamPassed } = useCourseProgress(
@@ -829,6 +853,15 @@ export function ExamPage() {
           takenAt: new Date().toISOString(),
           timeTakenSeconds: Math.round((Date.now() - startTime) / 1000),
         })
+      }
+      // ── Mandatory feedback: redirect immediately after pass ──────────────
+      // The backend sets pendingFeedback on exam pass. Redirect the user to the
+      // feedback page so they cannot navigate elsewhere until feedback is done.
+      if (data.passed && data.pendingFeedback && level) {
+        // Sync the AuthContext so ProtectedRoute enforces the redirect on any
+        // subsequent navigation attempt.
+        updateUser({ pendingFeedback: data.pendingFeedback })
+        navigate(`/feedback/${level}`, { replace: true })
       }
     },
   })

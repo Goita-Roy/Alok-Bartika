@@ -276,6 +276,21 @@ const userSchema = new mongoose.Schema(
       default: {},
     },
 
+    // Feedback
+    feedbackSubmittedLevels: {
+      type: [String],
+      enum: ['beginner', 'intermediate', 'advanced'],
+      default: [],
+    },
+    // Mandatory feedback: after passing an exam, user must submit feedback
+    // before accessing any other page. Set on exam pass, cleared on feedback
+    // submission. null = no pending feedback.
+    pendingFeedback: {
+      type: String,
+      enum: ['beginner', 'intermediate', 'advanced', null],
+      default: null,
+    },
+
     // Exam Progression
     completedExams: [
       {

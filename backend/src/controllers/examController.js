@@ -31,10 +31,27 @@ async function checkExamAccess(user, level) {
   const { completedLevels, unlockedLevels } = await P.computeLevels(
     user.completedExams || [],
     user.completedCourses || [],
+    user.feedbackSubmittedLevels || [],
+    user.unlockedLevels || [],
   )
+
+  console.log('========================')
+  console.log('403 DEBUG - checkExamAccess')
+  console.log('User ID:', user._id.toString())
+  console.log('Requested Level:', level)
+  console.log('Completed Exams:', JSON.stringify((user.completedExams || []).map(String)))
+  console.log('Completed Courses:', JSON.stringify((user.completedCourses || []).map(String)))
+  console.log('Feedback Submitted:', JSON.stringify(user.feedbackSubmittedLevels || []))
+  console.log('Stored Unlocked Levels:', JSON.stringify(user.unlockedLevels || []))
+  console.log('Computed Completed Levels:', JSON.stringify(completedLevels))
+  console.log('Computed Unlocked Levels:', JSON.stringify(unlockedLevels))
+  console.log('Completed includes level:', completedLevels.includes(level))
+  console.log('Unlocked includes level:', unlockedLevels.includes(level))
+  console.log('========================')
 
   // ── Already passed → never retakable ─────────────────────────────────────
   if (completedLevels.includes(level)) {
+    console.log(`403 REJECT: level=${level} already in completedLevels=[${completedLevels.join(',')}]`)
     return {
       ok: false,
       status: 403,
@@ -46,6 +63,7 @@ async function checkExamAccess(user, level) {
   // ── Not yet unlocked → locked ────────────────────────────────────────────
   if (!unlockedLevels.includes(level)) {
     const prev = LEVEL_ORDER[LEVEL_ORDER.indexOf(level) - 1]
+    console.log(`403 REJECT: level=${level} NOT in unlockedLevels=[${unlockedLevels.join(',')}] prev=${prev}`)
     return {
       ok: false,
       status: 403,
@@ -53,6 +71,7 @@ async function checkExamAccess(user, level) {
       requiredLevel: prev || null,
     }
   }
+  console.log(`403 DEBUG: level=${level} ACCESS GRANTED`)
   return { ok: true }
 }
 
@@ -388,6 +407,10 @@ const submitExam = async (req, res) => {
         }
       }
 
+      // ── Mandatory feedback: set pendingFeedback to block navigation ──
+      // The user must submit feedback before accessing any other page.
+      user.pendingFeedback = exam.level
+
       const nextLevel = NEXT_LEVEL[exam.level]
       if (nextLevel) nextLevelUnlocked = true
     } else {
@@ -417,6 +440,13 @@ const submitExam = async (req, res) => {
       notifyExamPass(req.user._id, exam, newBadge, newAchievement, nextLevelUnlocked)
     }
 
+    // ── Check if feedback is required before next level unlock ──
+    let feedbackRequired = false
+    if (passed) {
+      const feedbackLevels = user.feedbackSubmittedLevels || []
+      feedbackRequired = !feedbackLevels.includes(exam.level)
+    }
+
     res.json({
       passed,
       score: percentage,
@@ -427,8 +457,10 @@ const submitExam = async (req, res) => {
       xpAwarded: passed ? XP_EXAM_PASS : XP_EXAM_FAIL,
       newBadge,
       newAchievement,
-      nextLevelUnlocked,
+      nextLevelUnlocked: nextLevelUnlocked && !feedbackRequired,
       nextLevel: passed ? NEXT_LEVEL[exam.level] : null,
+      feedbackRequired,
+      pendingFeedback: user.pendingFeedback || null,
       questionResults,
     })
   } catch (err) {

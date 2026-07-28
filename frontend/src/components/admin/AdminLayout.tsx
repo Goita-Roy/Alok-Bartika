@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import type { ReactNode } from 'react'
 import {
   LayoutDashboard, Users, BookOpen, FileText, ClipboardList,
-  MessageSquare, Megaphone,
+  MessageSquare, Megaphone, Star,
   LogOut, Menu, X, Moon, Sun, ChevronDown, Shield,
 } from 'lucide-react'
 
@@ -15,6 +15,7 @@ const navItems = [
   { to: '/admin/courses',    label: 'Course Management',        icon: BookOpen },
   { to: '/admin/lessons',    label: 'Lesson Management',        icon: FileText },
   { to: '/admin/questions',  label: 'Question & Exam Management', icon: ClipboardList },
+  { to: '/admin/feedback',   label: 'Student Feedback',         icon: Star },
   { to: '/admin/support',    label: 'Student Support',          icon: MessageSquare },
   { to: '/admin/notices',    label: 'Notice Management',        icon: Megaphone },
 ]

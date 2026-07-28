@@ -194,7 +194,10 @@ function normalizeExamIds(arr) {
 }
 
 // ── Level derivation (canonical, derived ONLY from completedExams/courses) ────
-async function computeLevels(completedExamIds, completedCourseIds) {
+// Note: computeLevels is a STATELESS helper. It only computes from the arguments
+// provided — it does NOT read or write the database. For full compute+persist,
+// use computeUserProgression().
+async function computeLevels(completedExamIds, completedCourseIds, feedbackSubmittedLevels = [], existingUnlockedLevels = []) {
   const exams = await Exam.find({ isActive: true })
   const courses = await Course.find({}).sort({ level: 1 })
   const levelExam = {}
@@ -202,8 +205,14 @@ async function computeLevels(completedExamIds, completedCourseIds) {
   const levelCourseIds = {}
   courses.forEach(c => { (levelCourseIds[c.level] ||= []).push(c._id.toString()) })
 
+  console.log('[computeLevels] exams found:', exams.length, 'levels:', JSON.stringify(Object.keys(levelExam)))
+  console.log('[computeLevels] courses found:', courses.length, 'levelCourseIds:', JSON.stringify(levelCourseIds))
+  console.log('[computeLevels] completedExamIds:', JSON.stringify(completedExamIds.map(String)))
+  console.log('[computeLevels] completedCourseIds:', JSON.stringify(completedCourseIds.map(String)))
+
   const examSet = new Set(completedExamIds.map(String))
   const courseSet = new Set(completedCourseIds.map(String))
+  const feedbackSet = new Set(feedbackSubmittedLevels)
 
   const completedLevels = LEVEL_ORDER.filter(lvl => {
     if (levelExam[lvl]) return examSet.has(levelExam[lvl])
@@ -214,10 +223,75 @@ async function computeLevels(completedExamIds, completedCourseIds) {
   const unlockedLevels = LEVEL_ORDER.filter(lvl => {
     if (lvl === 'beginner') return true
     const prev = LEVEL_ORDER[LEVEL_ORDER.indexOf(lvl) - 1]
-    return completedLevels.includes(prev)
+    return completedLevels.includes(prev) && feedbackSet.has(prev)
   })
 
-  return { completedLevels, unlockedLevels }
+  // Preserve any level the user already had unlocked (migration compatibility).
+  // Existing students who completed levels before the feedback feature was
+  // deployed keep their unlocked levels without being forced to submit feedback.
+  const merged = new Set([...unlockedLevels, ...existingUnlockedLevels.filter(l => LEVEL_ORDER.includes(l))])
+  const finalUnlocked = LEVEL_ORDER.filter(l => merged.has(l))
+
+  console.log('[computeLevels] computed unlockedLevels (before merge):', JSON.stringify(unlockedLevels))
+  console.log('[computeLevels] existingUnlockedLevels:', JSON.stringify(existingUnlockedLevels))
+  console.log('[computeLevels] merged:', JSON.stringify([...merged]))
+  console.log('[computeLevels] finalUnlocked:', JSON.stringify(finalUnlocked))
+  console.log('[computeLevels] completedLevels:', JSON.stringify(completedLevels))
+
+  return { completedLevels, unlockedLevels: finalUnlocked }
+}
+
+// ── THE single source of truth for computing AND persisting ALL derived state ──
+// After every mutation (lesson complete, practice complete, exam submit, feedback
+// submit), call this function to recompute every derived field and persist it
+// atomically. No other code should write completedLevels / unlockedLevels /
+// completedCourses / unlockedCourses / currentStage / progressPercentage directly.
+//
+// Returns the full canonical progression object (same shape as canonicalize).
+async function computeUserProgression(userId) {
+  const user = await User.findById(userId)
+  if (!user) {
+    console.log(`[computeUserProgression] user=${userId} — NOT FOUND`)
+    return null
+  }
+
+  const canon = await canonicalize(user)
+
+  // Persist ALL derived fields in a single atomic write
+  await User.updateOne(
+    { _id: userId },
+    {
+      $set: {
+        completedCourses: canon.completedCourses.map(id => new mongoose.Types.ObjectId(id)),
+        unlockedCourses: canon.unlockedCourses.map(id => new mongoose.Types.ObjectId(id)),
+        completedLevels: canon.completedLevels,
+        unlockedLevels: canon.unlockedLevels,
+        currentStage: canon.currentStage,
+        progressPercentage: canon.progressPercentage,
+        // Also persist the validated lesson arrays so stale slugs are cleaned up
+        completedLessons: canon.completedLessons,
+        unlockedLessons: canon.unlockedLessons,
+        practiceCompleted: canon.practiceCompleted,
+        completedExams: canon.completedExams.map(id => new mongoose.Types.ObjectId(id)),
+      },
+    }
+  )
+
+  // Sync XP-based level
+  await syncLevel(userId)
+
+  console.log(
+    `[Progression] user=${userId}` +
+    ` completedLessons=${canon.completedLessons.length}` +
+    ` completedLevels=[${canon.completedLevels.join(',')}]` +
+    ` unlockedLevels=[${canon.unlockedLevels.join(',')}]` +
+    ` feedbackLevels=[${(user.feedbackSubmittedLevels||[]).join(',')}]` +
+    ` completedExams=${canon.completedExams.length}` +
+    ` currentStage=${canon.currentStage}` +
+    ` courseProgress=${canon.progressPercentage}%`
+  )
+
+  return canon
 }
 
 function highestLevel(levels) {
@@ -308,12 +382,42 @@ async function canonicalize(rawUser) {
     .filter((id) => courseIdSet.has(id))
   const unlockedCourses = [...new Set(unlockedCoursesRaw)]
 
-  const completedExams = normalizeExamIds(rawUser.completedExams)
+  const rawCompletedExams = normalizeExamIds(rawUser.completedExams)
+
+  // BUG FIX: Validate every completedExams entry against examAttempts.
+  // An exam may only count as "completed" if the user has at least one passed
+  // attempt for it in examAttempts.  If an exam ID is present in completedExams
+  // but there is NO passed attempt (e.g., from a previous data corruption bug),
+  // it must be removed so the user is not permanently locked out with 403.
+  // The exam attempts Map has the exam ObjectId as key (string) → array of
+  // attempt objects, each with a `passed` boolean.
+  let examAttempts = new Map()
+  if (rawUser.examAttempts) {
+    if (typeof rawUser.examAttempts.get === 'function') {
+      examAttempts = rawUser.examAttempts
+    } else if (typeof rawUser.examAttempts === 'object') {
+      examAttempts = new Map(Object.entries(rawUser.examAttempts))
+    }
+  }
+  const completedExams = rawCompletedExams.filter((id) => {
+    const attempts = examAttempts.get(id)
+    if (!attempts || !Array.isArray(attempts)) {
+      console.log(`[canonicalize] dropping stale completedExam id="${id}" — no attempts found`)
+      return false
+    }
+    const hasPassed = attempts.some((a) => a.passed)
+    if (!hasPassed) {
+      console.log(`[canonicalize] dropping stale completedExam id="${id}" — no passed attempt found`)
+    }
+    return hasPassed
+  })
 
   // Ensure every course of a completed level is in completedCourses and every
   // course of an unlocked level is in unlockedCourses (recomputed from the
   // canonical level state, not from whatever was stored).
-  const { completedLevels, unlockedLevels } = await computeLevels(completedExams, completedCourses)
+  const feedbackLevels = rawUser.feedbackSubmittedLevels || []
+  const existingUnlocked = (rawUser.unlockedLevels || []).filter(l => LEVEL_ORDER.includes(l))
+  const { completedLevels, unlockedLevels } = await computeLevels(completedExams, completedCourses, feedbackLevels, existingUnlocked)
   const courseSet = new Set(completedCourses)
   courses.forEach((c) => {
     if (completedLevels.includes(c.level)) courseSet.add(c._id.toString())
@@ -343,83 +447,12 @@ async function canonicalize(rawUser) {
   }
 }
 
-// Persist the canonicalized progression to the DB. Uses $set with de-duplicated,
-// validated arrays so the stored data is always canonical.
+// Persist the canonicalized progression to the DB. Delegates to
+// computeUserProgression() which is the single source of truth for all derived
+// state persistence. This function exists for backward compatibility only —
+// new code should call computeUserProgression() directly.
 async function repairUser(userId) {
-  const user = await User.findById(userId)
-  if (!user) return null
-  const canon = await canonicalize(user)
-
-  // Badges / achievements: unique by name only.
-  const badges = []
-  const badgeSeen = new Set()
-  for (const b of (user.badges || [])) {
-    if (b && b.name && !badgeSeen.has(b.name)) {
-      badgeSeen.add(b.name)
-      badges.push(b)
-    }
-  }
-  const achievements = []
-  const achSeen = new Set()
-  for (const a of (user.achievements || [])) {
-    if (a && a.name && !achSeen.has(a.name)) {
-      achSeen.add(a.name)
-      achievements.push(a)
-    }
-  }
-  // XP must never be negative.
-  const xp = Math.max(0, user.xp || 0)
-
-  // Reconstruct completedCourses: if ALL lessons of a course are legitimately
-  // completed, add the course.  canon.completedLessons has already been filtered
-  // to real lessons by canonicalize(), so this is safe.
-  const slugMaps = await buildSlugMaps()
-  const allLessons = await Lesson.find({}).populate('courseId', 'level').sort({ order: 1 })
-  const byCourse = {}
-  allLessons.forEach((l) => {
-    const cid = l.courseId && l.courseId._id ? l.courseId._id.toString() : (l.courseId ? l.courseId.toString() : null)
-    if (!cid) return
-    ;(byCourse[cid] ||= []).push(l)
-  })
-  const completedSlugSet = new Set(canon.completedLessons)
-  const completedCoursesFromLessons = []
-  for (const [cid, courseLessons] of Object.entries(byCourse)) {
-    if (
-      courseLessons.length > 0 &&
-      courseLessons.every((l) => completedSlugSet.has(slugForLesson(l)))
-    ) {
-      completedCoursesFromLessons.push(cid)
-    }
-  }
-  // Merge with existing valid completedCourses
-  const courses = await Course.find({})
-  const courseIdSet = new Set(courses.map((c) => c._id.toString()))
-  const existingCompleted = (user.completedCourses || [])
-    .map((v) => (v && typeof v === 'object' && v._id ? v._id.toString() : String(v)))
-    .filter((id) => courseIdSet.has(id))
-  const finalCompletedCourses = [...new Set([...existingCompleted, ...completedCoursesFromLessons])]
-
-  await User.updateOne(
-    { _id: userId },
-    {
-      $set: {
-        completedLessons: canon.completedLessons,
-        unlockedLessons: canon.unlockedLessons,
-        practiceCompleted: canon.practiceCompleted,
-        completedCourses: finalCompletedCourses.map(id => new mongoose.Types.ObjectId(id)),
-        unlockedCourses: canon.unlockedCourses.map(id => new mongoose.Types.ObjectId(id)),
-        completedExams: canon.completedExams.map(id => new mongoose.Types.ObjectId(id)),
-        completedLevels: canon.completedLevels,
-        unlockedLevels: canon.unlockedLevels,
-        currentStage: canon.currentStage,
-        progressPercentage: canon.progressPercentage,
-        badges,
-        achievements,
-        xp,
-      },
-    }
-  )
-  return canon
+  return computeUserProgression(userId)
 }
 
 // ── XP / level sync ───────────────────────────────────────────────────────────
@@ -490,7 +523,9 @@ async function getContinueLearning(user) {
   }
 
   // Determine current/preferred level for fallback ordering.
-  const { unlockedLevels } = await computeLevels(user.completedExams || [], user.completedCourses || [])
+  const feedbackLevels = user.feedbackSubmittedLevels || []
+  const existingUnlocked = (user.unlockedLevels || []).filter(l => LEVEL_ORDER.includes(l))
+  const { unlockedLevels } = await computeLevels(user.completedExams || [], user.completedCourses || [], feedbackLevels, existingUnlocked)
   const currentStage = user.currentStage && LEVEL_ORDER.includes(user.currentStage)
     ? user.currentStage
     : (highestLevel(unlockedLevels) || 'beginner')
@@ -618,6 +653,7 @@ module.exports = {
   normalizeCourseIds,
   normalizeExamIds,
   computeLevels,
+  computeUserProgression,
   highestLevel,
   canonicalize,
   repairUser,

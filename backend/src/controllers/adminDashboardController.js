@@ -3,6 +3,7 @@ const { Course } = require('../models/Course')
 const { Lesson } = require('../models/Lesson')
 const { Exam } = require('../models/Exam')
 const Notification = require('../models/Notification')
+const { StudentFeedback } = require('../models/StudentFeedback')
 
 // @desc    Get admin dashboard statistics
 // @route   GET /api/admin/dashboard
@@ -26,6 +27,8 @@ const getDashboardStats = async (_req, res) => {
       totalLessons,
       totalExams,
       totalNotices,
+      totalFeedback,
+      averageRating,
       recentStudents,
     ] = await Promise.all([
       User.countDocuments({ role: 'student' }),
@@ -34,6 +37,10 @@ const getDashboardStats = async (_req, res) => {
       Lesson.countDocuments(),
       Exam.countDocuments(),
       Notification.countDocuments(),
+      StudentFeedback.countDocuments(),
+      StudentFeedback.aggregate([
+        { $group: { _id: null, avg: { $avg: '$rating' } } },
+      ]),
       User.find({ role: 'student' })
         .select('-password -resetOtp -resetOtpExpire')
         .sort({ createdAt: -1 })
@@ -49,6 +56,8 @@ const getDashboardStats = async (_req, res) => {
         totalLessons,
         totalExams,
         totalNotices,
+        totalFeedback,
+        averageRating: averageRating.length > 0 ? Math.round(averageRating[0].avg * 10) / 10 : 0,
         recentStudents: recentStudents.map(sanitizeStudent),
       },
     })
