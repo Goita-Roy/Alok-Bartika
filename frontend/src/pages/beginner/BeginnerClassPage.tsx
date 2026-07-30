@@ -55,12 +55,12 @@ import Section6_Game from "../../components/beginner-content/Section6_Game";
 import Section6_Game_02 from "../../components/beginner-content/Section6_Game_02";
 import Section6_Game_03 from "../../components/beginner-content/Section6_Game_03";
 import Section6_Game_04 from "../../components/beginner-content/Section6_Game_04";
-import Section6_Game_05 from "../../components/beginner-content/Section6_Game_05";
-import Section6_Game_06 from "../../components/beginner-content/Section6_Game_06";
+import BubblePopMouseTraining from "../../components/beginner-content/bubble-pop-mouse-training/BubblePopMouseTraining";
 import Section6_Game_07 from "../../components/beginner-content/Section6_Game_07";
 import Section6_Game_08 from "../../components/beginner-content/Section6_Game_08";
 import Section6_Game_09 from "../../components/beginner-content/Section6_Game_09";
 import Section6_Game_10 from "../../components/beginner-content/Section6_Game_10";
+import OutputTargetChallenge from "../../components/beginner-content/output-target-challenge/OutputTargetChallenge";
 import { lessonClasses } from "../../components/beginner-content/lessonConfig";
 
 const classComponents: Record<string, React.FC> = {
@@ -111,7 +111,7 @@ const classComponents: Record<string, React.FC> = {
       <Section3_RealLife_05 />
       <Section4_HowItWorks_05 />
       <Section5_Timeline_05 />
-      <Section6_Game_05 />
+      <BubblePopMouseTraining />
     </ClassPageLayout>
   ),
   "class-06": () => (
@@ -121,7 +121,7 @@ const classComponents: Record<string, React.FC> = {
       <Section3_RealLife_06 />
       <Section4_HowItWorks_06 />
       <Section5_Timeline_06 />
-      <Section6_Game_06 />
+      <OutputTargetChallenge />
     </ClassPageLayout>
   ),
   "class-07": () => (
