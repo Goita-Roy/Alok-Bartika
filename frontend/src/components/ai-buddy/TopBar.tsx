@@ -1,31 +1,19 @@
-import { useEffect, useState } from 'react'
-import { Menu, Moon, RefreshCw, Settings, Sun } from 'lucide-react'
+import { Moon, Menu, RefreshCw, Settings, Sun } from 'lucide-react'
 import { useTheme } from '../../context/ThemeContext'
 import { MODEL_NAME, MODEL_PROVIDER } from './utils'
-import { SettingsMenu } from './SettingsMenu'
 
 interface TopBarProps {
   title: string
   loading: boolean
+  online: boolean
+  userInitial: string
+  userFullName: string
   onToggleSidebar: () => void
-  onClear: () => void
+  onOpenSettings: () => void
 }
 
-export function TopBar({ title, loading, onToggleSidebar, onClear }: TopBarProps) {
+export function TopBar({ title, loading, online, userInitial, userFullName, onToggleSidebar, onOpenSettings }: TopBarProps) {
   const { theme, toggleTheme } = useTheme()
-  const [online, setOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true))
-  const [settingsOpen, setSettingsOpen] = useState(false)
-
-  useEffect(() => {
-    const goOnline = () => setOnline(true)
-    const goOffline = () => setOnline(false)
-    window.addEventListener('online', goOnline)
-    window.addEventListener('offline', goOffline)
-    return () => {
-      window.removeEventListener('online', goOnline)
-      window.removeEventListener('offline', goOffline)
-    }
-  }, [])
 
   return (
     <div
@@ -87,23 +75,22 @@ export function TopBar({ title, loading, onToggleSidebar, onClear }: TopBarProps
         >
           {theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}
         </button>
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setSettingsOpen((v) => !v)}
-            aria-label="সেটিংস"
-            aria-expanded={settingsOpen}
-            className="rounded-lg p-2 transition-colors"
-            style={{
-              color: settingsOpen ? 'var(--color-accent)' : 'var(--color-text-muted)',
-              backgroundColor: settingsOpen ? 'var(--color-accent-pale)' : 'transparent',
-            }}
-          >
-            <Settings size={17} />
-          </button>
-          {settingsOpen && (
-            <SettingsMenu onClose={() => setSettingsOpen(false)} onClear={onClear} online={online} />
-          )}
+        <button
+          type="button"
+          onClick={onOpenSettings}
+          aria-label="সেটিংস"
+          className="rounded-lg p-2 transition-colors"
+          style={{ color: 'var(--color-text-muted)' }}
+        >
+          <Settings size={17} />
+        </button>
+        <div
+          className="ml-0.5 flex h-8 w-8 items-center justify-center rounded-full text-xs font-black"
+          title={userFullName}
+          aria-label={userFullName}
+          style={{ backgroundColor: 'var(--color-accent)', color: '#fff' }}
+        >
+          {userInitial}
         </div>
       </div>
     </div>

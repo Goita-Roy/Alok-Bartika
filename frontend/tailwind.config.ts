@@ -46,6 +46,14 @@ export default {
           '0%':   { opacity: '0', transform: 'translateX(-10px)' },
           '100%': { opacity: '1', transform: 'translateX(0)' },
         },
+        'mic-pulse': {
+          '0%, 100%': { boxShadow: '0 0 0 0 rgba(255,107,74,0.45)' },
+          '50%':      { boxShadow: '0 0 0 6px rgba(255,107,74,0)' },
+        },
+        'progress-slide': {
+          '0%':   { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(300%)' },
+        },
       },
       animation: {
         'fade-up': 'fade-up 0.5s ease-out forwards',
@@ -54,6 +62,8 @@ export default {
         'pop-in': 'pop-in 0.18s ease-out both',
         'typing-bounce': 'typing-bounce 1.2s ease-in-out infinite',
         'slide-in-left': 'slide-in-left 0.25s ease-out both',
+        'mic-pulse': 'mic-pulse 1.2s ease-out infinite',
+        'progress-slide': 'progress-slide 1.2s ease-in-out infinite',
       },
       fontFamily: {
         bengali: ['Hind Siliguri', 'Noto Sans Bengali', 'sans-serif'],

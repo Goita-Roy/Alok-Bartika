@@ -1,8 +1,10 @@
 import { memo, useEffect, useRef, useState } from 'react'
 import { AlertCircle, Bot, Check, Copy, RefreshCw, Sparkles } from 'lucide-react'
 import type { ChatTurn } from './types'
+import { formatTime } from './utils'
 import { Markdown } from './Markdown'
 import { SuggestedPrompts } from './SuggestedPrompts'
+import { VoicePlayback } from './VoicePlayback'
 
 interface MessageBubbleProps {
   turn: ChatTurn
@@ -42,15 +44,23 @@ function MessageBubble({ turn, userInitial, onRetry }: MessageBubbleProps) {
   if (turn.role === 'user') {
     return (
       <div className="flex justify-end gap-2.5">
-        <div
-          className="max-w-[88%] animate-message-in rounded-2xl rounded-br-md px-4 py-3 sm:max-w-[75%]"
-          style={{
-            background: 'linear-gradient(135deg, #0E7C66, #1D9E75)',
-            color: '#fff',
-            boxShadow: '0 4px 14px rgba(14,124,102,0.22)',
-          }}
-        >
-          <p className="whitespace-pre-wrap text-sm leading-relaxed">{turn.content}</p>
+        <div className="flex max-w-[88%] flex-col items-end sm:max-w-[75%]">
+          <div
+            className="animate-message-in rounded-2xl rounded-br-md px-4 py-3"
+            style={{
+              background: 'linear-gradient(135deg, #0E7C66, #1D9E75)',
+              color: '#fff',
+              boxShadow: '0 4px 14px rgba(14,124,102,0.22)',
+            }}
+          >
+            <p className="whitespace-pre-wrap text-sm leading-relaxed">{turn.content}</p>
+          </div>
+          <span
+            className="mt-1 px-1 text-[10px] font-medium"
+            style={{ color: 'var(--color-text-muted)' }}
+          >
+            {formatTime(turn.createdAt)}
+          </span>
         </div>
         <div
           className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black"
@@ -83,6 +93,9 @@ function MessageBubble({ turn, userInitial, onRetry }: MessageBubbleProps) {
             style={{ backgroundColor: 'var(--color-accent-pale)', color: 'var(--color-accent)' }}
           >
             AI
+          </span>
+          <span className="text-[10px] font-medium" style={{ color: 'var(--color-text-muted)' }}>
+            {formatTime(turn.createdAt)}
           </span>
         </div>
         {turn.error ? (
@@ -122,8 +135,9 @@ function MessageBubble({ turn, userInitial, onRetry }: MessageBubbleProps) {
           </div>
         )}
         {!turn.error && (
-          <div className="mt-0.5 flex justify-start pl-1 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+          <div className="mt-0.5 flex flex-wrap items-center justify-start gap-x-2 gap-y-0.5 pl-1 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
             <CopyMessageButton text={turn.content} />
+            <VoicePlayback content={turn.content} />
           </div>
         )}
       </div>
@@ -208,15 +222,19 @@ interface MessageListProps {
   loading: boolean
   userInitial: string
   hasConversation: boolean
+  fontSize: 'sm' | 'md' | 'lg'
   onRetry: (turnId: string) => void
   onSuggestedPrompt: (text: string) => void
 }
+
+const FONT_SIZES = { sm: '0.875rem', md: '0.9375rem', lg: '1.0625rem' }
 
 export function MessageList({
   messages,
   loading,
   userInitial,
   hasConversation,
+  fontSize,
   onRetry,
   onSuggestedPrompt,
 }: MessageListProps) {
@@ -235,7 +253,10 @@ export function MessageList({
           <EmptyState onPrompt={onSuggestedPrompt} hasConversation={hasConversation} />
         </div>
       ) : (
-        <div className="mx-auto w-full max-w-3xl space-y-5 px-3 py-4 sm:px-6 sm:py-6">
+        <div
+          className="mx-auto w-full max-w-3xl space-y-5 px-3 py-4 sm:px-6 sm:py-6"
+          style={{ fontSize: FONT_SIZES[fontSize] }}
+        >
           {messages.map((turn) => (
             <MessageBubbleMemo
               key={turn.id}

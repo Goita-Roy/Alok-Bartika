@@ -1,0 +1,140 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+
+const DEFAULT_LANG = 'bn-BD'
+
+function getRecognitionCtor(): (new () => SpeechRecognition) | null {
+  if (typeof window === 'undefined') return null
+  const w = window as Window
+  const ctor = w.SpeechRecognition ?? w.webkitSpeechRecognition
+  return ctor ?? null
+}
+
+function friendlyError(code: string): string {
+  switch (code) {
+    case 'not-allowed':
+    case 'service-not-allowed':
+      return 'মাইক্রোফোন ব্যবহারের অনুমতি দেওয়া হয়নি। ব্রাউজার সেটিংস থেকে অনুমতি দিন।'
+    case 'no-speech':
+      return 'কোনো কথা শোনা যায়নি। আবার চেষ্টা করুন।'
+    case 'network':
+      return 'ভয়েস ইনপুটের জন্য ইন্টারনেট সংযোগ প্রয়োজন।'
+    case 'audio-capture':
+      return 'মাইক্রোফোন খুঁজে পাওয়া যায়নি।'
+    case 'language-not-supported':
+      return 'এই ব্রাউজারে বাংলা ভয়েস ইনপুট সমর্থিত নয়।'
+    default:
+      return 'ভয়েস শনাক্তকরণে সমস্যা হয়েছে। আবার চেষ্টা করুন।'
+  }
+}
+
+export interface UseSpeechRecognitionOptions {
+  lang?: string
+  onFinal: (transcript: string) => void
+  onError: (message: string) => void
+}
+
+export interface UseSpeechRecognitionResult {
+  supported: boolean
+  listening: boolean
+  interim: string
+  start: () => void
+  stop: () => void
+  cancel: () => void
+}
+
+export function useSpeechRecognition({
+  lang = DEFAULT_LANG,
+  onFinal,
+  onError,
+}: UseSpeechRecognitionOptions): UseSpeechRecognitionResult {
+  const [supported] = useState(() => getRecognitionCtor() !== null)
+  const [listening, setListening] = useState(false)
+  const [interim, setInterim] = useState('')
+
+  const recognitionRef = useRef<SpeechRecognition | null>(null)
+  const onFinalRef = useRef(onFinal)
+  const onErrorRef = useRef(onError)
+  const cancelledRef = useRef(false)
+
+  useEffect(() => {
+    onFinalRef.current = onFinal
+    onErrorRef.current = onError
+  }, [onFinal, onError])
+
+  const teardown = useCallback(() => {
+    recognitionRef.current = null
+    setListening(false)
+    setInterim('')
+  }, [])
+
+  const start = useCallback(() => {
+    if (!supported) return
+    const ctor = getRecognitionCtor()
+    if (!ctor) return
+    try {
+      const rec = new ctor()
+      recognitionRef.current = rec
+      cancelledRef.current = false
+      rec.lang = lang
+      rec.continuous = false
+      rec.interimResults = true
+      rec.maxAlternatives = 1
+
+      rec.onresult = (event) => {
+        let interimText = ''
+        for (let i = event.resultIndex; i < event.results.length; i += 1) {
+          const result = event.results[i]
+          const transcript = result[0]?.transcript ?? ''
+          if (result.isFinal) {
+            const text = transcript.trim()
+            if (text) onFinalRef.current(text)
+          } else {
+            interimText += transcript
+          }
+        }
+        setInterim(interimText)
+      }
+
+      rec.onerror = (event) => {
+        if (cancelledRef.current) return
+        if (event.error === 'aborted') return
+        onErrorRef.current(friendlyError(event.error))
+        try {
+          rec.abort()
+        } catch {
+          // ignore
+        }
+      }
+
+      rec.onend = () => {
+        teardown()
+      }
+
+      rec.start()
+      setListening(true)
+    } catch {
+      onErrorRef.current('ভয়েস ইনপুট শুরু করা যায়নি। আবার চেষ্টা করুন।')
+    }
+  }, [supported, lang, teardown])
+
+  const stop = useCallback(() => {
+    recognitionRef.current?.stop()
+  }, [])
+
+  const cancel = useCallback(() => {
+    cancelledRef.current = true
+    recognitionRef.current?.abort()
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      cancelledRef.current = true
+      recognitionRef.current?.abort()
+    }
+  }, [])
+
+  return useMemo(
+    () => ({ supported, listening, interim, start, stop, cancel }),
+    [supported, listening, interim, start, stop, cancel],
+  )
+}

@@ -9,12 +9,12 @@ interface SuggestedPrompt {
 }
 
 const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
-  { text: 'Explain Python loops', icon: RefreshCw },
-  { text: 'Debug my code', icon: Bug },
-  { text: 'Teach variables', icon: Variable },
-  { text: 'Explain recursion', icon: GitBranch },
-  { text: 'Help with Scratch', icon: Puzzle },
-  { text: 'Solve this error', icon: Wrench },
+  { text: '🐍 Python কী?', icon: RefreshCw },
+  { text: '🔁 Loop বুঝিয়ে দাও', icon: GitBranch },
+  { text: '📦 Variable কী?', icon: Variable },
+  { text: '🐞 আমার কোড ঠিক করো', icon: Bug },
+  { text: '⚠️ এই Error কেন হচ্ছে?', icon: Wrench },
+  { text: '🎮 Scratch শিখতে চাই', icon: Puzzle },
 ]
 
 export function SuggestedPrompts({ onPrompt }: { onPrompt: (text: string) => void }) {

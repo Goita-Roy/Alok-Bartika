@@ -31,6 +31,7 @@ export interface UseConversationsResult {
   addTurn: (conversationId: string, turn: ChatTurn) => void
   removeTurns: (conversationId: string, turnIds: string[]) => void
   clearConversation: (id: string) => void
+  clearAll: () => void
 }
 
 export function useConversations(): UseConversationsResult {
@@ -117,6 +118,11 @@ export function useConversations(): UseConversationsResult {
     [patchConversation],
   )
 
+  const clearAll = useCallback(() => {
+    setConversations([])
+    setActiveId(null)
+  }, [])
+
   const activeConversation = conversations.find((c) => c.id === activeId) ?? null
 
   return {
@@ -130,5 +136,6 @@ export function useConversations(): UseConversationsResult {
     addTurn,
     removeTurns,
     clearConversation,
+    clearAll,
   }
 }

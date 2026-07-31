@@ -59,7 +59,7 @@ function createInlineParser() {
 }
 
 function isTableSeparator(line: string): boolean {
-  return /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(line) && /-{3,}/.test(line)
+  return /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?\s*$/.test(line)
 }
 
 function splitTableRow(line: string): string[] {
@@ -262,6 +262,8 @@ export function Markdown({ content }: { content: string }) {
     }
 
     const para: string[] = []
+    para.push(lines[i])
+    i += 1
     while (
       i < lines.length &&
       lines[i].trim() &&

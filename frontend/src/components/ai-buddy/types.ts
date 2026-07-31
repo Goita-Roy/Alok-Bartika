@@ -17,3 +17,13 @@ export interface Conversation {
 }
 
 export type GroupKey = 'Today' | 'Yesterday' | 'Previous 7 Days' | 'Previous 30 Days'
+
+export interface Attachment {
+  id: string
+  kind: 'image' | 'file'
+  name: string
+  size: number
+  previewUrl?: string
+  status: 'processing' | 'ready'
+  file: File
+}

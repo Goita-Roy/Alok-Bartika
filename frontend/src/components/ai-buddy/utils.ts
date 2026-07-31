@@ -99,3 +99,194 @@ export function buildHistory(messages: ChatTurn[]): ChatTurn[] {
     .filter((m) => m.role === 'user' || (m.role === 'assistant' && !m.error))
     .slice(-10)
 }
+
+export function formatTime(ts: number): string {
+  try {
+    return new Date(ts).toLocaleTimeString('bn-BD', { hour: 'numeric', minute: '2-digit' })
+  } catch {
+    const d = new Date(ts)
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}`
+  }
+}
+
+export const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+export const MAX_FILE_BYTES = 10 * 1024 * 1024
+
+const IMAGE_MIME_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
+const SUPPORTED_FILE_EXTENSIONS = new Set(['py', 'cpp', 'c', 'java', 'js', 'ts', 'txt', 'pdf', 'zip'])
+
+export function isSupportedImageFile(file: File): boolean {
+  return IMAGE_MIME_TYPES.has(file.type) && file.size <= MAX_IMAGE_BYTES
+}
+
+export function isSupportedFile(file: File): boolean {
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
+  return SUPPORTED_FILE_EXTENSIONS.has(ext) && file.size <= MAX_FILE_BYTES
+}
+
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function loadImageFile(file: File): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      resolve(img)
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('image load failed'))
+    }
+    img.src = url
+  })
+}
+
+export async function compressImage(file: File, maxDimension = 1280, quality = 0.82): Promise<File> {
+  if (!file.type.startsWith('image/')) return file
+  let img: HTMLImageElement
+  try {
+    img = await loadImageFile(file)
+  } catch {
+    return file
+  }
+  const scale = Math.min(1, maxDimension / Math.max(img.width, img.height))
+  if (scale >= 1 && file.size <= MAX_IMAGE_BYTES) return file
+  const w = Math.max(1, Math.round(img.width * scale))
+  const h = Math.max(1, Math.round(img.height * scale))
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return file
+  ctx.drawImage(img, 0, 0, w, h)
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality))
+  if (!blob) return file
+  const name = file.name.replace(/\.[^.]+$/, '') || 'image'
+  return new File([blob], `${name}.jpg`, { type: 'image/jpeg' })
+}
+
+export function markdownToPlainText(markdown: string): string {
+  return markdown
+    .replace(/```[a-zA-Z]*\n?/g, '')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/^>\s?/gm, '')
+    .replace(/^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?\s*$/gm, '')
+    .replace(/^\s*\|/gm, '')
+    .replace(/^\s*[-*+]\s+/gm, '')
+    .replace(/^\s*\d+[.)]\s+/gm, '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/(^|\s)_([^_]+)_(?=\s|$)/g, '$1$2')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\|/g, ' ')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+const EMOJI_RE = /\p{Extended_Pictographic}/gu
+const EMOJI_JOIN_RE = /\u200D|\uFE0F|\u20E3/g
+const FLAG_RE = /[\u{1F1E6}-\u{1F1FF}]/gu
+
+const TABLE_DIVIDER_CELL_RE = /^:?-{2,}:?$/
+
+export function markdownToSpeechText(markdown: string): string {
+  if (!markdown) return ''
+  let text = markdown
+  text = text.replace(/```[^\n`]*\n?([\s\S]*?)```/g, (_m, code: string) => `\nএখন একটি কোড উদাহরণ বলছি।\n${code}\n`)
+  text = text
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/(^|\s)_([^_]+)_(?=\s|$)/g, '$1$2')
+    .replace(/~~([^~]+)~~/g, '$1')
+    .replace(/^>\s?/gm, '')
+    .replace(/^\s*([-*_])\s*\1\s*\1+\s*$/gm, '')
+    .replace(/^\s*[-*+]\s+/gm, '')
+    .replace(/^\s*\d+[.)]\s+/gm, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+  text = text
+    .split('\n')
+    .map((line) => {
+      const trimmed = line.trim()
+      if (!trimmed.startsWith('|')) return line
+      const cells = trimmed
+        .replace(/^\|/, '')
+        .replace(/\|$/, '')
+        .split('|')
+        .map((cell) => cell.trim())
+        .filter((cell) => cell.length > 0)
+      if (cells.length === 0) return ''
+      if (cells.every((cell) => TABLE_DIVIDER_CELL_RE.test(cell))) return ''
+      return cells.join(', ')
+    })
+    .join('\n')
+  text = text
+    .replace(/\|/g, ' ')
+    .replace(EMOJI_RE, '')
+    .replace(EMOJI_JOIN_RE, '')
+    .replace(FLAG_RE, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/^\n+|\n+$/g, '')
+    .trim()
+  return text
+}
+
+export function splitForSpeech(text: string, maxChars = 200): string[] {
+  const chunks: string[] = []
+  let rest = text.trim()
+  while (rest.length > 0) {
+    if (rest.length <= maxChars) {
+      const trimmed = rest.trim()
+      if (trimmed) chunks.push(trimmed)
+      break
+    }
+    const low = Math.floor(maxChars * 0.55)
+    const windowText = rest.slice(0, maxChars + 1)
+    let cut = -1
+    const sentence = Math.max(
+      windowText.lastIndexOf('।'),
+      windowText.lastIndexOf('.'),
+      windowText.lastIndexOf('!'),
+      windowText.lastIndexOf('?'),
+      windowText.lastIndexOf('…'),
+      windowText.lastIndexOf('\n'),
+    )
+    if (sentence > low) cut = sentence
+    if (cut < 0) {
+      const mid = Math.max(
+        windowText.lastIndexOf(', '),
+        windowText.lastIndexOf(';'),
+        windowText.lastIndexOf(':'),
+        windowText.lastIndexOf(' '),
+      )
+      if (mid > low) cut = mid
+    }
+    if (cut < 0) cut = maxChars
+    const piece = rest.slice(0, cut + 1).trim()
+    if (piece) chunks.push(piece)
+    rest = rest.slice(cut + 1).trim()
+  }
+  return chunks
+}

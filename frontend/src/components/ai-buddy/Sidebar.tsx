@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Check, Moon, Pencil, Plus, Search, Sparkles, Sun, Trash2, X } from 'lucide-react'
+import { Check, Moon, Pencil, Plus, RotateCcw, Search, Settings, Sparkles, Sun, Trash2, X } from 'lucide-react'
 import type { Conversation, GroupKey } from './types'
 import { GROUP_LABELS, GROUP_ORDER, formatConversationDate, groupKeyOf } from './utils'
 import { useTheme } from '../../context/ThemeContext'
@@ -14,6 +14,8 @@ interface SidebarProps {
   onSelect: (id: string) => void
   onRename: (id: string, title: string) => void
   onDelete: (id: string) => void
+  onOpenSettings: () => void
+  onClearAll: () => void
 }
 
 export function Sidebar({
@@ -25,6 +27,8 @@ export function Sidebar({
   onSelect,
   onRename,
   onDelete,
+  onOpenSettings,
+  onClearAll,
 }: SidebarProps) {
   const { theme, toggleTheme } = useTheme()
   const { user } = useAuth()
@@ -276,6 +280,32 @@ export function Sidebar({
               ))
             )}
           </nav>
+
+          <div className="border-t px-2 py-2" style={{ borderColor: 'var(--color-border)' }}>
+            <button
+              type="button"
+              onClick={() => {
+                onOpenSettings()
+                onCloseMobile()
+              }}
+              className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-sm font-semibold transition-colors"
+              style={{ color: 'var(--color-text-muted)' }}
+            >
+              <Settings size={16} /> সেটিংস
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm('সব কথোপকথন মুছে ফেলতে চাও? এই কাজটি আর ফেরানো যাবে না।')) {
+                  onClearAll()
+                }
+              }}
+              className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-sm font-semibold transition-colors"
+              style={{ color: 'var(--color-error)' }}
+            >
+              <RotateCcw size={16} /> ইতিহাস পরিষ্কার করুন
+            </button>
+          </div>
 
           <div className="border-t px-3 py-3" style={{ borderColor: 'var(--color-border)' }}>
             <div className="flex items-center justify-between">
