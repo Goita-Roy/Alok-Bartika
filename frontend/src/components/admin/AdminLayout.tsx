@@ -25,7 +25,7 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
-  const { theme, toggleTheme } = useTheme()
+  const { resolvedTheme, toggleTheme } = useTheme()
   const { user, logout } = useAuth()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -154,7 +154,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'var(--color-accent-pale)'; e.currentTarget.style.color = 'var(--color-accent)' }}
               onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)' }}
             >
-              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+              {resolvedTheme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
 
             {user && (

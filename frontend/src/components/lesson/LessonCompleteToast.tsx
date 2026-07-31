@@ -11,8 +11,8 @@ interface Props {
 }
 
 export function LessonCompleteToast({ show, isLevelCompleted, nextLessonLabel, onDismiss }: Props) {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   useEffect(() => {
     if (!show) return;

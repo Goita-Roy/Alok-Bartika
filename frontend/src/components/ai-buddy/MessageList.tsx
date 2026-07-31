@@ -229,6 +229,9 @@ interface MessageListProps {
 
 const FONT_SIZES = { sm: '0.875rem', md: '0.9375rem', lg: '1.0625rem' }
 
+const INITIAL_VISIBLE = 30
+const LOAD_MORE_STEP = 30
+
 export function MessageList({
   messages,
   loading,
@@ -239,15 +242,18 @@ export function MessageList({
   onSuggestedPrompt,
 }: MessageListProps) {
   const endRef = useRef<HTMLDivElement>(null)
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE)
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages.length, loading, endRef])
 
   const empty = messages.length === 0 && !loading
+  const sliceStart = Math.max(0, messages.length - visibleCount)
+  const visibleMessages = messages.slice(sliceStart)
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto">
+    <div className="chat-scroll min-h-0 flex-1 overflow-y-auto">
       {empty ? (
         <div className="flex min-h-full flex-col items-center justify-center px-4 py-8">
           <EmptyState onPrompt={onSuggestedPrompt} hasConversation={hasConversation} />
@@ -257,7 +263,19 @@ export function MessageList({
           className="mx-auto w-full max-w-3xl space-y-5 px-3 py-4 sm:px-6 sm:py-6"
           style={{ fontSize: FONT_SIZES[fontSize] }}
         >
-          {messages.map((turn) => (
+          {sliceStart > 0 && (
+            <div className="flex justify-center pt-1">
+              <button
+                type="button"
+                onClick={() => setVisibleCount((n) => n + LOAD_MORE_STEP)}
+                className="rounded-lg px-3 py-1.5 text-xs font-bold transition-opacity hover:opacity-80"
+                style={{ color: 'var(--color-accent)', backgroundColor: 'var(--color-accent-pale)' }}
+              >
+                আরও পুরনো বার্তা দেখুন ({sliceStart})
+              </button>
+            </div>
+          )}
+          {visibleMessages.map((turn) => (
             <MessageBubbleMemo
               key={turn.id}
               turn={turn}

@@ -32,8 +32,8 @@ import PendingCompletionContext from "../../components/beginner-content/PendingC
 import { useTheme } from "../../context/ThemeContext";
 
 function useP() {
-  const { theme } = useTheme();
-  return theme === 'light' ? {
+  const { resolvedTheme } = useTheme();
+  return resolvedTheme === 'light' ? {
     bg: "#FBF8F1",
     surface: "#E8F4F1",
     surfaceAlt: "#FFFFFF",

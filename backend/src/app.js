@@ -10,6 +10,7 @@ const { courseRouter } = require('./routes/courseRoutes')
 const { lessonRouter } = require('./routes/lessonRoutes')
 const { executionRouter } = require('./routes/executionRoutes')
 const { aiRouter } = require('./routes/aiRoutes')
+const { conversationRouter } = require('./routes/conversationRoutes')
 const { progressionRouter } = require('./routes/progressionRoutes')
 const { testRouter } = require('./routes/testRoutes')
 const { statsRouter } = require('./routes/statsRoutes')
@@ -85,7 +86,7 @@ function createApp() {
   app.use('/api/practice', ...blockOnPending, practiceRouter)
   app.use('/api/dashboard', ...blockOnPending, dashboardRouter)
   app.use('/api/learning', ...blockOnPending, learningRouter)
-  app.use('/api/ai', ...blockOnPending, aiRouter)
+  app.use('/api/ai', ...blockOnPending, aiRouter, conversationRouter)
 
   //  REMAINING ROUTES — no pending-feedback block needed
   app.use('/api/execute', executionRouter)

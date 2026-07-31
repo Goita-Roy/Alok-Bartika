@@ -14,6 +14,7 @@ export interface Conversation {
   createdAt: number
   updatedAt: number
   messages: ChatTurn[]
+  pinned?: boolean
 }
 
 export type GroupKey = 'Today' | 'Yesterday' | 'Previous 7 Days' | 'Previous 30 Days'

@@ -28,6 +28,7 @@ export interface UseConversationsResult {
   selectConversation: (id: string) => void
   deleteConversation: (id: string) => void
   renameConversation: (id: string, title: string) => void
+  togglePin: (id: string) => void
   addTurn: (conversationId: string, turn: ChatTurn) => void
   removeTurns: (conversationId: string, turnIds: string[]) => void
   clearConversation: (id: string) => void
@@ -73,6 +74,12 @@ export function useConversations(): UseConversationsResult {
     const t = title.trim()
     setConversations((prev) =>
       prev.map((c) => (c.id === id ? { ...c, title: t || 'নতুন কথোপকথন' } : c)),
+    )
+  }, [])
+
+  const togglePin = useCallback((id: string) => {
+    setConversations((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, pinned: !c.pinned } : c)),
     )
   }, [])
 
@@ -133,6 +140,7 @@ export function useConversations(): UseConversationsResult {
     selectConversation,
     deleteConversation,
     renameConversation,
+    togglePin,
     addTurn,
     removeTurns,
     clearConversation,

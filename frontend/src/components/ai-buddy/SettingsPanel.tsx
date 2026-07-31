@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Bot, RotateCcw, Sun, Moon, Wifi, WifiOff, X } from 'lucide-react'
+import { Bot, Monitor, RotateCcw, Sun, Moon, Wifi, WifiOff, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 import { MODEL_NAME, MODEL_PROVIDER } from './utils'
@@ -97,7 +97,7 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
 const FONT_SIZE_LABELS: Record<FontSize, string> = { sm: 'ছোট', md: 'মাঝারি', lg: 'বড়' }
 
 export function SettingsPanel({ open, online, onClose, onClearAll }: SettingsPanelProps) {
-  const { theme, toggleTheme } = useTheme()
+  const { theme, resolvedTheme, setTheme } = useTheme()
   const { fontSize, autoRead, setFontSize, setAutoRead } = usePrefs()
   const speech = useSpeech()
 
@@ -175,13 +175,29 @@ export function SettingsPanel({ open, online, onClose, onClearAll }: SettingsPan
 
           <hr className="mx-4 my-3" style={{ borderColor: 'var(--color-border)' }} />
 
-          <Row icon={theme === 'light' ? <Sun size={16} /> : <Moon size={16} />} label="থিম">
+          <Row
+            icon={
+              theme === 'system' ? (
+                <Monitor size={16} />
+              ) : resolvedTheme === 'light' ? (
+                <Sun size={16} />
+              ) : (
+                <Moon size={16} />
+              )
+            }
+            label="থিম"
+          >
             <Segmented
-              options={['light', 'dark'] as const}
+              options={['light', 'dark', 'system'] as const}
               value={theme}
-              onChange={() => toggleTheme()}
-              labels={{ light: 'লাইট', dark: 'ডার্ক' }}
+              onChange={setTheme}
+              labels={{ light: 'লাইট', dark: 'ডার্ক', system: 'সিস্টেম' }}
             />
+            {theme === 'system' && (
+              <p className="mt-1 text-[10px] font-medium" style={{ color: 'var(--color-text-muted)' }}>
+                ডিভাইসের থিম অনুযায়ী স্বয়ংক্রিয়
+              </p>
+            )}
           </Row>
 
           <Row icon={<span className="text-sm font-black">বাং</span>} label="ভাষা">

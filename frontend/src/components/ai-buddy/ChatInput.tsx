@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ClipboardEvent } from 'react'
 import { File, FileCode, FileText, ImagePlus, Mic, Paperclip, SendHorizontal, Square, X } from 'lucide-react'
 import type { Attachment } from './types'
 import { MAX_MESSAGE_CHARS, compressImage, formatBytes, isSupportedFile, isSupportedImageFile, uid } from './utils'
@@ -31,7 +31,7 @@ export function ChatInput({ loading, onSend, onStop, onNotice }: ChatInputProps)
     setValue((prev) => (prev ? `${prev} ${t}` : t))
   }
 
-  const rec = useSpeechRecognition({ lang: 'bn-BD', onFinal: appendTranscript, onError: onNotice })
+  const rec = useSpeechRecognition({ langs: ['bn-BD', 'en-US'], onFinal: appendTranscript, onError: onNotice })
 
   useEffect(() => {
     attachmentsRef.current = attachments
@@ -112,6 +112,19 @@ export function ChatInput({ loading, onSend, onStop, onNotice }: ChatInputProps)
     }
     if (images.length) addImageFiles(images)
     if (others.length) addFileItems(others)
+  }
+
+  const handlePaste = (e: ClipboardEvent<HTMLTextAreaElement>) => {
+    const files = Array.from(e.clipboardData.files).filter((f) => f.type.startsWith('image/'))
+    const itemImages = Array.from(e.clipboardData.items)
+      .filter((i) => i.kind === 'file' && i.type.startsWith('image/'))
+      .map((i) => i.getAsFile())
+      .filter((f): f is File => f !== null)
+    const images = [...files, ...itemImages]
+    if (images.length > 0) {
+      e.preventDefault()
+      processFiles(images)
+    }
   }
 
   const submit = () => {
@@ -240,7 +253,7 @@ export function ChatInput({ loading, onSend, onStop, onNotice }: ChatInputProps)
 
         {rec.listening && (
           <div className="flex items-center gap-2 rounded-xl px-2 py-1.5" style={{ backgroundColor: 'rgba(255,107,74,0.1)' }}>
-            <Mic size={13} className="animate-pulse" style={{ color: 'var(--color-error)' }} />
+            <WaveBars />
             <span className="flex-1 truncate text-xs font-semibold" style={{ color: 'var(--color-text)' }}>
               শুনছি…{rec.interim && <span style={{ color: 'var(--color-text-muted)' }}> «{rec.interim}</span>}
             </span>
@@ -264,7 +277,7 @@ export function ChatInput({ loading, onSend, onStop, onNotice }: ChatInputProps)
               disabled={loading}
               aria-label={rec.listening ? 'রেকর্ডিং বন্ধ করুন' : 'ভয়েস দিয়ে প্রশ্ন করুন'}
               title="ভয়েস দিয়ে প্রশ্ন করুন"
-              className="flex h-8 w-8 items-center justify-center rounded-xl transition-colors disabled:opacity-40"
+              className="flex h-9 w-9 items-center justify-center rounded-xl transition-colors disabled:opacity-40"
               style={{
                 color: rec.listening ? 'var(--color-error)' : 'var(--color-text-muted)',
                 backgroundColor: rec.listening ? 'rgba(255,107,74,0.1)' : 'transparent',
@@ -280,7 +293,7 @@ export function ChatInput({ loading, onSend, onStop, onNotice }: ChatInputProps)
               disabled={loading}
               aria-label="ছবি আপলোড করুন"
               title="ছবি আপলোড করুন"
-              className="flex h-8 w-8 items-center justify-center rounded-xl transition-colors disabled:opacity-40"
+              className="flex h-9 w-9 items-center justify-center rounded-xl transition-colors disabled:opacity-40"
               style={{ color: 'var(--color-text-muted)' }}
             >
               <ImagePlus size={16} />
@@ -291,7 +304,7 @@ export function ChatInput({ loading, onSend, onStop, onNotice }: ChatInputProps)
               disabled={loading}
               aria-label="ফাইল সংযুক্ত করুন"
               title="ফাইল সংযুক্ত করুন"
-              className="flex h-8 w-8 items-center justify-center rounded-xl transition-colors disabled:opacity-40"
+              className="flex h-9 w-9 items-center justify-center rounded-xl transition-colors disabled:opacity-40"
               style={{ color: 'var(--color-text-muted)' }}
             >
               <Paperclip size={16} />
@@ -328,6 +341,7 @@ export function ChatInput({ loading, onSend, onStop, onNotice }: ChatInputProps)
               setValue(e.target.value)
               grow(e.target)
             }}
+            onPaste={handlePaste}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
@@ -337,7 +351,7 @@ export function ChatInput({ loading, onSend, onStop, onNotice }: ChatInputProps)
             disabled={loading}
             placeholder="বার্তা লিখুন…"
             aria-label="বার্তা"
-            className="max-h-40 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-[color:var(--color-text-muted)]"
+            className="chat-textarea max-h-40 flex-1 resize-none bg-transparent px-2 py-2 outline-none placeholder:text-[color:var(--color-text-muted)]"
             style={{ color: 'var(--color-text)' }}
           />
 
@@ -363,7 +377,7 @@ export function ChatInput({ loading, onSend, onStop, onNotice }: ChatInputProps)
               onClick={onStop}
               aria-label="থামাও"
               title="থামাও"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white transition-opacity hover:opacity-85"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white transition-opacity hover:opacity-85"
               style={{ backgroundColor: 'var(--color-error)' }}
             >
               <Square size={16} fill="currentColor" />
@@ -375,7 +389,7 @@ export function ChatInput({ loading, onSend, onStop, onNotice }: ChatInputProps)
               aria-label="পাঠান"
               title="পাঠান"
               disabled={!canSend}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white transition-all disabled:opacity-40"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white transition-all disabled:opacity-40"
               style={{
                 backgroundColor: 'var(--color-accent)',
                 boxShadow: canSend ? '0 2px 8px rgba(14,124,102,0.3)' : 'none',
@@ -410,5 +424,19 @@ function RefreshSpin() {
       className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
       aria-label="প্রস্তুত হচ্ছে"
     />
+  )
+}
+
+function WaveBars() {
+  return (
+    <span className="flex shrink-0 items-center gap-0.5" aria-hidden="true">
+      {[0, 1, 2, 3].map((i) => (
+        <span
+          key={i}
+          className="h-3 w-0.5 animate-typing-bounce rounded-full"
+          style={{ backgroundColor: 'var(--color-error)', animationDelay: `${i * 0.12}s` }}
+        />
+      ))}
+    </span>
   )
 }

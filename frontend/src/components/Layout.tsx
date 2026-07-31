@@ -11,7 +11,7 @@ interface LayoutProps { children: ReactNode }
 
 export function Layout({ children }: LayoutProps) {
   const { user, logout } = useAuth()
-  const { theme, toggleTheme } = useTheme()
+  const { resolvedTheme, toggleTheme } = useTheme()
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [prevPath, setPrevPath] = useState(location.pathname)
@@ -22,6 +22,7 @@ export function Layout({ children }: LayoutProps) {
 
   const isLessonPage = location.pathname.startsWith('/courses/') && location.pathname.length > '/courses/'.length
   const isIDEPage = location.pathname === '/development' || location.pathname === '/practice'
+  const isAIBuddy = location.pathname === '/ai-buddy'
 
   const navLinks = [
     { to: '/',        label: 'হোম' },
@@ -44,7 +45,7 @@ export function Layout({ children }: LayoutProps) {
 
       {/* ── Navbar ─────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50"
-        style={{ backgroundColor: 'var(--color-navbar-bg)', backdropFilter: 'blur(14px)', borderBottom: '1px solid var(--color-border)', boxShadow: '0 1px 8px rgba(29,158,117,0.05)' }}>
+        style={{ backgroundColor: 'var(--color-navbar-bg)', backdropFilter: 'blur(14px)', borderBottom: '1px solid var(--color-border)', boxShadow: '0 1px 8px rgba(29,158,117,0.05)', paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
 
           {/* Logo */}
@@ -81,12 +82,12 @@ export function Layout({ children }: LayoutProps) {
             {/* Notifications */}
             <NotificationBell />
             {/* Theme toggle */}
-            <button onClick={toggleTheme} aria-label={theme === 'light' ? 'ডার্ক মোড' : 'লাইট মোড'}
+            <button onClick={toggleTheme} aria-label={resolvedTheme === 'light' ? 'ডার্ক মোড' : 'লাইট মোড'}
               className="p-2.5 rounded-xl transition-all duration-200"
               style={{ color: 'var(--color-text-muted)', border: '1.5px solid var(--color-border)' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-accent)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-accent-light)' }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-text-muted)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)' }}>
-              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+              {resolvedTheme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
             {!user ? (
               <>
@@ -228,7 +229,11 @@ export function Layout({ children }: LayoutProps) {
       </header>
 
       {/* ── Main ───────────────────────────────────────────────────── */}
-      <main className="flex-grow container mx-auto px-4 sm:px-6 pt-0 max-w-7xl">
+      <main
+        className={`flex-grow w-full mx-auto pt-0 ${
+          isAIBuddy ? 'max-w-[1600px] px-0 sm:px-4' : 'container max-w-7xl px-4 sm:px-6'
+        }`}
+      >
         {!isIDEPage && location.pathname !== '/ai-buddy' && <BackButton />}
         {children}
       </main>

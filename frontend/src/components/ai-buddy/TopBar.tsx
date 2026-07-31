@@ -13,7 +13,7 @@ interface TopBarProps {
 }
 
 export function TopBar({ title, loading, online, userInitial, userFullName, onToggleSidebar, onOpenSettings }: TopBarProps) {
-  const { theme, toggleTheme } = useTheme()
+  const { resolvedTheme, toggleTheme } = useTheme()
 
   return (
     <div
@@ -24,7 +24,7 @@ export function TopBar({ title, loading, online, userInitial, userFullName, onTo
         type="button"
         onClick={onToggleSidebar}
         aria-label="সাইডবার খুলুন"
-        className="rounded-lg p-1.5 transition-colors lg:hidden"
+        className="rounded-lg p-1.5 transition-colors xl:hidden"
         style={{ color: 'var(--color-text-muted)' }}
       >
         <Menu size={19} />
@@ -73,7 +73,7 @@ export function TopBar({ title, loading, online, userInitial, userFullName, onTo
           className="rounded-lg p-2 transition-colors"
           style={{ color: 'var(--color-text-muted)' }}
         >
-          {theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}
+          {resolvedTheme === 'light' ? <Moon size={17} /> : <Sun size={17} />}
         </button>
         <button
           type="button"

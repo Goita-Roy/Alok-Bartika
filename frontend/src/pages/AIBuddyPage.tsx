@@ -29,6 +29,7 @@ function AIBuddyInner() {
     selectConversation,
     deleteConversation,
     renameConversation,
+    togglePin,
     addTurn,
     removeTurns,
     clearAll,
@@ -198,13 +199,12 @@ function AIBuddyInner() {
   const hasConversation = activeConversation !== null
 
   return (
-    <div className="h-[calc(100vh-64px)] min-h-[460px]">
+    <div className="aibuddy-page min-h-[460px] pb-safe">
       <div
-        className="relative flex h-full overflow-hidden rounded-2xl"
+        className="relative flex h-full overflow-hidden rounded-none border-0 sm:rounded-2xl sm:border sm:shadow-[var(--shadow-card)]"
         style={{
           backgroundColor: 'var(--color-bg)',
-          border: '1.5px solid var(--color-border)',
-          boxShadow: 'var(--shadow-card)',
+          borderColor: 'var(--color-border)',
         }}
       >
         <Sidebar
@@ -216,6 +216,7 @@ function AIBuddyInner() {
           onSelect={handleSelect}
           onRename={renameConversation}
           onDelete={deleteConversation}
+          onTogglePin={togglePin}
           onOpenSettings={() => setSettingsOpen(true)}
           onClearAll={handleClearAll}
         />
@@ -230,6 +231,7 @@ function AIBuddyInner() {
             onOpenSettings={() => setSettingsOpen(true)}
           />
           <MessageList
+            key={activeConversation?.id ?? 'empty'}
             messages={activeConversation?.messages ?? []}
             loading={loading}
             userInitial={userInitial}
@@ -239,13 +241,15 @@ function AIBuddyInner() {
             onSuggestedPrompt={(text) => handleSend(text, [])}
           />
           <div className="border-t px-3 pb-3 pt-2.5 sm:px-4 sm:pb-4" style={{ borderColor: 'var(--color-border)' }}>
-            <ChatInput loading={loading} onSend={handleSend} onStop={handleStop} onNotice={showNotice} />
-            <p
-              className="mt-2 text-center text-[11px] font-medium"
-              style={{ color: 'var(--color-text-muted)', fontFamily: "'Hind Siliguri', sans-serif" }}
-            >
-              AI বাডি তোমাকে গাইড করে — উত্তর বলে দেয় না, শেখার পথ দেখায়
-            </p>
+            <div className="mx-auto w-full max-w-3xl">
+              <ChatInput loading={loading} onSend={handleSend} onStop={handleStop} onNotice={showNotice} />
+              <p
+                className="mt-2 text-center text-[11px] font-medium"
+                style={{ color: 'var(--color-text-muted)', fontFamily: "'Hind Siliguri', sans-serif" }}
+              >
+                AI বাডি তোমাকে গাইড করে — উত্তর বলে দেয় না, শেখার পথ দেখায়
+              </p>
+            </div>
           </div>
         </div>
       </div>

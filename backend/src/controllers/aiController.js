@@ -1,6 +1,8 @@
+const mongoose = require('mongoose')
 const { complete } = require('../services/ai')
 const { AIApiError } = require('../services/ai/errors')
 const { CHAT_SYSTEM_PROMPT, HINT_SYSTEM_PROMPT } = require('../services/ai/prompts')
+const { Conversation } = require('../models/Conversation')
 
 // ── Input guards ──────────────────────────────────────────────────────
 // Cap every text field so a single request can't blow up token cost.
@@ -10,6 +12,8 @@ const MAX_MESSAGE_LENGTH = 1000
 const MAX_HISTORY_LENGTH = 20
 const MAX_HINT_TOKENS = 150
 const MAX_CHAT_TOKENS = 500
+const DEFAULT_TITLE = 'New Chat'
+const MAX_TITLE_LENGTH = 80
 
 // Strip control characters (keeps prompts clean) and clamp length.
 function sanitizeText(value, maxLen) {
@@ -71,6 +75,7 @@ const chat = async (req, res) => {
     }
 
     // Optional conversation history — replayed for context, capped & sanitized.
+    // Kept identical so existing /api/ai/chat clients keep working.
     const messages = []
     const rawHistory = Array.isArray(req.body && req.body.history) ? req.body.history : []
     for (const item of rawHistory.slice(0, MAX_HISTORY_LENGTH)) {
@@ -80,6 +85,37 @@ const chat = async (req, res) => {
     }
     messages.push({ role: 'user', content: message })
 
+    // ── Conversation memory ────────────────────────────────────────────────
+    // Resolve the conversation this turn belongs to: an explicitly requested
+    // (and owned) conversation, otherwise the user's most recent active
+    // conversation, otherwise a brand-new auto-created one.
+    const userId = req.user._id
+    const body = req.body || {}
+    let conversation = null
+    if (body.conversationId) {
+      if (!mongoose.Types.ObjectId.isValid(body.conversationId)) {
+        return res.status(404).json({ message: 'Conversation not found' })
+      }
+      conversation = await Conversation.findOne({ _id: body.conversationId, userId })
+      if (!conversation) {
+        return res.status(404).json({ message: 'Conversation not found' })
+      }
+    } else {
+      conversation = await Conversation.findOne({ userId, archived: false }).sort({ updatedAt: -1 })
+      if (!conversation) {
+        conversation = await Conversation.create({ userId, title: DEFAULT_TITLE })
+      }
+    }
+
+    const hadMessages = conversation.messages.length > 0
+
+    // Persist the user message (timestamps bump `updatedAt` automatically).
+    conversation = await Conversation.findByIdAndUpdate(
+      conversation._id,
+      { $push: { messages: { role: 'user', content: message } } },
+      { new: true },
+    )
+
     const content = await complete({
       system: CHAT_SYSTEM_PROMPT,
       messages,
@@ -87,7 +123,20 @@ const chat = async (req, res) => {
       temperature: 0.7,
     })
 
-    res.status(200).json({ content })
+    // Persist the AI reply.
+    conversation = await Conversation.findByIdAndUpdate(
+      conversation._id,
+      { $push: { messages: { role: 'assistant', content } } },
+      { new: true },
+    )
+
+    // Auto-generate the title from the first user message.
+    if (!hadMessages && conversation.title === DEFAULT_TITLE) {
+      conversation.title = message.slice(0, MAX_TITLE_LENGTH)
+      await conversation.save()
+    }
+
+    res.status(200).json({ content, conversationId: String(conversation._id), conversation })
   } catch (err) {
     handleAIError(err, res)
   }

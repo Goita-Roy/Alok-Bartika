@@ -1,9 +1,13 @@
-import { useMemo, useState } from 'react'
-import { Check, Moon, Pencil, Plus, RotateCcw, Search, Settings, Sparkles, Sun, Trash2, X } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Check, Moon, Pencil, Pin, Plus, RotateCcw, Search, Settings, Sparkles, Sun, Trash2, X } from 'lucide-react'
 import type { Conversation, GroupKey } from './types'
 import { GROUP_LABELS, GROUP_ORDER, formatConversationDate, groupKeyOf } from './utils'
 import { useTheme } from '../../context/ThemeContext'
 import { useAuth } from '../../context/AuthContext'
+
+const SIDEBAR_WIDTH_KEY = 'ai-buddy.sidebarWidth'
+const SIDEBAR_MIN = 240
+const SIDEBAR_MAX = 400
 
 interface SidebarProps {
   conversations: Conversation[]
@@ -14,8 +18,20 @@ interface SidebarProps {
   onSelect: (id: string) => void
   onRename: (id: string, title: string) => void
   onDelete: (id: string) => void
+  onTogglePin: (id: string) => void
   onOpenSettings: () => void
   onClearAll: () => void
+}
+
+function readSidebarWidth(): number {
+  try {
+    const raw = localStorage.getItem(SIDEBAR_WIDTH_KEY)
+    const n = raw ? Number(raw) : NaN
+    if (Number.isFinite(n)) return Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, n))
+  } catch {
+    // ignore
+  }
+  return 280
 }
 
 export function Sidebar({
@@ -27,19 +43,31 @@ export function Sidebar({
   onSelect,
   onRename,
   onDelete,
+  onTogglePin,
   onOpenSettings,
   onClearAll,
 }: SidebarProps) {
-  const { theme, toggleTheme } = useTheme()
+  const { resolvedTheme, toggleTheme } = useTheme()
   const { user } = useAuth()
   const [query, setQuery] = useState('')
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
+  const [width, setWidth] = useState(readSidebarWidth)
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_WIDTH_KEY, String(width))
+    } catch {
+      // ignore
+    }
+  }, [width])
 
   const q = query.trim().toLowerCase()
 
   const filtered = useMemo(() => {
-    const list = [...conversations].sort((a, b) => b.updatedAt - a.updatedAt)
+    const list = [...conversations].sort(
+      (a, b) => (Number(Boolean(b.pinned)) - Number(Boolean(a.pinned))) || b.updatedAt - a.updatedAt,
+    )
     if (!q) return list
     return list.filter(
       (c) =>
@@ -77,16 +105,39 @@ export function Sidebar({
         <button
           type="button"
           aria-label="সাইডবার বন্ধ করুন"
-          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-30 bg-black/50 xl:hidden"
           onClick={onCloseMobile}
         />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-[280px] shrink-0 flex-col border-r transition-transform duration-300 ease-in-out lg:static lg:z-auto lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex shrink-0 flex-col border-r transition-transform duration-300 ease-in-out xl:relative xl:z-auto xl:translate-x-0 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
-        style={{ backgroundColor: 'var(--color-sidebar)', borderColor: 'var(--color-border)' }}
+        style={{ backgroundColor: 'var(--color-sidebar)', borderColor: 'var(--color-border)', width }}
       >
+        <div
+          role="separator"
+          aria-label="সাইডবার প্রস্থ পরিবর্তন করুন"
+          aria-orientation="vertical"
+          aria-valuenow={Math.round(width)}
+          aria-valuemin={SIDEBAR_MIN}
+          aria-valuemax={SIDEBAR_MAX}
+          className="absolute inset-y-0 right-0 z-10 hidden w-1.5 cursor-col-resize touch-none xl:block"
+          onPointerDown={(e) => {
+            e.preventDefault()
+            const startX = e.clientX
+            const startWidth = width
+            const onMove = (ev: PointerEvent) => {
+              setWidth(Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, startWidth + ev.clientX - startX)))
+            }
+            const onUp = () => {
+              window.removeEventListener('pointermove', onMove)
+              window.removeEventListener('pointerup', onUp)
+            }
+            window.addEventListener('pointermove', onMove)
+            window.addEventListener('pointerup', onUp)
+          }}
+        />
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex items-center gap-2.5 px-4 pb-3 pt-4">
             <div
@@ -116,7 +167,7 @@ export function Sidebar({
               type="button"
               onClick={onCloseMobile}
               aria-label="বন্ধ করুন"
-              className="rounded-lg p-2 lg:hidden"
+              className="rounded-lg p-2 xl:hidden"
               style={{ color: 'var(--color-text-muted)' }}
             >
               <X size={18} />
@@ -208,6 +259,7 @@ export function Sidebar({
                         ) : (
                           <div
                             className="group/item flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 transition-colors"
+                            aria-current={c.id === activeId ? 'true' : undefined}
                             style={
                               c.id === activeId
                                 ? { backgroundColor: 'var(--color-accent-pale)' }
@@ -230,20 +282,38 @@ export function Sidebar({
                             }}
                           >
                             <div className="min-w-0 flex-1">
-                              <p
-                                className="truncate text-[13px] font-semibold"
-                                style={{
-                                  color:
-                                    c.id === activeId ? 'var(--color-accent)' : 'var(--color-text)',
-                                }}
-                              >
-                                {c.title}
-                              </p>
+                              <div className="flex items-center gap-1">
+                                {c.pinned && (
+                                  <Pin size={10} className="shrink-0" style={{ color: 'var(--color-accent)' }} aria-hidden="true" />
+                                )}
+                                <p
+                                  className="min-w-0 truncate text-[13px] font-semibold"
+                                  style={{
+                                    color:
+                                      c.id === activeId ? 'var(--color-accent)' : 'var(--color-text)',
+                                  }}
+                                >
+                                  {c.title}
+                                </p>
+                              </div>
                               <p className="text-[10px] font-medium" style={{ color: 'var(--color-text-muted)' }}>
                                 {c.messages.length} বার্তা · {formatConversationDate(c.updatedAt)}
                               </p>
                             </div>
                             <div className="hidden shrink-0 items-center gap-0.5 group-hover/item:flex">
+                              <button
+                                type="button"
+                                aria-label={c.pinned ? 'পিন খুলুন' : 'পিন করুন'}
+                                title={c.pinned ? 'পিন খুলুন' : 'পিন করুন'}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onTogglePin(c.id)
+                                }}
+                                className="rounded-md p-1 transition-colors"
+                                style={{ color: c.pinned ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
+                              >
+                                {c.pinned ? <Pin size={13} fill="currentColor" /> : <Pin size={13} />}
+                              </button>
                               <button
                                 type="button"
                                 aria-label="নাম বদলান"
@@ -340,7 +410,7 @@ export function Sidebar({
                   ;(e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
                 }}
               >
-                {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+                {resolvedTheme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
               </button>
             </div>
           </div>
