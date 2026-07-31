@@ -1,12 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, CheckCircle, Monitor, Mic, Trophy, Bot, Smartphone, Lock, ArrowDown } from 'lucide-react'
+import { ArrowRight, CheckCircle, Monitor, Mic, Trophy, Bot, Smartphone, Lock, ShieldCheck, GraduationCap, Sparkles } from 'lucide-react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import api from '../config/api'
 import { useAuth } from '../context/AuthContext'
 import { useCourseProgress, type LearningLevel } from '../hooks/useCourseProgress'
 import homeBannerImage from '../assets/image/home-b-1.jpg'
+import aboutIllustration from '../assets/image/home-b-2.avif'
 import milestoneImage from '../assets/image/home-b-3.avif'
 
 /* ── Bengali digit helper (display-only, values unchanged) ───────────── */
@@ -763,82 +764,215 @@ export function HomePage() {
       </section>
 
 
-        {/* ── আমাদের সম্পর্কে ──────────────────────────────────────────────── */}
-      <motion.section
-        initial={prefersReduced ? false : 'hidden'}
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.25 }}
-        variants={sectionReveal}
+        {/* ── আমাদের সম্পর্কে (About Us - Educational Narrative with Mascot) ───────────── */}
+      <section
+        aria-labelledby="about-heading"
+        className="relative bg-gradient-to-b from-emerald-50/60 via-teal-50/30 to-emerald-100/40 py-16 sm:py-20 lg:py-28 overflow-hidden"
       >
-        <div className="rounded-3xl p-8 sm:p-12 lg:p-20 text-center relative overflow-hidden"
-          style={{ backgroundColor: 'var(--color-home-card-bg)', border: '1.5px solid var(--color-home-card-border)', boxShadow: '0 8px 32px rgba(14,124,102,0.08)' }}>
-          <motion.div className="relative z-10 space-y-6 max-w-3xl mx-auto" variants={staggerIn}>
-            <motion.span className="inline-block px-5 py-2 rounded-full text-sm font-black uppercase tracking-widest"
-              style={{ backgroundColor: 'var(--color-home-warm-badge-bg)', color: 'var(--color-home-warm-badge-text)', border: '1px solid var(--color-home-warm-badge-border)', fontFamily: BN }}
-              variants={fadeUp}>
-              আমাদের সম্পর্কে
-            </motion.span>
-            <motion.h2 className="text-4xl lg:text-5xl font-black leading-tight" style={{ color: 'var(--color-home-accent-dark)', fontFamily: BN }}
-              variants={headingReveal}>
-              বাংলাদেশের শিশুদের জন্য<br />
-              <span style={{ color: 'var(--color-accent)' }}>প্রোগ্রামিং শেখার আলো</span>
-            </motion.h2>
-            <motion.p className="text-lg lg:text-xl leading-relaxed max-w-2xl mx-auto" style={{ color: 'var(--color-home-text-body)', fontFamily: BN }}
-              variants={fadeUp}>
-              আলোকবর্তিকা — ৬ষ্ঠ থেকে ৮ম শ্রেণীর শিক্ষার্থীদের জন্য বাংলা ভাষায় ইন্টারঅ্যাকটিভ কোডিং প্ল্যাটফর্ম।
-            </motion.p>
-            <motion.div variants={buttonReveal}>
-              <Link to="/about"
-                className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl text-lg font-black transition-all duration-200 hover:scale-105 cursor-pointer"
-                style={{ color: 'var(--color-accent)', border: '1.5px solid var(--color-accent)', backgroundColor: 'var(--color-white)', fontFamily: BN }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-home-surface)' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-white)' }}>
-                আরও জানুন <ArrowDown size={18} />
-              </Link>
-            </motion.div>
-          </motion.div>
-        </div>
-      </motion.section>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
 
-      {/* ── CTA ────────────────────────────────────────────────────────── */}
-      <motion.section
-        initial={prefersReduced ? false : 'hidden'}
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.25 }}
-        variants={sectionReveal}
-      >
-        <div className="rounded-3xl p-8 sm:p-12 lg:p-20 text-center relative overflow-hidden"
-          style={{ backgroundColor: 'var(--color-home-cta-bg)', boxShadow: '0 12px 40px rgba(14,124,102,0.25)' }}>
-          <motion.div className="absolute top-0 right-0 w-80 h-80 rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(253,248,241,0.10) 0%, transparent 70%)', transform: 'translate(30%,-30%)' }}
-            variants={imageReveal} />
-          <motion.div className="absolute bottom-0 left-0 w-96 h-96 rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(253,248,241,0.06) 0%, transparent 70%)', transform: 'translate(-30%,30%)' }}
-            variants={imageReveal} />
-          <motion.div className="relative z-10 space-y-8" variants={staggerIn}>
-            <div className="space-y-4">
-              <motion.h2 className="text-4xl lg:text-5xl font-black leading-tight" style={{ color: 'var(--color-home-cta-text)', fontFamily: BN }}
-                variants={headingReveal}>
-                আজই শুরু করো তোমার<br />
-                <span style={{ color: 'var(--color-home-cta-soft)' }}>কোডিং যাত্রা!</span>
+            {/* Left Column: Story Content & Educational Pillars */}
+            <motion.div
+              className="lg:col-span-7 space-y-6 sm:space-y-8"
+              initial={prefersReduced ? false : 'hidden'}
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              variants={staggerIn}
+            >
+              {/* Badge */}
+              <motion.div variants={fadeUp}>
+                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold bg-white text-emerald-800 border border-emerald-200 shadow-sm font-['Hind_Siliguri',sans-serif]">
+                  <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                  আমাদের পরিচিতি ও লক্ষ্য
+                </span>
+              </motion.div>
+
+              {/* Headline */}
+              <motion.h2
+                id="about-heading"
+                variants={headingReveal}
+                className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 leading-tight tracking-tight font-['Hind_Siliguri',sans-serif]"
+              >
+                বাংলাদেশের শিক্ষার্থীদের জন্য<br />
+                <span className="bg-gradient-to-r from-[#0B7A69] to-[#0E8A74] bg-clip-text text-transparent">
+                  বাংলায় প্রোগ্রামিং শিক্ষার আলো
+                </span>
               </motion.h2>
-              <motion.p className="text-lg lg:text-xl font-medium max-w-2xl mx-auto" style={{ color: 'var(--color-home-cta-soft)', fontFamily: BN }}
-                variants={fadeUp}>
-                বিনামূল্যে রেজিস্ট্রেশন করো — কোনো ক্রেডিট কার্ড লাগবে না।
+
+              {/* Paragraph */}
+              <motion.p
+                variants={fadeUp}
+                className="text-base sm:text-lg text-slate-700 leading-relaxed font-['Hind_Siliguri',sans-serif]"
+              >
+                আলোকবর্তিকা — ৬ষ্ঠ থেকে ৮ম শ্রেণীর শিক্ষার্থীদের জন্য বাংলা ভাষায় ইন্টারঅ্যাকটিভ কোডিং প্ল্যাটফর্ম।
+                কম্পিউটার বা ফোনে কোনো সফটওয়্যার ইনস্টল ছাড়াই সরাসরি ব্রাউজারে Python শিখো।
               </motion.p>
-            </div>
-            <motion.div variants={buttonReveal}>
-              <Link to={!user ? '/signup' : (continueUrl || '/courses')}
-                className="inline-flex items-center gap-3 px-10 py-4 rounded-2xl text-xl font-black transition-all duration-200 hover:scale-105"
-                style={{ backgroundColor: 'var(--color-home-gold)', color: 'var(--color-home-gold-text)', boxShadow: '0 4px 20px rgba(244,197,58,0.35)', fontFamily: BN }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-home-gold-hover)' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-home-gold)' }}>
-                {!user ? 'বিনামূল্যে শুরু করুন' : (continueUrl ? 'শেখা চালিয়ে যান' : 'কোর্সসমূহ দেখুন')} <ArrowRight size={22} />
+
+              {/* 3 Pillars */}
+              <motion.div variants={staggerIn} className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                {[
+                  {
+                    icon: '🇧🇩',
+                    title: 'সহজ বাংলায় পাঠ',
+                    desc: 'জটিল প্রোগ্রামিং ধারণা সহজ বাংলা ভাষায় ব্যাখ্যাকৃত।',
+                  },
+                  {
+                    icon: '💻',
+                    title: 'ইনস্টলহীন IDE',
+                    desc: 'যেকোনো ব্রাউজারে সরাসরি কোড লেখার সুবিধা।',
+                  },
+                  {
+                    icon: '🤖',
+                    title: 'বাংলা AI সহায়তা',
+                    desc: 'ভুল হলে বাংলায় তাত্ক্ষণিক ফিডব্যাক ও গাইড।',
+                  },
+                ].map((item, idx) => (
+                  <motion.div
+                    key={idx}
+                    variants={fadeUp}
+                    className="bg-white/90 rounded-xl p-4 border border-emerald-100/80 shadow-sm transition-all duration-200 hover:shadow-md hover:border-emerald-200"
+                  >
+                    <div className="text-2xl mb-2">{item.icon}</div>
+                    <h3 className="text-base font-bold text-slate-900 font-['Hind_Siliguri',sans-serif] mb-1">
+                      {item.title}
+                    </h3>
+                    <p className="text-xs text-slate-600 font-['Hind_Siliguri',sans-serif] leading-relaxed">
+                      {item.desc}
+                    </p>
+                  </motion.div>
+                ))}
+              </motion.div>
+
+              {/* Action Button */}
+              <motion.div variants={buttonReveal} className="pt-2">
+                <Link
+                  to="/about"
+                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl text-base font-bold text-white bg-[#0B7A69] hover:bg-[#0E8A74] shadow-md hover:shadow-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B7A69] focus-visible:ring-offset-2 font-['Hind_Siliguri',sans-serif]"
+                >
+                  <span>আমাদের সম্পর্কে বিস্তারিত পড়ুন</span>
+                  <ArrowRight size={18} className="transition-transform duration-200 group-hover:translate-x-1" />
+                </Link>
+              </motion.div>
+            </motion.div>
+
+            {/* Right Column: Mascot / Illustration on Desktop */}
+            <motion.div
+              className="lg:col-span-5 flex justify-center"
+              initial={prefersReduced ? false : 'hidden'}
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              variants={imageReveal}
+            >
+              <div className="relative w-full max-w-md lg:max-w-none">
+                <div className="absolute -inset-4 bg-emerald-200/40 rounded-3xl blur-2xl -z-10" />
+                <img
+                  src={aboutIllustration}
+                  alt="আলোকবর্তিকা শিক্ষা সহায়ক ইলাস্ট্রেশন"
+                  width="480"
+                  height="360"
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-auto rounded-2xl border border-emerald-100/60 shadow-lg object-cover"
+                />
+              </div>
+            </motion.div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ── Responsive Curved Transition Divider Bridge ────────────────────── */}
+      <div className="relative w-full overflow-hidden leading-none bg-[#0B5E4F] -mt-1 pointer-events-none" aria-hidden="true">
+        <svg
+          viewBox="0 0 1440 96"
+          className="w-full h-12 sm:h-16 lg:h-20"
+          preserveAspectRatio="none"
+        >
+          <path
+            fill="#D1FAE5"
+            fillOpacity="0.4"
+            d="M0,32L60,42.7C120,53,240,75,360,74.7C480,75,600,53,720,48C840,43,960,53,1080,64C1200,75,1320,85,1380,85.3L1440,86L1440,0L1380,0C1320,0,1200,0,1080,0C960,0,840,0,720,0C600,0,480,0,360,0C240,0,120,0,60,0L0,0Z"
+          />
+          <path
+            fill="#0B5E4F"
+            d="M0,64L60,69.3C120,75,240,85,360,80C480,75,600,53,720,48C840,43,960,53,1080,64C1200,75,1320,85,1380,90L1440,96L1440,96L1380,96C1320,96,1200,96,1080,96C960,96,840,96,720,96C600,96,480,96,360,96C240,96,120,96,60,96L0,96Z"
+          />
+        </svg>
+      </div>
+
+      {/* ── CTA (Educational Call to Action Section with Trust Badges) ────── */}
+      <section
+        aria-labelledby="cta-heading"
+        className="relative bg-[#0B5E4F] text-white pt-8 pb-16 sm:pb-20 lg:pb-24 overflow-hidden"
+      >
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <motion.div
+            className="space-y-6 sm:space-y-8"
+            initial={prefersReduced ? false : 'hidden'}
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={staggerIn}
+          >
+            {/* Pill Badge */}
+            <motion.div variants={fadeUp}>
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold bg-emerald-900/60 text-emerald-200 border border-emerald-400/30 font-['Hind_Siliguri',sans-serif]">
+                <Sparkles size={14} className="text-amber-400" />
+                আজই যোগ দাও আলোকবর্তিকায়
+              </span>
+            </motion.div>
+
+            {/* Headline */}
+            <motion.h2
+              id="cta-heading"
+              variants={headingReveal}
+              className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight font-['Hind_Siliguri',sans-serif]"
+            >
+              আজই শুরু করো তোমার<br />
+              <span className="text-amber-300">কোডিং যাত্রা!</span>
+            </motion.h2>
+
+            {/* Paragraph */}
+            <motion.p
+              variants={fadeUp}
+              className="text-base sm:text-lg text-emerald-100/90 max-w-2xl mx-auto font-['Hind_Siliguri',sans-serif] leading-relaxed"
+            >
+              বিনামূল্যে রেজিস্ট্রেশন করো — কোনো গোপন ফি বা ক্রেডিট কার্ড লাগবে না।
+            </motion.p>
+
+            {/* Primary Action Button */}
+            <motion.div variants={buttonReveal} className="pt-2">
+              <Link
+                to={!user ? '/signup' : (continueUrl || '/courses')}
+                className="group inline-flex items-center gap-3 px-8 sm:px-10 py-4 rounded-xl text-lg sm:text-xl font-black text-amber-950 bg-[#F4C542] hover:bg-amber-400 shadow-lg hover:shadow-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B5E4F] font-['Hind_Siliguri',sans-serif]"
+              >
+                <span>{!user ? 'বিনামূল্যে শুরু করুন' : (continueUrl ? 'শেখা চালিয়ে যান' : 'কোর্সসমূহ দেখুন')}</span>
+                <ArrowRight size={20} className="transition-transform duration-200 group-hover:translate-x-1" />
               </Link>
             </motion.div>
+
+            {/* 3 Trust Indicators Below CTA */}
+            <motion.div
+              variants={fadeUp}
+              className="pt-6 border-t border-emerald-800/60 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-xs sm:text-sm text-emerald-200/90 font-['Hind_Siliguri',sans-serif]"
+            >
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={16} className="text-emerald-400 shrink-0" />
+                <span>১০০% বিনামূল্যে ও নিরাপদ</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <GraduationCap size={16} className="text-emerald-400 shrink-0" />
+                <span>৬ষ্ঠ-৮ম শ্রেণীর শিক্ষাক্রম উপযোগী</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle size={16} className="text-emerald-400 shrink-0" />
+                <span>সম্পূর্ণ বাংলায় ও কার্ডমুক্ত</span>
+              </div>
+            </motion.div>
+
           </motion.div>
         </div>
-      </motion.section>
+      </section>
     </div>
   )
 }
