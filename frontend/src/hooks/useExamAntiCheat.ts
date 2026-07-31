@@ -6,6 +6,12 @@ export interface ExamTerminationInfo {
   terminatedAt: number | null
 }
 
+// Browsers dispatch a window `blur` event while entering AND exiting the
+// Fullscreen API (ESC / the browser's fullscreen control). Without a guard,
+// a student pressing ESC to leave fullscreen would be misread as "focus lost"
+// and the exam would be terminated. This grace window covers both transitions.
+const FULLSCREEN_BLUR_GRACE_MS = 1500
+
 export function useExamAntiCheat(active: boolean) {
   const [info, setInfo] = useState<ExamTerminationInfo>({
     terminated: false,
@@ -13,6 +19,7 @@ export function useExamAntiCheat(active: boolean) {
     terminatedAt: null,
   })
   const activeRef = useRef(active)
+  const lastFullscreenChangeRef = useRef(0)
 
   useEffect(() => {
     activeRef.current = active
@@ -20,6 +27,16 @@ export function useExamAntiCheat(active: boolean) {
 
   const terminate = useCallback((reason: string) => {
     setInfo({ terminated: true, reason, terminatedAt: Date.now() })
+  }, [])
+
+  // Always track fullscreen transitions (even before the exam starts) so the
+  // blur guard below always has accurate timing data.
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      lastFullscreenChangeRef.current = Date.now()
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
   }, [])
 
   useEffect(() => {
@@ -34,6 +51,12 @@ export function useExamAntiCheat(active: boolean) {
 
     const handleWindowBlur = () => {
       if (!activeRef.current) return
+      // Exiting fullscreen (ESC) is a native browser action, NOT cheating.
+      // Skip any blur that belongs to a fullscreen transition.
+      if (document.fullscreenElement) return
+      if (Date.now() - lastFullscreenChangeRef.current < FULLSCREEN_BLUR_GRACE_MS) return
+      // A hidden tab is already recorded by visibilitychange — don't double-fire.
+      if (document.hidden) return
       terminate('আপনি পরীক্ষার নিয়ম ভঙ্গ করেছেন। ব্রাউজার ফোকাস হারানো হয়েছে।')
     }
 

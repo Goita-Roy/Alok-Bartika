@@ -126,7 +126,7 @@ interface BubbleItemProps {
 }
 
 function BubbleItem({ bubble: b, containerHeight, disabled, onClick }: BubbleItemProps) {
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const color = BUBBLE_COLORS[b.colorIdx % BUBBLE_COLORS.length];
   const size = 56 * b.size;
 
@@ -158,7 +158,6 @@ function BubbleItem({ bubble: b, containerHeight, disabled, onClick }: BubbleIte
           repeat: Infinity,
           ease: "easeInOut",
         },
-        exit: { duration: 0.3, ease: "easeOut" },
       }}
       onClick={(e) => {
         e.stopPropagation();

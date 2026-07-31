@@ -1,93 +1,165 @@
-import { Link } from 'react-router-dom'
-import { Code, Layers, Star, Zap, Sparkles } from 'lucide-react'
+import { useCallback, useRef, useState } from 'react'
+import axios from 'axios'
+import { ChatInput } from '../components/ai-buddy/ChatInput'
+import { MessageList } from '../components/ai-buddy/MessageList'
+import { Sidebar } from '../components/ai-buddy/Sidebar'
+import { TopBar } from '../components/ai-buddy/TopBar'
+import { useConversations } from '../components/ai-buddy/useConversations'
+import { buildHistory, toFriendlyError, uid } from '../components/ai-buddy/utils'
+import type { ChatTurn } from '../components/ai-buddy/types'
+import api from '../config/api'
 import { useAuth } from '../context/AuthContext'
-
-const AI_TOPICS = [
-  {
-    label: 'ভেরিয়েবল',
-    description: 'পরিবর্তনশীল ও ডাটা টাইপ',
-    href: '/courses',
-    icon: Code,
-    color: '#7C3AED',
-    bg: '#F5F3FF',
-  },
-  {
-    label: 'লুপ',
-    description: 'লুপ ও পুনরাবৃত্তি',
-    href: '/courses',
-    icon: Layers,
-    color: '#2563EB',
-    bg: '#EFF6FF',
-  },
-  {
-    label: 'ফাংশন',
-    description: 'ফাংশন ও মডিউল',
-    href: '/courses',
-    icon: Star,
-    color: '#D97706',
-    bg: '#FFFBEB',
-  },
-  {
-    label: 'কুইজ',
-    description: 'প্র্যাকটিস কুইজ',
-    href: '/practice',
-    icon: Zap,
-    color: '#DC2626',
-    bg: '#FEF2F2',
-  },
-]
 
 export function AIBuddyPage() {
   const { user } = useAuth()
+  const {
+    conversations,
+    activeId,
+    activeConversation,
+    createConversation,
+    selectConversation,
+    deleteConversation,
+    renameConversation,
+    addTurn,
+    removeTurns,
+    clearConversation,
+  } = useConversations()
+
+  const [loading, setLoading] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const abortRef = useRef<AbortController | null>(null)
+
+  const requestAnswer = useCallback(
+    async (convId: string, message: string, history: ChatTurn[]) => {
+      setLoading(true)
+      const controller = new AbortController()
+      abortRef.current = controller
+      try {
+        const res = await api.post('/ai/chat', { message, history }, { signal: controller.signal })
+        const content: unknown = res.data && (res.data as { content?: unknown }).content
+        if (typeof content !== 'string' || !content.trim()) {
+          throw new Error('empty response')
+        }
+        addTurn(convId, { id: uid(), role: 'assistant', content, createdAt: Date.now() })
+      } catch (err) {
+        if (axios.isCancel(err)) return
+        const friendly = toFriendlyError(err)
+        addTurn(convId, {
+          id: uid(),
+          role: 'assistant',
+          content: friendly,
+          error: true,
+          createdAt: Date.now(),
+        })
+      } finally {
+        abortRef.current = null
+        setLoading(false)
+      }
+    },
+    [addTurn],
+  )
+
+  const handleSend = useCallback(
+    (text: string) => {
+      if (loading) return
+      const userTurn: ChatTurn = { id: uid(), role: 'user', content: text, createdAt: Date.now() }
+      if (!activeConversation) {
+        const conv = createConversation()
+        addTurn(conv.id, userTurn)
+        void requestAnswer(conv.id, text, [])
+      } else {
+        const history = buildHistory(activeConversation.messages)
+        addTurn(activeConversation.id, userTurn)
+        void requestAnswer(activeConversation.id, text, history)
+      }
+    },
+    [loading, activeConversation, createConversation, addTurn, requestAnswer],
+  )
+
+  const handleStop = useCallback(() => {
+    abortRef.current?.abort()
+  }, [])
+
+  const handleRetry = useCallback(
+    (errorTurnId: string) => {
+      if (loading || !activeConversation) return
+      const msgs = activeConversation.messages
+      const idx = msgs.findIndex((m) => m.id === errorTurnId)
+      if (idx <= 0) return
+      const userTurn = msgs[idx - 1]
+      if (userTurn.role !== 'user') return
+      const history = buildHistory(msgs.slice(0, idx - 1))
+      removeTurns(activeConversation.id, [errorTurnId])
+      void requestAnswer(activeConversation.id, userTurn.content, history)
+    },
+    [loading, activeConversation, removeTurns, requestAnswer],
+  )
+
+  const handleNewChat = useCallback(() => {
+    createConversation()
+    setSidebarOpen(false)
+  }, [createConversation])
+
+  const handleClear = useCallback(() => {
+    if (activeConversation) clearConversation(activeConversation.id)
+  }, [activeConversation, clearConversation])
+
+  const handleSelect = useCallback(
+    (id: string) => {
+      selectConversation(id)
+      setSidebarOpen(false)
+    },
+    [selectConversation],
+  )
+
+  const userInitial = (user?.fullName ?? 'U').charAt(0).toUpperCase()
+  const hasConversation = activeConversation !== null
+
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Hero */}
-      <div className="text-center mb-10">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
-          style={{ background: 'linear-gradient(135deg, #7C3AED, #A78BFA)', boxShadow: '0 4px 16px rgba(124,58,237,0.25)' }}>
-          <Sparkles size={28} color="#fff" />
-        </div>
-        <h1 className="text-3xl font-black mb-2" style={{ color: 'var(--color-text)' }}>
-          🤖 AI বাডি
-        </h1>
-        <p className="text-base font-medium max-w-lg mx-auto" style={{ color: 'var(--color-text-muted)', fontFamily: "'Hind Siliguri', sans-serif" }}>
-          তোমার ব্যক্তিগত AI সহায়ক — যেকোনো বিষয়ে সাহায্য, গাইড ও প্র্যাকটিসের জন্য তৈরি
-        </p>
-      </div>
-
-      {/* Topic cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {AI_TOPICS.map(t => {
-          const Icon = t.icon
-          return (
-            <Link key={t.label} to={t.href}
-              className="group rounded-2xl p-6 transition-all duration-200 hover:-translate-y-1"
-              style={{ backgroundColor: t.bg, border: '1.5px solid transparent', borderColor: t.color }}
+    <div className="h-[calc(100vh-64px)] min-h-[460px]">
+      <div
+        className="relative flex h-full overflow-hidden rounded-2xl"
+        style={{
+          backgroundColor: 'var(--color-bg)',
+          border: '1.5px solid var(--color-border)',
+          boxShadow: 'var(--shadow-card)',
+        }}
+      >
+        <Sidebar
+          conversations={conversations}
+          activeId={activeId}
+          mobileOpen={sidebarOpen}
+          onCloseMobile={() => setSidebarOpen(false)}
+          onNewChat={handleNewChat}
+          onSelect={handleSelect}
+          onRename={renameConversation}
+          onDelete={deleteConversation}
+        />
+        <div className="flex min-w-0 flex-1 flex-col" style={{ backgroundColor: 'var(--color-bg)' }}>
+          <TopBar
+            title={activeConversation?.title ?? 'AI বাডি'}
+            loading={loading}
+            onToggleSidebar={() => setSidebarOpen((v) => !v)}
+            onClear={handleClear}
+          />
+          <MessageList
+            messages={activeConversation?.messages ?? []}
+            loading={loading}
+            userInitial={userInitial}
+            hasConversation={hasConversation}
+            onRetry={handleRetry}
+            onSuggestedPrompt={handleSend}
+          />
+          <div className="border-t px-3 pb-3 pt-2.5 sm:px-4 sm:pb-4" style={{ borderColor: 'var(--color-border)' }}>
+            <ChatInput loading={loading} onSend={handleSend} onStop={handleStop} />
+            <p
+              className="mt-2 text-center text-[11px] font-medium"
+              style={{ color: 'var(--color-text-muted)', fontFamily: "'Hind Siliguri', sans-serif" }}
             >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.7)' }}>
-                  <Icon size={20} color={t.color} />
-                </div>
-                <div>
-                  <p className="font-bold text-sm" style={{ color: t.color }}>{t.label}</p>
-                  <p className="text-[11px] font-medium" style={{ color: 'var(--color-text-muted)', fontFamily: "'Hind Siliguri', sans-serif" }}>{t.description}</p>
-                </div>
-              </div>
-              <p className="text-xs font-semibold group-hover:underline" style={{ color: t.color }}>
-                {user ? 'শেখা চালিয়ে যান →' : 'শেখা শুরু করুন →'}
-              </p>
-            </Link>
-          )
-        })}
-      </div>
-
-      {/* Bottom info */}
-      <div className="mt-10 text-center rounded-2xl p-6"
-        style={{ backgroundColor: 'var(--color-surface)', border: '1.5px solid var(--color-border)' }}>
-        <p className="text-sm font-medium" style={{ color: 'var(--color-text-muted)', fontFamily: "'Hind Siliguri', sans-serif" }}>
-          আরও ফিচার শীঘ্রই আসছে — চ্যাট, কোড জেনারেশন, ব্যক্তিগতকৃত সুপারিশ!
-        </p>
+              AI বাডি তোমাকে গাইড করে — উত্তর বলে দেয় না, শেখার পথ দেখায়
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   )

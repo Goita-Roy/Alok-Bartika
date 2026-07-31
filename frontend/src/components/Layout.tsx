@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import type { ReactNode } from 'react'
 import { BookOpen, LayoutDashboard, LogOut, Menu, Moon, Sun, User, Settings, X } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { BackButton } from './BackButton'
 import { NotificationBell } from './NotificationBell'
 
@@ -14,10 +14,11 @@ export function Layout({ children }: LayoutProps) {
   const { theme, toggleTheme } = useTheme()
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
-
-  useEffect(() => {
+  const [prevPath, setPrevPath] = useState(location.pathname)
+  if (location.pathname !== prevPath) {
+    setPrevPath(location.pathname)
     setMobileOpen(false)
-  }, [location.pathname])
+  }
 
   const isLessonPage = location.pathname.startsWith('/courses/') && location.pathname.length > '/courses/'.length
   const isIDEPage = location.pathname === '/development' || location.pathname === '/practice'
@@ -26,7 +27,7 @@ export function Layout({ children }: LayoutProps) {
     { to: '/',        label: 'হোম' },
     { to: '/about',   label: 'আমাদের সম্পর্কে' },
     { to: '/contact', label: 'যোগাযোগ' },
-    ...(user ? [{ to: '/courses', label: 'কোর্সসমূহ' }] : []),
+    ...(user ? [{ to: '/courses', label: 'কোর্সসমূহ' }, { to: '/ai-buddy', label: 'AI বাডি' }] : []),
   ]
 
   const mobileUserLinks = user ? [
@@ -228,7 +229,7 @@ export function Layout({ children }: LayoutProps) {
 
       {/* ── Main ───────────────────────────────────────────────────── */}
       <main className="flex-grow container mx-auto px-4 sm:px-6 pt-0 max-w-7xl">
-        {!isIDEPage && <BackButton />}
+        {!isIDEPage && location.pathname !== '/ai-buddy' && <BackButton />}
         {children}
       </main>
 

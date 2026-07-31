@@ -202,7 +202,7 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Server is source of truth — replace localStorage with the canonical list.
       // Never union with stale local data; that would let deleted/incorrect
       // entries survive indefinitely and break multi-device consistency.
-      const serverCompleted = (data.completedLessons || []).map(String)
+      const serverCompleted: string[] = (data.completedLessons || []).map(String)
       saveCompletedClassIdsToLocal(serverCompleted)
 
       // IMPORTANT: Use functional updater so optimistic additions from

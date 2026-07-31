@@ -5,6 +5,7 @@ import { API_BASE_URL } from '../config/api'
 import { useAuth } from '../context/AuthContext'
 import { useCopyProtection } from '../hooks/useCopyProtection'
 import { useExamAntiCheat } from '../hooks/useExamAntiCheat'
+import { useExamFullscreenSecurity, MAX_FULLSCREEN_VIOLATIONS } from '../hooks/useExamFullscreenSecurity'
 import { useCourseProgress, type LearningLevel } from '../hooks/useCourseProgress'
 
 import { ExamTerminatedPage } from '../components/exam/ExamTerminatedPage'
@@ -72,6 +73,7 @@ interface SubmitResult {
   nextLevelUnlocked: boolean
   nextLevel: string | null
   feedbackRequired: boolean
+  pendingFeedback: string | null
   questionResults: QuestionResult[]
 }
 
@@ -499,6 +501,93 @@ function ExamRulesModal({
   )
 }
 
+// ── Fullscreen warning ───────────────────────────────────────────────────────
+// Shown when the student leaves fullscreen mid-exam. They can re-enter
+// fullscreen or continue anyway; each exit counts as a violation and the exam
+// is auto-submitted after MAX_FULLSCREEN_VIOLATIONS exits.
+function FullscreenWarningModal({
+  level,
+  examTitle,
+  violationCount,
+  reEntering,
+  onReEnter,
+  onContinue,
+}: {
+  level: string
+  examTitle: string
+  violationCount: number
+  reEntering: boolean
+  onReEnter: () => void
+  onContinue: () => void
+}) {
+  const remaining = Math.max(0, MAX_FULLSCREEN_VIOLATIONS - violationCount)
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}
+    >
+      <div
+        className="w-full max-w-md rounded-3xl overflow-hidden"
+        style={{
+          backgroundColor: 'rgba(10,74,63,0.95)',
+          border: '1.5px solid rgba(245,200,66,0.35)',
+          boxShadow: '0 0 60px rgba(245,200,66,0.10), 0 25px 50px rgba(0,0,0,0.45)',
+          animation: 'rulesModalIn 0.3s ease-out',
+        }}
+      >
+        <div
+          className="shrink-0 px-6 pt-6 pb-4 text-center"
+          style={{ borderBottom: '1px solid rgba(101,209,178,0.12)' }}
+        >
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3"
+            style={{ backgroundColor: 'rgba(245,200,66,0.12)', border: '2px solid rgba(245,200,66,0.30)' }}
+          >
+            <Monitor size={28} style={{ color: S.warn }} />
+          </div>
+          <h2 className="text-lg font-black" style={{ color: S.text }}>
+            পূর্ণ পর্দা মোড ছেড়ে যাওয়া হয়েছে
+          </h2>
+          <p className="text-xs font-semibold mt-1" style={{ color: S.muted }}>
+            {LEVEL_LABELS[level]} ফাইনাল পরীক্ষা — {examTitle}
+          </p>
+        </div>
+
+        <div className="px-6 py-4 space-y-3">
+          <p className="text-sm font-bold leading-relaxed" style={{ color: S.text }}>
+            পরীক্ষা নিরাপদ রাখতে পূর্ণ পর্দা মোডে থাকা প্রয়োজন। আপনি পূর্ণ পর্দা মোড থেকে বের হয়েছেন।
+          </p>
+          <p className="text-xs font-semibold leading-relaxed" style={{ color: S.warn }}>
+            সতর্কতা {violationCount}/{MAX_FULLSCREEN_VIOLATIONS} ·{' '}
+            {remaining > 0
+              ? `আর ${remaining} বার বের হলে পরীক্ষা স্বয়ংক্রিয়ভাবে জমা হয়ে যাবে।`
+              : 'পরীক্ষা স্বয়ংক্রিয়ভাবে জমা হয়ে যাবে।'}
+          </p>
+        </div>
+
+        <div className="px-6 pb-6 flex flex-col gap-3">
+          <button
+            onClick={onReEnter}
+            disabled={reEntering}
+            className="w-full py-3 rounded-xl font-black text-sm transition-all hover:scale-[1.02] disabled:opacity-60 disabled:hover:scale-100"
+            style={{ backgroundColor: S.accent, color: '#04342C', boxShadow: '0 0 20px rgba(101,209,178,0.25)' }}
+          >
+            {reEntering ? 'পুনরায় চেষ্টা করা হচ্ছে...' : '🖥️ পূর্ণ পর্দায় ফিরে যান'}
+          </button>
+          <button
+            onClick={onContinue}
+            className="w-full py-3 rounded-xl font-bold text-sm transition-all"
+            style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: S.muted, border: '1px solid rgba(255,255,255,0.10)' }}
+          >
+            এখনই নয় (সতর্কতা হিসেবে ধরা হবে)
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Result screen ────────────────────────────────────────────────────────────
 function ResultScreen({
   result, level, onRetry,
@@ -763,6 +852,13 @@ export function ExamPage() {
   useEffect(() => { submittedRef.current = submitted }, [submitted])
 
   const antiCheatInfo = useExamAntiCheat(examStarted)
+
+  // Secure fullscreen handling. Auto-submits via submitFnRef (always the latest
+  // submit function) after MAX_FULLSCREEN_VIOLATIONS fullscreen exits.
+  const fullscreenSecurity = useExamFullscreenSecurity(
+    examStarted && !submitted && !antiCheatInfo.terminated,
+    () => submitFnRef.current(),
+  )
 
   // Fetch exam
   const { data: exam, isLoading, isError, error } = useQuery<ExamData>({
@@ -1033,11 +1129,7 @@ export function ExamPage() {
           onCancel={() => navigate('/courses')}
           onAccept={() => {
             setExamStarted(true)
-            try {
-              const el = document.documentElement
-              if (el.requestFullscreen) el.requestFullscreen().catch(() => {})
-              else if ((el as any).webkitRequestFullscreen) (el as any).webkitRequestFullscreen()
-            } catch { /* fullscreen not supported */ }
+            fullscreenSecurity.enterFullscreen()
           }}
         />
       </div>
@@ -1190,6 +1282,17 @@ export function ExamPage() {
           </button>
         )}
       </footer>
+
+      {fullscreenSecurity.showWarning && (
+        <FullscreenWarningModal
+          level={level!}
+          examTitle={exam.title}
+          violationCount={fullscreenSecurity.violationCount}
+          reEntering={fullscreenSecurity.reEntering}
+          onReEnter={fullscreenSecurity.enterFullscreen}
+          onContinue={fullscreenSecurity.continueWithoutFullscreen}
+        />
+      )}
     </div>
   )
 }

@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Gamepad2, Sparkles, RefreshCw, Repeat, Infinity,
+  Gamepad2, Sparkles, RefreshCw, Repeat, Infinity as InfinityIcon,
   Flag, Lightbulb
 } from "lucide-react";
 import SectionWrapper from "./SectionWrapper";
@@ -486,7 +486,7 @@ export default function Section6_Game_07() {
                       onClick={executeForever}
                       className="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-sm flex items-center gap-2 shadow-lg shadow-purple-500/20 border border-purple-400/20"
                     >
-                      <Infinity className="w-4 h-4" />
+                      <InfinityIcon className="w-4 h-4" />
                       <div className="text-left">
                         <span className="block">Forever</span>
                         <span className="text-[9px] font-normal opacity-70">অবিরাম চলতে থাকবে</span>
