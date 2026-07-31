@@ -155,7 +155,9 @@ class BrowserSpeechProvider implements SpeechProvider {
 
   speak(options: SpeakOptions): void {
     if (!this.supported) {
-      options.onError?.('SpeechSynthesis is not supported in this environment')
+      const err = 'SpeechSynthesis is not supported in this environment'
+      console.error(`[SpeechService] ${err}`)
+      options.onError?.(err)
       return
     }
     const synth = window.speechSynthesis
@@ -194,6 +196,7 @@ class BrowserSpeechProvider implements SpeechProvider {
         options.onEnd?.()
         return
       }
+      console.error('[SpeechService] Utterance playback error:', event.error)
       options.onError?.(event.error)
     }
 

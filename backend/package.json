@@ -4,6 +4,7 @@
   "description": "Alokbartika backend",
   "main": "src/server.js",
   "scripts": {
+    "build": "echo Backend build complete",
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "seed:exams": "node src/scripts/seedExams.js",

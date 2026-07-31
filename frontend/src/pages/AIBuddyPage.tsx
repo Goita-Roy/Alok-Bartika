@@ -79,7 +79,7 @@ function AIBuddyInner() {
 
   useEffect(() => {
     if (!autoRead) speech.stop()
-  }, [autoRead, speech])
+  }, [autoRead, speech.stop])
 
   useEffect(() => {
     if (!autoRead || loading || !activeConversation) return
@@ -96,7 +96,7 @@ function AIBuddyInner() {
     }
     readIdsRef.current.add(last.id)
     speech.speak(markdownToSpeechText(last.content))
-  }, [autoRead, loading, activeConversation, speech, showNotice])
+  }, [autoRead, loading, activeConversation, speech.supported, speech.speak, showNotice])
 
   const requestAnswer = useCallback(
     async (convId: string, message: string, history: ChatTurn[]) => {

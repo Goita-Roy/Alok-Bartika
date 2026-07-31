@@ -196,16 +196,147 @@ export function markdownToPlainText(markdown: string): string {
     .trim()
 }
 
-const EMOJI_RE = /\p{Extended_Pictographic}/gu
-const EMOJI_JOIN_RE = /\u200D|\uFE0F|\u20E3/g
-const FLAG_RE = /[\u{1F1E6}-\u{1F1FF}]/gu
-
 const TABLE_DIVIDER_CELL_RE = /^:?-{2,}:?$/
+
+const DIGIT_WORDS: Record<string, string> = {
+  '0': 'zero', '1': 'one', '2': 'two', '3': 'three', '4': 'four',
+  '5': 'five', '6': 'six', '7': 'seven', '8': 'eight', '9': 'nine',
+}
+
+function joinTokens(tokens: string[]): string {
+  if (tokens.length === 0) return ''
+  return tokens.join('. ')
+}
+
+function convertNumber(digits: string): string {
+  if (digits.length === 1) return DIGIT_WORDS[digits] ?? digits
+  return digits.split('').map((d) => DIGIT_WORDS[d] ?? d).join(' ')
+}
+
+function tokenizeLine(line: string): string[] {
+  const tokens: string[] = []
+  let i = 0
+  while (i < line.length) {
+    if (line[i] === '"') {
+      tokens.push('Double quote')
+      i++
+      let content = ''
+      while (i < line.length && line[i] !== '"') {
+        content += line[i]
+        i++
+      }
+      if (content) tokens.push(content)
+      if (i < line.length && line[i] === '"') {
+        tokens.push('Double quote')
+        i++
+      }
+      continue
+    }
+    if (line[i] === "'") {
+      tokens.push('Single quote')
+      i++
+      let content = ''
+      while (i < line.length && line[i] !== "'") {
+        content += line[i]
+        i++
+      }
+      if (content) tokens.push(content)
+      if (i < line.length && line[i] === "'") {
+        tokens.push('Single quote')
+        i++
+      }
+      continue
+    }
+    if (line[i] === '#' && tokens.length === 0) {
+      const comment = line.slice(i + 1).trim()
+      if (comment) {
+        tokens.push('comment')
+        tokens.push(comment)
+      }
+      break
+    }
+    if (/\s/.test(line[i])) {
+      i++
+      continue
+    }
+    const rest = line.slice(i)
+    if (/^===?/.test(rest)) { tokens.push('equals'); i += (rest[1] === '=' ? 2 : 1); continue }
+    if (/^!==?/.test(rest)) { tokens.push('not equals'); i += 2; continue }
+    if (/^<==?/.test(rest)) { tokens.push('less than or equal'); i += 2; continue }
+    if (/^>==?/.test(rest)) { tokens.push('greater than or equal'); i += 2; continue }
+    if (/^&&/.test(rest)) { tokens.push('and'); i += 2; continue }
+    if (/^\|\|/.test(rest)) { tokens.push('or'); i += 2; continue }
+    if (/^>>/.test(rest)) { tokens.push('right shift'); i += 2; continue }
+    if (/^<</.test(rest)) { tokens.push('left shift'); i += 2; continue }
+    const ch = line[i]
+    switch (ch) {
+      case '=': tokens.push('equals'); i++; continue
+      case '+': tokens.push('plus'); i++; continue
+      case '-': tokens.push('minus'); i++; continue
+      case '*': tokens.push('times'); i++; continue
+      case '/': tokens.push('divides'); i++; continue
+      case '%': tokens.push('modulo'); i++; continue
+      case '<': tokens.push('less than'); i++; continue
+      case '>': tokens.push('greater than'); i++; continue
+      case '&': tokens.push('ampersand'); i++; continue
+      case '|': tokens.push('pipe'); i++; continue
+      case '^': tokens.push('caret'); i++; continue
+      case '!': tokens.push('not'); i++; continue
+      case '(': tokens.push('Open bracket'); i++; continue
+      case ')': tokens.push('Close bracket'); i++; continue
+      case '{': tokens.push('Open brace'); i++; continue
+      case '}': tokens.push('Close brace'); i++; continue
+      case '[': tokens.push('Open square bracket'); i++; continue
+      case ']': tokens.push('Close square bracket'); i++; continue
+      case ',': tokens.push('comma'); i++; continue
+      case ';': tokens.push('semicolon'); i++; continue
+      case ':': tokens.push('colon'); i++; continue
+      case '.': tokens.push('dot'); i++; continue
+      case '?': tokens.push('question mark'); i++; continue
+      case '@': tokens.push('at'); i++; continue
+      case '$': tokens.push('dollar'); i++; continue
+      default:
+        if (/\d/.test(ch)) {
+          let numStr = ''
+          while (i < line.length && /\d/.test(line[i])) { numStr += line[i]; i++ }
+          tokens.push(convertNumber(numStr))
+          continue
+        }
+        if (/[a-zA-Z_]/.test(ch)) {
+          let word = ''
+          while (i < line.length && /[a-zA-Z0-9_]/.test(line[i])) { word += line[i]; i++ }
+          tokens.push(word)
+          continue
+        }
+        i++
+    }
+  }
+  return tokens
+}
+
+function codeToSpeechText(code: string, language?: string): string {
+  const parts: string[] = []
+  if (language) {
+    parts.push(language + ' code')
+  }
+  const lines = code.split('\n')
+  for (const rawLine of lines) {
+    const line = rawLine.trim()
+    if (!line) continue
+    const tokens = tokenizeLine(line)
+    if (tokens.length === 0) continue
+    parts.push(joinTokens(tokens))
+  }
+  return parts.join('. ')
+}
 
 export function markdownToSpeechText(markdown: string): string {
   if (!markdown) return ''
   let text = markdown
-  text = text.replace(/```[^\n`]*\n?([\s\S]*?)```/g, (_m, code: string) => `\nএখন একটি কোড উদাহরণ বলছি।\n${code}\n`)
+  text = text.replace(/```([a-zA-Z]*)[^\n`]*\n?([\s\S]*?)```/g, (_m, lang: string, code: string) => {
+    const label = lang ? ` ${lang} code ` : ' code '
+    return `\n${label}${codeToSpeechText(code, lang || undefined)}\n`
+  })
   text = text
     .replace(/`([^`]+)`/g, '$1')
     .replace(/^#{1,6}\s+/gm, '')
@@ -225,6 +356,7 @@ export function markdownToSpeechText(markdown: string): string {
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+  let rowIndex = 0
   text = text
     .split('\n')
     .map((line) => {
@@ -238,14 +370,12 @@ export function markdownToSpeechText(markdown: string): string {
         .filter((cell) => cell.length > 0)
       if (cells.length === 0) return ''
       if (cells.every((cell) => TABLE_DIVIDER_CELL_RE.test(cell))) return ''
-      return cells.join(', ')
+      rowIndex++
+      return cells.map((c) => c.replace(/\|/g, ' ')).join('. ') + '. Row ' + rowIndex + '.'
     })
     .join('\n')
   text = text
     .replace(/\|/g, ' ')
-    .replace(EMOJI_RE, '')
-    .replace(EMOJI_JOIN_RE, '')
-    .replace(FLAG_RE, '')
     .replace(/[ \t]+\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .replace(/^\n+|\n+$/g, '')
@@ -287,6 +417,43 @@ export function splitForSpeech(text: string, maxChars = 200): string[] {
     const piece = rest.slice(0, cut + 1).trim()
     if (piece) chunks.push(piece)
     rest = rest.slice(cut + 1).trim()
+  }
+  return chunks
+}
+
+export function splitByLanguage(text: string): string[] {
+  const segments: string[] = []
+  let current = ''
+  let currentIsBengali = false
+  for (const char of text) {
+    const isBengali = /[\u0980-\u09FF]/.test(char)
+    if (current === '') {
+      current = char
+      currentIsBengali = isBengali
+    } else if (isBengali === currentIsBengali) {
+      current += char
+    } else {
+      segments.push(current)
+      current = char
+      currentIsBengali = isBengali
+    }
+  }
+  if (current) segments.push(current)
+  return segments
+}
+
+export function splitForSpeechByLanguage(text: string, maxChars = 200): string[] {
+  const segments = splitByLanguage(text)
+  const chunks: string[] = []
+  for (const segment of segments) {
+    const trimmed = segment.trim()
+    if (!trimmed) continue
+    if (trimmed.length <= maxChars) {
+      chunks.push(trimmed)
+      continue
+    }
+    const subChunks = splitForSpeech(trimmed, maxChars)
+    chunks.push(...subChunks)
   }
   return chunks
 }
