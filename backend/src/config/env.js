@@ -22,6 +22,17 @@ const env = {
   clientOrigin,
   mongoUri,
   allowStartWithoutDb: process.env.ALLOW_START_WITHOUT_DB === 'true',
+  // SECURITY: JWT signing/verification secret. There is intentionally NO
+  // fallback here — a missing value must fail startup, never sign tokens
+  // with a well-known default.
+  jwtSecret: process.env.JWT_SECRET || '',
+  // SECURITY: whether the app sits behind a single reverse proxy (Render).
+  // Required so rate limiting keys off the real client IP from the
+  // X-Forwarded-For chain instead of the proxy's socket address. Enabled by
+  // default in production; override with TRUST_PROXY=true|false.
+  trustProxy: process.env.TRUST_PROXY
+    ? process.env.TRUST_PROXY === 'true' || process.env.TRUST_PROXY === '1'
+    : nodeEnv === 'production',
   clerkSecretKey: process.env.CLERK_SECRET_KEY || '',
   smsProvider: process.env.SMS_PROVIDER || '',
   smsApiKey: process.env.SMS_API_KEY || '',
@@ -43,4 +54,26 @@ const env = {
   emailFrom: process.env.EMAIL_FROM || 'noreply@alokbartika.com',
 }
 
-module.exports = { env }
+// Validate required environment variables at startup (fail fast, never fall
+// back to insecure defaults).
+function validateEnv() {
+  const errors = []
+
+  if (!env.jwtSecret) {
+    errors.push('JWT_SECRET is required. Set it in backend/.env (generate one, e.g. `openssl rand -hex 32`).')
+  }
+
+  if (!env.mongoUri && !env.allowStartWithoutDb) {
+    errors.push('MONGO_URI is required. Set it in backend/.env (or set ALLOW_START_WITHOUT_DB=true for local dev without a database).')
+  }
+
+  if (errors.length > 0) {
+    const message = `[env] Invalid environment configuration:\n  - ${errors.join('\n  - ')}`
+    console.error(message)
+    throw new Error(message)
+  }
+
+  return env
+}
+
+module.exports = { env, validateEnv }

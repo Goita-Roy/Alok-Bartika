@@ -74,7 +74,6 @@ const examSchema = new mongoose.Schema(
       type: String,
       enum: ['beginner', 'intermediate', 'advanced'],
       required: true,
-      index: true,
     },
     title: { type: String, required: true, trim: true },
     description: { type: String, trim: true, default: '' },
@@ -87,6 +86,13 @@ const examSchema = new mongoose.Schema(
   },
   { timestamps: true }
 )
+
+// ── Database indexes ────────────────────────────────────────────────────────
+// Exams are always fetched by level with an active filter:
+// Exam.find({ level, isActive: true }). Compound index covers both the
+// equality filter and the common fetch-by-level, replacing the previous
+// single-field level index.
+examSchema.index({ level: 1, isActive: 1 })
 
 const Exam = mongoose.model('Exam', examSchema)
 module.exports = { Exam }

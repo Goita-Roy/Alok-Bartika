@@ -1,5 +1,17 @@
 const { Course } = require('../models/Course')
 const { Lesson } = require('../models/Lesson')
+const { auditService } = require('../services/auditService')
+
+// SECURITY: the ONLY fields an admin may set when creating/updating a course.
+const COURSE_FIELDS = ['title', 'level', 'description', 'thumbnailUrl']
+
+function pickCourseFields(body) {
+  const picked = {}
+  for (const key of COURSE_FIELDS) {
+    if (body[key] !== undefined) picked[key] = body[key]
+  }
+  return picked
+}
 
 const INTERMEDIATE_LESSON_ORDER = [
   'algorithm', 'flowchart', 'events', 'logic', 'loops',
@@ -65,9 +77,9 @@ const getCourseById = async (req, res) => {
 // @access  Private/Admin
 const createCourse = async (req, res) => {
   try {
-    const { title, level, description, thumbnailUrl } = req.body
-    const course = new Course({ title, level, description, thumbnailUrl })
+    const course = new Course(pickCourseFields(req.body))
     await course.save()
+    auditService.logCourseCrud(req.user, 'create', course, req)
     res.status(201).json({ message: 'Course created', data: course })
   } catch (error) {
     console.error('Create Course Error:', error)
@@ -80,10 +92,16 @@ const createCourse = async (req, res) => {
 // @access  Private/Admin
 const updateCourse = async (req, res) => {
   try {
-    const course = await Course.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after', runValidators: true })
+    // SECURITY: whitelist fields — never pass req.body to findByIdAndUpdate.
+    const course = await Course.findByIdAndUpdate(
+      req.params.id,
+      { $set: pickCourseFields(req.body) },
+      { returnDocument: 'after', runValidators: true }
+    )
     if (!course) {
       return res.status(404).json({ message: 'Course not found' })
     }
+    auditService.logCourseCrud(req.user, 'update', course, req)
     res.status(200).json({ message: 'Course updated', data: course })
   } catch (error) {
     console.error('Update Course Error:', error)
@@ -102,6 +120,7 @@ const deleteCourse = async (req, res) => {
     }
     // Also delete associated lessons
     await Lesson.deleteMany({ courseId: req.params.id })
+    auditService.logCourseCrud(req.user, 'delete', course, req)
     res.status(200).json({ message: 'Course and lessons deleted' })
   } catch (error) {
     console.error('Delete Course Error:', error)

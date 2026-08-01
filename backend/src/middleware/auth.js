@@ -1,7 +1,10 @@
 const jwt = require('jsonwebtoken')
+const { env } = require('../config/env')
 const { User } = require('../models/User')
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret'
+// SECURITY: no fallback secret. validateEnv() (run at startup) guarantees a
+// strong JWT_SECRET before any token is signed or verified.
+const JWT_SECRET = env.jwtSecret
 
 const protect = async (req, res, next) => {
   // Skip if already authenticated (e.g., from a parent middleware wrapper).
@@ -21,6 +24,15 @@ const protect = async (req, res, next) => {
     req.user = await User.findById(decoded.id).select('-password')
     if (!req.user) {
       return res.status(401).json({ message: 'User not found' })
+    }
+
+    // SECURITY: suspended/inactive accounts must not access protected APIs,
+    // even with a still-valid JWT (tokens live up to 30 days).
+    if (req.user.isActive === false) {
+      return res.status(403).json({
+        code: 'ACCOUNT_SUSPENDED',
+        message: 'This account has been suspended. Please contact support.',
+      })
     }
 
     next()

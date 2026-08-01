@@ -1,4 +1,5 @@
 const { User } = require('../models/User')
+const { auditService } = require('../services/auditService')
 
 const sanitize = (u) => ({
   id: u._id,
@@ -53,6 +54,7 @@ const createAdmin = async (req, res) => {
       isActive: true,
     })
 
+    auditService.logRoleChange(req.user, user, null, 'admin', req)
     res.status(201).json({ message: 'Admin created successfully', data: sanitize(user) })
   } catch (error) {
     if (error.code === 11000) {
@@ -171,6 +173,7 @@ const deleteAdmin = async (req, res) => {
     if (!user || user.role !== 'admin') {
       return res.status(404).json({ message: 'Admin not found' })
     }
+    auditService.logUserDeletion(req.user, user, req)
     res.json({ message: 'Admin deleted successfully' })
   } catch (error) {
     res.status(500).json({ message: 'Internal server error' })

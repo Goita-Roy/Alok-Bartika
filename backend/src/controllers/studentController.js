@@ -1,4 +1,5 @@
 const { User } = require('../models/User')
+const { auditService } = require('../services/auditService')
 
 const sanitizeStudent = (u) => ({
   id: u._id,
@@ -119,6 +120,7 @@ const deleteStudent = async (req, res) => {
     if (!user || user.role !== 'student') {
       return res.status(404).json({ message: 'Student not found' })
     }
+    auditService.logUserDeletion(req.user, user, req)
     res.json({ message: 'Student deleted successfully' })
   } catch (error) {
     res.status(500).json({ message: 'Internal server error' })

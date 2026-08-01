@@ -26,6 +26,11 @@ const courseSchema = new mongoose.Schema(
   }
 )
 
+// ── Database indexes ────────────────────────────────────────────────────────
+// Courses are listed/filtered by level (dashboard course map, admin screens):
+// Course.find({}).sort({ level: 1 }) and Course.find({ level }).
+courseSchema.index({ level: 1 })
+
 const Course = mongoose.model('Course', courseSchema)
 
 module.exports = { Course }

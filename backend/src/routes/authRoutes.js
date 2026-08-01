@@ -6,19 +6,22 @@ const {
   sendSignupOtp, resendSignupOtp, verifySignupOtp,
 } = require('../controllers/authController')
 const { protect } = require('../middleware/auth')
+const {
+  loginLimiter, registerLimiter, otpSendLimiter, otpVerifyLimiter, resetPasswordLimiter,
+} = require('../middleware/rateLimiter')
 
 router.post('/check-availability', checkAvailability)
-router.post('/register', registerUser)
-router.post('/login', loginUser)
+router.post('/register', registerLimiter, registerUser)
+router.post('/login', loginLimiter, loginUser)
 router.post('/firebase', firebaseLogin)
-router.post('/admin-login', adminLogin)
-router.post('/super-admin-login', superAdminLogin)
-router.post('/send-otp', sendSignupOtp)
-router.post('/resend-otp', resendSignupOtp)
-router.post('/verify-otp-signup', verifySignupOtp)
+router.post('/admin-login', loginLimiter, adminLogin)
+router.post('/super-admin-login', loginLimiter, superAdminLogin)
+router.post('/send-otp', otpSendLimiter, sendSignupOtp)
+router.post('/resend-otp', otpSendLimiter, resendSignupOtp)
+router.post('/verify-otp-signup', otpVerifyLimiter, verifySignupOtp)
 router.get('/me', protect, getMe)
-router.post('/forgot-password', forgotPassword)
-router.post('/verify-otp', verifyOtp)
-router.post('/reset-password', resetPassword)
+router.post('/forgot-password', otpSendLimiter, forgotPassword)
+router.post('/verify-otp', otpVerifyLimiter, verifyOtp)
+router.post('/reset-password', resetPasswordLimiter, resetPassword)
 
 module.exports = { authRouter: router }

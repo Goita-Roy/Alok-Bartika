@@ -26,9 +26,17 @@ const { adminRouter } = require('./routes/adminRoutes')
 const { studentRouter } = require('./routes/studentRoutes')
 const { adminDashboardRouter } = require('./routes/adminDashboardRoutes')
 const { feedbackRouter } = require('./routes/feedbackRoutes')
+const { systemSettingsRouter } = require('./routes/systemSettingsRoutes')
 
 function createApp() {
   const app = express()
+
+  // SECURITY: when behind a single reverse proxy (Render), trust it so that
+  // rate limiting and req.ip reflect the real client IP from the
+  // X-Forwarded-For chain rather than the proxy's socket address.
+  if (env.trustProxy) {
+    app.set('trust proxy', 1)
+  }
 
   const allowedOrigins = env.clientOrigin
     .split(',')
@@ -97,6 +105,7 @@ function createApp() {
   app.use('/api/admins', adminRouter)
   app.use('/api/students', studentRouter)
   app.use('/api/admin/dashboard', adminDashboardRouter)
+  app.use('/api/system/settings', systemSettingsRouter)
 
   app.use((_req, res) => {
     res.status(404).json({ message: 'Not found' })

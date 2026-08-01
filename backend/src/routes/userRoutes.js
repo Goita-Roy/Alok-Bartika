@@ -8,7 +8,7 @@ const {
   getAllUsers,
   deleteUserById,
 } = require('../controllers/userController')
-const { protect, requireAdmin } = require('../middleware/auth')
+const { protect, requireSuperAdmin } = require('../middleware/auth')
 
 // Protect all routes
 router.use(protect)
@@ -18,8 +18,9 @@ router.get('/me', getProfile)
 router.put('/me', updateProfile)
 router.delete('/me', deleteProfile)
 
-// Admin only routes
-router.get('/', requireAdmin, getAllUsers)
-router.delete('/:id', requireAdmin, deleteUserById)
+// Super Admin only routes — these list ALL users (incl. admins/super-admins)
+// and can delete ANY account, so plain admins must not have access.
+router.get('/', requireSuperAdmin, getAllUsers)
+router.delete('/:id', requireSuperAdmin, deleteUserById)
 
 module.exports = { userRouter: router }

@@ -41,7 +41,8 @@ export function OnboardingPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          role: formData.role,
+          // SECURITY: never let the client request a privileged role.
+          role: 'student',
           name: formData.name,
           email: user?.email,
           phone: formData.phone,

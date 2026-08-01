@@ -391,6 +391,11 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password)
 }
 
+// ── Database indexes ────────────────────────────────────────────────────────
+// Role-filtered, newest-first listings (admin/student management, dashboards,
+// leaderboards): User.find({ role: ... }).sort({ createdAt: -1 }).
+userSchema.index({ role: 1, createdAt: -1 })
+
 const User = mongoose.model('User', userSchema)
 
 module.exports = { User }

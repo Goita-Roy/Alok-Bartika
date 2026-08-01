@@ -1,8 +1,11 @@
-const { env } = require('./config/env')
+const { env, validateEnv } = require('./config/env')
 const { createApp } = require('./app')
 const { connectDb } = require('./config/db')
 
 async function bootstrap() {
+  // Fail fast if required env vars are missing — never run with a fallback
+  // JWT secret or an unconfigured database.
+  validateEnv()
   if (env.mongoUri) {
     try {
       await connectDb(env.mongoUri)

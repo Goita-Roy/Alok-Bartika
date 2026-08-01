@@ -1,6 +1,20 @@
 const { Lesson } = require('../models/Lesson')
 const { Course } = require('../models/Course')
 
+// SECURITY: the ONLY fields an admin may set when creating/updating a lesson.
+const LESSON_FIELDS = [
+  'courseId', 'title', 'content', 'videoUrl', 'audioUrl', 'codingProblem',
+  'order', 'language', 'starterCode', 'expectedOutput', 'practice',
+]
+
+function pickLessonFields(body) {
+  const picked = {}
+  for (const key of LESSON_FIELDS) {
+    if (body[key] !== undefined) picked[key] = body[key]
+  }
+  return picked
+}
+
 // @desc    Get all lessons for a course
 // @route   GET /api/lessons/course/:courseId
 // @access  Public
@@ -35,15 +49,17 @@ const getLessonById = async (req, res) => {
 // @access  Private/Admin
 const createLesson = async (req, res) => {
   try {
-    const { courseId, title, content, videoUrl, audioUrl, codingProblem, order, language, starterCode, expectedOutput, practice } = req.body
-    
+    const lesson = new Lesson(pickLessonFields(req.body))
+
     // Verify course exists
-    const course = await Course.findById(courseId)
+    if (!lesson.courseId) {
+      return res.status(400).json({ message: 'courseId is required' })
+    }
+    const course = await Course.findById(lesson.courseId)
     if (!course) {
       return res.status(404).json({ message: 'Course not found' })
     }
 
-    const lesson = new Lesson({ courseId, title, content, videoUrl, audioUrl, codingProblem, order, language, starterCode, expectedOutput, practice })
     await lesson.save()
     res.status(201).json({ message: 'Lesson created', data: lesson })
   } catch (error) {
@@ -57,7 +73,12 @@ const createLesson = async (req, res) => {
 // @access  Private/Admin
 const updateLesson = async (req, res) => {
   try {
-    const lesson = await Lesson.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after', runValidators: true })
+    // SECURITY: whitelist fields — never pass req.body to findByIdAndUpdate.
+    const lesson = await Lesson.findByIdAndUpdate(
+      req.params.id,
+      { $set: pickLessonFields(req.body) },
+      { returnDocument: 'after', runValidators: true }
+    )
     if (!lesson) {
       return res.status(404).json({ message: 'Lesson not found' })
     }

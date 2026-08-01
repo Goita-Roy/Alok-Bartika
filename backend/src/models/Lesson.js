@@ -6,7 +6,6 @@ const lessonSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Course',
       required: true,
-      index: true,
     },
     title: {
       type: String,
@@ -83,6 +82,12 @@ const lessonSchema = new mongoose.Schema(
     timestamps: true,
   }
 )
+
+// ── Database indexes ────────────────────────────────────────────────────────
+// Lessons are always fetched per-course in order: Lesson.find({ courseId })
+// .sort({ order: 1 }). Compound index covers both the equality filter and the
+// sort, replacing the previous single-field courseId index.
+lessonSchema.index({ courseId: 1, order: 1 })
 
 const Lesson = mongoose.model('Lesson', lessonSchema)
 

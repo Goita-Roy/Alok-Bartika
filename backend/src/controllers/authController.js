@@ -1,11 +1,13 @@
 const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
+const { env } = require('../config/env')
 const { User } = require('../models/User')
 const { Exam } = require('../models/Exam')
 const { NEXT_LEVEL } = require('../services/progressService')
 const { sendOtpEmail } = require('../utils/email')
 const { sendOtp, verifyOtp: verifyOtpToken } = require('../services/otpService')
 const { OTP_TTL_MS } = require('../services/otpService')
+const { auditService } = require('../services/auditService')
 const { admin, auth } = require('../config/firebase')
 
 const generateUniqueUsername = async (base) => {
@@ -17,7 +19,8 @@ const generateUniqueUsername = async (base) => {
   return username
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret'
+// SECURITY: validated at startup (see config/env.js validateEnv()).
+const JWT_SECRET = env.jwtSecret
 
 const generateToken = (user) => {
   return jwt.sign({ id: user._id, userId: user._id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '30d' })
@@ -70,12 +73,10 @@ const checkAvailability = async (req, res) => {
 // Supports signup with email, phone, or both.
 const registerUser = async (req, res) => {
   try {
-    console.log('[auth] register body:', JSON.stringify(req.body, null, 2))
-
     const {
       fullName, username, email, password, phone, dob, gender,
       schoolName, grade, section, division, city, country,
-      termsAccepted, role, studentId, interests, preferredLanguage, skillLevel,
+      termsAccepted, studentId, interests, preferredLanguage, skillLevel,
     } = req.body
 
     const trimmedFullName = fullName?.trim()
@@ -136,7 +137,10 @@ const registerUser = async (req, res) => {
       username: trimmedUsername,
       password,
       termsAccepted: termsAccepted !== false,
-      role: role || 'student',
+      // SECURITY: Public registration can ONLY create students. The client-
+      // supplied role is never trusted; privileged roles (admin, super-admin)
+      // are granted exclusively via authenticated /api/admins (requireSuperAdmin).
+      role: 'student',
     }
     if (trimmedEmail) userData.email = trimmedEmail
     if (trimmedPhone) userData.phone = trimmedPhone
@@ -154,7 +158,6 @@ const registerUser = async (req, res) => {
     if (preferredLanguage?.trim()) userData.preferredLanguage = preferredLanguage.trim()
     if (skillLevel) userData.skillLevel = skillLevel
 
-    console.log('[auth] creating user with:', JSON.stringify(userData, null, 2))
     const user = await User.create(userData)
     console.log('[auth] user created:', user._id)
 
@@ -172,8 +175,6 @@ const registerUser = async (req, res) => {
 // @route   POST /api/auth/login
 const loginUser = async (req, res) => {
   try {
-    console.log('[auth] login body:', JSON.stringify(req.body, null, 2))
-
     const { email, password } = req.body
 
     if (!email || !password) {
@@ -198,6 +199,11 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ message: 'Incorrect password' })
     }
 
+    if (user.isActive === false) {
+      return res.status(403).json({ code: 'ACCOUNT_SUSPENDED', message: 'This account has been suspended. Please contact support.' })
+    }
+
+    auditService.logLogin(user, req)
     res.json(userResponse(user))
   } catch (error) {
     res.status(500).json({ message: error.message })
@@ -246,6 +252,10 @@ const firebaseLogin = async (req, res) => {
 
     if (user) {
       console.log('[auth][firebase] existing user found:', user._id, 'linking firebaseUid if needed')
+      if (user.isActive === false) {
+        console.warn('[auth][firebase] suspended user blocked:', user._id)
+        return res.status(403).json({ code: 'ACCOUNT_SUSPENDED', message: 'This account has been suspended. Please contact support.' })
+      }
       if (!user.firebaseUid) {
         user.firebaseUid = firebaseUid
         if (picture && !user.picture) user.picture = picture
@@ -275,7 +285,7 @@ const firebaseLogin = async (req, res) => {
     }
 
     const response = userResponse(user)
-    console.log('[auth][firebase] login successful for user:', user._id)
+    auditService.logLogin(user, req, 'firebase')
     res.json(response)
   } catch (error) {
     console.error('[auth][firebase] login FAILED:', error.message)
@@ -308,6 +318,11 @@ const adminLogin = async (req, res) => {
       return res.status(403).json({ code: 'NOT_ADMIN', message: 'Access denied. Admin privileges required.' })
     }
 
+    if (user.isActive === false) {
+      return res.status(403).json({ code: 'ACCOUNT_SUSPENDED', message: 'This account has been suspended. Please contact support.' })
+    }
+
+    auditService.logLogin(user, req, 'admin')
     res.json(userResponse(user))
   } catch (error) {
     res.status(500).json({ message: error.message })
@@ -339,6 +354,11 @@ const superAdminLogin = async (req, res) => {
       return res.status(403).json({ code: 'NOT_SUPER_ADMIN', message: 'Access denied. Super Admin privileges required.' })
     }
 
+    if (user.isActive === false) {
+      return res.status(403).json({ code: 'ACCOUNT_SUSPENDED', message: 'This account has been suspended. Please contact support.' })
+    }
+
+    auditService.logLogin(user, req, 'super-admin')
     res.json(userResponse(user))
   } catch (error) {
     res.status(500).json({ message: error.message })
@@ -425,7 +445,6 @@ const forgotPassword = async (req, res) => {
 
     try {
       await sendOtpEmail(user.email, otp)
-      console.log(`[auth] OTP sent to ${user.email}: ${otp}`)
     } catch (mailErr) {
       console.error('[auth] Email send failed:', mailErr.message)
       user.resetOtp = undefined

@@ -4,6 +4,24 @@ const { Course } = require('../models/Course')
 const P = require('../services/progressService')
 const N = require('../services/notificationService')
 const { gradeCodingQuestion } = require('../services/codingEvaluationService')
+const { auditService } = require('../services/auditService')
+
+// SECURITY: the ONLY top-level fields an admin may set when creating/updating
+// an exam. `questions` is intentionally allowed so admins can author exams —
+// answers/solutions are legitimate admin input for content management, but no
+// other schema field can be mass-assigned via this route.
+const EXAM_FIELDS = [
+  'courseId', 'level', 'title', 'description', 'passingScore',
+  'timeLimitMinutes', 'isActive', 'questions',
+]
+
+function pickExamFields(body) {
+  const picked = {}
+  for (const key of EXAM_FIELDS) {
+    if (body[key] !== undefined) picked[key] = body[key]
+  }
+  return picked
+}
 
 // Maximum points a single coding question can contribute when ALL its tests pass.
 // (The question's own `points` field governs weighting; the judge returns 0-100
@@ -264,10 +282,21 @@ async function gradeExam(exam, answers, ctx = {}) {
 const getExamByLevel = async (req, res) => {
   try {
     const { level } = req.params
-    const isReview = req.query.review === 'true'  // bypass access check for review
+    const isReview = req.query.review === 'true'
 
-    // Only enforce access control when NOT in review mode
-    if (!isReview) {
+    const exam = await Exam.findOne({ level, isActive: true })
+    if (!exam) return res.status(404).json({ message: 'No exam found for this level' })
+
+    if (isReview) {
+      // SECURITY: "review" must NOT be a blanket access-control bypass. Exam
+      // metadata/questions are only returned after the user actually attempted
+      // this exam (they can then legitimately review it).
+      const attempts = req.user.examAttempts?.get(exam._id.toString()) || []
+      const hasGradedAttempt = attempts.some((a) => !a.terminated)
+      if (!hasGradedAttempt) {
+        return res.status(403).json({ message: 'Review is available only after you have attempted this exam.' })
+      }
+    } else {
       const access = await checkExamAccess(req.user, level)
       if (!access.ok) {
         return res.status(access.status).json({
@@ -277,9 +306,6 @@ const getExamByLevel = async (req, res) => {
         })
       }
     }
-
-    const exam = await Exam.findOne({ level, isActive: true })
-    if (!exam) return res.status(404).json({ message: 'No exam found for this level' })
 
     const safeQuestions = exam.questions.map(q => ({
       _id: q._id,
@@ -309,8 +335,24 @@ const getExamByLevel = async (req, res) => {
 // ── @route GET /api/exams/:examId ────────────────────────────────────────────
 const getExamById = async (req, res) => {
   try {
-    const exam = await Exam.findById(req.params.examId)
+    const exam = await Exam.findOne({ _id: req.params.examId, isActive: true })
     if (!exam) return res.status(404).json({ message: 'Exam not found' })
+
+    // SECURITY: students may only view an exam they can currently access (or
+    // one they have already attempted). Admins may preview any active exam.
+    const isPrivileged = req.user.role === 'admin' || req.user.role === 'super-admin'
+    if (!isPrivileged) {
+      const access = await checkExamAccess(req.user, exam.level)
+      const attempts = req.user.examAttempts?.get(exam._id.toString()) || []
+      const hasGradedAttempt = attempts.some((a) => !a.terminated)
+      if (!access.ok && !hasGradedAttempt) {
+        return res.status(access.status).json({
+          message: access.message,
+          requiredLevel: access.requiredLevel,
+          code: access.code,
+        })
+      }
+    }
 
     const safeQuestions = exam.questions.map(q => ({
       _id: q._id,
@@ -660,8 +702,8 @@ const getFirstAttemptResults = async (req, res) => {
 // ── Admin: Create exam ────────────────────────────────────────────────────────
 const createExam = async (req, res) => {
   try {
-    const { courseId, level, title, description, passingScore, timeLimitMinutes, questions } = req.body
-    const exam = await Exam.create({ courseId, level, title, description, passingScore, timeLimitMinutes, questions })
+    const exam = await Exam.create(pickExamFields(req.body))
+    auditService.logExamCrud(req.user, 'create', exam, req)
     res.status(201).json({ message: 'Exam created', data: exam })
   } catch (err) {
     console.error('createExam Error:', err)
@@ -672,8 +714,16 @@ const createExam = async (req, res) => {
 // ── Admin: Update exam ────────────────────────────────────────────────────────
 const updateExam = async (req, res) => {
   try {
-    const exam = await Exam.findByIdAndUpdate(req.params.examId, req.body, { returnDocument: 'after' })
+    // SECURITY: whitelist fields — never pass req.body to findByIdAndUpdate.
+    // This prevents mass-assignment of arbitrary schema fields (e.g. shared
+    // timestamps, hidden grading flags) and forces runValidators.
+    const exam = await Exam.findByIdAndUpdate(
+      req.params.examId,
+      { $set: pickExamFields(req.body) },
+      { returnDocument: 'after', runValidators: true }
+    )
     if (!exam) return res.status(404).json({ message: 'Exam not found' })
+    auditService.logExamCrud(req.user, 'update', exam, req)
     res.json({ message: 'Exam updated', data: exam })
   } catch (err) {
     console.error('updateExam Error:', err)
