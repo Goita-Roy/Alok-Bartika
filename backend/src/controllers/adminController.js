@@ -7,11 +7,208 @@ const sanitize = (u) => ({
   username: u.username,
   email: u.email,
   role: u.role,
-  phone: u.phone,
+  phone: u.phone || '',
+  avatar: u.profilePicture || (u.profile && u.profile.avatar) || '',
   isActive: u.isActive,
   emailVerified: !!u.emailVerified,
   createdAt: u.createdAt,
+  updatedAt: u.updatedAt,
 })
+
+// Helper for password strength validation
+function validatePasswordStrength(password) {
+  if (!password || typeof password !== 'string') return 'Password is required'
+  if (password.length < 8) return 'Password must be at least 8 characters long'
+  if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter'
+  if (!/[a-z]/.test(password)) return 'Password must contain at least one lowercase letter'
+  if (!/[0-9]/.test(password)) return 'Password must contain at least one number'
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) return 'Password must contain at least one special character'
+  return null
+}
+
+// @desc    Get current logged in Super Admin profile
+// @route   GET /api/admins/me
+// @access  Private/SuperAdmin
+const getSelfProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password')
+    if (!user) {
+      return res.status(404).json({ message: 'User profile not found' })
+    }
+    res.json({
+      success: true,
+      data: sanitize(user),
+    })
+  } catch (error) {
+    console.error('Get Self Profile Error:', error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+// @desc    Update current logged in Super Admin profile
+// @route   PUT /api/admins/me
+// @access  Private/SuperAdmin
+const updateSelfProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+    if (!user) {
+      return res.status(404).json({ message: 'User profile not found' })
+    }
+
+    const { fullName, email, phone, avatar, profilePicture } = req.body || {}
+
+    // Email cannot be changed
+    if (email && email.trim().toLowerCase() !== user.email.toLowerCase()) {
+      return res.status(400).json({ message: 'Email cannot be changed' })
+    }
+
+    const updatedFields = []
+
+    if (fullName !== undefined) {
+      const trimmedName = String(fullName).trim()
+      if (!trimmedName || trimmedName.length < 2) {
+        return res.status(400).json({ message: 'Full name must be at least 2 characters long' })
+      }
+      if (trimmedName !== user.fullName) {
+        user.fullName = trimmedName
+        updatedFields.push('fullName')
+      }
+    }
+
+    if (phone !== undefined) {
+      const trimmedPhone = String(phone || '').trim()
+      if (trimmedPhone !== (user.phone || '')) {
+        user.phone = trimmedPhone || undefined
+        updatedFields.push('phone')
+      }
+    }
+
+    const avatarUrl = avatar !== undefined ? avatar : profilePicture
+    if (avatarUrl !== undefined) {
+      const trimmedAvatar = String(avatarUrl || '').trim()
+      if (trimmedAvatar !== (user.profilePicture || '')) {
+        user.profilePicture = trimmedAvatar
+        if (!user.profile) user.profile = {}
+        user.profile.avatar = trimmedAvatar
+        updatedFields.push('avatar')
+      }
+    }
+
+    await user.save()
+
+    const ctx = {
+      ip: req.ip || (req.socket && req.socket.remoteAddress) || '',
+      userAgent: (req.get && req.get('user-agent')) || '',
+    }
+
+    auditService.record({
+      actorId: user._id,
+      actorRole: user.role,
+      action: 'ADMIN_PROFILE_UPDATED',
+      category: 'admin',
+      status: 'success',
+      targetType: 'User',
+      targetId: user._id,
+      metadata: { updatedFields },
+      ip: ctx.ip,
+      userAgent: ctx.userAgent,
+    })
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: sanitize(user),
+    })
+  } catch (error) {
+    console.error('Update Self Profile Error:', error)
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map((v) => v.message)
+      return res.status(400).json({ message: 'Validation error', errors: messages })
+    }
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+// @desc    Change current logged in Super Admin password
+// @route   PUT /api/admins/change-password
+// @access  Private/SuperAdmin
+const changeSelfPassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body || {}
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({ message: 'Current password, new password, and confirmation password are required' })
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: 'New password and confirmation password do not match' })
+    }
+
+    const strengthError = validatePasswordStrength(newPassword)
+    if (strengthError) {
+      return res.status(400).json({ message: strengthError })
+    }
+
+    const user = await User.findById(req.user._id)
+    if (!user) {
+      return res.status(404).json({ message: 'User profile not found' })
+    }
+
+    const isMatch = await user.comparePassword(currentPassword)
+    if (!isMatch) {
+      const ctx = {
+        ip: req.ip || (req.socket && req.socket.remoteAddress) || '',
+        userAgent: (req.get && req.get('user-agent')) || '',
+      }
+      auditService.record({
+        actorId: user._id,
+        actorRole: user.role,
+        action: 'ADMIN_PASSWORD_CHANGE_FAILED',
+        category: 'admin',
+        status: 'failed',
+        targetType: 'User',
+        targetId: user._id,
+        metadata: { reason: 'Incorrect current password' },
+        ip: ctx.ip,
+        userAgent: ctx.userAgent,
+      })
+      return res.status(400).json({ message: 'Current password is incorrect' })
+    }
+
+    const isSamePassword = await user.comparePassword(newPassword)
+    if (isSamePassword) {
+      return res.status(400).json({ message: 'New password must be different from current password' })
+    }
+
+    user.password = newPassword
+    await user.save()
+
+    const ctx = {
+      ip: req.ip || (req.socket && req.socket.remoteAddress) || '',
+      userAgent: (req.get && req.get('user-agent')) || '',
+    }
+    auditService.record({
+      actorId: user._id,
+      actorRole: user.role,
+      action: 'ADMIN_PASSWORD_CHANGED',
+      category: 'admin',
+      status: 'success',
+      targetType: 'User',
+      targetId: user._id,
+      metadata: {},
+      ip: ctx.ip,
+      userAgent: ctx.userAgent,
+    })
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully',
+    })
+  } catch (error) {
+    console.error('Change Self Password Error:', error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
 
 // @desc    Create a new admin
 // @route   POST /api/admins
@@ -180,4 +377,14 @@ const deleteAdmin = async (req, res) => {
   }
 }
 
-module.exports = { createAdmin, getAdmins, getAdmin, updateAdmin, suspendAdmin, deleteAdmin }
+module.exports = {
+  createAdmin,
+  getAdmins,
+  getAdmin,
+  updateAdmin,
+  suspendAdmin,
+  deleteAdmin,
+  getSelfProfile,
+  updateSelfProfile,
+  changeSelfPassword,
+}
