@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import LiveChatModal from './chat/LiveChatModal';
 import { 
   Mail, 
   MapPin, 
@@ -15,6 +16,7 @@ const contactInfo = {
 
 const ContactSection: React.FC = () => {
   const [showMap, setShowMap] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const locationRef = useRef<HTMLElement>(null);
 
   const handleShowMap = () => {
@@ -162,7 +164,10 @@ const ContactSection: React.FC = () => {
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
               <h4 className="text-xl font-bold mb-3 relative z-10">সরাসরি সহায়তা চান?</h4>
               <p className="text-white/80 mb-6 relative z-10 leading-relaxed">আমাদের টিম আপনাকে তাৎক্ষণিক সহায়তার জন্য প্রস্তুত রয়েছে।</p>
-              <button className="bg-white text-[#1D9E75] px-6 py-3 rounded-xl font-bold hover:bg-[#F7FBF9] transition-all relative z-10">
+              <button
+                id="live-chat-open-btn"
+                onClick={() => setIsChatOpen(true)}
+                className="bg-white text-[#1D9E75] px-6 py-3 rounded-xl font-bold hover:bg-[#F7FBF9] transition-all relative z-10 cursor-pointer">
                 লাইভ চ্যাট শুরু করুন
               </button>
             </div>
@@ -260,6 +265,9 @@ const ContactSection: React.FC = () => {
       <footer className="py-12 text-center text-sm" style={{ color: 'var(--color-text-muted)', borderTop: '1px solid rgba(255,201,60,0.2)' }}>
         <p>© ২০২৬ আলোকবর্তিকা। আমরা আপনার অপেক্ষায় আছি।</p>
       </footer>
+
+      {/* Live Chat Modal — portal-like overlay rendered at the end of the tree */}
+      <LiveChatModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </div>
   );
 };

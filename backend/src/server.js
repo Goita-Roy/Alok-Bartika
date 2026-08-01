@@ -1,6 +1,8 @@
+const http = require('http')
 const { env, validateEnv } = require('./config/env')
 const { createApp } = require('./app')
 const { connectDb } = require('./config/db')
+const { initSocket } = require('./socket')
 
 async function bootstrap() {
   // Fail fast if required env vars are missing — never run with a fallback
@@ -27,7 +29,20 @@ async function bootstrap() {
 
   const app = createApp()
 
-  app.listen(env.port, () => {
+  // Wrap Express app in a plain Node HTTP server so Socket.IO can share the
+  // same port as the REST API without needing a second server process.
+  const httpServer = http.createServer(app)
+
+  // Parse the allowed origins from env so Socket.IO CORS mirrors Express CORS.
+  const allowedOrigins = env.clientOrigin
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean)
+
+  // Attach Socket.IO to the HTTP server (JWT auth + event handlers wired inside)
+  initSocket(httpServer, allowedOrigins)
+
+  httpServer.listen(env.port, () => {
     console.log(`running on http://localhost:${env.port}`)
   })
 }

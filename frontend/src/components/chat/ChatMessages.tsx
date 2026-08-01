@@ -1,0 +1,140 @@
+/**
+ * ChatMessages — scrollable message list.
+ * Handles:
+ *  - Grouping student vs admin messages (bubble alignment)
+ *  - Optimistic messages styled differently (slightly faded)
+ *  - Read receipts (double-tick for student's own messages)
+ *  - Auto-scroll to bottom on new message
+ *  - Timestamps
+ */
+
+import React, { useEffect, useRef } from 'react'
+import { Check, CheckCheck, Loader2 } from 'lucide-react'
+import type { SupportMessage } from '../../types/support'
+import EmptyChatState from './EmptyChatState'
+import TypingIndicator from './TypingIndicator'
+
+function formatTime(iso: string) {
+  try {
+    return new Date(iso).toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' })
+  } catch {
+    return ''
+  }
+}
+
+interface ChatMessagesProps {
+  messages: SupportMessage[]
+  studentId: string
+  loadingHistory: boolean
+  historyError: string | null
+  adminTyping: boolean
+}
+
+const ChatMessages: React.FC<ChatMessagesProps> = ({
+  messages,
+  studentId,
+  loadingHistory,
+  historyError,
+  adminTyping,
+}) => {
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll to bottom whenever messages change or typing indicator appears
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages.length, adminTyping])
+
+  if (loadingHistory) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-3">
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-accent)' }} />
+        <p className="text-sm font-bengali" style={{ color: 'var(--color-text-muted)' }}>
+          বার্তা লোড হচ্ছে...
+        </p>
+      </div>
+    )
+  }
+
+  if (historyError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-3 px-6 text-center">
+        <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(255,107,74,0.1)' }}>
+          <span className="text-2xl">⚠️</span>
+        </div>
+        <p className="text-sm font-bengali" style={{ color: 'var(--color-error)' }}>
+          {historyError}
+        </p>
+      </div>
+    )
+  }
+
+  if (messages.length === 0 && !adminTyping) {
+    return <EmptyChatState />
+  }
+
+  return (
+    <div className="flex flex-col gap-1 px-4 py-4 overflow-y-auto h-full font-bengali">
+      {messages.map((msg) => {
+        const isMine = msg.senderRole === 'student'
+        const isOptimistic = msg._optimistic === true
+
+        return (
+          <div
+            key={msg._id}
+            className={`flex items-end gap-2 ${isMine ? 'flex-row-reverse' : 'flex-row'}`}
+          >
+            {/* Avatar — only for admin messages */}
+            {!isMine && (
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 mb-1"
+                style={{ background: 'linear-gradient(135deg, #0E7C66, #04342C)' }}
+              >
+                আ
+              </div>
+            )}
+
+            <div className={`flex flex-col max-w-[75%] ${isMine ? 'items-end' : 'items-start'}`}>
+              <div
+                className="px-4 py-2.5 text-sm leading-relaxed"
+                style={{
+                  borderRadius: isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                  backgroundColor: isMine ? '#0E7C66' : 'var(--color-surface)',
+                  color: isMine ? '#FFFFFF' : 'var(--color-text)',
+                  opacity: isOptimistic ? 0.65 : 1,
+                  transition: 'opacity 0.3s',
+                  wordBreak: 'break-word',
+                }}
+              >
+                {msg.message}
+              </div>
+
+              {/* Timestamp + read receipt */}
+              <div className="flex items-center gap-1 mt-1 px-1">
+                <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
+                  {formatTime(msg.createdAt)}
+                </span>
+                {isMine && (
+                  isOptimistic ? (
+                    <Loader2 className="w-3 h-3 animate-spin" style={{ color: 'var(--color-text-muted)' }} />
+                  ) : msg.read ? (
+                    <CheckCheck className="w-3 h-3 text-blue-400" />
+                  ) : (
+                    <Check className="w-3 h-3" style={{ color: 'var(--color-text-muted)' }} />
+                  )
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })}
+
+      {/* Admin typing indicator */}
+      {adminTyping && <TypingIndicator />}
+
+      {/* Scroll anchor */}
+      <div ref={bottomRef} />
+    </div>
+  )
+}
+
+export default ChatMessages
