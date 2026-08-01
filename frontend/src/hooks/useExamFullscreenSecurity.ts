@@ -6,23 +6,85 @@ export const MAX_FULLSCREEN_VIOLATIONS = 3
 type RequestFullscreenFn = () => Promise<boolean>
 
 // Requests fullscreen on the whole document. Never throws — returns whether the
-// browser accepted the request. Uses the prefixed API for older Safari.
-export function requestDocumentFullscreen(): Promise<boolean> {
+// browser accepted the request. Uses prefixed APIs for cross-browser compatibility.
+export async function requestDocumentFullscreen(): Promise<boolean> {
+  if (typeof document === 'undefined') return false
+
   try {
     const el = document.documentElement as HTMLElement & {
-      webkitRequestFullscreen?: () => void | Promise<void>
+      webkitRequestFullscreen?: () => Promise<void> | void
+      mozRequestFullScreen?: () => Promise<void> | void
+      msRequestFullscreen?: () => Promise<void> | void
     }
+
     if (typeof el.requestFullscreen === 'function') {
-      return Promise.resolve(el.requestFullscreen()).then(() => true).catch(() => false)
+      await el.requestFullscreen()
+    } else if (typeof el.webkitRequestFullscreen === 'function') {
+      await el.webkitRequestFullscreen()
+    } else if (typeof el.mozRequestFullScreen === 'function') {
+      await el.mozRequestFullScreen()
+    } else if (typeof el.msRequestFullscreen === 'function') {
+      await el.msRequestFullscreen()
     }
-    if (typeof el.webkitRequestFullscreen === 'function') {
-      el.webkitRequestFullscreen()
-      return Promise.resolve(true)
-    }
-  } catch {
-    // Fullscreen unsupported or blocked by the browser.
+  } catch (err) {
+    console.warn('Fullscreen request failed:', err)
   }
-  return Promise.resolve(false)
+
+  return !!(
+    document.fullscreenElement ||
+    (document as any).webkitFullscreenElement ||
+    (document as any).mozFullScreenElement ||
+    (document as any).msFullscreenElement
+  )
+}
+
+// Safely exits fullscreen, waiting for the fullscreenchange event to confirm the
+// browser has actually completed the transition. No setTimeout fallback — resolves
+// only when the event fires (or immediately if already not in fullscreen).
+export async function exitDocumentFullscreenSafe(): Promise<void> {
+  if (typeof document === 'undefined') return
+
+  const fsElement =
+    document.fullscreenElement ||
+    (document as any).webkitFullscreenElement ||
+    (document as any).mozFullScreenElement ||
+    (document as any).msFullscreenElement
+
+  if (!fsElement) return
+
+  // Wait for fullscreenchange to fire, which confirms exit is complete.
+  const exitConfirmed = new Promise<void>(resolve => {
+    const handler = () => {
+      document.removeEventListener('fullscreenchange', handler)
+      document.removeEventListener('webkitfullscreenchange', handler)
+      document.removeEventListener('mozfullscreenchange', handler)
+      document.removeEventListener('MSFullscreenChange', handler)
+      resolve()
+    }
+    document.addEventListener('fullscreenchange', handler, { once: true })
+    document.addEventListener('webkitfullscreenchange', handler, { once: true })
+    document.addEventListener('mozfullscreenchange', handler, { once: true })
+    document.addEventListener('MSFullscreenChange', handler, { once: true })
+  })
+
+  try {
+    const doc = document as any
+    if (typeof doc.exitFullscreen === 'function') {
+      await doc.exitFullscreen()
+    } else if (typeof doc.webkitExitFullscreen === 'function') {
+      await doc.webkitExitFullscreen()
+    } else if (typeof doc.mozCancelFullScreen === 'function') {
+      await doc.mozCancelFullScreen()
+    } else if (typeof doc.msExitFullscreen === 'function') {
+      await doc.msExitFullscreen()
+    }
+  } catch (e) {
+    console.error('Failed to exit fullscreen', e)
+    return
+  }
+
+  // Await the event — browser fires it asynchronously after the exit completes.
+  await exitConfirmed
 }
 
 export interface ExamFullscreenSecurity {
@@ -32,21 +94,18 @@ export interface ExamFullscreenSecurity {
   reEntering: boolean
   enterFullscreen: RequestFullscreenFn
   continueWithoutFullscreen: () => void
+  /** Call this before any intentional exitDocumentFullscreenSafe() to prevent
+   *  the fullscreenchange handler from treating the exit as a violation. */
+  signalIntentionalExit: () => void
 }
 
 // Watches the Fullscreen API for the secure exam experience.
-//
-// Exiting fullscreen (ESC, the browser's fullscreen control, or any other way)
-// is a *browser* action that cannot be blocked. Instead of redirecting or
-// terminating the exam, we count it as a violation, show a warning dialog, and
-// let the student re-enter fullscreen. After MAX_FULLSCREEN_VIOLATIONS exits
-// the exam is auto-submitted.
 export function useExamFullscreenSecurity(
   active: boolean,
   onMaxViolations: () => void,
 ): ExamFullscreenSecurity {
   const [isFullscreen, setIsFullscreen] = useState(
-    () => typeof document !== 'undefined' && !!document.fullscreenElement,
+    () => typeof document !== 'undefined' && !!(document.fullscreenElement || (document as any).webkitFullscreenElement),
   )
   const [violationCount, setViolationCount] = useState(0)
   const [showWarning, setShowWarning] = useState(false)
@@ -56,26 +115,34 @@ export function useExamFullscreenSecurity(
   const onMaxViolationsRef = useRef(onMaxViolations)
   const wasInFullscreenRef = useRef(false)
   const violationCountRef = useRef(0)
+  // Flag set before any intentional exit (submit / confirmed manual leave)
+  // so handleFullscreenChange knows to skip violation logic.
+  const intentionalExitRef = useRef(false)
 
   useEffect(() => {
     activeRef.current = active
     onMaxViolationsRef.current = onMaxViolations
   })
 
-  // A fresh attempt starts with a clean slate (also runs when the exam starts).
+  // A fresh attempt starts with a clean slate.
   useEffect(() => {
     if (!active) return
     violationCountRef.current = 0
+    intentionalExitRef.current = false
     setViolationCount(0)
     setShowWarning(false)
-    wasInFullscreenRef.current = !!document.fullscreenElement
+    wasInFullscreenRef.current = !!(document.fullscreenElement || (document as any).webkitFullscreenElement)
   }, [active])
 
-  // Detect every fullscreen enter/exit. An exit is only counted as a violation
-  // once the exam is active AND we had previously entered fullscreen.
+  // Detect every fullscreen enter/exit.
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      const nowInFullscreen = !!document.fullscreenElement
+    const handleFullscreenChange = async () => {
+      const nowInFullscreen = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      )
       setIsFullscreen(nowInFullscreen)
 
       if (nowInFullscreen) {
@@ -84,10 +151,27 @@ export function useExamFullscreenSecurity(
         return
       }
 
+      // ── Intentional exit (submit or confirmed manual leave) ───────────────
+      // Simply clear the flag and return — no violation, no re-entry attempt.
+      if (intentionalExitRef.current) {
+        intentionalExitRef.current = false
+        wasInFullscreenRef.current = false
+        return
+      }
+
       const wasInFullscreen = wasInFullscreenRef.current
       wasInFullscreenRef.current = false
       if (!activeRef.current || !wasInFullscreen) return
 
+      // ── Unexpected exit (ESC / browser chrome) — attempt re-entry ─────────
+      const reEntered = await requestDocumentFullscreen()
+      if (reEntered && !!(document.fullscreenElement || (document as any).webkitFullscreenElement)) {
+        wasInFullscreenRef.current = true
+        setShowWarning(false)
+        return
+      }
+
+      // Count violation only if re-entry is blocked by browser policy
       violationCountRef.current += 1
       const count = violationCountRef.current
       setViolationCount(count)
@@ -99,8 +183,18 @@ export function useExamFullscreenSecurity(
         setShowWarning(true)
       }
     }
+
     document.addEventListener('fullscreenchange', handleFullscreenChange)
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange)
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange)
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange)
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange)
+    }
   }, [])
 
   const enterFullscreen = useCallback(async () => {
@@ -112,6 +206,10 @@ export function useExamFullscreenSecurity(
 
   const continueWithoutFullscreen = useCallback(() => setShowWarning(false), [])
 
+  const signalIntentionalExit = useCallback(() => {
+    intentionalExitRef.current = true
+  }, [])
+
   return {
     isFullscreen,
     violationCount,
@@ -119,5 +217,6 @@ export function useExamFullscreenSecurity(
     reEntering,
     enterFullscreen,
     continueWithoutFullscreen,
+    signalIntentionalExit,
   }
 }

@@ -6,10 +6,6 @@ export interface ExamTerminationInfo {
   terminatedAt: number | null
 }
 
-// Browsers dispatch a window `blur` event while entering AND exiting the
-// Fullscreen API (ESC / the browser's fullscreen control). Without a guard,
-// a student pressing ESC to leave fullscreen would be misread as "focus lost"
-// and the exam would be terminated. This grace window covers both transitions.
 const FULLSCREEN_BLUR_GRACE_MS = 1500
 
 export function useExamAntiCheat(active: boolean) {
@@ -29,14 +25,17 @@ export function useExamAntiCheat(active: boolean) {
     setInfo({ terminated: true, reason, terminatedAt: Date.now() })
   }, [])
 
-  // Always track fullscreen transitions (even before the exam starts) so the
-  // blur guard below always has accurate timing data.
+  // Track fullscreen transitions for blur grace window
   useEffect(() => {
     const handleFullscreenChange = () => {
       lastFullscreenChangeRef.current = Date.now()
     }
     document.addEventListener('fullscreenchange', handleFullscreenChange)
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+    }
   }, [])
 
   useEffect(() => {
@@ -51,11 +50,8 @@ export function useExamAntiCheat(active: boolean) {
 
     const handleWindowBlur = () => {
       if (!activeRef.current) return
-      // Exiting fullscreen (ESC) is a native browser action, NOT cheating.
-      // Skip any blur that belongs to a fullscreen transition.
-      if (document.fullscreenElement) return
+      if (document.fullscreenElement || (document as any).webkitFullscreenElement) return
       if (Date.now() - lastFullscreenChangeRef.current < FULLSCREEN_BLUR_GRACE_MS) return
-      // A hidden tab is already recorded by visibilitychange — don't double-fire.
       if (document.hidden) return
       terminate('আপনি পরীক্ষার নিয়ম ভঙ্গ করেছেন। ব্রাউজার ফোকাস হারানো হয়েছে।')
     }
@@ -65,14 +61,33 @@ export function useExamAntiCheat(active: boolean) {
       terminate('আপনি পরীক্ষার নিয়ম ভঙ্গ করেছেন। পৃষ্ঠা বন্ধ করা হয়েছে।')
     }
 
+    // Prevent page refresh or tab close during active exam
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!activeRef.current) return
+      e.preventDefault()
+      e.returnValue = 'পরীক্ষা চলাকালীন রিফ্রেশ বা ট্যাব বন্ধ করা যাবে না।'
+      return 'পরীক্ষা চলাকালীন রিফ্রেশ বা ট্যাব বন্ধ করা যাবে না।'
+    }
+
+    // Prevent browser Back button navigation by locking history state
+    window.history.pushState(null, '', window.location.href)
+    const handlePopState = () => {
+      if (!activeRef.current) return
+      window.history.pushState(null, '', window.location.href)
+    }
+
     document.addEventListener('visibilitychange', handleVisibilityChange)
     window.addEventListener('blur', handleWindowBlur)
     window.addEventListener('pagehide', handlePageHide)
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('popstate', handlePopState)
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('blur', handleWindowBlur)
       window.removeEventListener('pagehide', handlePageHide)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('popstate', handlePopState)
     }
   }, [active, info.terminated, terminate])
 

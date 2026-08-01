@@ -5,7 +5,7 @@ import { API_BASE_URL } from '../config/api'
 import { useAuth } from '../context/AuthContext'
 import { useCopyProtection } from '../hooks/useCopyProtection'
 import { useExamAntiCheat } from '../hooks/useExamAntiCheat'
-import { useExamFullscreenSecurity, MAX_FULLSCREEN_VIOLATIONS } from '../hooks/useExamFullscreenSecurity'
+import { useExamFullscreenSecurity, requestDocumentFullscreen, exitDocumentFullscreenSafe, MAX_FULLSCREEN_VIOLATIONS } from '../hooks/useExamFullscreenSecurity'
 import { useCourseProgress, type LearningLevel } from '../hooks/useCourseProgress'
 
 import { ExamTerminatedPage } from '../components/exam/ExamTerminatedPage'
@@ -326,9 +326,21 @@ function ExamRulesModal({
   level: string
   examTitle: string
   onCancel: () => void
-  onAccept: () => void
+  onAccept: () => Promise<boolean>
 }) {
   const [agreed, setAgreed] = useState(false)
+  const [requesting, setRequesting] = useState(false)
+  const [fullscreenError, setFullscreenError] = useState('')
+
+  const handleStart = async () => {
+    setFullscreenError('')
+    setRequesting(true)
+    const ok = await onAccept()
+    if (!ok) {
+      setFullscreenError('ফুলস্ক্রিন মোড সক্রিয় করা সম্ভব হয়নি। পরীক্ষা শুরু করতে ব্রাউজারে ফুলস্ক্রিন অনুমতি দিন।')
+    }
+    setRequesting(false)
+  }
 
   const rules = [
     {
@@ -441,6 +453,14 @@ function ExamRulesModal({
           ))}
         </div>
 
+        {/* Fullscreen error message if denied */}
+        {fullscreenError && (
+          <div className="mx-6 mb-3 p-3 rounded-xl bg-red-950/60 border border-red-500/30 text-red-300 text-xs font-semibold text-center flex items-center justify-center gap-2">
+            <AlertTriangle size={15} className="shrink-0 text-red-400" />
+            <span>{fullscreenError}</span>
+          </div>
+        )}
+
         {/* Agreement checkbox */}
         <div
           className="shrink-0 mx-6 mb-4 rounded-xl p-3.5"
@@ -466,7 +486,8 @@ function ExamRulesModal({
         >
           <button
             onClick={onCancel}
-            className="flex-1 py-3 rounded-xl font-bold text-sm transition-all hover:scale-105"
+            disabled={requesting}
+            className="flex-1 py-3 rounded-xl font-bold text-sm transition-all hover:scale-105 disabled:opacity-50"
             style={{
               backgroundColor: 'rgba(255,255,255,0.05)',
               color: S.muted,
@@ -476,16 +497,16 @@ function ExamRulesModal({
             বাতিল
           </button>
           <button
-            onClick={onAccept}
-            disabled={!agreed}
-            className="flex-1 py-3 rounded-xl font-black text-sm transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+            onClick={handleStart}
+            disabled={!agreed || requesting}
+            className="flex-1 py-3 rounded-xl font-black text-sm transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
             style={{
               backgroundColor: agreed ? S.accent : 'rgba(101,209,178,0.15)',
               color: agreed ? '#04342C' : S.muted,
               boxShadow: agreed ? '0 0 24px rgba(101,209,178,0.30)' : 'none',
             }}
           >
-            🚀 পরীক্ষা শুরু করুন
+            {requesting ? 'ফুলস্ক্রিন প্রবেশ করা হচ্ছে...' : '🚀 পরীক্ষা শুরু করুন'}
           </button>
         </div>
       </div>
@@ -860,6 +881,8 @@ export function ExamPage() {
     () => submitFnRef.current(),
   )
 
+  const isSubmittingRef = useRef(false)
+
   // Fetch exam
   const { data: exam, isLoading, isError, error } = useQuery<ExamData>({
     queryKey: ['exam-level', level],
@@ -909,9 +932,6 @@ export function ExamPage() {
   }, [exam])
 
   // Countdown tick (only runs after exam starts).
-  // On timeout it calls submitFnRef.current(), which always reads the latest
-  // answers/startTime via refs — never a stale closure. This produces the exact
-  // same payload as clicking the Submit button.
   useEffect(() => {
     if (!exam || submitted || !examStarted) return
     timerRef.current = setInterval(() => {
@@ -937,41 +957,65 @@ export function ExamPage() {
       if (!res.ok) throw new Error('জমা দিতে ব্যর্থ')
       return res.json() as Promise<SubmitResult>
     },
-    onSuccess: data => {
+  })
+
+  const cleanupExamMode = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+    setExamStarted(false)
+  }, [])
+
+  // The single source of submission logic with guaranteed fullscreen exit before navigation
+  const submitExamNow = useCallback(async () => {
+    if (submittedRef.current || isSubmittingRef.current || !exam) return
+    isSubmittingRef.current = true
+
+    const answersArray = exam.questions.map((_, i) => answersRef.current[i] ?? null)
+    const timeTaken = Math.round((Date.now() - startTimeRef.current) / 1000)
+
+    try {
+      // 1. Submit exam payload to server
+      const data = await submitMutation.mutateAsync({ answers: answersArray, timeTakenSeconds: timeTaken })
+
+      // Debug: log the complete submit response so the post-submit navigation
+      // path (passed/pendingFeedback/result) can be verified from the console.
+      console.log('[ExamPage] submit response:', data)
+
+      // 2. Signal intentional exit so fullscreenchange won't count a violation
+      fullscreenSecurity.signalIntentionalExit()
+
+      // 3. Wait until browser actually exits fullscreen completely
+      await exitDocumentFullscreenSafe()
+
+      // 4. Clean up exam mode (removes beforeunload, popstate, timers, fullscreen flags)
+      cleanupExamMode()
+
+      // 5. Update UI result state
       setResult(data)
       setSubmitted(true)
-      // Update local progress so next-level unlock takes effect immediately
+
+      // 6. Update local progress & navigate if required
       if (data.passed && level) {
         completeLevel(level as LearningLevel)
-        markExamPassed(exam!._id, {
+        markExamPassed(exam._id, {
           score: data.score,
           passed: true,
           takenAt: new Date().toISOString(),
-          timeTakenSeconds: Math.round((Date.now() - startTime) / 1000),
+          timeTakenSeconds: timeTaken,
         })
       }
-      // ── Mandatory feedback: redirect immediately after pass ──────────────
-      // The backend sets pendingFeedback on exam pass. Redirect the user to the
-      // feedback page so they cannot navigate elsewhere until feedback is done.
+
       if (data.passed && data.pendingFeedback && level) {
-        // Sync the AuthContext so ProtectedRoute enforces the redirect on any
-        // subsequent navigation attempt.
         updateUser({ pendingFeedback: data.pendingFeedback })
         navigate(`/feedback/${level}`, { replace: true })
       }
-    },
-  })
-
-  // The single source of submission logic. Both manual submit and the
-  // timeout auto-submit call submitFnRef.current(), guaranteeing an identical
-  // payload (latest answers + accurate time taken).
-  const submitExamNow = useCallback(() => {
-    if (submittedRef.current || !exam) return
-    if (timerRef.current) clearInterval(timerRef.current)
-    const answersArray = exam.questions.map((_, i) => answersRef.current[i] ?? null)
-    const timeTaken = Math.round((Date.now() - startTimeRef.current) / 1000)
-    submitMutation.mutate({ answers: answersArray, timeTakenSeconds: timeTaken })
-  }, [exam, submitMutation])
+    } catch (err) {
+      isSubmittingRef.current = false
+      console.error('Submit failed:', err)
+    }
+  }, [exam, submitMutation, level, completeLevel, markExamPassed, updateUser, navigate, cleanupExamMode])
 
   useEffect(() => { submitFnRef.current = submitExamNow }, [submitExamNow])
 
@@ -1119,6 +1163,14 @@ export function ExamPage() {
     return <ExamTerminatedPage level={level!} reason={antiCheatInfo.reason} />
   }
 
+  // ── Result screen ────────────────────────────────────────────────────────
+  // Checked BEFORE the pre-exam rules modal: a finished attempt sets
+  // examStarted=false during cleanup, so without this ordering the result
+  // screen would never render and the UI would snap back to the last question.
+  if (submitted && result) {
+    return <ResultScreen result={result} level={level!} onRetry={handleRetry} />
+  }
+
   // ── Pre-exam: rules modal (the only pre-exam screen) ─────────────────────
   if (!examStarted) {
     return (
@@ -1129,16 +1181,11 @@ export function ExamPage() {
           onCancel={() => navigate('/courses')}
           onAccept={() => {
             setExamStarted(true)
-            fullscreenSecurity.enterFullscreen()
+            return fullscreenSecurity.enterFullscreen()
           }}
         />
       </div>
     )
-  }
-
-  // ── Result screen ────────────────────────────────────────────────────────
-  if (submitted && result) {
-    return <ResultScreen result={result} level={level!} onRetry={handleRetry} />
   }
 
   // ── Submitting overlay ───────────────────────────────────────────────────
@@ -1183,14 +1230,21 @@ export function ExamPage() {
         className="sticky top-0 z-30 px-4 py-3 flex items-center gap-4"
         style={{ backgroundColor: S.card, borderBottom: '1px solid rgba(101,209,178,0.12)' }}
       >
-        <Link
-          to="/courses"
+        <button
+          onClick={async () => {
+            if (window.confirm('আপনি কি নিশ্চিত যে আপনি পরীক্ষা থেকে বের হতে চান? আপনার অগ্রগতি হারানো যাবে।')) {
+              fullscreenSecurity.signalIntentionalExit()
+              await exitDocumentFullscreenSafe()
+              cleanupExamMode()
+              navigate('/courses')
+            }
+          }}
           className="p-2 rounded-lg transition-colors hover:bg-white/5"
           style={{ color: S.muted }}
           title="পরীক্ষা থেকে বের হন"
         >
           <ArrowLeft size={18} />
-        </Link>
+        </button>
         <div className="flex-1 min-w-0">
           <h1 className="text-sm font-black truncate" style={{ color: S.text }}>{exam.title}</h1>
           <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: S.muted }}>

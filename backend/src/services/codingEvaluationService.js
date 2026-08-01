@@ -676,7 +676,17 @@ function getWorker() {
       job.resolve(msg)
       pump()
     })
-    w.on('error', () => { w.busy = false; pump() })
+    w.on('error', (err) => {
+      console.error('[CodingEvaluationService] worker error:', err && err.message)
+      w.busy = false
+      // Resolve any jobs stranded on this worker so callers fall back to inline
+      // evaluation instead of hanging the exam submission forever.
+      for (const [jobId, job] of pendingJobs.entries()) {
+        pendingJobs.delete(jobId)
+        if (job && job.resolve) job.resolve({ ok: false })
+      }
+      pump()
+    })
     workerPool.push(w)
     return w
   }
@@ -692,7 +702,18 @@ function pump() {
     const { id, question, answer, resolve } = queue.shift()
     pendingJobs.set(id, { resolve })
     w.busy = true
-    w.postMessage({ id, question, answer })
+    try {
+      w.postMessage({ id, question, answer })
+    } catch (err) {
+      // The payload could not be structured-cloned (e.g. Mongoose subdocuments
+      // leaked into a question). Fail the job back to the inline fallback so
+      // grading still completes instead of 500ing the exam submit.
+      pendingJobs.delete(id)
+      w.busy = false
+      console.error('[CodingEvaluationService] worker postMessage failed:', err && err.message)
+      resolve({ ok: false })
+      pump()
+    }
   }
 }
 
@@ -717,6 +738,31 @@ function evaluateInWorker(question, answer) {
 // ===========================================================================
 
 /**
+ * Convert a Mongoose test-case array into a plain cloneable JS array.
+ *
+ * DocumentArrays (e.g. question.visibleTestCases loaded from a query) carry
+ * circular internal references (`$__`, `$parent`, ...). Passing them straight
+ * into worker.postMessage fails structured-clone serialization with
+ * "DOMException: [object Array] could not be cloned", which 500s the whole
+ * exam submit. Only the fields the judge actually needs are copied.
+ */
+function toPlainTestCases(testCases) {
+  if (!Array.isArray(testCases)) return []
+  return testCases.map((t) => {
+    let doc = t
+    if (doc && typeof doc === 'object' && typeof doc.toObject === 'function') {
+      try { doc = doc.toObject({ depopulate: true }) } catch (_) { doc = t }
+    }
+    if (!doc || typeof doc !== 'object') return { input: '', expectedOutput: '', description: '' }
+    return {
+      input: String(doc.input || ''),
+      expectedOutput: String(doc.expectedOutput || ''),
+      description: String(doc.description || ''),
+    }
+  })
+}
+
+/**
  * gradeCodingQuestion — the ONLY place that decides a coding question's result.
  *
  * @param {Object} question  Coding question doc (with test cases).
@@ -726,14 +772,16 @@ function evaluateInWorker(question, answer) {
  */
 async function gradeCodingQuestion(question, answer, ctx = {}) {
   // Normalized question (defensive against missing fields / populated docs).
+  // Test cases are flattened to plain objects so the payload survives
+  // structured-clone serialization into the worker thread.
   const normalized = {
     language: question.language || 'python',
     solutionCode: question.solutionCode,
     expectedOutput: question.expectedOutput || '',
     sampleInput: question.sampleInput || '',
     sampleOutput: question.sampleOutput || '',
-    visibleTestCases: question.visibleTestCases || [],
-    hiddenTestCases: question.hiddenTestCases || [],
+    visibleTestCases: toPlainTestCases(question.visibleTestCases),
+    hiddenTestCases: toPlainTestCases(question.hiddenTestCases),
     timeLimitMs: question.timeLimitMs || GLOBAL.timeLimitMs,
     memoryLimitMb: question.memoryLimitMb || GLOBAL.memoryLimitMb,
     points: question.points || 1,

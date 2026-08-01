@@ -2,6 +2,7 @@ const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
 const { User } = require('../models/User')
 const { Exam } = require('../models/Exam')
+const { NEXT_LEVEL } = require('../services/progressService')
 const { sendOtpEmail } = require('../utils/email')
 const { sendOtp, verifyOtp: verifyOtpToken } = require('../services/otpService')
 const { OTP_TTL_MS } = require('../services/otpService')
@@ -353,6 +354,9 @@ const superAdminLogin = async (req, res) => {
 async function autoRecoverPendingFeedback(user) {
   const levels = ['beginner', 'intermediate', 'advanced']
   for (const level of levels) {
+    // Feedback gates next-level progression only. The final level (advanced)
+    // has no next level, so it never requires feedback.
+    if (!NEXT_LEVEL[level]) continue
     // Skip if feedback was already submitted for this level
     if ((user.feedbackSubmittedLevels || []).includes(level)) continue
     // Skip if user already has a pendingFeedback (don't overwrite)

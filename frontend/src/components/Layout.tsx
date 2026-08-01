@@ -23,6 +23,7 @@ export function Layout({ children }: LayoutProps) {
   const isLessonPage = location.pathname.startsWith('/courses/') && location.pathname.length > '/courses/'.length
   const isIDEPage = location.pathname === '/development' || location.pathname === '/practice'
   const isAIBuddy = location.pathname === '/ai-buddy'
+  const isExamPage = location.pathname.startsWith('/exam/') && !location.pathname.includes('/review')
 
   const navLinks = [
     { to: '/',        label: 'হোম' },
@@ -44,23 +45,24 @@ export function Layout({ children }: LayoutProps) {
     <div className={`min-h-screen flex flex-col ${isLessonPage ? 'overflow-hidden' : ''}`} style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}>
 
       {/* ── Navbar ─────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50"
-        style={{ backgroundColor: 'var(--color-navbar-bg)', backdropFilter: 'blur(14px)', borderBottom: '1px solid var(--color-border)', boxShadow: '0 1px 8px rgba(29,158,117,0.05)', paddingTop: 'env(safe-area-inset-top)' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+      {!isExamPage && (
+        <header className="sticky top-0 z-50"
+          style={{ backgroundColor: 'var(--color-navbar-bg)', backdropFilter: 'blur(14px)', borderBottom: '1px solid var(--color-border)', boxShadow: '0 1px 8px rgba(29,158,117,0.05)', paddingTop: 'env(safe-area-inset-top)' }}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
 
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 group shrink-0">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: 'linear-gradient(135deg, #1D9E75, #9FE1CB)', boxShadow: '0 2px 10px rgba(29,158,117,0.30)' }}>
-              <BookOpen size={17} color="#fff" strokeWidth={2.5} />
-            </div>
-            <span className="text-xl font-black" style={{ color: 'var(--color-text)', fontFamily: "'Hind Siliguri', sans-serif" }}>
-              আলোকবর্তিকা
-            </span>
-          </Link>
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-2.5 group shrink-0">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: 'linear-gradient(135deg, #1D9E75, #9FE1CB)', boxShadow: '0 2px 10px rgba(29,158,117,0.30)' }}>
+                <BookOpen size={17} color="#fff" strokeWidth={2.5} />
+              </div>
+              <span className="text-xl font-black" style={{ color: 'var(--color-text)', fontFamily: "'Hind Siliguri', sans-serif" }}>
+                আলোকবর্তিকা
+              </span>
+            </Link>
 
-          {/* Desktop nav */}
-          <nav className="hidden lg:flex items-center gap-1">
+            {/* Desktop nav */}
+            <nav className="hidden lg:flex items-center gap-1">
             {navLinks.map(link => (
               <Link key={link.to} to={link.to}
                 className="px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200"
@@ -227,19 +229,21 @@ export function Layout({ children }: LayoutProps) {
           </div>
         </div>
       </header>
+      )}
 
       {/* ── Main ───────────────────────────────────────────────────── */}
       <main
         className={`flex-grow w-full mx-auto pt-0 ${
-          isAIBuddy ? 'max-w-[1600px] px-0 sm:px-4' : 'container max-w-7xl px-4 sm:px-6'
+          isAIBuddy || isExamPage ? 'max-w-none px-0' : 'container max-w-7xl px-4 sm:px-6'
         }`}
       >
-        {!isIDEPage && location.pathname !== '/ai-buddy' && <BackButton />}
+        {!isIDEPage && location.pathname !== '/ai-buddy' && !isExamPage && <BackButton />}
         {children}
       </main>
 
       {/* ── Footer ─────────────────────────────────────────────────── */}
-      <footer className="mt-auto" style={{ backgroundColor: 'var(--color-footer-bg)' }}>
+      {!isExamPage && (
+        <footer className="mt-auto" style={{ backgroundColor: 'var(--color-footer-bg)' }}>
         {/* Top accent glow bar */}
         <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, #1D9E75, #34D399, #6EE7B7)' }} />
 
@@ -346,6 +350,7 @@ export function Layout({ children }: LayoutProps) {
           </div>
         </div>
       </footer>
+      )}
     </div>
   )
 }

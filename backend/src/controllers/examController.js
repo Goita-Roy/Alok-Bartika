@@ -407,12 +407,15 @@ const submitExam = async (req, res) => {
         }
       }
 
-      // ── Mandatory feedback: set pendingFeedback to block navigation ──
-      // The user must submit feedback before accessing any other page.
-      user.pendingFeedback = exam.level
-
+      // ── Mandatory feedback: gate next-level progression ──
+      // Feedback is only required when passing unlocks the NEXT level. Advanced
+      // is the final level (NEXT_LEVEL.advanced === null), so its pass goes
+      // straight to the result screen — no feedback gate, nothing to unlock.
       const nextLevel = NEXT_LEVEL[exam.level]
-      if (nextLevel) nextLevelUnlocked = true
+      if (nextLevel) {
+        user.pendingFeedback = exam.level
+        nextLevelUnlocked = true
+      }
     } else {
       user.xp = (user.xp || 0) + XP_EXAM_FAIL
     }
@@ -442,7 +445,7 @@ const submitExam = async (req, res) => {
 
     // ── Check if feedback is required before next level unlock ──
     let feedbackRequired = false
-    if (passed) {
+    if (passed && NEXT_LEVEL[exam.level]) {
       const feedbackLevels = user.feedbackSubmittedLevels || []
       feedbackRequired = !feedbackLevels.includes(exam.level)
     }
