@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
+import { RatingDistributionChart } from '../../components/admin/feedback/RatingDistributionChart'
 import { useAuth } from '../../context/AuthContext'
 import { API_BASE_URL } from '../../config/api'
 import {
   Search, Star, MessageSquare, AlertTriangle, Loader2,
   ChevronLeft, ChevronRight, Calendar, Filter,
-  TrendingUp, Users, BarChart3, PieChart, Activity,
+  TrendingUp, Users, BarChart3, Activity,
 } from 'lucide-react'
 interface AnalyticsData {
   totalFeedback: number
@@ -160,12 +161,6 @@ export function AdminFeedbackPage() {
 
   const averageRating = analytics?.averageRating ?? 0
   const recommendationPercentage = analytics?.recommendationPercentage ?? 0
-
-  const levelDistribution = useMemo(() => ({
-    beginner: analytics?.feedbackByLevel?.beginner ?? 0,
-    intermediate: analytics?.feedbackByLevel?.intermediate ?? 0,
-    advanced: analytics?.feedbackByLevel?.advanced ?? 0,
-  }), [analytics])
 
   const renderStarVisual = (rating: number) => {
     return Array.from({ length: 5 }, (_, index) => (
@@ -506,6 +501,13 @@ export function AdminFeedbackPage() {
             </div>
           )}
         </div>
+
+        {/* Rating Distribution Chart */}
+        <RatingDistributionChart
+          ratingDistribution={analytics?.ratingDistribution}
+          loading={analyticsLoading}
+          error={analyticsError}
+        />
 
         {/* Detail modal */}
         {selected && (
