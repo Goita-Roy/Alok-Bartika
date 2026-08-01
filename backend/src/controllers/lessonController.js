@@ -1,5 +1,6 @@
 const { Lesson } = require('../models/Lesson')
 const { Course } = require('../models/Course')
+const { auditService } = require('../services/auditService')
 
 // SECURITY: the ONLY fields an admin may set when creating/updating a lesson.
 const LESSON_FIELDS = [
@@ -61,6 +62,7 @@ const createLesson = async (req, res) => {
     }
 
     await lesson.save()
+    auditService.logLessonCrud(req.user, 'create', lesson, req)
     res.status(201).json({ message: 'Lesson created', data: lesson })
   } catch (error) {
     console.error('Create Lesson Error:', error)
@@ -82,6 +84,7 @@ const updateLesson = async (req, res) => {
     if (!lesson) {
       return res.status(404).json({ message: 'Lesson not found' })
     }
+    auditService.logLessonCrud(req.user, 'update', lesson, req)
     res.status(200).json({ message: 'Lesson updated', data: lesson })
   } catch (error) {
     console.error('Update Lesson Error:', error)
@@ -98,6 +101,7 @@ const deleteLesson = async (req, res) => {
     if (!lesson) {
       return res.status(404).json({ message: 'Lesson not found' })
     }
+    auditService.logLessonCrud(req.user, 'delete', lesson, req)
     res.status(200).json({ message: 'Lesson deleted' })
   } catch (error) {
     console.error('Delete Lesson Error:', error)

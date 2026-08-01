@@ -128,6 +128,22 @@ function logCourseCrud(actor, action, course, req) {
   })
 }
 
+function logLessonCrud(actor, action, lesson, req) {
+  if (!lesson) return
+  const ctx = contextFrom(req)
+  record({
+    actorId: actor ? actor._id : null,
+    actorRole: actor ? actor.role : '',
+    action: `lesson.${action}`,
+    category: 'lesson',
+    targetType: 'Lesson',
+    targetId: lesson._id,
+    metadata: { title: lesson.title, courseId: lesson.courseId },
+    ip: ctx.ip,
+    userAgent: ctx.userAgent,
+  })
+}
+
 function logExamCrud(actor, action, exam, req) {
   if (!exam) return
   const ctx = contextFrom(req)
@@ -190,6 +206,7 @@ module.exports = {
     logRoleChange,
     logUserDeletion,
     logCourseCrud,
+    logLessonCrud,
     logExamCrud,
     logSystemSettingChange,
     logSystemSettingsUpdate,
