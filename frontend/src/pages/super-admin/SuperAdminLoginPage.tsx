@@ -31,9 +31,9 @@ export function SuperAdminLoginPage() {
 
       if (!res.ok) {
         if (res.status === 403 && data.code === 'NOT_SUPER_ADMIN') {
-          setError('প্রবেশাধিকার অস্বীকৃত। সুপার অ্যাডমিন অনুমতি প্রয়োজন।')
+          setError('Access denied. Super admin permission is required.')
         } else {
-          setError(data.message || 'লগইন ব্যর্থ হয়েছে। আপনার তথ্য যাচাই করুন।')
+          setError(data.message || 'Login failed. Please check your credentials.')
         }
         return
       }
@@ -41,7 +41,7 @@ export function SuperAdminLoginPage() {
       login(data)
       navigate('/super-admin/dashboard', { replace: true })
     } catch {
-      setError('নেটওয়ার্ক ত্রুটি। আবার চেষ্টা করুন।')
+      setError('Network error. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -55,16 +55,18 @@ export function SuperAdminLoginPage() {
           <div className="text-center space-y-2">
             <div className="flex justify-center">
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg, #7c3aed, #c084fc)',
-                         boxShadow: '0 4px 16px rgba(124,58,237,0.25)' }}>
+                style={{
+                  background: 'linear-gradient(135deg, #7c3aed, #c084fc)',
+                  boxShadow: '0 4px 16px rgba(124,58,237,0.25)'
+                }}>
                 <Shield size={28} color="#fff" strokeWidth={2.5} />
               </div>
             </div>
             <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>
-              সুপার অ্যাডমিন লগইন
+              Super Admin Login
             </h1>
             <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-              সুপার অ্যাডমিন প্যানেলে সাইন ইন করুন
+              Sign in to the super admin panel
             </p>
           </div>
 
@@ -78,7 +80,7 @@ export function SuperAdminLoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <fieldset className="fieldset">
-              <legend className="fieldset-legend">ইমেইল</legend>
+              <legend className="fieldset-legend">Email</legend>
               <input
                 type="email"
                 className="input w-full"
@@ -91,7 +93,7 @@ export function SuperAdminLoginPage() {
             </fieldset>
 
             <fieldset className="fieldset">
-              <legend className="fieldset-legend">পাসওয়ার্ড</legend>
+              <legend className="fieldset-legend">Password</legend>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -124,7 +126,7 @@ export function SuperAdminLoginPage() {
               onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
               onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
             >
-              {loading ? <span className="loading loading-spinner loading-sm" /> : 'সাইন ইন'}
+              {loading ? <span className="loading loading-spinner loading-sm" /> : 'Sign In'}
             </button>
           </form>
         </div>

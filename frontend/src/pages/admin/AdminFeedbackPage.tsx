@@ -37,17 +37,17 @@ interface FeedbackItem {
 }
 
 const LEVEL_LABELS: Record<string, string> = {
-  beginner: 'শিক্ষানবিশ',
-  intermediate: 'মাঝারি',
-  advanced: 'উন্নত',
+  beginner: 'Beginner',
+  intermediate: 'Intermediate',
+  advanced: 'Advanced',
 }
 
 const RATING_LABELS: Record<number, string> = {
-  1: 'খারাপ',
-  2: 'গড়',
-  3: 'ভালো',
-  4: 'খুব ভালো',
-  5: 'চমৎকার',
+  1: 'Poor',
+  2: 'Fair',
+  3: 'Good',
+  4: 'Very Good',
+  5: 'Excellent',
 }
 
 const LEVEL_BADGE_STYLES: Record<string, { bg: string; text: string }> = {
@@ -152,7 +152,7 @@ export function AdminFeedbackPage() {
 
   const formatDate = (d: string) => {
     const date = new Date(d)
-    return date.toLocaleDateString('bn-BD', { year: 'numeric', month: 'short', day: 'numeric' })
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
   }
 
   const renderStars = (rating: number) => {
@@ -176,7 +176,11 @@ export function AdminFeedbackPage() {
   const getLevelBadgeStyle = (level: string) => LEVEL_BADGE_STYLES[level] || { bg: 'var(--color-accent-pale)', text: 'var(--color-accent)' }
   const getRatingBadgeStyle = (rating: number) => RATING_BADGE_STYLES[rating] || { bg: '#f3f4f6', text: '#6b7280' }
   const getRecommendationBadgeStyle = (recommendation: string) => {
-    const normalized = recommendation?.toLowerCase().includes('অবশ্যই') || recommendation?.toLowerCase().includes('সম্ভবত')
+    const normalized = recommendation?.toLowerCase().includes('recommended') ||
+      recommendation?.toLowerCase().includes('definitely') ||
+      recommendation?.toLowerCase().includes('probably') ||
+      recommendation?.toLowerCase().includes('yes') ||
+      recommendation?.toLowerCase().includes('likely')
       ? 'recommended'
       : 'notRecommended'
     return RECOMMENDATION_BADGE_STYLES[normalized] || { bg: '#f3f4f6', text: '#6b7280' }
@@ -189,10 +193,10 @@ export function AdminFeedbackPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-black" style={{ color: 'var(--color-text)' }}>
-              শিক্ষার্থীর মতামত
+              Student Feedback
             </h1>
             <p className="text-sm font-semibold mt-1" style={{ color: 'var(--color-text-muted)' }}>
-              মোট {total} টি মতামত
+              Total {total} feedback entries
             </p>
           </div>
         </div>
@@ -239,7 +243,7 @@ export function AdminFeedbackPage() {
                 <div className="card-body p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text-muted)' }}>মোট মতামত</p>
+                      <p className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text-muted)' }}>Total Feedback</p>
                       <p className="text-3xl font-bold" style={{ color: '#3b82f6' }}>{analytics?.totalFeedback || 0}</p>
                     </div>
                     <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #3b82f6, #06b6d4)' }}>
@@ -256,7 +260,7 @@ export function AdminFeedbackPage() {
                 <div className="card-body p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text-muted)' }}>গড় রেটিং</p>
+                      <p className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text-muted)' }}>Average Rating</p>
                       <p className="text-3xl font-bold" style={{ color: '#f59e0b' }}>{averageRating > 0 ? averageRating.toFixed(1) : '0.0'}</p>
                     </div>
                     <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #f59e0b, #fbbf24)' }}>
@@ -273,7 +277,7 @@ export function AdminFeedbackPage() {
                 <div className="card-body p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text-muted)' }}>সুপারিশ %</p>
+                      <p className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text-muted)' }}>Recommendation %</p>
                       <p className="text-3xl font-bold" style={{ color: '#10b981' }}>{recommendationPercentage > 0 ? recommendationPercentage : 0}%</p>
                     </div>
                     <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #10b981, #34d399)' }}>
@@ -290,7 +294,7 @@ export function AdminFeedbackPage() {
                 <div className="card-body p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text-muted)' }}>লেভেল অনুযায়ী</p>
+                      <p className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text-muted)' }}>By Level</p>
                       <div className="flex items-center gap-3">
                         <div className="flex flex-col items-center">
                           <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-1" style={{ backgroundColor: 'var(--color-accent-pale)', color: 'var(--color-accent)' }}>
@@ -326,7 +330,7 @@ export function AdminFeedbackPage() {
             <input
               type="text"
               className="input input-sm w-full pl-9"
-              placeholder="শিক্ষার্থী বা কোর্স দ্বারা অনুসন্ধান..."
+              placeholder="Search by student or course..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
@@ -338,10 +342,10 @@ export function AdminFeedbackPage() {
             onChange={e => setLevelFilter(e.target.value)}
             style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
           >
-            <option value="">সব লেভেল</option>
-            <option value="beginner">শিক্ষানবিশ</option>
-            <option value="intermediate">মাঝারি</option>
-            <option value="advanced">উন্নত</option>
+            <option value="">All Levels</option>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
           </select>
           <select
             className="select select-sm"
@@ -349,12 +353,12 @@ export function AdminFeedbackPage() {
             onChange={e => setRatingFilter(e.target.value)}
             style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
           >
-            <option value="">সব রেটিং</option>
-            <option value="5">৫ ★</option>
-            <option value="4">৪ ★</option>
-            <option value="3">৩ ★</option>
-            <option value="2">২ ★</option>
-            <option value="1">১ ★</option>
+            <option value="">All Ratings</option>
+            <option value="5">5 ★</option>
+            <option value="4">4 ★</option>
+            <option value="3">3 ★</option>
+            <option value="2">2 ★</option>
+            <option value="1">1 ★</option>
           </select>
           <select
             className="select select-sm"
@@ -362,11 +366,11 @@ export function AdminFeedbackPage() {
             onChange={e => setRecommendationFilter(e.target.value)}
             style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
           >
-            <option value="">সব সুপারিশ</option>
-            <option value="অবশ্যই করব">অবশ্যই করব</option>
-            <option value="সম্ভবত করব">সম্ভবত করব</option>
-            <option value="নিশ্চিত নই">নিশ্চিত নই</option>
-            <option value="না, করব না">না, করব না</option>
+            <option value="">All Recommendations</option>
+            <option value="Definitely recommend">Definitely recommend</option>
+            <option value="Probably recommend">Probably recommend</option>
+            <option value="Not sure">Not sure</option>
+            <option value="Would not recommend">Would not recommend</option>
           </select>
           <div className="flex items-center gap-2">
             <Calendar size={14} style={{ color: 'var(--color-text-muted)' }} />
@@ -377,7 +381,7 @@ export function AdminFeedbackPage() {
               onChange={e => setDateFrom(e.target.value)}
               style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
             />
-            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>থেকে</span>
+            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>From</span>
             <input
               type="date"
               className="input input-sm"
@@ -401,7 +405,7 @@ export function AdminFeedbackPage() {
             <div className="card-body items-center text-center py-16">
               <MessageSquare size={40} style={{ color: 'var(--color-text-muted)', opacity: 0.4 }} />
               <p className="text-sm mt-2" style={{ color: 'var(--color-text-muted)' }}>
-                কোনো মতামত পাওয়া যায়নি
+                No feedback found
               </p>
             </div>
           ) : (
@@ -409,7 +413,7 @@ export function AdminFeedbackPage() {
               <table className="table table-sm w-full">
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                    {['শিক্ষার্থী', 'কোর্স', 'লেভেল', 'স্কোর', 'রেটিং', 'অভিজ্ঞতা', 'সুপারিশ', 'তারিখ'].map(h => (
+                    {['Student', 'Course', 'Level', 'Score', 'Rating', 'Experience', 'Recommendation', 'Date'].map(h => (
                       <th
                         key={h}
                         className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
@@ -478,7 +482,7 @@ export function AdminFeedbackPage() {
               style={{ borderTop: '1px solid var(--color-border)' }}
             >
               <span className="text-xs font-semibold" style={{ color: 'var(--color-text-muted)' }}>
-                পৃষ্ঠা {page} / {totalPages}
+                Page {page} / {totalPages}
               </span>
               <div className="flex gap-2">
                 <button
@@ -523,7 +527,7 @@ export function AdminFeedbackPage() {
             >
               <div className="sticky top-0 flex items-center justify-between p-6 pb-4" style={{ backgroundColor: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}>
                 <h2 className="text-lg font-black" style={{ color: 'var(--color-text)' }}>
-                  মতামতের বিবরণ
+                  Feedback Details
                 </h2>
                 <button className="btn btn-ghost btn-xs" onClick={() => setSelected(null)} style={{ color: 'var(--color-text-muted)' }}>
                   ✕
@@ -531,37 +535,37 @@ export function AdminFeedbackPage() {
               </div>
 
               <div className="p-6 space-y-4">
-                <DetailRow label="শিক্ষার্থীর নাম" value={selected.studentName} />
-                <DetailRow label="কোর্স" value={selected.courseTitle} />
-                <DetailRow label="লেভেল" value={LEVEL_LABELS[selected.level] || selected.level} />
-                <DetailRow label="পরীক্ষার স্কোর" value={`${selected.examScore}%`} />
+                <DetailRow label="Student Name" value={selected.studentName} />
+                <DetailRow label="Course" value={selected.courseTitle} />
+                <DetailRow label="Level" value={LEVEL_LABELS[selected.level] || selected.level} />
+                <DetailRow label="Exam Score" value={`${selected.examScore}%`} />
                 <DetailRow
-                  label="রেটিং"
+                  label="Rating"
                   value={`${renderStars(selected.rating)} (${RATING_LABELS[selected.rating] || selected.rating})`}
                 />
-                <DetailRow label="কোর্সের অভিজ্ঞতা" value={selected.courseExperience} />
-                <DetailRow label="শেখার অভিজ্ঞতা" value={selected.learnedSomething} />
-                <DetailRow label="পাঠ বোঝার মাত্রা" value={selected.lessonUnderstanding} />
+                <DetailRow label="Course Experience" value={selected.courseExperience} />
+                <DetailRow label="Learning Experience" value={selected.learnedSomething} />
+                <DetailRow label="Lesson Understanding" value={selected.lessonUnderstanding} />
                 <DetailRow
-                  label="পছন্দের বিষয়"
+                  label="Favorite Topics"
                   value={selected.favoriteParts.length > 0 ? selected.favoriteParts.join(', ') : '—'}
                 />
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--color-text-muted)' }}>
-                    উন্নতির পরামর্শ
+                    Improvement Suggestions
                   </p>
                   <p className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
                     {selected.improvementSuggestion}
                   </p>
                 </div>
                 {selected.futureFeatures && (
-                  <DetailRow label="ভবিষ্যতের ফিচার" value={selected.futureFeatures} />
+                  <DetailRow label="Future Features" value={selected.futureFeatures} />
                 )}
-                <DetailRow label="সুপারিশ" value={selected.recommendation} />
+                <DetailRow label="Recommendation" value={selected.recommendation} />
                 {selected.additionalSuggestion && (
-                  <DetailRow label="অতিরিক্ত পরামর্শ" value={selected.additionalSuggestion} />
+                  <DetailRow label="Additional Suggestions" value={selected.additionalSuggestion} />
                 )}
-                <DetailRow label="জমা দেওয়ার তারিখ" value={formatDate(selected.submittedAt)} />
+                <DetailRow label="Submitted On" value={formatDate(selected.submittedAt)} />
               </div>
             </div>
           </div>

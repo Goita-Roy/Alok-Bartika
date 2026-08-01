@@ -10,17 +10,17 @@ import {
 } from 'lucide-react'
 
 const navItems = [
-  { to: '/admin/dashboard',  label: 'Dashboard',                icon: LayoutDashboard },
-  { to: '/admin/students',   label: 'Student Management',       icon: Users },
-  { to: '/admin/courses',    label: 'Course Management',        icon: BookOpen },
-  { to: '/admin/lessons',    label: 'Lesson Management',        icon: FileText },
-  { to: '/admin/questions',  label: 'Question & Exam Management', icon: ClipboardList },
-  { to: '/admin/feedback',   label: 'Student Feedback',         icon: Star },
-  { to: '/admin/analytics',  label: 'Analytics',                icon: BarChart3 },
-  { to: '/admin/support',    label: 'Student Support',          icon: MessageSquare },
-  { to: '/admin/notices',    label: 'Notice Management',        icon: Megaphone },
-  { to: '/admin/settings',   label: 'Settings',                 icon: Settings },
-  { to: '/admin/profile',    label: 'Profile',                  icon: User },
+  { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/admin/students', label: 'Student Management', icon: Users },
+  { to: '/admin/courses', label: 'Course Management', icon: BookOpen },
+  { to: '/admin/lessons', label: 'Lesson Management', icon: FileText },
+  { to: '/admin/questions', label: 'Question and Exam Management', icon: ClipboardList },
+  { to: '/admin/feedback', label: 'Student Feedback', icon: Star },
+  { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+  { to: '/admin/support', label: 'Student Support', icon: MessageSquare },
+  { to: '/admin/notices', label: 'Notice Management', icon: Megaphone },
+  { to: '/admin/settings', label: 'Settings', icon: Settings },
+  { to: '/admin/profile', label: 'Profile', icon: User },
 ]
 
 interface AdminLayoutProps {
@@ -60,8 +60,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           style={{ borderBottom: '1px solid var(--color-border)' }}>
           <Link to="/admin/dashboard" className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, #1D9E75, #9FE1CB)',
-                       boxShadow: '0 2px 10px rgba(29,158,117,0.30)' }}>
+              style={{
+                background: 'linear-gradient(135deg, #1D9E75, #9FE1CB)',
+                boxShadow: '0 2px 10px rgba(29,158,117,0.30)'
+              }}>
               <Shield size={17} color="#fff" strokeWidth={2.5} />
             </div>
             <span className="text-base font-black" style={{ fontFamily: "'Hind Siliguri', sans-serif" }}>

@@ -157,7 +157,7 @@ export function AdminQuestionsPage() {
     <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>Question & Exam Management</h1>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>Question and Exam Management</h1>
           <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Create and update the active exam for each learning level</p>
         </div>
 
