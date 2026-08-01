@@ -22,6 +22,16 @@ const auditLogSchema = new mongoose.Schema(
     action: { type: String, required: true, index: true },
     category: { type: String, required: true, index: true },
 
+    // Outcome of the action. Powers the security dashboard's "Failed Actions"
+    // counter and the `status` filter. Older entries (pre-status schema) are
+    // treated as successful by the query layer.
+    status: {
+      type: String,
+      enum: ['success', 'failed'],
+      default: 'success',
+      index: true,
+    },
+
     // Optional structured references to the affected record.
     targetType: { type: String, default: '' },
     targetId: {

@@ -192,14 +192,17 @@ const loginUser = async (req, res) => {
     const user = await User.findOne(query)
 
     if (!user) {
+      auditService.logLoginFailed(identifier, 'account_not_found', req)
       return res.status(401).json({ message: 'Account not found' })
     }
 
     if (!(await user.comparePassword(password))) {
+      auditService.logLoginFailed(identifier, 'incorrect_password', req)
       return res.status(401).json({ message: 'Incorrect password' })
     }
 
     if (user.isActive === false) {
+      auditService.logLoginFailed(identifier, 'account_suspended', req)
       return res.status(403).json({ code: 'ACCOUNT_SUSPENDED', message: 'This account has been suspended. Please contact support.' })
     }
 
@@ -229,11 +232,13 @@ const firebaseLogin = async (req, res) => {
       console.log('[auth][firebase] token verified. uid:', decoded.uid, 'email:', decoded.email)
     } catch (err) {
       console.error('[auth][firebase] token verification FAILED:', err.message)
+      auditService.logLoginFailed(null, 'invalid_firebase_token', req, 'firebase')
       return res.status(401).json({ message: 'Invalid Firebase token' })
     }
 
     if (!decoded || !decoded.email) {
       console.warn('[auth][firebase] decoded token has no email')
+      auditService.logLoginFailed(null, 'firebase_no_email', req, 'firebase')
       return res.status(400).json({ message: 'Firebase token has no email' })
     }
 
@@ -254,6 +259,7 @@ const firebaseLogin = async (req, res) => {
       console.log('[auth][firebase] existing user found:', user._id, 'linking firebaseUid if needed')
       if (user.isActive === false) {
         console.warn('[auth][firebase] suspended user blocked:', user._id)
+        auditService.logLoginFailed(user.email, 'account_suspended', req, 'firebase')
         return res.status(403).json({ code: 'ACCOUNT_SUSPENDED', message: 'This account has been suspended. Please contact support.' })
       }
       if (!user.firebaseUid) {
@@ -307,18 +313,22 @@ const adminLogin = async (req, res) => {
     const user = await User.findOne({ email: identifier })
 
     if (!user) {
+      auditService.logLoginFailed(identifier, 'account_not_found', req, 'admin')
       return res.status(401).json({ message: 'No account found with this email' })
     }
 
     if (!(await user.comparePassword(password))) {
+      auditService.logLoginFailed(identifier, 'incorrect_password', req, 'admin')
       return res.status(401).json({ message: 'Incorrect password' })
     }
 
     if (user.role !== 'admin') {
+      auditService.logLoginFailed(identifier, 'not_admin', req, 'admin')
       return res.status(403).json({ code: 'NOT_ADMIN', message: 'Access denied. Admin privileges required.' })
     }
 
     if (user.isActive === false) {
+      auditService.logLoginFailed(identifier, 'account_suspended', req, 'admin')
       return res.status(403).json({ code: 'ACCOUNT_SUSPENDED', message: 'This account has been suspended. Please contact support.' })
     }
 
@@ -343,18 +353,22 @@ const superAdminLogin = async (req, res) => {
     const user = await User.findOne({ email: identifier })
 
     if (!user) {
+      auditService.logLoginFailed(identifier, 'account_not_found', req, 'super-admin')
       return res.status(401).json({ message: 'No account found with this email' })
     }
 
     if (!(await user.comparePassword(password))) {
+      auditService.logLoginFailed(identifier, 'incorrect_password', req, 'super-admin')
       return res.status(401).json({ message: 'Incorrect password' })
     }
 
     if (user.role !== 'super-admin') {
+      auditService.logLoginFailed(identifier, 'not_super_admin', req, 'super-admin')
       return res.status(403).json({ code: 'NOT_SUPER_ADMIN', message: 'Access denied. Super Admin privileges required.' })
     }
 
     if (user.isActive === false) {
+      auditService.logLoginFailed(identifier, 'account_suspended', req, 'super-admin')
       return res.status(403).json({ code: 'ACCOUNT_SUSPENDED', message: 'This account has been suspended. Please contact support.' })
     }
 

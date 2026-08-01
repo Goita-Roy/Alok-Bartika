@@ -13,6 +13,7 @@ function record(entry) {
     actorRole: entry.actorRole || '',
     action: entry.action,
     category: entry.category,
+    status: entry.status === 'failed' ? 'failed' : 'success',
     targetType: entry.targetType || '',
     targetId: entry.targetId || null,
     metadata: entry.metadata || {},
@@ -53,6 +54,24 @@ function logLogin(user, req, via = 'local') {
 
 // actor = the admin/super-admin performing the change; target = affected user;
 // fromRole = role before (null when assigning the first role).
+// Records a failed authentication attempt (unknown account, wrong password,
+// role denial, suspended account, invalid Firebase token). `identifier` is the
+// attempted email/username/phone — the password itself is never stored.
+function logLoginFailed(identifier, reason, req, via = 'local') {
+  const ctx = contextFrom(req)
+  record({
+    actorId: null,
+    actorRole: '',
+    action: 'login_failed',
+    category: 'login',
+    status: 'failed',
+    targetType: 'User',
+    metadata: { identifier: identifier || null, reason, via },
+    ip: ctx.ip,
+    userAgent: ctx.userAgent,
+  })
+}
+
 function logRoleChange(actor, target, fromRole, toRole, req) {
   if (!target) return
   const ctx = contextFrom(req)
@@ -167,6 +186,7 @@ module.exports = {
   auditService: {
     record,
     logLogin,
+    logLoginFailed,
     logRoleChange,
     logUserDeletion,
     logCourseCrud,
