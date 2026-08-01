@@ -1,11 +1,20 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import { useAuth } from '../../context/AuthContext'
 import { API_BASE_URL } from '../../config/api'
 import {
   Search, Star, MessageSquare, AlertTriangle, Loader2,
   ChevronLeft, ChevronRight, Calendar, Filter,
+  TrendingUp, Users, BarChart3, PieChart, Activity,
 } from 'lucide-react'
+interface AnalyticsData {
+  totalFeedback: number
+  averageRating: number
+  ratingDistribution: { [key: number]: number }
+  recommendationPercentage: number
+  feedbackByLevel: { [key: string]: number }
+  monthlyTrend?: { month: string; count: number }[]
+}
 
 interface FeedbackItem {
   _id: string
@@ -40,6 +49,25 @@ const RATING_LABELS: Record<number, string> = {
   5: 'চমৎকার',
 }
 
+const LEVEL_BADGE_STYLES: Record<string, { bg: string; text: string }> = {
+  beginner: { bg: '#dcfce7', text: '#16a34a' },
+  intermediate: { bg: '#dbeafe', text: '#2563eb' },
+  advanced: { bg: '#ede9fe', text: '#7c3aed' },
+}
+
+const RATING_BADGE_STYLES: Record<number, { bg: string; text: string }> = {
+  5: { bg: '#dcfce7', text: '#15803d' },
+  4: { bg: '#dbeafe', text: '#2563eb' },
+  3: { bg: '#fef3c7', text: '#d97706' },
+  2: { bg: '#ffedd5', text: '#ea580c' },
+  1: { bg: '#fee2e2', text: '#dc2626' },
+}
+
+const RECOMMENDATION_BADGE_STYLES: Record<string, { bg: string; text: string }> = {
+  recommended: { bg: '#dcfce7', text: '#15803d' },
+  notRecommended: { bg: '#fee2e2', text: '#dc2626' },
+}
+
 export function AdminFeedbackPage() {
   const { token } = useAuth()
   const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>([])
@@ -54,9 +82,33 @@ export function AdminFeedbackPage() {
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [selected, setSelected] = useState<FeedbackItem | null>(null)
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
+  const [analyticsLoading, setAnalyticsLoading] = useState(true)
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null)
+  const [feedbackError, setFeedbackError] = useState<string | null>(null)
+
+  const fetchAnalytics = async () => {
+    try {
+      setAnalyticsLoading(true)
+      setAnalyticsError(null)
+      const res = await fetch(`${API_BASE_URL}/feedback/admin/analytics`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error('Failed to load analytics')
+      const data = await res.json()
+      setAnalytics(data)
+    } catch (err) {
+      console.error('Analytics Error:', err)
+      const message = err instanceof Error ? err.message : 'Failed to load analytics'
+      setAnalyticsError(message)
+    } finally {
+      setAnalyticsLoading(false)
+    }
+  }
 
   const fetchFeedbacks = async () => {
     setLoading(true)
+    setFeedbackError(null)
     try {
       const params = new URLSearchParams()
       if (search) params.set('search', search)
@@ -78,14 +130,19 @@ export function AdminFeedbackPage() {
       setTotalPages(data.totalPages)
     } catch (err) {
       console.error(err)
+      const message = err instanceof Error ? err.message : 'Unable to load feedback records'
+      setFeedbackError(message)
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchFeedbacks()
-  }, [page])
+    if (token) {
+      fetchFeedbacks()
+      fetchAnalytics()
+    }
+  }, [token])
 
   useEffect(() => {
     setPage(1)
@@ -99,6 +156,35 @@ export function AdminFeedbackPage() {
 
   const renderStars = (rating: number) => {
     return '★'.repeat(rating) + '☆'.repeat(5 - rating)
+  }
+
+  const averageRating = analytics?.averageRating ?? 0
+  const recommendationPercentage = analytics?.recommendationPercentage ?? 0
+
+  const levelDistribution = useMemo(() => ({
+    beginner: analytics?.feedbackByLevel?.beginner ?? 0,
+    intermediate: analytics?.feedbackByLevel?.intermediate ?? 0,
+    advanced: analytics?.feedbackByLevel?.advanced ?? 0,
+  }), [analytics])
+
+  const renderStarVisual = (rating: number) => {
+    return Array.from({ length: 5 }, (_, index) => (
+      <Star
+        key={index}
+        size={14}
+        className={index < Math.round(rating) ? 'fill-current' : ''}
+        style={{ color: index < Math.round(rating) ? '#f59e0b' : 'var(--color-text-muted)' }}
+      />
+    ))
+  }
+
+  const getLevelBadgeStyle = (level: string) => LEVEL_BADGE_STYLES[level] || { bg: 'var(--color-accent-pale)', text: 'var(--color-accent)' }
+  const getRatingBadgeStyle = (rating: number) => RATING_BADGE_STYLES[rating] || { bg: '#f3f4f6', text: '#6b7280' }
+  const getRecommendationBadgeStyle = (recommendation: string) => {
+    const normalized = recommendation?.toLowerCase().includes('অবশ্যই') || recommendation?.toLowerCase().includes('সম্ভবত')
+      ? 'recommended'
+      : 'notRecommended'
+    return RECOMMENDATION_BADGE_STYLES[normalized] || { bg: '#f3f4f6', text: '#6b7280' }
   }
 
   return (
@@ -115,6 +201,128 @@ export function AdminFeedbackPage() {
             </p>
           </div>
         </div>
+
+        {/* Summary Cards */}
+        {analyticsLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="card shadow-sm rounded-2xl border-0 overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+                <div className="card-body p-6">
+                  <div className="animate-pulse flex items-center justify-between gap-4">
+                    <div className="flex-1 space-y-3">
+                      <div className="h-3 rounded w-24" style={{ backgroundColor: 'var(--color-border)' }}></div>
+                      <div className="h-8 rounded w-20" style={{ backgroundColor: 'var(--color-border)' }}></div>
+                    </div>
+                    <div className="h-12 w-12 rounded-2xl" style={{ backgroundColor: 'var(--color-border)' }}></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : analyticsError ? (
+          <div className="card shadow-sm rounded-2xl border-0 overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+            <div className="card-body p-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ backgroundColor: 'var(--color-accent-pale)', color: 'var(--color-accent)' }}>
+                  <AlertTriangle size={20} />
+                </div>
+                <div>
+                  <p className="font-semibold" style={{ color: 'var(--color-text)' }}>Analytics unavailable</p>
+                  <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{analyticsError}</p>
+                </div>
+              </div>
+              <button className="btn btn-sm" onClick={fetchAnalytics} style={{ backgroundColor: 'var(--color-accent)', color: '#fff', border: 'none' }}>
+                Retry
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl blur opacity-25 group-hover:opacity-75 transition duration-300"></div>
+              <div className="relative card shadow-sm hover:shadow-lg transition-all duration-300 rounded-2xl border-0 overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+                <div className="card-body p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text-muted)' }}>মোট মতামত</p>
+                      <p className="text-3xl font-bold" style={{ color: '#3b82f6' }}>{analytics?.totalFeedback || 0}</p>
+                    </div>
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #3b82f6, #06b6d4)' }}>
+                      <MessageSquare size={20} color="#fff" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-600 to-orange-600 rounded-2xl blur opacity-25 group-hover:opacity-75 transition duration-300"></div>
+              <div className="relative card shadow-sm hover:shadow-lg transition-all duration-300 rounded-2xl border-0 overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+                <div className="card-body p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text-muted)' }}>গড় রেটিং</p>
+                      <p className="text-3xl font-bold" style={{ color: '#f59e0b' }}>{averageRating > 0 ? averageRating.toFixed(1) : '0.0'}</p>
+                    </div>
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #f59e0b, #fbbf24)' }}>
+                      <Star size={20} color="#fff" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl blur opacity-25 group-hover:opacity-75 transition duration-300"></div>
+              <div className="relative card shadow-sm hover:shadow-lg transition-all duration-300 rounded-2xl border-0 overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+                <div className="card-body p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text-muted)' }}>সুপারিশ %</p>
+                      <p className="text-3xl font-bold" style={{ color: '#10b981' }}>{recommendationPercentage > 0 ? recommendationPercentage : 0}%</p>
+                    </div>
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #10b981, #34d399)' }}>
+                      <TrendingUp size={20} color="#fff" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-violet-600 rounded-2xl blur opacity-25 group-hover:opacity-75 transition duration-300"></div>
+              <div className="relative card shadow-sm hover:shadow-lg transition-all duration-300 rounded-2xl border-0 overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+                <div className="card-body p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text-muted)' }}>লেভেল অনুযায়ী</p>
+                      <div className="flex items-center gap-3">
+                        <div className="flex flex-col items-center">
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-1" style={{ backgroundColor: 'var(--color-accent-pale)', color: 'var(--color-accent)' }}>
+                            <Users size={14} />
+                          </div>
+                          <span className="text-xs font-bold" style={{ color: 'var(--color-text)' }}>{analytics?.feedbackByLevel?.beginner || 0}</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-1" style={{ backgroundColor: '#fef3c7', color: '#f59e0b' }}>
+                            <Users size={14} />
+                          </div>
+                          <span className="text-xs font-bold" style={{ color: 'var(--color-text)' }}>{analytics?.feedbackByLevel?.intermediate || 0}</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-1" style={{ backgroundColor: '#dcfce7', color: '#22c55e' }}>
+                            <Users size={14} />
+                          </div>
+                          <span className="text-xs font-bold" style={{ color: 'var(--color-text)' }}>{analytics?.feedbackByLevel?.advanced || 0}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3 flex-wrap">

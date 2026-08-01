@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import type { ReactNode } from 'react'
 import {
   LayoutDashboard, Shield, Users, Key, Settings, ClipboardList,
-  BarChart3, Database, UserCog,
+  BarChart3, Database, UserCog, Star,
   LogOut, Menu, X, Moon, Sun, ChevronDown,
 } from 'lucide-react'
 
@@ -17,6 +17,7 @@ const navItems = [
   { to: '/super-admin/platform',  label: 'Platform Settings',        icon: Settings },
   { to: '/super-admin/security',  label: 'Security & Audit Logs',    icon: ClipboardList },
   { to: '/super-admin/analytics', label: 'System Analytics',          icon: BarChart3 },
+  { to: '/admin/feedback',       label: 'Student Feedback',          icon: Star },
   { to: '/super-admin/backup',    label: 'Backup & Restore',         icon: Database },
   { to: '/super-admin/profile',   label: 'Profile & Settings',       icon: UserCog },
 ]

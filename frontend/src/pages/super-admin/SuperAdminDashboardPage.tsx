@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Shield, Users, UserCheck, UserX, Settings, LayoutDashboard, ChevronRight, Loader2 } from 'lucide-react'
+import { Shield, Users, UserCheck, UserX, Settings, LayoutDashboard, ChevronRight, Loader2, Star } from 'lucide-react'
 import { SuperAdminLayout } from '../../components/super-admin/SuperAdminLayout'
 import { useAuth } from '../../context/AuthContext'
 import { API_BASE_URL } from '../../config/api'
@@ -22,6 +22,7 @@ export function SuperAdminDashboardPage() {
   const { token } = useAuth()
   const [admins, setAdmins] = useState<Admin[]>([])
   const [users, setUsers] = useState<User[]>([])
+  const [feedbackStats, setFeedbackStats] = useState<{ totalFeedback: number; averageRating: number } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -33,9 +34,10 @@ export function SuperAdminDashboardPage() {
 
         const headers = { Authorization: `Bearer ${token}` }
 
-        const [adminsRes, usersRes] = await Promise.all([
+        const [adminsRes, usersRes, feedbackRes] = await Promise.all([
           fetch(`${API_BASE_URL}/admins`, { headers }),
           fetch(`${API_BASE_URL}/users`, { headers }),
+          fetch(`${API_BASE_URL}/admin/dashboard`, { headers }),
         ])
 
         if (!adminsRes.ok || !usersRes.ok) {
@@ -44,9 +46,11 @@ export function SuperAdminDashboardPage() {
 
         const adminsJson = await adminsRes.json()
         const usersJson = await usersRes.json()
+        const feedbackJson = await feedbackRes.json()
 
         setAdmins(adminsJson.data ?? [])
         setUsers(usersJson.data ?? [])
+        setFeedbackStats(feedbackJson.data ?? null)
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'An error occurred while loading the dashboard')
       } finally {
@@ -113,6 +117,12 @@ export function SuperAdminDashboardPage() {
       to: '/super-admin/platform',
       icon: Settings,
       color: '#2563eb',
+    },
+    {
+      label: 'Student Feedback',
+      to: '/admin/feedback',
+      icon: Star,
+      color: '#F59E0B',
     },
   ]
 
@@ -325,6 +335,89 @@ export function SuperAdminDashboardPage() {
                 })}
               </div>
             </div>
+
+            {feedbackStats && (
+              <div
+                style={{
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '12px',
+                  padding: '1.5rem',
+                }}
+              >
+                <h2
+                  style={{
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    color: 'var(--color-text)',
+                    margin: '0 0 1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <Star size={18} style={{ color: 'var(--color-accent)' }} />
+                  Feedback Analytics
+                </h2>
+
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                    gap: '1rem',
+                  }}
+                >
+                  <div
+                    style={{
+                      background: 'var(--color-bg)',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: '10px',
+                      padding: '1rem',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: 0 }}>
+                      Total Feedback
+                    </p>
+                    <p
+                      style={{
+                        fontSize: '1.75rem',
+                        fontWeight: 700,
+                        color: 'var(--color-text)',
+                        margin: '4px 0 0',
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      {feedbackStats.totalFeedback}
+                    </p>
+                  </div>
+                  <div
+                    style={{
+                      background: 'var(--color-bg)',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: '10px',
+                      padding: '1rem',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: 0 }}>
+                      Average Rating
+                    </p>
+                    <p
+                      style={{
+                        fontSize: '1.75rem',
+                        fontWeight: 700,
+                        color: '#F59E0B',
+                        margin: '4px 0 0',
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      {feedbackStats.averageRating}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div
               style={{
