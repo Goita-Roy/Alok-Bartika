@@ -29,6 +29,7 @@ interface AdminProfileData {
   emailVerified: boolean
   createdAt: string
   updatedAt?: string
+  lastLogin?: string | null
 }
 
 interface Toast {
@@ -47,6 +48,7 @@ export function SuperAdminProfilePage() {
 
   // Form states
   const [fullName, setFullName] = useState('')
+  const [username, setUsername] = useState('')
   const [phone, setPhone] = useState('')
   const [avatar, setAvatar] = useState('')
 
@@ -82,10 +84,11 @@ export function SuperAdminProfilePage() {
     setLoading(true)
     setLoadError(null)
     try {
-      const response = await api.get('/admins/me')
+      const response = await api.get('/super-admin/profile')
       const data: AdminProfileData = response.data?.data || response.data
       setProfile(data)
       setFullName(data.fullName || '')
+      setUsername(data.username || '')
       setPhone(data.phone || '')
       setAvatar(data.avatar || '')
     } catch (err: any) {
@@ -117,6 +120,12 @@ export function SuperAdminProfilePage() {
 
   const pwdStrength = getPasswordStrength(newPassword)
 
+  const isProfileDirty =
+    fullName.trim() !== (profile?.fullName || '').trim() ||
+    username.trim().toLowerCase() !== (profile?.username || '').trim().toLowerCase() ||
+    phone.trim() !== (profile?.phone || '').trim() ||
+    avatar.trim() !== (profile?.avatar || '').trim()
+
   // Handle Profile Update
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -126,6 +135,11 @@ export function SuperAdminProfilePage() {
     if (!fullName.trim() || fullName.trim().length < 2) {
       errors.fullName = 'Full name must be at least 2 characters long'
     }
+    if (!username.trim()) {
+      errors.username = 'Username is required'
+    } else if (username.trim().length < 3) {
+      errors.username = 'Username must be at least 3 characters long'
+    }
     if (Object.keys(errors).length > 0) {
       setProfileErrors(errors)
       return
@@ -133,16 +147,22 @@ export function SuperAdminProfilePage() {
 
     setSavingProfile(true)
     try {
-      const response = await api.put('/admins/me', {
+      const response = await api.put('/super-admin/profile', {
         fullName: fullName.trim(),
+        username: username.trim(),
         phone: phone.trim(),
         avatar: avatar.trim(),
       })
 
       const updated = response.data?.data || response.data
       setProfile(updated)
+      setUsername(updated.username || '')
+      setFullName(updated.fullName || '')
+      setPhone(updated.phone || '')
+      setAvatar(updated.avatar || '')
       updateUser({ fullName: updated.fullName, phone: updated.phone })
       addToast('success', 'Profile updated successfully')
+      fetchProfile()
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message || 'Failed to update profile'
       addToast('error', msg)
@@ -189,7 +209,7 @@ export function SuperAdminProfilePage() {
 
     setSavingPassword(true)
     try {
-      const response = await api.put('/admins/change-password', {
+      const response = await api.put('/super-admin/profile/password', {
         currentPassword,
         newPassword,
         confirmPassword,
@@ -232,6 +252,14 @@ export function SuperAdminProfilePage() {
   const displayEmail = profile?.email || user?.email || ''
   const displayRole = profile?.role || user?.role || 'super-admin'
   const displayInitials = (fullName || profile?.fullName || 'SA').charAt(0).toUpperCase()
+  const handleCancelProfile = () => {
+    if (!profile) return
+    setFullName(profile.fullName || '')
+    setUsername(profile.username || '')
+    setPhone(profile.phone || '')
+    setAvatar(profile.avatar || '')
+    setProfileErrors({})
+  }
 
   return (
     <SuperAdminLayout>
@@ -485,6 +513,22 @@ export function SuperAdminProfilePage() {
                   {profileErrors.fullName && <span style={errorStyle}>{profileErrors.fullName}</span>}
                 </div>
 
+                {/* Username */}
+                <div>
+                  <label style={labelStyle}>Username *</label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => {
+                      setUsername(e.target.value)
+                      setProfileErrors((prev) => ({ ...prev, username: '' }))
+                    }}
+                    placeholder="Enter username"
+                    style={inputStyle}
+                  />
+                  {profileErrors.username && <span style={errorStyle}>{profileErrors.username}</span>}
+                </div>
+
                 {/* Email (Read-Only) */}
                 <div>
                   <label style={labelStyle}>Email Address (Read-Only)</label>
@@ -511,6 +555,17 @@ export function SuperAdminProfilePage() {
                   />
                 </div>
 
+                {/* Role (Read-Only) */}
+                <div>
+                  <label style={labelStyle}>Role (Read-Only)</label>
+                  <input
+                    type="text"
+                    value={displayRole}
+                    disabled
+                    style={{ ...inputStyle, opacity: 0.6, cursor: 'not-allowed', textTransform: 'uppercase' }}
+                  />
+                </div>
+
                 {/* Avatar Image URL */}
                 <div>
                   <label style={labelStyle}>Avatar URL / Image Data</label>
@@ -522,12 +577,44 @@ export function SuperAdminProfilePage() {
                     style={inputStyle}
                   />
                 </div>
+
+                {/* Created Date (Read-Only) */}
+                <div>
+                  <label style={labelStyle}>Created Date (Read-Only)</label>
+                  <input
+                    type="text"
+                    value={profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'N/A'}
+                    disabled
+                    style={{ ...inputStyle, opacity: 0.6, cursor: 'not-allowed' }}
+                  />
+                </div>
               </div>
 
-              <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end' }}>
+              <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={handleCancelProfile}
+                  disabled={!isProfileDirty || savingProfile}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '10px 24px',
+                    borderRadius: 8,
+                    border: '1px solid var(--color-border)',
+                    background: 'var(--color-bg)',
+                    color: 'var(--color-text)',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    cursor: !isProfileDirty || savingProfile ? 'not-allowed' : 'pointer',
+                    opacity: !isProfileDirty || savingProfile ? 0.6 : 1,
+                  }}
+                >
+                  Cancel
+                </button>
                 <button
                   type="submit"
-                  disabled={savingProfile}
+                  disabled={savingProfile || !isProfileDirty}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -540,7 +627,7 @@ export function SuperAdminProfilePage() {
                     fontSize: 14,
                     fontWeight: 600,
                     cursor: savingProfile ? 'not-allowed' : 'pointer',
-                    opacity: savingProfile ? 0.7 : 1,
+                    opacity: savingProfile || !isProfileDirty ? 0.6 : 1,
                   }}
                 >
                   {savingProfile ? (

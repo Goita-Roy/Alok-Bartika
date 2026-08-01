@@ -13,6 +13,7 @@ const sanitize = (u) => ({
   emailVerified: !!u.emailVerified,
   createdAt: u.createdAt,
   updatedAt: u.updatedAt,
+  lastLogin: u.lastLogin || u.lastActivityTime || null,
 })
 
 // Helper for password strength validation
@@ -55,13 +56,13 @@ const updateSelfProfile = async (req, res) => {
       return res.status(404).json({ message: 'User profile not found' })
     }
 
-    const { fullName, email, phone, avatar, profilePicture } = req.body || {}
-
-    // Email cannot be changed
-    if (email && email.trim().toLowerCase() !== user.email.toLowerCase()) {
-      return res.status(400).json({ message: 'Email cannot be changed' })
+    const allowedFields = ['fullName', 'username', 'phone', 'avatar']
+    const unknownFields = Object.keys(req.body || {}).filter((key) => !allowedFields.includes(key))
+    if (unknownFields.length > 0) {
+      return res.status(400).json({ message: 'Unknown fields provided', errors: unknownFields })
     }
 
+    const { fullName, username, phone, avatar } = req.body || {}
     const updatedFields = []
 
     if (fullName !== undefined) {
@@ -75,23 +76,50 @@ const updateSelfProfile = async (req, res) => {
       }
     }
 
+    if (username !== undefined) {
+      const trimmedUsername = String(username || '').trim().toLowerCase()
+      if (!trimmedUsername) {
+        return res.status(400).json({ message: 'Username is required' })
+      }
+      if (trimmedUsername.length < 3) {
+        return res.status(400).json({ message: 'Username must be at least 3 characters long' })
+      }
+      if (trimmedUsername !== user.username) {
+        const existing = await User.findOne({ username: trimmedUsername, _id: { $ne: user._id } })
+        if (existing) {
+          return res.status(409).json({ message: 'Username already exists' })
+        }
+        user.username = trimmedUsername
+        updatedFields.push('username')
+      }
+    }
+
     if (phone !== undefined) {
       const trimmedPhone = String(phone || '').trim()
+      if (trimmedPhone && trimmedPhone !== (user.phone || '')) {
+        const existing = await User.findOne({ phone: trimmedPhone, _id: { $ne: user._id } })
+        if (existing) {
+          return res.status(409).json({ message: 'Phone already exists' })
+        }
+      }
       if (trimmedPhone !== (user.phone || '')) {
         user.phone = trimmedPhone || undefined
         updatedFields.push('phone')
       }
     }
 
-    const avatarUrl = avatar !== undefined ? avatar : profilePicture
-    if (avatarUrl !== undefined) {
-      const trimmedAvatar = String(avatarUrl || '').trim()
+    if (avatar !== undefined) {
+      const trimmedAvatar = String(avatar || '').trim()
       if (trimmedAvatar !== (user.profilePicture || '')) {
         user.profilePicture = trimmedAvatar
         if (!user.profile) user.profile = {}
         user.profile.avatar = trimmedAvatar
         updatedFields.push('avatar')
       }
+    }
+
+    if (updatedFields.length === 0) {
+      return res.status(200).json({ success: true, message: 'No changes were made', data: sanitize(user) })
     }
 
     await user.save()
@@ -104,12 +132,12 @@ const updateSelfProfile = async (req, res) => {
     auditService.record({
       actorId: user._id,
       actorRole: user.role,
-      action: 'ADMIN_PROFILE_UPDATED',
+      action: 'PROFILE_UPDATED',
       category: 'admin',
       status: 'success',
       targetType: 'User',
       targetId: user._id,
-      metadata: { updatedFields },
+      metadata: { changedFields: updatedFields },
       ip: ctx.ip,
       userAgent: ctx.userAgent,
     })
@@ -121,6 +149,10 @@ const updateSelfProfile = async (req, res) => {
     })
   } catch (error) {
     console.error('Update Self Profile Error:', error)
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern || {})[0]
+      return res.status(409).json({ message: `${field} already exists` })
+    }
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map((v) => v.message)
       return res.status(400).json({ message: 'Validation error', errors: messages })
@@ -163,7 +195,7 @@ const changeSelfPassword = async (req, res) => {
       auditService.record({
         actorId: user._id,
         actorRole: user.role,
-        action: 'ADMIN_PASSWORD_CHANGE_FAILED',
+        action: 'PASSWORD_CHANGED_FAILED',
         category: 'admin',
         status: 'failed',
         targetType: 'User',
@@ -190,12 +222,12 @@ const changeSelfPassword = async (req, res) => {
     auditService.record({
       actorId: user._id,
       actorRole: user.role,
-      action: 'ADMIN_PASSWORD_CHANGED',
+      action: 'PASSWORD_CHANGED',
       category: 'admin',
       status: 'success',
       targetType: 'User',
       targetId: user._id,
-      metadata: {},
+      metadata: { changedFields: ['password'] },
       ip: ctx.ip,
       userAgent: ctx.userAgent,
     })

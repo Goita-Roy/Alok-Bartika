@@ -29,6 +29,7 @@ const { feedbackRouter } = require('./routes/feedbackRoutes')
 const { systemSettingsRouter } = require('./routes/systemSettingsRoutes')
 const { auditRouter } = require('./routes/auditRoutes')
 const { backupRouter } = require('./routes/backupRoutes')
+const { superAdminRouter } = require('./routes/superAdminRoutes')
 
 function createApp() {
   const app = express()
@@ -110,6 +111,7 @@ function createApp() {
   app.use('/api/system/settings', systemSettingsRouter)
   app.use('/api/audit', auditRouter)
   app.use('/api/backup', backupRouter)
+  app.use('/api/super-admin', superAdminRouter)
 
   app.use((_req, res) => {
     res.status(404).json({ message: 'Not found' })
