@@ -12,6 +12,7 @@ const {
   getAdminConversations,
   updateConversationStatus,
   toggleConversationPin,
+  searchConversationMessages,
 } = require('../controllers/supportController')
 
 // Student-facing support chat endpoints
@@ -23,6 +24,7 @@ router.patch('/read', protect, requireSupportRole, supportWriteLimiter, markMess
 
 // Admin-only conversation management endpoints
 router.get('/admin/conversations', protect, requireAdmin, getAdminConversations)
+router.get('/admin/messages/:conversationId/search', protect, requireAdmin, searchConversationMessages)
 router.patch('/admin/conversations/:id/status', protect, requireAdmin, updateConversationStatus)
 router.patch('/admin/conversations/:id/pin', protect, requireAdmin, toggleConversationPin)
 

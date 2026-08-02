@@ -88,6 +88,25 @@ function StatusBadge({ status }: { status: SupportStatus }) {
   )
 }
 
+function HighlightText({ text, query }: { text: string; query: string }) {
+  if (!query.trim()) return <>{text}</>
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const parts = text.split(new RegExp(`(${escaped})`, 'gi'))
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === query.toLowerCase() ? (
+          <mark key={i} className="rounded bg-amber-400/30 px-0.5 text-amber-200">{part}</mark>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
+  )
+}
+
+type ChatMessage = { _id: string; message: string; sender?: { _id: string; fullName: string }; createdAt: string }
+
 export function AdminDashboard() {
   const user = useAuthStore((s) => s.user)
   const token = useAuthStore((s) => s.token)
@@ -112,6 +131,12 @@ export function AdminDashboard() {
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null)
   const [presenceMap, setPresenceMap] = useState<Record<string, StudentPresence>>({})
   const [statusFilter, setStatusFilter] = useState<'all' | SupportStatus>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+
+  const [chatSearchQuery, setChatSearchQuery] = useState('')
+  const [chatSearchResults, setChatSearchResults] = useState<ChatMessage[]>([])
+  const [chatSearchIndex, setChatSearchIndex] = useState(0)
 
   const presenceMapRef = useRef(presenceMap)
   presenceMapRef.current = presenceMap
@@ -189,9 +214,17 @@ export function AdminDashboard() {
     }
   }, [token, user])
 
-  const loadConversations = useCallback(async () => {
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery), 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  const loadConversations = useCallback(async (search?: string) => {
     try {
-      const { data } = await api.get('/api/support/admin/conversations')
+      const params: Record<string, string> = {}
+      if (search && search.trim()) params.search = search.trim()
+      const { data } = await api.get('/api/support/admin/conversations', { params })
       setConversations(data.conversations ?? [])
     } catch {
       // silently fail; conversations are optional
@@ -227,8 +260,46 @@ export function AdminDashboard() {
   }, [])
 
   useEffect(() => {
-    if (tab === 'support') loadConversations()
-  }, [tab, loadConversations])
+    if (tab === 'support') loadConversations(debouncedQuery)
+  }, [tab, loadConversations, debouncedQuery])
+
+  // Chat search debounce
+  const chatSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const searchChatMessages = useCallback(async (query: string) => {
+    if (!selectedConvId || !query.trim()) {
+      setChatSearchResults([])
+      setChatSearchIndex(0)
+      return
+    }
+    try {
+      const { data } = await api.get(`/api/support/admin/messages/${selectedConvId}/search`, { params: { q: query.trim() } })
+      setChatSearchResults(data.messages ?? [])
+      setChatSearchIndex(0)
+    } catch {
+      setChatSearchResults([])
+    }
+  }, [selectedConvId])
+
+  function handleChatSearchChange(value: string) {
+    setChatSearchQuery(value)
+    if (chatSearchTimerRef.current) clearTimeout(chatSearchTimerRef.current)
+    chatSearchTimerRef.current = setTimeout(() => searchChatMessages(value), 300)
+  }
+
+  function chatSearchPrev() {
+    setChatSearchIndex((prev) => (chatSearchResults.length === 0 ? 0 : prev > 0 ? prev - 1 : chatSearchResults.length - 1))
+  }
+
+  function chatSearchNext() {
+    setChatSearchIndex((prev) => (chatSearchResults.length === 0 ? 0 : prev < chatSearchResults.length - 1 ? prev + 1 : 0))
+  }
+
+  // Clear chat search when switching conversations
+  useEffect(() => {
+    setChatSearchQuery('')
+    setChatSearchResults([])
+    setChatSearchIndex(0)
+  }, [selectedConvId])
 
   async function createStudent() {
     setBusy(true)
@@ -543,6 +614,28 @@ export function AdminDashboard() {
         <section className="flex gap-3" style={{ minHeight: 480 }}>
           <div className="w-80 shrink-0 rounded-xl border border-white/10 bg-white/5 p-4 overflow-y-auto" style={{ maxHeight: 520 }}>
             <div className="mb-3 text-sm font-semibold">Conversations ({filteredConversations.length})</div>
+            <div className="mb-2 relative">
+              <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search name, email, message..."
+                className="w-full rounded-md border border-white/10 bg-zinc-950 pl-7 pr-7 py-1.5 text-xs text-zinc-200 outline-none focus:border-white/30 placeholder:text-zinc-500"
+              />
+              <svg xmlns="http://www.w3.org/2000/svg" className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              {searchQuery ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              ) : null}
+            </div>
             <div className="mb-3 flex flex-wrap gap-1">
               {(['all', 'open', 'pending', 'resolved', 'closed'] as const).map((f) => (
                 <button
@@ -557,7 +650,7 @@ export function AdminDashboard() {
             </div>
             {filteredConversations.length === 0 ? (
               <div className="py-8 text-center text-xs text-zinc-400">
-                {conversations.length === 0 ? 'No conversations yet' : 'No conversations match this filter'}
+                {conversations.length === 0 && !debouncedQuery ? 'No conversations yet' : debouncedQuery ? 'No matching conversations found.' : 'No conversations match this filter'}
               </div>
             ) : (
               <div className="space-y-1">
@@ -591,8 +684,8 @@ export function AdminDashboard() {
                       >
                         <PresenceDot online={isOnline} />
                         <div className="min-w-0 flex-1">
-                          <div className="truncate font-semibold">{studentObj?.fullName ?? 'Student'}</div>
-                          <div className="mt-0.5 truncate text-[11px] text-zinc-400">{conv.lastMessage || 'No messages yet'}</div>
+                          <div className="truncate font-semibold"><HighlightText text={studentObj?.fullName ?? 'Student'} query={debouncedQuery} /></div>
+                          <div className="mt-0.5 truncate text-[11px] text-zinc-400"><HighlightText text={conv.lastMessage || 'No messages yet'} query={debouncedQuery} /></div>
                         </div>
                         <div className="flex flex-col items-end gap-1">
                           {conv.unreadAdmin > 0 ? (
@@ -644,6 +737,53 @@ export function AdminDashboard() {
                   </div>
                 </div>
                 <div className="mt-3 flex-1 rounded-md border border-white/10 bg-zinc-950/40 p-4 text-xs text-zinc-300" style={{ minHeight: 320 }}>
+                  {/* Chat search bar */}
+                  <div className="mb-3 relative">
+                    <input
+                      value={chatSearchQuery}
+                      onChange={(e) => handleChatSearchChange(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); chatSearchNext() } }}
+                      placeholder="Search in conversation..."
+                      className="w-full rounded-md border border-white/10 bg-zinc-900 pl-7 pr-20 py-1.5 text-xs text-zinc-200 outline-none focus:border-white/30 placeholder:text-zinc-500"
+                    />
+                    <svg xmlns="http://www.w3.org/2000/svg" className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    {chatSearchQuery ? (
+                      <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                        <span className="text-[10px] text-zinc-400 px-1">
+                          {chatSearchResults.length > 0 ? `${chatSearchIndex + 1}/${chatSearchResults.length}` : '0 results'}
+                        </span>
+                        <button type="button" onClick={chatSearchPrev} className="rounded p-0.5 text-zinc-400 hover:text-white hover:bg-white/10" title="Previous">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15" /></svg>
+                        </button>
+                        <button type="button" onClick={chatSearchNext} className="rounded p-0.5 text-zinc-400 hover:text-white hover:bg-white/10" title="Next">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                        </button>
+                        <button type="button" onClick={() => { setChatSearchQuery(''); setChatSearchResults([]); setChatSearchIndex(0) }} className="rounded p-0.5 text-zinc-400 hover:text-white hover:bg-white/10" title="Clear">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {/* Chat search results list */}
+                  {chatSearchResults.length > 0 ? (
+                    <div className="mb-3 space-y-1">
+                      {chatSearchResults.map((msg, idx) => (
+                        <div
+                          key={msg._id}
+                          className={`rounded-md border px-3 py-2 text-[11px] transition-colors ${idx === chatSearchIndex ? 'border-amber-400/50 bg-amber-400/10 text-amber-100' : 'border-white/10 bg-white/5 text-zinc-300'}`}
+                        >
+                          <div className="text-[10px] text-zinc-400">{msg.sender?.fullName} · {msg.createdAt ? new Date(msg.createdAt).toLocaleString() : ''}</div>
+                          <div className="mt-0.5"><HighlightText text={msg.message} query={chatSearchQuery} /></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : chatSearchQuery.trim() ? (
+                    <div className="mb-3 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-[11px] text-zinc-400">No matching messages found.</div>
+                  ) : null}
+
                   <div className="text-zinc-400">Last message: {selectedConv.lastMessage || 'None'}</div>
                   <div className="mt-1 text-zinc-500">Sent: {selectedConv.lastMessageAt ? new Date(selectedConv.lastMessageAt).toLocaleString() : 'N/A'}</div>
                   <div className="mt-4 text-center text-zinc-500">

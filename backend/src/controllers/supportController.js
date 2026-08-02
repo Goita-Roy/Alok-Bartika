@@ -282,6 +282,7 @@ const markMessagesRead = async (req, res) => {
 
 // ── GET /api/support/admin/conversations ──────────────────────────────────
 // Admin-only endpoint: list all support conversations with search and filter.
+// Supports searching by student name, email, and message text.
 const getAdminConversations = async (req, res) => {
   try {
     const { status, search, page = '1', limit = '50' } = req.query
@@ -290,30 +291,86 @@ const getAdminConversations = async (req, res) => {
     const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 50))
     const skip = (pageNum - 1) * limitNum
 
-    const filter = {}
+    const searchTerm = search && search.trim() ? search.trim() : null
 
-    if (status && ['open', 'pending', 'resolved', 'closed'].includes(status)) {
-      filter.status = status
-    }
+    let conversations
+    let total
 
-    if (search && search.trim()) {
-      const searchTerm = search.trim()
-      // Search by student name or email via population
-      filter.$or = [
-        { 'student.fullName': { $regex: searchTerm, $options: 'i' } },
-        { 'student.email': { $regex: searchTerm, $options: 'i' } },
+    if (searchTerm) {
+      // Use aggregation to search across student name, email, and message text
+      const matchStage = {}
+      if (status && ['open', 'pending', 'resolved', 'closed'].includes(status)) {
+        matchStage.status = status
+      }
+
+      const pipeline = [
+        // Search messages by text and get matching conversation IDs
+        {
+          $lookup: {
+            from: 'supportmessages',
+            let: { convId: '$_id' },
+            pipeline: [
+              { $match: { $expr: { $eq: ['$conversation', '$$convId'] }, message: { $regex: searchTerm, $options: 'i' } } },
+              { $limit: 1 },
+            ],
+            as: 'matchedMessages',
+          },
+        },
+        // Also search by student name/email via lookup to User collection
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'student',
+            foreignField: '_id',
+            as: '_student',
+          },
+        },
+        { $unwind: { path: '$_student', preserveNullAndEmptyArrays: true } },
+        {
+          $match: {
+            $or: [
+              { 'matchedMessages.0': { $exists: true } },
+              { '_student.fullName': { $regex: searchTerm, $options: 'i' } },
+              { '_student.email': { $regex: searchTerm, $options: 'i' } },
+            ],
+            ...matchStage,
+          },
+        },
+        // Clean up temporary fields
+        { $project: { matchedMessages: 0, _student: 0 } },
+        // Sort: pinned first, then by most recent activity
+        { $sort: { pinned: -1, updatedAt: -1 } },
+        // Get total count before pagination
+        { $facet: {
+          metadata: [{ $count: 'total' }],
+          data: [{ $skip: skip }, { $limit: limitNum }],
+        }},
       ]
+
+      const [result] = await SupportConversation.aggregate(pipeline)
+      total = result.metadata[0]?.total ?? 0
+      conversations = result.data
+
+      // Populate student and assignedAdmin
+      await SupportConversation.populate(conversations, { path: 'student', model: 'User', select: 'fullName email profilePicture' })
+      await SupportConversation.populate(conversations, { path: 'assignedAdmin', model: 'User', select: 'fullName email' })
+    } else {
+      // No search term — use simple query with status filter
+      const filter = {}
+      if (status && ['open', 'pending', 'resolved', 'closed'].includes(status)) {
+        filter.status = status
+      }
+
+      conversations = await SupportConversation.find(filter)
+        .populate('student', 'fullName email profilePicture')
+        .populate('assignedAdmin', 'fullName email')
+        .sort({ pinned: -1, updatedAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean()
+
+      total = await SupportConversation.countDocuments(filter)
     }
-
-    const conversations = await SupportConversation.find(filter)
-      .populate('student', 'fullName email profilePicture')
-      .populate('assignedAdmin', 'fullName email')
-      .sort({ pinned: -1, updatedAt: -1 })
-      .skip(skip)
-      .limit(limitNum)
-      .lean()
-
-    const total = await SupportConversation.countDocuments(filter)
 
     res.status(200).json({
       conversations,
@@ -392,6 +449,38 @@ const toggleConversationPin = async (req, res) => {
   }
 }
 
+// ── GET /api/support/admin/messages/:conversationId/search ────────────────
+// Admin-only: search messages within a specific conversation.
+const searchConversationMessages = async (req, res) => {
+  try {
+    const { conversationId } = req.params
+    const { q } = req.query
+
+    if (!mongoose.Types.ObjectId.isValid(conversationId)) {
+      return res.status(400).json({ message: 'Invalid conversation ID' })
+    }
+
+    if (!q || !q.trim()) {
+      return res.status(400).json({ message: 'Search query is required' })
+    }
+
+    const searchTerm = q.trim()
+
+    const messages = await SupportMessage.find({
+      conversation: conversationId,
+      message: { $regex: searchTerm, $options: 'i' },
+    })
+      .populate('sender', 'fullName email role')
+      .sort({ createdAt: 1 })
+      .lean()
+
+    res.status(200).json({ messages, total: messages.length })
+  } catch (error) {
+    console.error('searchConversationMessages Error:', error)
+    res.status(500).json({ message: error.message || 'Internal Server Error' })
+  }
+}
+
 module.exports = {
   getStudentConversation,
   createStudentConversation,
@@ -402,4 +491,5 @@ module.exports = {
   getAdminConversations,
   updateConversationStatus,
   toggleConversationPin,
+  searchConversationMessages,
 }
