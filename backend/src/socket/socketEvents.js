@@ -25,6 +25,7 @@
 const mongoose = require('mongoose')
 const { SupportConversation } = require('../models/SupportConversation')
 const { SupportMessage } = require('../models/SupportMessage')
+const { CheatingReport } = require('../models/CheatingReport')
 const { env } = require('../config/env')
 
 const isDev = env.nodeEnv !== 'production'
@@ -413,6 +414,73 @@ async function handleMessageSeen(io, socket, payload) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// cheating_event  →  student reports a cheating event via socket
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function handleCheatingEvent(io, socket, payload) {
+  try {
+    const { user } = socket
+    const { conversationId, examId, violations } = payload || {}
+
+    if (!violations || !Array.isArray(violations) || violations.length === 0) {
+      return emitError(socket, 'INVALID_PAYLOAD', 'At least one violation is required')
+    }
+
+    const VALID_VIOLATION_TYPES = [
+      'tab_switch', 'window_blur', 'copy_paste', 'devtools',
+      'fullscreen_exit', 'multiple_devices', 'screen_capture', 'other',
+    ]
+
+    for (const v of violations) {
+      if (!v.type || !VALID_VIOLATION_TYPES.includes(v.type)) {
+        return emitError(socket, 'INVALID_VIOLATION', `Invalid violation type: ${v.type}`)
+      }
+    }
+
+    // Find or create a pending report for this student
+    let report = await CheatingReport.findOne({
+      student: user._id,
+      status: { $in: ['pending', 'reviewing'] },
+    })
+
+    if (report) {
+      report.violations.push(...violations)
+      if (conversationId && isValidObjectId(conversationId)) {
+        report.conversation = conversationId
+      }
+      if (examId && isValidObjectId(examId)) {
+        report.exam = examId
+      }
+      await report.save()
+    } else {
+      report = await CheatingReport.create({
+        student: user._id,
+        conversation: conversationId || null,
+        exam: examId || null,
+        violations,
+        status: 'pending',
+      })
+    }
+
+    const populated = await CheatingReport.findById(report._id)
+      .populate('student', 'fullName email profilePicture')
+      .populate('conversation', 'status lastMessage')
+      .lean()
+
+    // Broadcast to all admins
+    io.to('admin-support').emit('cheating_event', { report: populated })
+
+    // Confirm back to sender
+    socket.emit('cheating_event_sent', { reportId: report._id })
+
+    devLog(`cheating_event: student=${user._id} violations=${violations.length} score=${report.cheatingScore}`)
+  } catch (error) {
+    console.error('[socket] cheating_event error:', error.message)
+    emitError(socket, 'CHEATING_EVENT_FAILED', 'Failed to report cheating event')
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Main event registration (called once per socket connection)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -460,6 +528,9 @@ function registerSocketEvents(io, socket) {
   // ── message_seen ──────────────────────────────────────────────────────────
   socket.on('message_seen', (payload) => handleMessageSeen(io, socket, payload))
 
+  // ── cheating_event ────────────────────────────────────────────────────────
+  socket.on('cheating_event', (payload) => handleCheatingEvent(io, socket, payload))
+
   // ── disconnect ────────────────────────────────────────────────────────────
   socket.on('disconnect', (reason) => {
     devLog(`disconnect: userId=${user._id} role=${user.role} socketId=${socket.id} reason=${reason}`)
@@ -472,7 +543,7 @@ function registerSocketEvents(io, socket) {
   // ── catch-all for unhandled events (dev only) ─────────────────────────────
   if (isDev) {
     socket.onAny((event, ...args) => {
-      const knownEvents = ['join_room', 'leave_room', 'send_message', 'typing', 'stop_typing', 'message_seen', 'status_changed', 'conversation_pinned', 'disconnect']
+      const knownEvents = ['join_room', 'leave_room', 'send_message', 'typing', 'stop_typing', 'message_seen', 'status_changed', 'conversation_pinned', 'cheating_event', 'disconnect']
       if (!knownEvents.includes(event)) {
         console.warn('[socket] Unknown event received:', event, args)
       }

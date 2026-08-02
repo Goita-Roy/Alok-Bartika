@@ -107,6 +107,59 @@ function HighlightText({ text, query }: { text: string; query: string }) {
 
 type ChatMessage = { _id: string; message: string; sender?: { _id: string; fullName: string }; createdAt: string }
 
+type CheatingViolation = {
+  type: 'tab_switch' | 'window_blur' | 'copy_paste' | 'devtools' | 'fullscreen_exit' | 'multiple_devices' | 'screen_capture' | 'other'
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  timestamp: string
+  description?: string
+  metadata?: Record<string, unknown>
+}
+
+type CheatingReport = {
+  _id: string
+  student: { _id: string; fullName: string; email: string; profilePicture?: string } | string
+  conversation?: { _id: string; status: string; lastMessage: string } | string | null
+  exam?: string | null
+  riskLevel: 'low' | 'medium' | 'high' | 'critical'
+  cheatingScore: number
+  status: 'pending' | 'reviewing' | 'confirmed' | 'dismissed' | 'escalated'
+  violations: CheatingViolation[]
+  totalViolations: number
+  resolvedBy?: { _id: string; fullName: string } | string | null
+  resolvedAt?: string | null
+  notes: Array<{ author?: { _id: string; fullName: string }; text: string; createdAt: string }>
+  createdAt: string
+  updatedAt: string
+}
+
+type CheatingStats = {
+  total: number
+  unresolved: number
+  byStatus: Array<{ _id: string; count: number }>
+  byRisk: Array<{ _id: string; count: number }>
+}
+
+const VIOLATION_LABELS: Record<string, string> = {
+  tab_switch: 'Tab Switch', window_blur: 'Window Blur', copy_paste: 'Copy/Paste',
+  devtools: 'DevTools', fullscreen_exit: 'Fullscreen Exit', multiple_devices: 'Multiple Devices',
+  screen_capture: 'Screen Capture', other: 'Other',
+}
+
+const RISK_STYLES: Record<string, string> = {
+  low: 'bg-emerald-500/20 text-emerald-300',
+  medium: 'bg-amber-500/20 text-amber-300',
+  high: 'bg-orange-500/20 text-orange-300',
+  critical: 'bg-red-500/20 text-red-300',
+}
+
+const REPORT_STATUS_STYLES: Record<string, string> = {
+  pending: 'bg-amber-500/20 text-amber-300',
+  reviewing: 'bg-sky-500/20 text-sky-300',
+  confirmed: 'bg-red-500/20 text-red-300',
+  dismissed: 'bg-zinc-500/20 text-zinc-400',
+  escalated: 'bg-purple-500/20 text-purple-300',
+}
+
 export function AdminDashboard() {
   const user = useAuthStore((s) => s.user)
   const token = useAuthStore((s) => s.token)
@@ -137,6 +190,13 @@ export function AdminDashboard() {
   const [chatSearchQuery, setChatSearchQuery] = useState('')
   const [chatSearchResults, setChatSearchResults] = useState<ChatMessage[]>([])
   const [chatSearchIndex, setChatSearchIndex] = useState(0)
+
+  const [cheatingReports, setCheatingReports] = useState<CheatingReport[]>([])
+  const [cheatingStats, setCheatingStats] = useState<CheatingStats | null>(null)
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null)
+  const [reportDetail, setReportDetail] = useState<CheatingReport | null>(null)
+  const [reportNoteText, setReportNoteText] = useState('')
+  const [reportStatusFilter, setReportStatusFilter] = useState<string>('all')
 
   const presenceMapRef = useRef(presenceMap)
   presenceMapRef.current = presenceMap
@@ -195,6 +255,19 @@ export function AdminDashboard() {
       ))
     })
 
+    socket.on('cheating_event', (data: { report: CheatingReport }) => {
+      setCheatingReports((prev) => {
+        const idx = prev.findIndex((r) => r._id === data.report._id)
+        if (idx >= 0) {
+          const updated = [...prev]
+          updated[idx] = data.report
+          return updated
+        }
+        return [data.report, ...prev]
+      })
+      setCheatingStats((prev) => prev ? { ...prev, unresolved: prev.unresolved + 1 } : prev)
+    })
+
     socket.on('connect_error', () => {})
 
     if (socket.connected) {
@@ -208,6 +281,7 @@ export function AdminDashboard() {
       socket.off('conversation_pinned')
       socket.off('receive_message')
       socket.off('message_seen')
+      socket.off('cheating_event')
       socket.off('connect_error')
       disconnectAdminSocket()
       socketRef.current = null
@@ -254,14 +328,35 @@ export function AdminDashboard() {
     }
   }
 
+  const loadCheatingStats = useCallback(async () => {
+    try {
+      const { data } = await api.get('/api/cheating/stats')
+      setCheatingStats(data)
+    } catch { /* silent */ }
+  }, [])
+
+  const loadCheatingReports = useCallback(async (status?: string) => {
+    try {
+      const params: Record<string, string> = {}
+      if (status && status !== 'all') params.status = status
+      const { data } = await api.get('/api/cheating/reports', { params })
+      setCheatingReports(data.reports ?? [])
+    } catch { /* silent */ }
+  }, [])
+
   useEffect(() => {
     loadAll()
     loadConversations()
+    loadCheatingStats()
   }, [])
 
   useEffect(() => {
     if (tab === 'support') loadConversations(debouncedQuery)
   }, [tab, loadConversations, debouncedQuery])
+
+  useEffect(() => {
+    if (tab === 'support') loadCheatingReports(reportStatusFilter)
+  }, [tab, loadCheatingReports, reportStatusFilter])
 
   // Chat search debounce
   const chatSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -417,6 +512,41 @@ export function AdminDashboard() {
     }
   }
 
+  async function loadReportDetail(id: string) {
+    try {
+      setSelectedReportId(id)
+      const { data } = await api.get(`/api/cheating/reports/${id}`)
+      setReportDetail(data.report)
+    } catch (e: any) {
+      setError(e?.response?.data?.error ?? 'Failed to load report')
+    }
+  }
+
+  async function updateReportStatus(id: string, status: string, note?: string) {
+    try {
+      const body: Record<string, string> = { status }
+      if (note && note.trim()) body.notes = note.trim()
+      await api.patch(`/api/cheating/reports/${id}/status`, body)
+      setReportNoteText('')
+      await loadReportDetail(id)
+      await loadCheatingStats()
+      setCheatingReports((prev) => prev.map((r) => r._id === id ? { ...r, status: status as CheatingReport['status'] } : r))
+    } catch (e: any) {
+      setError(e?.response?.data?.error ?? 'Failed to update report')
+    }
+  }
+
+  async function addReportNote(id: string) {
+    if (!reportNoteText.trim()) return
+    try {
+      await api.post(`/api/cheating/reports/${id}/notes`, { text: reportNoteText.trim() })
+      setReportNoteText('')
+      await loadReportDetail(id)
+    } catch (e: any) {
+      setError(e?.response?.data?.error ?? 'Failed to add note')
+    }
+  }
+
   const completion = useMemo(() => {
     const done = progressRows.filter((x) => x.completedAt).length
     return progressRows.length ? Math.round((done / progressRows.length) * 100) : 0
@@ -445,6 +575,19 @@ export function AdminDashboard() {
     [conversations],
   )
 
+  const totalCheatingUnresolved = cheatingStats?.unresolved ?? 0
+
+  const studentsWithReports = useMemo(() => {
+    const set = new Set<string>()
+    for (const r of cheatingReports) {
+      if (r.status === 'pending' || r.status === 'reviewing') {
+        const s = r.student
+        set.add(typeof s === 'object' ? s._id : s)
+      }
+    }
+    return set
+  }, [cheatingReports])
+
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-semibold">Admin Panel</h2>
@@ -456,6 +599,9 @@ export function AdminDashboard() {
                 Student Support
                 {totalUnread > 0 ? (
                   <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-emerald-500 px-1 text-[10px] font-bold text-zinc-950">{totalUnread}</span>
+                ) : null}
+                {totalCheatingUnresolved > 0 ? (
+                  <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">{totalCheatingUnresolved}</span>
                 ) : null}
               </span>
             ) : t}
@@ -688,6 +834,9 @@ export function AdminDashboard() {
                           <div className="mt-0.5 truncate text-[11px] text-zinc-400"><HighlightText text={conv.lastMessage || 'No messages yet'} query={debouncedQuery} /></div>
                         </div>
                         <div className="flex flex-col items-end gap-1">
+                          {studentsWithReports.has(studentId) ? (
+                            <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white" title="Active cheating report">!</span>
+                          ) : null}
                           {conv.unreadAdmin > 0 ? (
                             <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-emerald-500 px-1 text-[10px] font-bold text-zinc-950">{conv.unreadAdmin}</span>
                           ) : null}
@@ -695,6 +844,56 @@ export function AdminDashboard() {
                         </div>
                       </button>
                     </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Academic Integrity Panel */}
+          <div className="w-80 shrink-0 rounded-xl border border-red-500/20 bg-red-500/5 p-4 overflow-y-auto" style={{ maxHeight: 520 }}>
+            <div className="mb-3 flex items-center justify-between">
+              <div className="text-sm font-semibold text-red-300">Academic Integrity</div>
+              {totalCheatingUnresolved > 0 ? (
+                <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">{totalCheatingUnresolved}</span>
+              ) : null}
+            </div>
+            {cheatingStats ? (
+              <div className="mb-3 grid grid-cols-2 gap-2">
+                <div className="rounded-md border border-white/10 bg-zinc-950/40 px-2 py-1.5 text-[10px] text-zinc-400">Total<br /><span className="text-sm font-bold text-zinc-200">{cheatingStats.total}</span></div>
+                <div className="rounded-md border border-white/10 bg-zinc-950/40 px-2 py-1.5 text-[10px] text-zinc-400">Unresolved<br /><span className="text-sm font-bold text-red-300">{cheatingStats.unresolved}</span></div>
+              </div>
+            ) : null}
+            <div className="mb-2 flex flex-wrap gap-1">
+              {(['all', 'pending', 'reviewing', 'confirmed', 'dismissed', 'escalated'] as const).map((f) => (
+                <button key={f} type="button" onClick={() => setReportStatusFilter(f)} className={`rounded-md px-2 py-1 text-[10px] font-semibold ${reportStatusFilter === f ? 'bg-white text-zinc-950' : 'bg-white/10 text-zinc-300 hover:bg-white/20'}`}>
+                  {f === 'all' ? 'All' : f}
+                </button>
+              ))}
+            </div>
+            {cheatingReports.length === 0 ? (
+              <div className="py-6 text-center text-[11px] text-zinc-500">No reports found</div>
+            ) : (
+              <div className="space-y-1.5">
+                {cheatingReports.map((report) => {
+                  const studentObj = typeof report.student === 'object' ? report.student : null
+                  return (
+                    <button
+                      key={report._id}
+                      type="button"
+                      onClick={() => loadReportDetail(report._id)}
+                      className={`w-full rounded-md border px-3 py-2 text-left text-[11px] transition-colors ${selectedReportId === report._id ? 'border-amber-400/50 bg-amber-400/10 text-amber-100' : 'border-white/10 bg-zinc-950/40 text-zinc-300 hover:bg-white/5'}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold">{studentObj?.fullName ?? 'Student'}</span>
+                        <span className={`rounded px-1 py-0.5 text-[9px] font-medium ${RISK_STYLES[report.riskLevel]}`}>{report.riskLevel}</span>
+                      </div>
+                      <div className="mt-0.5 flex items-center justify-between text-[10px] text-zinc-400">
+                        <span>{report.totalViolations} violations · Score {report.cheatingScore}</span>
+                        <span className={`rounded px-1 py-0.5 text-[9px] font-medium ${REPORT_STATUS_STYLES[report.status]}`}>{report.status}</span>
+                      </div>
+                      <div className="mt-0.5 text-[10px] text-zinc-500">{new Date(report.createdAt).toLocaleString()}</div>
+                    </button>
                   )
                 })}
               </div>
@@ -737,8 +936,83 @@ export function AdminDashboard() {
                   </div>
                 </div>
                 <div className="mt-3 flex-1 rounded-md border border-white/10 bg-zinc-950/40 p-4 text-xs text-zinc-300" style={{ minHeight: 320 }}>
-                  {/* Chat search bar */}
-                  <div className="mb-3 relative">
+                  {reportDetail ? (
+                    <div>
+                      <div className="mb-3 flex items-center justify-between">
+                        <div className="text-sm font-semibold text-red-300">Cheating Report</div>
+                        <button type="button" onClick={() => { setReportDetail(null); setSelectedReportId(null) }} className="rounded p-1 text-zinc-400 hover:text-white hover:bg-white/10" title="Close report">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                        </button>
+                      </div>
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${RISK_STYLES[reportDetail.riskLevel]}`}>{reportDetail.riskLevel} risk</span>
+                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${REPORT_STATUS_STYLES[reportDetail.status]}`}>{reportDetail.status}</span>
+                        <span className="text-[11px] text-zinc-400">Score: {reportDetail.cheatingScore}</span>
+                      </div>
+                      <div className="mb-3 text-[11px] text-zinc-400">
+                        Student: {typeof reportDetail.student === 'object' ? reportDetail.student.fullName : 'Unknown'} · {reportDetail.totalViolations} violations · {new Date(reportDetail.createdAt).toLocaleString()}
+                      </div>
+
+                      {/* Violation Timeline */}
+                      <div className="mb-3">
+                        <div className="mb-1 text-[11px] font-semibold text-zinc-300">Violation Timeline</div>
+                        <div className="max-h-[180px] space-y-1.5 overflow-auto">
+                          {reportDetail.violations.map((v, idx) => (
+                            <div key={idx} className="rounded border border-white/10 bg-white/5 px-2.5 py-1.5">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-semibold text-zinc-200">{VIOLATION_LABELS[v.type] ?? v.type}</span>
+                                <span className={`rounded px-1 py-0.5 text-[9px] font-medium ${RISK_STYLES[v.severity]}`}>{v.severity}</span>
+                              </div>
+                              {v.description ? <div className="mt-0.5 text-[10px] text-zinc-400">{v.description}</div> : null}
+                              <div className="mt-0.5 text-[9px] text-zinc-500">{new Date(v.timestamp).toLocaleString()}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Admin Actions */}
+                      <div className="mb-3">
+                        <div className="mb-1 text-[11px] font-semibold text-zinc-300">Actions</div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(['reviewing', 'confirmed', 'dismissed', 'escalated'] as const).map((s) => (
+                            <button key={s} type="button" onClick={() => updateReportStatus(reportDetail._id, s, reportNoteText)} className={`rounded-md px-2.5 py-1 text-[10px] font-semibold transition-colors ${reportDetail.status === s ? 'bg-white text-zinc-950' : 'bg-white/10 text-zinc-300 hover:bg-white/20'}`}>
+                              {s}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Notes */}
+                      <div className="mb-3">
+                        <div className="mb-1 text-[11px] font-semibold text-zinc-300">Notes</div>
+                        {reportDetail.notes.length === 0 ? (
+                          <div className="text-[10px] text-zinc-500">No notes yet</div>
+                        ) : (
+                          <div className="mb-2 max-h-[120px] space-y-1 overflow-auto">
+                            {reportDetail.notes.map((n, idx) => (
+                              <div key={idx} className="rounded border border-white/10 bg-white/5 px-2 py-1.5">
+                                <div className="text-[10px] text-zinc-400">{typeof n.author === 'object' ? n.author.fullName : 'Admin'} · {new Date(n.createdAt).toLocaleString()}</div>
+                                <div className="mt-0.5 text-[11px] text-zinc-300">{n.text}</div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex gap-1.5">
+                          <input
+                            value={reportNoteText}
+                            onChange={(e) => setReportNoteText(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addReportNote(reportDetail._id) } }}
+                            placeholder="Add a note..."
+                            className="flex-1 rounded-md border border-white/10 bg-zinc-900 px-2.5 py-1.5 text-[11px] text-zinc-200 outline-none focus:border-white/30 placeholder:text-zinc-500"
+                          />
+                          <button type="button" onClick={() => addReportNote(reportDetail._id)} className="rounded-md bg-sky-400 px-2.5 py-1 text-[10px] font-semibold text-zinc-950 hover:bg-sky-300">Add</button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Chat search bar */}
+                      <div className="mb-3 relative">
                     <input
                       value={chatSearchQuery}
                       onChange={(e) => handleChatSearchChange(e.target.value)}
@@ -789,6 +1063,8 @@ export function AdminDashboard() {
                   <div className="mt-4 text-center text-zinc-500">
                     Real-time chat coming soon — presence is live.
                   </div>
+                    </>
+                  )}
                 </div>
               </>
             ) : (

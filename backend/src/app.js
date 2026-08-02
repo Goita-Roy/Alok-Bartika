@@ -31,6 +31,7 @@ const { auditRouter } = require('./routes/auditRoutes')
 const { backupRouter } = require('./routes/backupRoutes')
 const { superAdminRouter } = require('./routes/superAdminRoutes')
 const { supportRouter } = require('./routes/supportRoutes')
+const { cheatingRouter } = require('./routes/cheatingReportRoutes')
 
 function createApp() {
   const app = express()
@@ -114,6 +115,7 @@ function createApp() {
   app.use('/api/backup', backupRouter)
   app.use('/api/super-admin', superAdminRouter)
   app.use('/api/support', supportRouter)
+  app.use('/api/cheating', cheatingRouter)
 
   app.use((_req, res) => {
     res.status(404).json({ message: 'Not found' })
