@@ -472,7 +472,7 @@ function registerSocketEvents(io, socket) {
   // ── catch-all for unhandled events (dev only) ─────────────────────────────
   if (isDev) {
     socket.onAny((event, ...args) => {
-      const knownEvents = ['join_room', 'leave_room', 'send_message', 'typing', 'stop_typing', 'message_seen', 'disconnect']
+      const knownEvents = ['join_room', 'leave_room', 'send_message', 'typing', 'stop_typing', 'message_seen', 'status_changed', 'conversation_pinned', 'disconnect']
       if (!knownEvents.includes(event)) {
         console.warn('[socket] Unknown event received:', event, args)
       }

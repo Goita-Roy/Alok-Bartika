@@ -16,6 +16,7 @@ type SupportConversation = {
   student: { _id: string; fullName: string; email: string; profilePicture?: string } | string
   assignedAdmin?: { _id: string; fullName: string; email: string } | string | null
   status: 'open' | 'pending' | 'resolved' | 'closed'
+  pinned: boolean
   lastMessage: string
   lastMessageAt: string
   unreadStudent: number
@@ -142,6 +143,10 @@ export function AdminDashboard() {
       setConversations((prev) => prev.map((c) => (c._id === data.conversationId ? { ...c, status: data.status } : c)))
     })
 
+    socket.on('conversation_pinned', (data: { conversationId: string; pinned: boolean }) => {
+      setConversations((prev) => prev.map((c) => (c._id === data.conversationId ? { ...c, pinned: data.pinned } : c)))
+    })
+
     socket.on('receive_message', (data: { conversationId: string; studentId: string; message: any; unreadStudent: number; unreadAdmin: number }) => {
       setConversations((prev) => {
         const idx = prev.findIndex((c) => c._id === data.conversationId)
@@ -175,6 +180,7 @@ export function AdminDashboard() {
       socket.off('connect')
       socket.off('user_presence')
       socket.off('status_changed')
+      socket.off('conversation_pinned')
       socket.off('receive_message')
       socket.off('message_seen')
       socket.off('connect_error')
@@ -321,6 +327,22 @@ export function AdminDashboard() {
       }
     } catch (e: any) {
       setError(e?.response?.data?.error ?? e?.message ?? 'Failed to update conversation')
+    }
+  }
+
+  async function toggleConversationPin(id: string) {
+    try {
+      const { data } = await api.patch(`/api/support/admin/conversations/${id}/pin`)
+      const newPinned = data.conversation.pinned
+      setConversations((prev) => {
+        const updated = prev.map((c) => (c._id === id ? { ...c, pinned: newPinned } : c))
+        return [...updated].sort((a, b) => (a.pinned === b.pinned ? 0 : a.pinned ? -1 : 1))
+      })
+      if (socketRef.current) {
+        socketRef.current.emit('conversation_pinned', { conversationId: id, pinned: newPinned })
+      }
+    } catch (e: any) {
+      setError(e?.response?.data?.error ?? e?.message ?? 'Failed to update pin status')
     }
   }
 
@@ -545,30 +567,41 @@ export function AdminDashboard() {
                   const p = presenceMap[studentId]
                   const isOnline = p?.online ?? false
                   return (
-                    <button
-                      key={conv._id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedConvId(conv._id)
-                        if (conv.unreadAdmin > 0 && socketRef.current) {
-                          socketRef.current.emit('message_seen', { conversationId: conv._id })
-                          setConversations((prev) => prev.map((c) => (c._id === conv._id ? { ...c, unreadAdmin: 0 } : c)))
-                        }
-                      }}
-                      className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-xs transition-colors ${selectedConvId === conv._id ? 'bg-white/15 text-white' : 'hover:bg-white/5 text-zinc-300'}`}
-                    >
-                      <PresenceDot online={isOnline} />
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate font-semibold">{studentObj?.fullName ?? 'Student'}</div>
-                        <div className="mt-0.5 truncate text-[11px] text-zinc-400">{conv.lastMessage || 'No messages yet'}</div>
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        {conv.unreadAdmin > 0 ? (
-                          <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-emerald-500 px-1 text-[10px] font-bold text-zinc-950">{conv.unreadAdmin}</span>
-                        ) : null}
-                        <StatusBadge status={conv.status} />
-                      </div>
-                    </button>
+                    <div key={conv._id} className={`flex items-center gap-1 rounded-lg px-2 py-1 transition-colors ${selectedConvId === conv._id ? 'bg-white/15' : 'hover:bg-white/5'}`}>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); toggleConversationPin(conv._id) }}
+                        className="shrink-0 p-1 rounded transition-colors hover:bg-white/10"
+                        title={conv.pinned ? 'Unpin' : 'Pin'}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={conv.pinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`h-3.5 w-3.5 transition-colors ${conv.pinned ? 'text-amber-400' : 'text-zinc-500 hover:text-amber-300'}`}>
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedConvId(conv._id)
+                          if (conv.unreadAdmin > 0 && socketRef.current) {
+                            socketRef.current.emit('message_seen', { conversationId: conv._id })
+                            setConversations((prev) => prev.map((c) => (c._id === conv._id ? { ...c, unreadAdmin: 0 } : c)))
+                          }
+                        }}
+                        className={`flex flex-1 items-center gap-2.5 rounded-lg px-2 py-2 text-left text-xs transition-colors ${selectedConvId === conv._id ? 'text-white' : 'text-zinc-300'}`}
+                      >
+                        <PresenceDot online={isOnline} />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate font-semibold">{studentObj?.fullName ?? 'Student'}</div>
+                          <div className="mt-0.5 truncate text-[11px] text-zinc-400">{conv.lastMessage || 'No messages yet'}</div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          {conv.unreadAdmin > 0 ? (
+                            <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-emerald-500 px-1 text-[10px] font-bold text-zinc-950">{conv.unreadAdmin}</span>
+                          ) : null}
+                          <StatusBadge status={conv.status} />
+                        </div>
+                      </button>
+                    </div>
                   )
                 })}
               </div>
@@ -589,6 +622,16 @@ export function AdminDashboard() {
                   </div>
                   <div className="flex items-center gap-3">
                     <PresenceStatus presence={selectedStudentPresence} />
+                    <button
+                      type="button"
+                      onClick={() => toggleConversationPin(selectedConv._id)}
+                      className="rounded-md p-1.5 transition-colors hover:bg-white/10"
+                      title={selectedConv.pinned ? 'Unpin conversation' : 'Pin conversation'}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={selectedConv.pinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`h-4 w-4 transition-colors ${selectedConv.pinned ? 'text-amber-400' : 'text-zinc-400 hover:text-amber-300'}`}>
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                    </button>
                     <select
                       value={selectedConv.status}
                       onChange={(e) => updateConversationStatus(selectedConv._id, e.target.value as SupportStatus)}

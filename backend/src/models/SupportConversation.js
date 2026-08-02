@@ -38,6 +38,11 @@ const supportConversationSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    pinned: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   {
     timestamps: true,
@@ -46,6 +51,7 @@ const supportConversationSchema = new mongoose.Schema(
 
 supportConversationSchema.index({ student: 1, status: 1 })
 supportConversationSchema.index({ updatedAt: -1 })
+supportConversationSchema.index({ pinned: -1, updatedAt: -1 })
 
 const SupportConversation = mongoose.model('SupportConversation', supportConversationSchema)
 

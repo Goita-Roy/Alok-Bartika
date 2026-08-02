@@ -308,7 +308,7 @@ const getAdminConversations = async (req, res) => {
     const conversations = await SupportConversation.find(filter)
       .populate('student', 'fullName email profilePicture')
       .populate('assignedAdmin', 'fullName email')
-      .sort({ updatedAt: -1 })
+      .sort({ pinned: -1, updatedAt: -1 })
       .skip(skip)
       .limit(limitNum)
       .lean()
@@ -362,6 +362,36 @@ const updateConversationStatus = async (req, res) => {
   }
 }
 
+// ── PATCH /api/support/admin/conversations/:id/pin ───────────────────────
+// Admin-only: toggle pin/unpin a conversation.
+const toggleConversationPin = async (req, res) => {
+  try {
+    const { id } = req.params
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid conversation ID' })
+    }
+
+    const conversation = await SupportConversation.findById(id)
+    if (!conversation) {
+      return res.status(404).json({ message: 'Conversation not found' })
+    }
+
+    conversation.pinned = !conversation.pinned
+    await conversation.save()
+
+    const populated = await SupportConversation.findById(id)
+      .populate('student', 'fullName email profilePicture')
+      .populate('assignedAdmin', 'fullName email')
+      .lean()
+
+    res.status(200).json({ conversation: populated })
+  } catch (error) {
+    console.error('toggleConversationPin Error:', error)
+    res.status(500).json({ message: error.message || 'Internal Server Error' })
+  }
+}
+
 module.exports = {
   getStudentConversation,
   createStudentConversation,
@@ -371,4 +401,5 @@ module.exports = {
   validateConversationOwnership,
   getAdminConversations,
   updateConversationStatus,
+  toggleConversationPin,
 }
