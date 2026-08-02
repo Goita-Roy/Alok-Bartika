@@ -40,6 +40,7 @@ const LiveChatModal: React.FC<LiveChatModalProps> = ({ isOpen, onClose }) => {
     messages,
     loadingHistory,
     historyError,
+    hasMore,
     sending,
     sendError,
     adminTyping,
@@ -47,15 +48,8 @@ const LiveChatModal: React.FC<LiveChatModalProps> = ({ isOpen, onClose }) => {
     emitTyping,
     emitStopTyping,
     markRead,
+    loadOlderMessages,
   } = useSupportChat({ socket, userId: user?.id ?? null, enabled: isOpen })
-
-  // Mark messages read when modal is opened / new messages arrive
-  useEffect(() => {
-    if (isOpen && conversation?._id && messages.length > 0) {
-      markRead()
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, messages.length])
 
   // Trap focus inside modal on open (accessibility)
   useEffect(() => {
@@ -117,6 +111,8 @@ const LiveChatModal: React.FC<LiveChatModalProps> = ({ isOpen, onClose }) => {
               loadingHistory={loadingHistory}
               historyError={historyError}
               adminTyping={adminTyping}
+              hasMore={hasMore}
+              onLoadOlder={loadOlderMessages}
             />
           </div>
 

@@ -17,6 +17,8 @@ export interface SupportMessage {
   createdAt: string
   // Optimistic flag — true while message is being saved to server
   _optimistic?: boolean
+  // Client-generated unique ID for matching optimistic messages with server acknowledgements
+  clientMessageId?: string
 }
 
 export interface SupportConversation {

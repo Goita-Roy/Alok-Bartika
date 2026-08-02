@@ -28,6 +28,56 @@ const { env } = require('../config/env')
 
 const isDev = env.nodeEnv !== 'production'
 
+// ── Socket-level rate limiting ──────────────────────────────────────
+// Prevents spam without affecting normal conversation pace.
+// In-memory store — cleared on server restart (acceptable for this use case).
+
+/**
+ * Track recent event timestamps per user.
+ * Key format: `${userId}:${eventName}`
+ */
+const socketRateLimitStore = new Map()
+
+/**
+ * Check if a socket event is within the allowed rate limit.
+ * Returns true if the event is allowed, false if it should be throttled.
+ */
+function checkSocketRateLimit(userId, eventName, limit, windowMs) {
+  const key = `${userId}:${eventName}`
+  const now = Date.now()
+  const timestamps = socketRateLimitStore.get(key) || []
+
+  // Prune timestamps outside the current window
+  const windowStart = now - windowMs
+  const recent = timestamps.filter((t) => t > windowStart)
+
+  if (recent.length >= limit) {
+    return false
+  }
+
+  recent.push(now)
+  socketRateLimitStore.set(key, recent)
+  return true
+}
+
+// Cleanup stale entries every 60 seconds to prevent memory growth
+setInterval(() => {
+  const now = Date.now()
+  for (const [key, timestamps] of socketRateLimitStore.entries()) {
+    const windowStart = now - 60000
+    const recent = timestamps.filter((t) => t > windowStart)
+    if (recent.length === 0) {
+      socketRateLimitStore.delete(key)
+    } else {
+      socketRateLimitStore.set(key, recent)
+    }
+  }
+}, 60000)
+
+// Rate limit configs
+const SEND_MESSAGE_LIMIT = { max: 5, windowMs: 10000 } // 5 messages per 10s
+const TYPING_LIMIT = { max: 1, windowMs: 1000 } // 1 typing event per 1s
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper utilities
 // ─────────────────────────────────────────────────────────────────────────────
@@ -124,8 +174,8 @@ async function leaveSupportRoom(socket, _payload) {
 
 async function saveAndBroadcastMessage(io, socket, payload) {
   try {
-    const { user } = socket
-    const { conversationId, message } = payload || {}
+     const { user } = socket
+     const { conversationId, message, clientMessageId } = payload || {}
 
     // ── Validate payload ──────────────────────────────────────────────────
     if (!message || typeof message !== 'string' || !message.trim()) {
@@ -202,6 +252,7 @@ async function saveAndBroadcastMessage(io, socket, payload) {
       conversationId: conversation._id.toString(),
       studentId: conversation.student.toString(),
       message: populated,
+      clientMessageId: clientMessageId || undefined,
     }
 
     // ── Broadcast to counterpart room only ────────────────────────────────
@@ -321,13 +372,28 @@ function registerSocketEvents(io, socket) {
   socket.on('leave_room', (payload) => leaveSupportRoom(socket, payload))
 
   // ── send_message ──────────────────────────────────────────────────────────
-  socket.on('send_message', (payload) => saveAndBroadcastMessage(io, socket, payload))
+  socket.on('send_message', (payload) => {
+    if (!checkSocketRateLimit(user._id, 'send_message', SEND_MESSAGE_LIMIT.max, SEND_MESSAGE_LIMIT.windowMs)) {
+      return emitError(socket, 'RATE_LIMITED', 'Too many messages. Please wait a moment.')
+    }
+    saveAndBroadcastMessage(io, socket, payload)
+  })
 
   // ── typing ────────────────────────────────────────────────────────────────
-  socket.on('typing', (payload) => handleTyping(io, socket, payload, 'typing'))
+  socket.on('typing', (payload) => {
+    if (!checkSocketRateLimit(user._id, 'typing', TYPING_LIMIT.max, TYPING_LIMIT.windowMs)) {
+      return
+    }
+    handleTyping(io, socket, payload, 'typing')
+  })
 
   // ── stop_typing ───────────────────────────────────────────────────────────
-  socket.on('stop_typing', (payload) => handleTyping(io, socket, payload, 'stop_typing'))
+  socket.on('stop_typing', (payload) => {
+    if (!checkSocketRateLimit(user._id, 'stop_typing', TYPING_LIMIT.max, TYPING_LIMIT.windowMs)) {
+      return
+    }
+    handleTyping(io, socket, payload, 'stop_typing')
+  })
 
   // ── message_seen ──────────────────────────────────────────────────────────
   socket.on('message_seen', (payload) => handleMessageSeen(io, socket, payload))

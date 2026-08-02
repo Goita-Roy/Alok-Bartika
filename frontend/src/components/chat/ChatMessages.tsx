@@ -8,7 +8,7 @@
  *  - Timestamps
  */
 
-import React, { useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { Check, CheckCheck, Loader2 } from 'lucide-react'
 import type { SupportMessage } from '../../types/support'
 import EmptyChatState from './EmptyChatState'
@@ -28,6 +28,8 @@ interface ChatMessagesProps {
   loadingHistory: boolean
   historyError: string | null
   adminTyping: boolean
+  hasMore: boolean
+  onLoadOlder: () => void
 }
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({
@@ -36,11 +38,38 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   loadingHistory,
   historyError,
   adminTyping,
+  hasMore,
+  onLoadOlder,
 }) => {
   const bottomRef = useRef<HTMLDivElement>(null)
+  const scrollableRef = useRef<HTMLDivElement>(null)
+  const isPaginationLoadingRef = useRef(false)
+  const savedScrollHeightRef = useRef(0)
+  const savedScrollTopRef = useRef(0)
 
-  // Auto-scroll to bottom whenever messages change or typing indicator appears
+  const handleLoadOlder = useCallback(() => {
+    const el = scrollableRef.current
+    if (el) {
+      savedScrollHeightRef.current = el.scrollHeight
+      savedScrollTopRef.current = el.scrollTop
+    }
+    isPaginationLoadingRef.current = true
+    onLoadOlder()
+  }, [onLoadOlder])
+
+  // Auto-scroll for realtime messages; restore scroll position after pagination
   useEffect(() => {
+    if (isPaginationLoadingRef.current) {
+      const el = scrollableRef.current
+      if (el && savedScrollHeightRef.current > 0) {
+        const heightDelta = el.scrollHeight - savedScrollHeightRef.current
+        el.scrollTop = savedScrollTopRef.current + heightDelta
+      }
+      isPaginationLoadingRef.current = false
+      savedScrollHeightRef.current = 0
+      savedScrollTopRef.current = 0
+      return
+    }
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages.length, adminTyping])
 
@@ -73,7 +102,23 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   }
 
   return (
-    <div className="flex flex-col gap-1 px-4 py-4 overflow-y-auto h-full font-bengali">
+    <div className="flex flex-col gap-1 px-4 py-4 overflow-y-auto h-full font-bengali" ref={scrollableRef}>
+      {/* Load Older Messages button */}
+      {hasMore && (
+        <div className="flex justify-center py-2">
+          <button
+            onClick={handleLoadOlder}
+            className="px-4 py-1.5 rounded-full text-xs font-bengali font-medium transition-all"
+            style={{
+              backgroundColor: 'var(--color-surface)',
+              color: 'var(--color-accent)',
+              border: '1px solid var(--color-border)',
+            }}
+          >
+            পুরনো বার্তা লোড করুন
+          </button>
+        </div>
+      )}
       {messages.map((msg) => {
         const isMine = msg.senderRole === 'student'
         const isOptimistic = msg._optimistic === true

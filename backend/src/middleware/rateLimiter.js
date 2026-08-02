@@ -49,10 +49,15 @@ const otpVerifyLimiter = buildLimiter(15 * 60 * 1000, 10)
 // Password reset: 5 per 15 minutes per IP.
 const resetPasswordLimiter = buildLimiter(15 * 60 * 1000, 5)
 
+// Support chat write endpoints: 10 per minute per IP.
+// Allows normal conversation pace while blocking flood/spam.
+const supportWriteLimiter = buildLimiter(60 * 1000, 10)
+
 module.exports = {
   loginLimiter,
   registerLimiter,
   otpSendLimiter,
   otpVerifyLimiter,
   resetPasswordLimiter,
+  supportWriteLimiter,
 }

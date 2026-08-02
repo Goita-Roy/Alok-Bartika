@@ -76,6 +76,11 @@ export function useSupportSocket({ token, enabled }: UseSupportSocketOptions): U
       setStatus('error')
     })
 
+    socket.on('error', (err) => {
+      console.error('[useSupportSocket] error:', err)
+      setStatus('error')
+    })
+
     socket.on('disconnect', (reason) => {
       setStatus('disconnected')
       if (reason === 'io server disconnect') {

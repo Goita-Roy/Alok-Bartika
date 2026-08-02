@@ -2,6 +2,16 @@ const mongoose = require('mongoose')
 const { SupportConversation } = require('../models/SupportConversation')
 const { SupportMessage } = require('../models/SupportMessage')
 
+function sanitizeMessage(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .trim()
+}
+
 // ── GET /api/support/conversation ───────────────────────────────────────────
 // Returns the active (open) support conversation for the authenticated student.
 const getStudentConversation = async (req, res) => {
@@ -65,6 +75,9 @@ const getConversationMessages = async (req, res) => {
     const userId = req.user._id
     const userRole = req.user.role
 
+    const limit = Math.min(parseInt(req.query.limit, 10) || 50, 100)
+    const before = req.query.before || null
+
     if (!mongoose.Types.ObjectId.isValid(conversationId)) {
       return res.status(400).json({ message: 'Invalid conversation ID format' })
     }
@@ -82,12 +95,25 @@ const getConversationMessages = async (req, res) => {
       return res.status(403).json({ message: 'Access denied: You cannot view another user\'s support conversation' })
     }
 
-    const messages = await SupportMessage.find({ conversation: conversationId })
-      .sort({ createdAt: 1 })
+    // Build query filter
+    const query = { conversation: conversationId }
+    if (before) {
+      query.createdAt = { $lt: new Date(before) }
+    }
+
+    const messages = await SupportMessage.find(query)
+      .sort({ createdAt: -1 })
+      .limit(limit)
       .populate('sender', 'fullName email role')
       .lean()
 
-    res.status(200).json({ messages, conversation })
+    // Reverse so oldest messages come first (matches previous behavior)
+    messages.reverse()
+
+    // Determine if there are more older messages
+    const hasMore = messages.length === limit
+
+    res.status(200).json({ messages, conversation, hasMore })
   } catch (error) {
     console.error('getConversationMessages Error:', error)
     res.status(500).json({ message: error.message || 'Internal Server Error' })
@@ -98,7 +124,7 @@ const getConversationMessages = async (req, res) => {
 // Sends a new message in the support conversation.
 const sendStudentMessage = async (req, res) => {
   try {
-    const { message, conversationId } = req.body
+    const { message, conversationId, clientMessageId } = req.body
     const userId = req.user._id
     const userRole = req.user.role || 'student'
 
@@ -173,6 +199,7 @@ const sendStudentMessage = async (req, res) => {
       message: 'Message sent successfully',
       data: populatedMessage,
       conversationId: conversation._id.toString(),
+      clientMessageId: clientMessageId || undefined,
     })
   } catch (error) {
     console.error('sendStudentMessage Error:', error)
