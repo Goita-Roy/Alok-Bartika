@@ -280,11 +280,16 @@ async function saveAndBroadcastMessage(io, socket, payload) {
       .populate('sender', 'fullName email role')
       .lean()
 
+    // Re-fetch conversation to get updated unread counts
+    const updatedConv = await SupportConversation.findById(conversation._id).lean()
+
     const broadcastPayload = {
       conversationId: conversation._id.toString(),
       studentId: conversation.student.toString(),
       message: populated,
       clientMessageId: clientMessageId || undefined,
+      unreadStudent: updatedConv.unreadStudent,
+      unreadAdmin: updatedConv.unreadAdmin,
     }
 
       // ── Broadcast to counterpart room only ────────────────────────────────
@@ -381,12 +386,17 @@ async function handleMessageSeen(io, socket, payload) {
     const resetField = user.role === 'student' ? { unreadStudent: 0 } : { unreadAdmin: 0 }
     await SupportConversation.findByIdAndUpdate(conversationId, { $set: resetField })
 
+    // Re-fetch conversation to get updated unread counts
+    const updatedConv = await SupportConversation.findById(conversationId).lean()
+
     // Broadcast seen status to the counterpart room
     const counterpartRoom = resolveCounterpartRoom(user.role, conversation.student.toString())
     const seenPayload = {
       conversationId,
       seenBy: user._id,
       seenByRole: user.role,
+      unreadStudent: updatedConv.unreadStudent,
+      unreadAdmin: updatedConv.unreadAdmin,
     }
 
     if (counterpartRoom) {

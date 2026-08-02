@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuthStore } from '../state/authStore'
+import { useSupportStore } from '../state/supportStore'
+import { getStudentSocket, disconnectStudentSocket, joinStudentRoom } from '../lib/socket'
 
 type DashboardData = {
   ok: boolean
@@ -47,6 +49,107 @@ export function StudentDashboard() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [chatOpen, setChatOpen] = useState(false)
+  const [chatMessages, setChatMessages] = useState<any[]>([])
+  const [chatInput, setChatInput] = useState('')
+  const [chatLoading, setChatLoading] = useState(false)
+  const [chatConversationId, setChatConversationId] = useState<string | null>(null)
+  const chatEndRef = useRef<HTMLDivElement>(null)
+
+  const token = useAuthStore((s) => s.token)
+  const studentUnread = useSupportStore((s) => s.studentUnread)
+  const setStudentUnread = useSupportStore((s) => s.setStudentUnread)
+  const clearStudentUnread = useSupportStore((s) => s.clearStudentUnread)
+
+  // Socket connection for unread notifications
+  useEffect(() => {
+    if (!token || !user) return
+
+    const socket = getStudentSocket(token)
+
+    socket.on('connect', () => {
+      joinStudentRoom(user.id)
+    })
+
+    socket.on('receive_message', (data: { conversationId: string; studentId: string; message: any; unreadStudent: number }) => {
+      setStudentUnread(data.unreadStudent)
+    })
+
+    socket.on('message_seen', (data: { conversationId: string; seenByRole: string; unreadStudent: number }) => {
+      if (data.seenByRole === 'admin' || data.seenByRole === 'super-admin') {
+        setStudentUnread(data.unreadStudent)
+      }
+    })
+
+    socket.on('connect_error', () => {})
+
+    if (socket.connected) {
+      joinStudentRoom(user.id)
+    }
+
+    return () => {
+      socket.off('connect')
+      socket.off('receive_message')
+      socket.off('message_seen')
+      socket.off('connect_error')
+      disconnectStudentSocket()
+    }
+  }, [token, user])
+
+  // Fetch initial unread count from conversation
+  useEffect(() => {
+    if (!user) return
+    api.get('/api/support/conversation')
+      .then((res) => {
+        if (res.data?.conversation) {
+          setStudentUnread(res.data.conversation.unreadStudent ?? 0)
+        }
+      })
+      .catch(() => {})
+  }, [user])
+
+  async function openChat() {
+    setChatOpen(true)
+    clearStudentUnread()
+    setChatLoading(true)
+    try {
+      const { data: convData } = await api.get('/api/support/conversation')
+      const conv = convData?.conversation
+      if (conv) {
+        setChatConversationId(conv._id)
+        const { data: msgData } = await api.get(`/api/support/messages/${conv._id}`)
+        setChatMessages(msgData?.messages ?? [])
+        await api.patch('/api/support/read', { conversationId: conv._id })
+      }
+    } catch {
+      // ignore
+    } finally {
+      setChatLoading(false)
+    }
+  }
+
+  function closeChat() {
+    setChatOpen(false)
+    setChatMessages([])
+    setChatConversationId(null)
+    setChatInput('')
+  }
+
+  async function sendChatMessage() {
+    if (!chatInput.trim() || !chatConversationId) return
+    const text = chatInput.trim()
+    setChatInput('')
+    try {
+      await api.post('/api/support/message', { message: text, conversationId: chatConversationId })
+      setChatMessages((prev) => [...prev, { _id: Date.now().toString(), message: text, sender: { _id: user?.id, fullName: user?.fullName }, createdAt: new Date().toISOString() }])
+    } catch {
+      // ignore
+    }
+  }
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [chatMessages])
 
   useEffect(() => {
     let mounted = true
@@ -248,6 +351,86 @@ export function StudentDashboard() {
               </div>
             </div>
           </section>
+        </div>
+      ) : null}
+
+      {/* Live Chat Floating Button */}
+      <button
+        type="button"
+        onClick={openChat}
+        className="fixed bottom-6 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-sky-500 text-zinc-950 shadow-lg hover:bg-sky-400 transition-colors"
+        title="Live Chat"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+        {studentUnread > 0 ? (
+          <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+            {studentUnread > 99 ? '99+' : studentUnread}
+          </span>
+        ) : null}
+      </button>
+
+      {/* Chat Panel */}
+      {chatOpen ? (
+        <div className="fixed inset-0 z-50 flex items-end justify-end p-4 sm:items-center sm:justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={closeChat} />
+          <div className="relative flex w-full max-w-md flex-col rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl" style={{ height: '70vh', maxHeight: 560 }}>
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+              <div className="text-sm font-semibold">Live Chat</div>
+              <button type="button" onClick={closeChat} className="text-zinc-400 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {chatLoading ? (
+                <div className="text-center text-xs text-zinc-400 py-8">Loading...</div>
+              ) : chatMessages.length === 0 ? (
+                <div className="text-center text-xs text-zinc-400 py-8">No messages yet. Start a conversation!</div>
+              ) : (
+                chatMessages.map((msg) => {
+                  const isMe = msg.sender?._id === user?.id
+                  return (
+                    <div key={msg._id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[80%] rounded-xl px-3 py-2 text-xs ${isMe ? 'bg-sky-500/20 text-sky-100' : 'bg-white/10 text-zinc-200'}`}>
+                        <div>{msg.message}</div>
+                        <div className="mt-1 text-[10px] text-zinc-400">
+                          {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Input */}
+            <div className="border-t border-white/10 p-3">
+              <div className="flex gap-2">
+                <input
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage() } }}
+                  placeholder="Type a message..."
+                  className="flex-1 rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 outline-none focus:border-white/30"
+                />
+                <button
+                  type="button"
+                  onClick={sendChatMessage}
+                  disabled={!chatInput.trim()}
+                  className="rounded-lg bg-sky-500 px-3 py-2 text-xs font-semibold text-zinc-950 hover:bg-sky-400 disabled:opacity-40"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       ) : null}
     </div>

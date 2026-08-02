@@ -142,6 +142,29 @@ export function AdminDashboard() {
       setConversations((prev) => prev.map((c) => (c._id === data.conversationId ? { ...c, status: data.status } : c)))
     })
 
+    socket.on('receive_message', (data: { conversationId: string; studentId: string; message: any; unreadStudent: number; unreadAdmin: number }) => {
+      setConversations((prev) => {
+        const idx = prev.findIndex((c) => c._id === data.conversationId)
+        if (idx === -1) return prev
+        const updated = [...prev]
+        updated[idx] = {
+          ...updated[idx],
+          lastMessage: data.message?.message ?? updated[idx].lastMessage,
+          lastMessageAt: data.message?.createdAt ?? updated[idx].lastMessageAt,
+          unreadAdmin: data.unreadAdmin ?? updated[idx].unreadAdmin,
+        }
+        return updated
+      })
+    })
+
+    socket.on('message_seen', (data: { conversationId: string; seenBy: string; seenByRole: string; unreadStudent: number; unreadAdmin: number }) => {
+      setConversations((prev) => prev.map((c) =>
+        c._id === data.conversationId
+          ? { ...c, unreadStudent: data.unreadStudent ?? c.unreadStudent, unreadAdmin: data.unreadAdmin ?? c.unreadAdmin }
+          : c
+      ))
+    })
+
     socket.on('connect_error', () => {})
 
     if (socket.connected) {
@@ -152,6 +175,8 @@ export function AdminDashboard() {
       socket.off('connect')
       socket.off('user_presence')
       socket.off('status_changed')
+      socket.off('receive_message')
+      socket.off('message_seen')
       socket.off('connect_error')
       disconnectAdminSocket()
       socketRef.current = null
@@ -322,13 +347,25 @@ export function AdminDashboard() {
     return conversations.filter((c) => c.status === statusFilter)
   }, [conversations, statusFilter])
 
+  const totalUnread = useMemo(
+    () => conversations.reduce((sum, c) => sum + (c.unreadAdmin > 0 ? 1 : 0), 0),
+    [conversations],
+  )
+
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-semibold">Admin Panel</h2>
       <div className="flex flex-wrap gap-2">
         {(['analytics', 'students', 'courses', 'lessons', 'progress', 'support'] as Tab[]).map((t) => (
           <button key={t} type="button" onClick={() => setTab(t)} className={`rounded-md px-3 py-1.5 text-xs font-semibold ${tab === t ? 'bg-white text-zinc-950' : 'bg-white/10 text-zinc-200 hover:bg-white/20'}`}>
-            {t === 'support' ? 'Student Support' : t}
+            {t === 'support' ? (
+              <span className="flex items-center gap-1.5">
+                Student Support
+                {totalUnread > 0 ? (
+                  <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-emerald-500 px-1 text-[10px] font-bold text-zinc-950">{totalUnread}</span>
+                ) : null}
+              </span>
+            ) : t}
           </button>
         ))}
         <button type="button" onClick={() => { loadAll(); if (tab === 'support') loadConversations() }} className="rounded-md bg-sky-400 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-sky-300">
@@ -511,7 +548,13 @@ export function AdminDashboard() {
                     <button
                       key={conv._id}
                       type="button"
-                      onClick={() => setSelectedConvId(conv._id)}
+                      onClick={() => {
+                        setSelectedConvId(conv._id)
+                        if (conv.unreadAdmin > 0 && socketRef.current) {
+                          socketRef.current.emit('message_seen', { conversationId: conv._id })
+                          setConversations((prev) => prev.map((c) => (c._id === conv._id ? { ...c, unreadAdmin: 0 } : c)))
+                        }
+                      }}
                       className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-xs transition-colors ${selectedConvId === conv._id ? 'bg-white/15 text-white' : 'hover:bg-white/5 text-zinc-300'}`}
                     >
                       <PresenceDot online={isOnline} />
