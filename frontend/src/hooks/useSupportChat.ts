@@ -161,27 +161,35 @@ export function useSupportChat({ socket, userId, enabled }: UseSupportChatOption
       )
     }
 
-    // Sender confirmation (our own message was saved successfully)
-    const onMessageSent = (payload: {
-      conversationId: string
-      studentId: string
-      message: SupportMessage
-      clientMessageId?: string
-    }) => {
-      const savedMsg = payload.message
-      const matchedClientId = payload.clientMessageId
-      if (!savedMsg?._id) return
+     // Sender confirmation (our own message was saved successfully)
+     const onMessageSent = (payload: {
+       conversationId: string
+       studentId: string
+       message: SupportMessage
+       clientMessageId?: string
+     }) => {
+       console.log('[CHAT] message_sent received', { payload })
+       const savedMsg = payload.message
+       const matchedClientId = payload.clientMessageId
+       if (!savedMsg?._id) return
 
-      setMessages((prev) => {
-        // Replace the matching optimistic placeholder for this message
-        const withoutOptimistic = prev.filter((m) => {
-          if (m._optimistic && m.clientMessageId === matchedClientId) return false
-          return true
+        setMessages((prev) => {
+          console.log('[DEBUG] onMessageSent setMessages prev', { prevLength: prev.length })
+          // If the saved message is already in state, return unchanged (idempotent)
+          if (prev.some((m) => m._id === savedMsg._id)) return prev
+
+          // Replace the matching optimistic placeholder for this message
+          const withoutOptimistic = prev.filter((m) => {
+            if (m._optimistic && m.clientMessageId === matchedClientId) return false
+            return true
+          })
+          console.log('[DEBUG] onMessageSent withoutOptimistic', { withoutOptimisticLength: withoutOptimistic.length, optimisticCount: prev.length - withoutOptimistic.length })
+          console.log('[DEBUG] onMessageSent identifiers', { matchedClientId, savedMsgId: savedMsg._id })
+          console.log('[CHAT] optimistic message replaced', { matchedClientId, savedMsgId: savedMsg._id })
+          const next = [...withoutOptimistic, savedMsg]
+          console.log('[DEBUG] onMessageSent next', { nextLength: next.length })
+          return next
         })
-        if (seenIds.current.has(savedMsg._id)) return withoutOptimistic
-        seenIds.current.add(savedMsg._id)
-        return [...withoutOptimistic, savedMsg]
-      })
 
       // Persist conversation id so next messages can reference it
       if (payload.conversationId) {
@@ -241,57 +249,67 @@ export function useSupportChat({ socket, userId, enabled }: UseSupportChatOption
       setSendError('সংযোগ হারিয়ে গেছে। বার্তা পাঠানো ব্যর্থ হয়েছে।')
     }
 
-    socket.on('receive_message', onReceiveMessage)
-    socket.on('message_sent', onMessageSent)
-    socket.on('typing', onTyping)
-    socket.on('stop_typing', onStopTyping)
-    socket.on('message_seen', onMessageSeen)
-    socket.on('error', onError)
-    socket.on('disconnect', onDisconnect)
+     console.log('[CHAT] registering socket listeners', { socketId: socket.id, userId })
+     socket.on('receive_message', onReceiveMessage)
+     socket.on('message_sent', onMessageSent)
+     socket.on('typing', onTyping)
+     socket.on('stop_typing', onStopTyping)
+     socket.on('message_seen', onMessageSeen)
+     socket.on('error', onError)
+     socket.on('disconnect', onDisconnect)
 
-    return () => {
-      socket.off('receive_message', onReceiveMessage)
-      socket.off('message_sent', onMessageSent)
-      socket.off('typing', onTyping)
-      socket.off('stop_typing', onStopTyping)
-      socket.off('message_seen', onMessageSeen)
-      socket.off('error', onError)
-      socket.off('disconnect', onDisconnect)
-      if (adminTypingTimeout.current) clearTimeout(adminTypingTimeout.current)
-    }
+     return () => {
+       console.log('[CHAT] unregistering socket listeners', { socketId: socket.id, userId })
+       socket.off('receive_message', onReceiveMessage)
+       socket.off('message_sent', onMessageSent)
+       socket.off('typing', onTyping)
+       socket.off('stop_typing', onStopTyping)
+       socket.off('message_seen', onMessageSeen)
+       socket.off('error', onError)
+       socket.off('disconnect', onDisconnect)
+       if (adminTypingTimeout.current) clearTimeout(adminTypingTimeout.current)
+     }
   }, [socket, userId])
 
-  // ── Send message ───────────────────────────────────────────────────────────
-  const sendMessage = useCallback(
-    async (text: string) => {
-      const trimmed = text.trim()
-      if (!trimmed || trimmed.length > 3000) return
+// ── Send message ───────────────────────────────────────────────────────────
+   const sendMessage = useCallback(
+     async (text: string) => {
+       const trimmed = text.trim()
+       if (!trimmed || trimmed.length > 3000) return
 
-      setSendError(null)
-      setSending(true)
+       setSendError(null)
+       setSending(true)
 
-      const conversationId = conversationRef.current?._id ?? undefined
+       const conversationId = conversationRef.current?._id ?? undefined
 
-      const clientMessageId = crypto.randomUUID()
+       const clientMessageId = crypto.randomUUID()
 
-      // Optimistic UI — insert the message immediately
-      const optimisticMsg: SupportMessage = {
-        _id: `opt_${Date.now()}`,
-        conversation: conversationId ?? '',
-        sender: { _id: userId ?? '', fullName: 'আপনি', email: '', role: 'student' },
-        senderRole: 'student',
-        message: trimmed,
-        read: false,
-        createdAt: new Date().toISOString(),
-        _optimistic: true,
-        clientMessageId,
-      }
-      setMessages((prev) => [...prev, optimisticMsg])
+       console.log("[CHAT] sendMessage called", {
+         socketConnected: socket?.connected,
+         conversationId,
+         clientMessageId,
+         message: trimmed,
+       })
 
-      try {
-        if (socket?.connected) {
-          // Real-time path: emit via socket — server saves and sends back message_sent
-          socket.emit('send_message', { message: trimmed, conversationId, clientMessageId })
+       // Optimistic UI — insert the message immediately
+       const optimisticMsg: SupportMessage = {
+         _id: `opt_${Date.now()}`,
+         conversation: conversationId ?? '',
+         sender: { _id: userId ?? '', fullName: 'আপনি', email: '', role: 'student' },
+         senderRole: 'student',
+         message: trimmed,
+         read: false,
+         createdAt: new Date().toISOString(),
+         _optimistic: true,
+         clientMessageId,
+       }
+       setMessages((prev) => [...prev, optimisticMsg])
+
+       try {
+         if (socket?.connected) {
+           // Real-time path: emit via socket — server saves and sends back message_sent
+           console.log("[CHAT] emitting send_message", { message: trimmed, conversationId, clientMessageId })
+           socket.emit('send_message', { message: trimmed, conversationId, clientMessageId })
         } else {
           // Fallback path: save via REST API directly
           const res = await api.post<{ data: SupportMessage; conversationId: string; clientMessageId: string }>('/support/message', {
@@ -392,6 +410,11 @@ export function useSupportChat({ socket, userId, enabled }: UseSupportChatOption
       api.patch('/support/read', { conversationId: convId }).catch(() => {/* non-critical */})
     }
   }, [socket])
+
+  console.log("[DEBUG] messages state", {
+    count: messages.length,
+    last: messages[messages.length - 1],
+  })
 
   return {
     conversation,

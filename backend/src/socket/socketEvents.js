@@ -255,14 +255,16 @@ async function saveAndBroadcastMessage(io, socket, payload) {
       clientMessageId: clientMessageId || undefined,
     }
 
-    // ── Broadcast to counterpart room only ────────────────────────────────
-    const counterpartRoom = resolveCounterpartRoom(user.role, conversation.student.toString())
-    if (counterpartRoom) {
-      io.to(counterpartRoom).emit('receive_message', broadcastPayload)
-    }
+     // ── Broadcast to counterpart room only ────────────────────────────────
+     const counterpartRoom = resolveCounterpartRoom(user.role, conversation.student.toString())
+     if (counterpartRoom) {
+       console.log('[SOCKET] emitting receive_message to room:', counterpartRoom, { messageId: populated._id, clientMessageId: broadcastPayload.clientMessageId })
+       io.to(counterpartRoom).emit('receive_message', broadcastPayload)
+     }
 
-    // ── Also confirm back to the sender ──────────────────────────────────
-    socket.emit('message_sent', broadcastPayload)
+     // ── Also confirm back to the sender ──────────────────────────────────
+     console.log('[SOCKET] emitting message_sent to sender socket:', socket.id, { messageId: populated._id, clientMessageId: broadcastPayload.clientMessageId })
+     socket.emit('message_sent', broadcastPayload)
 
     devLog(`Message saved & broadcast: conv=${conversation._id} sender=${user._id}`)
   } catch (error) {
@@ -372,12 +374,13 @@ function registerSocketEvents(io, socket) {
   socket.on('leave_room', (payload) => leaveSupportRoom(socket, payload))
 
   // ── send_message ──────────────────────────────────────────────────────────
-  socket.on('send_message', (payload) => {
-    if (!checkSocketRateLimit(user._id, 'send_message', SEND_MESSAGE_LIMIT.max, SEND_MESSAGE_LIMIT.windowMs)) {
-      return emitError(socket, 'RATE_LIMITED', 'Too many messages. Please wait a moment.')
-    }
-    saveAndBroadcastMessage(io, socket, payload)
-  })
+   socket.on('send_message', (payload) => {
+     console.log('[SOCKET] send_message received', { socketId: socket.id, userId: user._id, role: user.role, hasConversationId: !!payload?.conversationId, hasClientMessageId: !!payload?.clientMessageId })
+     if (!checkSocketRateLimit(user._id, 'send_message', SEND_MESSAGE_LIMIT.max, SEND_MESSAGE_LIMIT.windowMs)) {
+       return emitError(socket, 'RATE_LIMITED', 'Too many messages. Please wait a moment.')
+     }
+     saveAndBroadcastMessage(io, socket, payload)
+   })
 
   // ── typing ────────────────────────────────────────────────────────────────
   socket.on('typing', (payload) => {
