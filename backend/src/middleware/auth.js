@@ -59,6 +59,7 @@ const requireRole = (...roles) => {
 const requireStudent = requireRole('student')
 const requireAdmin = requireRole('admin', 'super-admin')
 const requireSuperAdmin = requireRole('super-admin')
+const requireSupportRole = requireRole('student', 'admin', 'super-admin')
 
 // ── Pending feedback guard ────────────────────────────────────────────────
 // Security layer that blocks LEARNING/EXAM API calls when the user has
@@ -91,4 +92,4 @@ function checkPendingFeedback(req, res, next) {
   next()
 }
 
-module.exports = { protect, requireRole, requireStudent, requireAdmin, requireSuperAdmin, checkPendingFeedback }
+module.exports = { protect, requireRole, requireStudent, requireAdmin, requireSuperAdmin, requireSupportRole, checkPendingFeedback }

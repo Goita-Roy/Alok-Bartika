@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { protect } = require('../middleware/auth')
+const { protect, requireSupportRole, requireAdmin } = require('../middleware/auth')
 const { supportWriteLimiter } = require('../middleware/rateLimiter')
 const {
   getStudentConversation,
@@ -8,13 +8,20 @@ const {
   getConversationMessages,
   sendStudentMessage,
   markMessagesRead,
+  validateConversationOwnership,
+  getAdminConversations,
+  updateConversationStatus,
 } = require('../controllers/supportController')
 
-// All support chat endpoints require JWT authentication
-router.get('/conversation', protect, getStudentConversation)
-router.post('/conversation', protect, supportWriteLimiter, createStudentConversation)
-router.get('/messages/:conversationId', protect, getConversationMessages)
-router.post('/message', protect, supportWriteLimiter, sendStudentMessage)
-router.patch('/read', protect, supportWriteLimiter, markMessagesRead)
+// Student-facing support chat endpoints
+router.get('/conversation', protect, requireSupportRole, getStudentConversation)
+router.post('/conversation', protect, requireSupportRole, supportWriteLimiter, createStudentConversation)
+router.get('/messages/:conversationId', protect, requireSupportRole, validateConversationOwnership, getConversationMessages)
+router.post('/message', protect, requireSupportRole, supportWriteLimiter, sendStudentMessage)
+router.patch('/read', protect, requireSupportRole, supportWriteLimiter, markMessagesRead)
+
+// Admin-only conversation management endpoints
+router.get('/admin/conversations', protect, requireAdmin, getAdminConversations)
+router.patch('/admin/conversations/:id/status', protect, requireAdmin, updateConversationStatus)
 
 module.exports = { supportRouter: router }

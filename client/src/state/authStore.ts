@@ -13,18 +13,31 @@ export type AuthUser = {
 
 type AuthState = {
   user: AuthUser | null
+  token: string | null
   hydrated: boolean
   hydrate: () => Promise<void>
-  setUser: (user: AuthUser) => void
+  setUser: (user: AuthUser, token?: string) => void
   logout: () => Promise<void>
   clearUser: () => void
 }
 
+const TOKEN_KEY = 'alokbartika.auth.token'
+
+function loadToken(): string | null {
+  try { return localStorage.getItem(TOKEN_KEY) } catch { return null }
+}
+
+function saveToken(token: string | null) {
+  try {
+    if (token) localStorage.setItem(TOKEN_KEY, token)
+    else localStorage.removeItem(TOKEN_KEY)
+  } catch { /* ignore */ }
+}
+
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
+  token: loadToken(),
   hydrated: false,
-  // Authentication is now cookie-based (HttpOnly access + refresh tokens).
-  // Hydration calls /me; the browser supplies the HttpOnly cookie automatically.
   hydrate: async () => {
     try {
       const res = await api.get<{ ok: boolean; user: AuthUser }>('/api/auth/me')
@@ -34,14 +47,21 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ user: null, hydrated: true })
     }
   },
-  setUser: (user) => set({ user }),
+  setUser: (user, token) => {
+    if (token) saveToken(token)
+    set({ user, ...(token ? { token } : {}) })
+  },
   logout: async () => {
     try {
       await api.post('/api/auth/logout')
     } catch {
       // ignore network errors; clear local state regardless
     }
-    set({ user: null })
+    saveToken(null)
+    set({ user: null, token: null })
   },
-  clearUser: () => set({ user: null }),
+  clearUser: () => {
+    saveToken(null)
+    set({ user: null, token: null })
+  },
 }))

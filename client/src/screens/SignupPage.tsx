@@ -5,6 +5,7 @@ import type { AuthUser } from '../state/authStore'
 import { useAuthStore } from '../state/authStore'
 
 type RegisterResponse = {
+  token?: string
   user: AuthUser
 }
 
@@ -76,7 +77,7 @@ export function SignupPage() {
         guardianName: 'Not specified',
         guardianPhone: form.phone,
       })
-      setUser(res.data.user)
+      setUser(res.data.user, res.data.token)
       navigate(res.data.user.role === 'admin' ? '/admin' : '/dashboard', { replace: true })
     } catch (err: any) {
       setServerError(err?.response?.data?.error ?? err?.message ?? 'Signup failed')

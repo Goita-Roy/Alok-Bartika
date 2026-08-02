@@ -1,17 +1,96 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../lib/api'
+import { useAuthStore } from '../state/authStore'
+import { getAdminSocket, disconnectAdminSocket, joinAdminRoom } from '../lib/socket'
 
-type Tab = 'students' | 'courses' | 'lessons' | 'progress' | 'analytics'
-type Student = { id: string; fullName: string; email: string; phone: string; student?: Record<string, string> }
+type Tab = 'analytics' | 'students' | 'courses' | 'lessons' | 'progress' | 'support'
+type Student = { id: string; fullName: string; email: string; phone: string; student?: Record<string, string>; isActive?: boolean }
 type Course = { _id?: string; id?: string; title: string; description: string; level: 'Beginner' | 'Intermediate' | 'Advanced'; order?: number; published?: boolean }
 type Lesson = { _id?: string; id?: string; courseId: string; title: string; slug: string; order?: number; practice?: { prompt?: string; starterCode?: string } }
 type ProgressRow = { id: string; studentName: string; courseTitle: string; lessonTitle: string; score: number; completedAt: string | null; modes: { reading?: boolean; video?: boolean; practice?: boolean } }
 type Analytics = { totalStudents: number; avgScores: number; mostAttemptedLessons: Array<{ lessonId: string; title: string; attempts: number }> }
 type CourseForm = { title: string; description: string; level: Course['level']; order: number }
 
+type SupportConversation = {
+  _id: string
+  student: { _id: string; fullName: string; email: string; profilePicture?: string } | string
+  assignedAdmin?: { _id: string; fullName: string; email: string } | string | null
+  status: 'open' | 'pending' | 'resolved' | 'closed'
+  lastMessage: string
+  lastMessageAt: string
+  unreadStudent: number
+  unreadAdmin: number
+  createdAt: string
+  updatedAt: string
+}
+
+type SupportStatus = SupportConversation['status']
+
+type StudentPresence = { online: boolean; lastSeen: number | null }
+
 const inputCls = 'w-full rounded-md border border-white/10 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 outline-none focus:border-white/30'
 
+function formatLastSeen(lastSeen: number | null): string {
+  if (!lastSeen) return 'Unknown'
+  const diffMs = Date.now() - lastSeen
+  const diffMin = Math.floor(diffMs / 60000)
+  if (diffMin < 1) return 'Just now'
+  if (diffMin < 60) return `${diffMin} min ago`
+  const diffHr = Math.floor(diffMin / 60)
+  if (diffHr < 24) return `${diffHr}h ago`
+  const diffDay = Math.floor(diffHr / 24)
+  return `${diffDay}d ago`
+}
+
+function PresenceDot({ online }: { online: boolean }) {
+  return (
+    <span
+      className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${online ? 'bg-emerald-400' : 'bg-zinc-500'}`}
+      title={online ? 'Online' : 'Offline'}
+    />
+  )
+}
+
+function PresenceStatus({ presence }: { presence: StudentPresence | undefined }) {
+  const isOnline = presence?.online ?? false
+  const lastSeen = presence?.lastSeen ?? null
+
+  if (isOnline) {
+    return (
+      <span className="flex items-center gap-1.5 text-xs text-emerald-400">
+        <PresenceDot online />
+        Online
+      </span>
+    )
+  }
+
+  return (
+    <span className="flex items-center gap-1.5 text-xs text-zinc-400">
+      <PresenceDot online={false} />
+      Offline · Last seen {formatLastSeen(lastSeen)}
+    </span>
+  )
+}
+
+const STATUS_STYLES: Record<SupportStatus, string> = {
+  open: 'bg-emerald-500/20 text-emerald-300',
+  pending: 'bg-amber-500/20 text-amber-300',
+  resolved: 'bg-sky-500/20 text-sky-300',
+  closed: 'bg-zinc-500/20 text-zinc-400',
+}
+
+function StatusBadge({ status }: { status: SupportStatus }) {
+  return (
+    <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${STATUS_STYLES[status]}`}>
+      {status}
+    </span>
+  )
+}
+
 export function AdminDashboard() {
+  const user = useAuthStore((s) => s.user)
+  const token = useAuthStore((s) => s.token)
+
   const [tab, setTab] = useState<Tab>('analytics')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -22,20 +101,71 @@ export function AdminDashboard() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
 
   const [studentForm, setStudentForm] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    password: '',
-    institution: '',
-    department: '',
-    batch: '',
-    roll: '',
-    address: '',
-    guardianName: '',
-    guardianPhone: '',
+    fullName: '', email: '', phone: '', password: '',
+    institution: '', department: '', batch: '', roll: '', address: '', guardianName: '', guardianPhone: '',
   })
   const [courseForm, setCourseForm] = useState<CourseForm>({ title: '', description: '', level: 'Beginner', order: 0 })
   const [lessonForm, setLessonForm] = useState({ courseId: '', title: '', slug: '', prompt: '', starterCode: '' })
+
+  const [conversations, setConversations] = useState<SupportConversation[]>([])
+  const [selectedConvId, setSelectedConvId] = useState<string | null>(null)
+  const [presenceMap, setPresenceMap] = useState<Record<string, StudentPresence>>({})
+  const [statusFilter, setStatusFilter] = useState<'all' | SupportStatus>('all')
+
+  const presenceMapRef = useRef(presenceMap)
+  presenceMapRef.current = presenceMap
+
+  const socketRef = useRef<ReturnType<typeof getAdminSocket> | null>(null)
+
+  useEffect(() => {
+    if (!token || !user) return
+
+    const socket = getAdminSocket(token)
+    socketRef.current = socket
+
+    socket.on('connect', () => {
+      joinAdminRoom()
+    })
+
+    socket.on('user_presence', (data: { userId: string; role: string; online: boolean }) => {
+      if (data.role !== 'student') return
+      setPresenceMap((prev) => ({
+        ...prev,
+        [data.userId]: {
+          online: data.online,
+          lastSeen: data.online ? null : Date.now(),
+        },
+      }))
+    })
+
+    socket.on('status_changed', (data: { conversationId: string; status: SupportStatus }) => {
+      setConversations((prev) => prev.map((c) => (c._id === data.conversationId ? { ...c, status: data.status } : c)))
+    })
+
+    socket.on('connect_error', () => {})
+
+    if (socket.connected) {
+      joinAdminRoom()
+    }
+
+    return () => {
+      socket.off('connect')
+      socket.off('user_presence')
+      socket.off('status_changed')
+      socket.off('connect_error')
+      disconnectAdminSocket()
+      socketRef.current = null
+    }
+  }, [token, user])
+
+  const loadConversations = useCallback(async () => {
+    try {
+      const { data } = await api.get('/api/support/admin/conversations')
+      setConversations(data.conversations ?? [])
+    } catch {
+      // silently fail; conversations are optional
+    }
+  }, [])
 
   async function loadAll() {
     setBusy(true)
@@ -62,7 +192,12 @@ export function AdminDashboard() {
 
   useEffect(() => {
     loadAll()
+    loadConversations()
   }, [])
+
+  useEffect(() => {
+    if (tab === 'support') loadConversations()
+  }, [tab, loadConversations])
 
   async function createStudent() {
     setBusy(true)
@@ -73,6 +208,7 @@ export function AdminDashboard() {
       await loadAll()
     } catch (e: any) {
       setError(e?.response?.data?.error ?? e?.message ?? 'Failed to create student')
+    } finally {
       setBusy(false)
     }
   }
@@ -85,6 +221,7 @@ export function AdminDashboard() {
       await loadAll()
     } catch (e: any) {
       setError(e?.response?.data?.error ?? e?.message ?? 'Failed to delete student')
+    } finally {
       setBusy(false)
     }
   }
@@ -98,6 +235,7 @@ export function AdminDashboard() {
       await loadAll()
     } catch (e: any) {
       setError(e?.response?.data?.error ?? e?.message ?? 'Failed to create course')
+    } finally {
       setBusy(false)
     }
   }
@@ -110,6 +248,7 @@ export function AdminDashboard() {
       await loadAll()
     } catch (e: any) {
       setError(e?.response?.data?.error ?? e?.message ?? 'Failed to delete course')
+    } finally {
       setBusy(false)
     }
   }
@@ -130,6 +269,7 @@ export function AdminDashboard() {
       await loadAll()
     } catch (e: any) {
       setError(e?.response?.data?.error ?? e?.message ?? 'Failed to create lesson')
+    } finally {
       setBusy(false)
     }
   }
@@ -142,7 +282,20 @@ export function AdminDashboard() {
       await loadAll()
     } catch (e: any) {
       setError(e?.response?.data?.error ?? e?.message ?? 'Failed to delete lesson')
+    } finally {
       setBusy(false)
+    }
+  }
+
+  async function updateConversationStatus(id: string, status: SupportStatus) {
+    try {
+      await api.patch(`/api/support/admin/conversations/${id}/status`, { status })
+      setConversations((prev) => prev.map((c) => (c._id === id ? { ...c, status } : c)))
+      if (socketRef.current) {
+        socketRef.current.emit('status_changed', { conversationId: id, status })
+      }
+    } catch (e: any) {
+      setError(e?.response?.data?.error ?? e?.message ?? 'Failed to update conversation')
     }
   }
 
@@ -151,16 +304,34 @@ export function AdminDashboard() {
     return progressRows.length ? Math.round((done / progressRows.length) * 100) : 0
   }, [progressRows])
 
+  const selectedConv = useMemo(
+    () => conversations.find((c) => c._id === selectedConvId) ?? null,
+    [conversations, selectedConvId],
+  )
+
+  const selectedStudentId = useMemo(() => {
+    if (!selectedConv) return null
+    const s = selectedConv.student
+    return typeof s === 'object' ? s._id : s
+  }, [selectedConv])
+
+  const selectedStudentPresence = selectedStudentId ? presenceMap[selectedStudentId] : undefined
+
+  const filteredConversations = useMemo(() => {
+    if (statusFilter === 'all') return conversations
+    return conversations.filter((c) => c.status === statusFilter)
+  }, [conversations, statusFilter])
+
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-semibold">Admin Panel</h2>
       <div className="flex flex-wrap gap-2">
-        {(['analytics', 'students', 'courses', 'lessons', 'progress'] as Tab[]).map((t) => (
+        {(['analytics', 'students', 'courses', 'lessons', 'progress', 'support'] as Tab[]).map((t) => (
           <button key={t} type="button" onClick={() => setTab(t)} className={`rounded-md px-3 py-1.5 text-xs font-semibold ${tab === t ? 'bg-white text-zinc-950' : 'bg-white/10 text-zinc-200 hover:bg-white/20'}`}>
-            {t}
+            {t === 'support' ? 'Student Support' : t}
           </button>
         ))}
-        <button type="button" onClick={loadAll} className="rounded-md bg-sky-400 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-sky-300">
+        <button type="button" onClick={() => { loadAll(); if (tab === 'support') loadConversations() }} className="rounded-md bg-sky-400 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-sky-300">
           Refresh
         </button>
       </div>
@@ -200,14 +371,20 @@ export function AdminDashboard() {
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
             <div className="text-sm font-semibold">Students ({students.length})</div>
             <div className="mt-3 max-h-[420px] space-y-2 overflow-auto">
-              {students.map((s) => (
-                <div key={s.id} className="rounded-md border border-white/10 bg-zinc-950/40 p-3 text-xs">
-                  <div className="font-semibold">{s.fullName}</div>
-                  <div className="text-zinc-300">{s.email}</div>
-                  <div className="text-zinc-400">{s.phone}</div>
-                  <button type="button" onClick={() => deleteStudent(s.id)} className="mt-2 rounded bg-red-400 px-2 py-1 font-semibold text-zinc-950 hover:bg-red-300">Delete</button>
-                </div>
-              ))}
+              {students.map((s) => {
+                const p = presenceMap[s.id]
+                return (
+                  <div key={s.id} className="rounded-md border border-white/10 bg-zinc-950/40 p-3 text-xs">
+                    <div className="flex items-center gap-2">
+                      <PresenceDot online={p?.online ?? false} />
+                      <span className="font-semibold">{s.fullName}</span>
+                    </div>
+                    <div className="mt-1 pl-4 text-zinc-300">{s.email}</div>
+                    <div className="pl-4 text-zinc-400">{s.phone}</div>
+                    <button type="button" onClick={() => deleteStudent(s.id)} className="mt-2 rounded bg-red-400 px-2 py-1 font-semibold text-zinc-950 hover:bg-red-300">Delete</button>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </section>
@@ -302,7 +479,100 @@ export function AdminDashboard() {
           </div>
         </section>
       ) : null}
+
+      {tab === 'support' ? (
+        <section className="flex gap-3" style={{ minHeight: 480 }}>
+          <div className="w-80 shrink-0 rounded-xl border border-white/10 bg-white/5 p-4 overflow-y-auto" style={{ maxHeight: 520 }}>
+            <div className="mb-3 text-sm font-semibold">Conversations ({filteredConversations.length})</div>
+            <div className="mb-3 flex flex-wrap gap-1">
+              {(['all', 'open', 'pending', 'resolved', 'closed'] as const).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setStatusFilter(f)}
+                  className={`rounded-md px-2 py-1 text-[10px] font-semibold ${statusFilter === f ? 'bg-white text-zinc-950' : 'bg-white/10 text-zinc-300 hover:bg-white/20'}`}
+                >
+                  {f === 'all' ? 'All' : f}
+                </button>
+              ))}
+            </div>
+            {filteredConversations.length === 0 ? (
+              <div className="py-8 text-center text-xs text-zinc-400">
+                {conversations.length === 0 ? 'No conversations yet' : 'No conversations match this filter'}
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {filteredConversations.map((conv) => {
+                  const studentObj = typeof conv.student === 'object' ? conv.student : null
+                  const studentId = studentObj?._id ?? (typeof conv.student === 'string' ? conv.student : '')
+                  const p = presenceMap[studentId]
+                  const isOnline = p?.online ?? false
+                  return (
+                    <button
+                      key={conv._id}
+                      type="button"
+                      onClick={() => setSelectedConvId(conv._id)}
+                      className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-xs transition-colors ${selectedConvId === conv._id ? 'bg-white/15 text-white' : 'hover:bg-white/5 text-zinc-300'}`}
+                    >
+                      <PresenceDot online={isOnline} />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate font-semibold">{studentObj?.fullName ?? 'Student'}</div>
+                        <div className="mt-0.5 truncate text-[11px] text-zinc-400">{conv.lastMessage || 'No messages yet'}</div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        {conv.unreadAdmin > 0 ? (
+                          <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-emerald-500 px-1 text-[10px] font-bold text-zinc-950">{conv.unreadAdmin}</span>
+                        ) : null}
+                        <StatusBadge status={conv.status} />
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 rounded-xl border border-white/10 bg-white/5 p-4 flex flex-col">
+            {selectedConv ? (
+              <>
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <div>
+                    <div className="text-sm font-semibold">
+                      {typeof selectedConv.student === 'object' ? selectedConv.student.fullName : 'Student'}
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-zinc-400">
+                      {typeof selectedConv.student === 'object' ? selectedConv.student.email : ''}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <PresenceStatus presence={selectedStudentPresence} />
+                    <select
+                      value={selectedConv.status}
+                      onChange={(e) => updateConversationStatus(selectedConv._id, e.target.value as SupportStatus)}
+                      className="rounded-md border border-white/10 bg-zinc-800 px-2 py-1 text-[11px] text-zinc-200 outline-none focus:border-white/30"
+                    >
+                      <option value="open">Open</option>
+                      <option value="pending">Pending</option>
+                      <option value="resolved">Resolved</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="mt-3 flex-1 rounded-md border border-white/10 bg-zinc-950/40 p-4 text-xs text-zinc-300" style={{ minHeight: 320 }}>
+                  <div className="text-zinc-400">Last message: {selectedConv.lastMessage || 'None'}</div>
+                  <div className="mt-1 text-zinc-500">Sent: {selectedConv.lastMessageAt ? new Date(selectedConv.lastMessageAt).toLocaleString() : 'N/A'}</div>
+                  <div className="mt-4 text-center text-zinc-500">
+                    Real-time chat coming soon — presence is live.
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-1 items-center justify-center text-xs text-zinc-500">
+                Select a conversation to view details
+              </div>
+            )}
+          </div>
+        </section>
+      ) : null}
     </div>
   )
 }
-

@@ -5,6 +5,7 @@ import type { AuthUser } from '../state/authStore'
 import { useAuthStore } from '../state/authStore'
 
 type LoginResponse = {
+  token?: string
   user: AuthUser
 }
 
@@ -39,7 +40,7 @@ export function LoginPage() {
         emailOrPhone: identifier,
         password,
       })
-      setUser(res.data.user)
+      setUser(res.data.user, res.data.token)
       const roleTarget = res.data.user.role === 'admin' ? '/admin' : '/dashboard'
       navigate(next ?? roleTarget, { replace: true })
     } catch (err: any) {

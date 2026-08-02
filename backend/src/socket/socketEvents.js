@@ -18,6 +18,7 @@
  *   typing          – typing indicator
  *   stop_typing     – stop typing indicator
  *   message_seen    – seen confirmation
+ *   user_presence   – online/offline status change
  *   error           – structured error event (never crashes the server)
  */
 
@@ -27,6 +28,31 @@ const { SupportMessage } = require('../models/SupportMessage')
 const { env } = require('../config/env')
 
 const isDev = env.nodeEnv !== 'production'
+
+// ── Online user tracking ──────────────────────────────────────
+const onlineUsers = new Map()
+const lastSeenMap = new Map()
+
+function setOnline(userId, socketId) {
+  onlineUsers.set(userId, socketId)
+}
+
+function setOffline(userId) {
+  onlineUsers.delete(userId)
+  lastSeenMap.set(userId, Date.now())
+}
+
+function isUserOnline(userId) {
+  return onlineUsers.has(userId)
+}
+
+function getLastSeen(userId) {
+  return lastSeenMap.get(userId) || null
+}
+
+function broadcastPresence(io, userId, role, online) {
+  io.to('admin-support').emit('user_presence', { userId, role, online })
+}
 
 // ── Socket-level rate limiting ──────────────────────────────────────
 // Prevents spam without affecting normal conversation pace.
@@ -177,6 +203,12 @@ async function saveAndBroadcastMessage(io, socket, payload) {
      const { user } = socket
      const { conversationId, message, clientMessageId } = payload || {}
 
+     // SECURITY: Only students, admins, and super-admins can use support chat
+     const isSupportRole = user.role === 'student' || user.role === 'admin' || user.role === 'super-admin'
+     if (!isSupportRole) {
+       return emitError(socket, 'ACCESS_DENIED', 'Your role does not have access to support chat')
+     }
+
     // ── Validate payload ──────────────────────────────────────────────────
     if (!message || typeof message !== 'string' || !message.trim()) {
       return emitError(socket, 'INVALID_MESSAGE', 'Message text is required')
@@ -255,16 +287,14 @@ async function saveAndBroadcastMessage(io, socket, payload) {
       clientMessageId: clientMessageId || undefined,
     }
 
-     // ── Broadcast to counterpart room only ────────────────────────────────
-     const counterpartRoom = resolveCounterpartRoom(user.role, conversation.student.toString())
-     if (counterpartRoom) {
-       console.log('[SOCKET] emitting receive_message to room:', counterpartRoom, { messageId: populated._id, clientMessageId: broadcastPayload.clientMessageId })
-       io.to(counterpartRoom).emit('receive_message', broadcastPayload)
-     }
+      // ── Broadcast to counterpart room only ────────────────────────────────
+      const counterpartRoom = resolveCounterpartRoom(user.role, conversation.student.toString())
+      if (counterpartRoom) {
+        io.to(counterpartRoom).emit('receive_message', broadcastPayload)
+      }
 
-     // ── Also confirm back to the sender ──────────────────────────────────
-     console.log('[SOCKET] emitting message_sent to sender socket:', socket.id, { messageId: populated._id, clientMessageId: broadcastPayload.clientMessageId })
-     socket.emit('message_sent', broadcastPayload)
+      // ── Also confirm back to the sender ──────────────────────────────────
+      socket.emit('message_sent', broadcastPayload)
 
     devLog(`Message saved & broadcast: conv=${conversation._id} sender=${user._id}`)
   } catch (error) {
@@ -280,6 +310,13 @@ async function saveAndBroadcastMessage(io, socket, payload) {
 function handleTyping(io, socket, payload, eventName) {
   try {
     const { user } = socket
+
+    // SECURITY: Only students, admins, and super-admins can use support chat
+    const isSupportRole = user.role === 'student' || user.role === 'admin' || user.role === 'super-admin'
+    if (!isSupportRole) {
+      return emitError(socket, 'ACCESS_DENIED', 'Your role does not have access to support chat')
+    }
+
     const { conversationId, studentId } = payload || {}
 
     const counterpartRoom = resolveCounterpartRoom(
@@ -309,6 +346,13 @@ function handleTyping(io, socket, payload, eventName) {
 async function handleMessageSeen(io, socket, payload) {
   try {
     const { user } = socket
+
+    // SECURITY: Only students, admins, and super-admins can use support chat
+    const isSupportRole = user.role === 'student' || user.role === 'admin' || user.role === 'super-admin'
+    if (!isSupportRole) {
+      return emitError(socket, 'ACCESS_DENIED', 'Your role does not have access to support chat')
+    }
+
     const { conversationId } = payload || {}
 
     if (!isValidObjectId(conversationId)) {
@@ -367,6 +411,12 @@ function registerSocketEvents(io, socket) {
 
   devLog(`connect: userId=${user._id} role=${user.role} socketId=${socket.id}`)
 
+  // Track online presence
+  setOnline(user._id, socket.id)
+  if (user.role === 'student') {
+    broadcastPresence(io, user._id, user.role, true)
+  }
+
   // ── join_room ─────────────────────────────────────────────────────────────
   socket.on('join_room', (payload) => joinSupportRoom(socket, payload))
 
@@ -375,8 +425,7 @@ function registerSocketEvents(io, socket) {
 
   // ── send_message ──────────────────────────────────────────────────────────
    socket.on('send_message', (payload) => {
-     console.log('[SOCKET] send_message received', { socketId: socket.id, userId: user._id, role: user.role, hasConversationId: !!payload?.conversationId, hasClientMessageId: !!payload?.clientMessageId })
-     if (!checkSocketRateLimit(user._id, 'send_message', SEND_MESSAGE_LIMIT.max, SEND_MESSAGE_LIMIT.windowMs)) {
+      if (!checkSocketRateLimit(user._id, 'send_message', SEND_MESSAGE_LIMIT.max, SEND_MESSAGE_LIMIT.windowMs)) {
        return emitError(socket, 'RATE_LIMITED', 'Too many messages. Please wait a moment.')
      }
      saveAndBroadcastMessage(io, socket, payload)
@@ -404,8 +453,10 @@ function registerSocketEvents(io, socket) {
   // ── disconnect ────────────────────────────────────────────────────────────
   socket.on('disconnect', (reason) => {
     devLog(`disconnect: userId=${user._id} role=${user.role} socketId=${socket.id} reason=${reason}`)
-    // Socket.IO automatically removes the socket from all rooms on disconnect.
-    // No manual cleanup required — there are no server-side maps to purge.
+    setOffline(user._id)
+    if (user.role === 'student') {
+      broadcastPresence(io, user._id, user.role, false)
+    }
   })
 
   // ── catch-all for unhandled events (dev only) ─────────────────────────────

@@ -15,6 +15,7 @@ import { AdminCoursesPage } from './pages/admin/AdminCoursesPage'
 import { AdminLessonsPage } from './pages/admin/AdminLessonsPage'
 import { AdminQuestionsPage } from './pages/admin/AdminQuestionsPage'
 import { AdminSupportPage } from './pages/admin/AdminSupportPage'
+import { AdminStudentSupportPage } from './pages/admin/AdminStudentSupportPage'
 import { AdminFeedbackPage } from './pages/admin/AdminFeedbackPage'
 import { AdminNoticesPage } from './pages/admin/AdminNoticesPage'
 import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage'
@@ -249,7 +250,7 @@ export default function App() {
         <Route path="/admin/lessons" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminLessonsPage /></ProtectedRoute>} />
         <Route path="/admin/questions" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminQuestionsPage /></ProtectedRoute>} />
         <Route path="/admin/feedback" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminFeedbackPage /></ProtectedRoute>} />
-        <Route path="/admin/support" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminSupportPage /></ProtectedRoute>} />
+        <Route path="/admin/support" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminStudentSupportPage /></ProtectedRoute>} />
         <Route path="/admin/notices" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminNoticesPage /></ProtectedRoute>} />
         <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminAnalyticsPage /></ProtectedRoute>} />
         <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminSettingsPage /></ProtectedRoute>} />

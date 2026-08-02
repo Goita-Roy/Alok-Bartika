@@ -15,7 +15,7 @@ const supportConversationSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['open', 'closed'],
+      enum: ['open', 'pending', 'resolved', 'closed'],
       default: 'open',
       index: true,
     },

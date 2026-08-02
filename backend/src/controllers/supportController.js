@@ -12,6 +12,50 @@ function sanitizeMessage(text) {
     .trim()
 }
 
+// ── Conversation ownership validation ──────────────────────────────────
+// Ensures the authenticated user owns the conversation (or is admin/super-admin).
+// Returns 403 if a student tries to access another student's conversation.
+const validateConversationOwnership = async (req, res, next) => {
+  try {
+    const { conversationId } = req.params
+    const userId = req.user._id
+    const userRole = req.user.role
+
+    if (!mongoose.Types.ObjectId.isValid(conversationId)) {
+      return res.status(400).json({ message: 'Invalid conversation ID format' })
+    }
+
+    const conversation = await SupportConversation.findById(conversationId)
+    if (!conversation) {
+      return res.status(404).json({ message: 'Support conversation not found' })
+    }
+
+    const isOwner = conversation.student.toString() === userId.toString()
+    const isAdmin = userRole === 'admin' || userRole === 'super-admin'
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ message: 'Access denied: You cannot access another user\'s support conversation' })
+    }
+
+    // Attach conversation to req for downstream handlers
+    req.supportConversation = conversation
+    next()
+  } catch (error) {
+    console.error('validateConversationOwnership Error:', error)
+    res.status(500).json({ message: error.message || 'Internal Server Error' })
+  }
+}
+
+function sanitizeMessage(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .trim()
+}
+
 // ── GET /api/support/conversation ───────────────────────────────────────────
 // Returns the active (open) support conversation for the authenticated student.
 const getStudentConversation = async (req, res) => {
@@ -68,7 +112,8 @@ const createStudentConversation = async (req, res) => {
 }
 
 // ── GET /api/support/messages/:conversationId ────────────────────────────────
-// Fetches all messages for a specific conversation with strict ownership checks.
+// Fetches all messages for a specific conversation. Ownership is validated
+// by the validateConversationOwnership middleware before this handler runs.
 const getConversationMessages = async (req, res) => {
   try {
     const { conversationId } = req.params
@@ -78,22 +123,8 @@ const getConversationMessages = async (req, res) => {
     const limit = Math.min(parseInt(req.query.limit, 10) || 50, 100)
     const before = req.query.before || null
 
-    if (!mongoose.Types.ObjectId.isValid(conversationId)) {
-      return res.status(400).json({ message: 'Invalid conversation ID format' })
-    }
-
-    const conversation = await SupportConversation.findById(conversationId)
-    if (!conversation) {
-      return res.status(404).json({ message: 'Support conversation not found' })
-    }
-
-    // SECURITY: Students can ONLY access their own conversation.
-    const isOwner = conversation.student.toString() === userId.toString()
-    const isAdmin = userRole === 'admin' || userRole === 'super-admin'
-
-    if (!isOwner && !isAdmin) {
-      return res.status(403).json({ message: 'Access denied: You cannot view another user\'s support conversation' })
-    }
+    // Conversation was already fetched and validated by middleware
+    const conversation = req.supportConversation
 
     // Build query filter
     const query = { conversation: conversationId }
@@ -249,10 +280,95 @@ const markMessagesRead = async (req, res) => {
   }
 }
 
+// ── GET /api/support/admin/conversations ──────────────────────────────────
+// Admin-only endpoint: list all support conversations with search and filter.
+const getAdminConversations = async (req, res) => {
+  try {
+    const { status, search, page = '1', limit = '50' } = req.query
+
+    const pageNum = Math.max(1, parseInt(page, 10) || 1)
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 50))
+    const skip = (pageNum - 1) * limitNum
+
+    const filter = {}
+
+    if (status && ['open', 'pending', 'resolved', 'closed'].includes(status)) {
+      filter.status = status
+    }
+
+    if (search && search.trim()) {
+      const searchTerm = search.trim()
+      // Search by student name or email via population
+      filter.$or = [
+        { 'student.fullName': { $regex: searchTerm, $options: 'i' } },
+        { 'student.email': { $regex: searchTerm, $options: 'i' } },
+      ]
+    }
+
+    const conversations = await SupportConversation.find(filter)
+      .populate('student', 'fullName email profilePicture')
+      .populate('assignedAdmin', 'fullName email')
+      .sort({ updatedAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .lean()
+
+    const total = await SupportConversation.countDocuments(filter)
+
+    res.status(200).json({
+      conversations,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+      },
+    })
+  } catch (error) {
+    console.error('getAdminConversations Error:', error)
+    res.status(500).json({ message: error.message || 'Internal Server Error' })
+  }
+}
+
+// ── PATCH /api/support/admin/conversations/:id/status ──────────────────────
+// Admin-only: update conversation status (open/closed).
+const updateConversationStatus = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { status } = req.body
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid conversation ID' })
+    }
+
+    if (!status || !['open', 'pending', 'resolved'].includes(status)) {
+      return res.status(400).json({ message: 'Status must be open, pending, or resolved' })
+    }
+
+    const conversation = await SupportConversation.findByIdAndUpdate(
+      id,
+      { $set: { status } },
+      { new: true },
+    ).populate('student', 'fullName email')
+
+    if (!conversation) {
+      return res.status(404).json({ message: 'Conversation not found' })
+    }
+
+    res.status(200).json({ conversation })
+  } catch (error) {
+    console.error('updateConversationStatus Error:', error)
+    res.status(500).json({ message: error.message || 'Internal Server Error' })
+  }
+}
+
 module.exports = {
   getStudentConversation,
   createStudentConversation,
   getConversationMessages,
   sendStudentMessage,
   markMessagesRead,
+  validateConversationOwnership,
+  getAdminConversations,
+  updateConversationStatus,
 }
