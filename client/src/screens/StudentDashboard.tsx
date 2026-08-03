@@ -114,7 +114,11 @@ export function StudentDashboard() {
     setChatLoading(true)
     try {
       const { data: convData } = await api.get('/api/support/conversation')
-      const conv = convData?.conversation
+      let conv = convData?.conversation
+      if (!conv) {
+        const { data: created } = await api.post('/api/support/conversation')
+        conv = created?.conversation
+      }
       if (conv) {
         setChatConversationId(conv._id)
         const { data: msgData } = await api.get(`/api/support/messages/${conv._id}`)
@@ -136,11 +140,28 @@ export function StudentDashboard() {
   }
 
   async function sendChatMessage() {
-    if (!chatInput.trim() || !chatConversationId) return
+    if (!chatInput.trim()) return
     const text = chatInput.trim()
     setChatInput('')
+
+    let convId = chatConversationId
+    if (!convId) {
+      try {
+        const { data } = await api.post('/api/support/conversation')
+        convId = data?.conversation?._id
+        if (convId) setChatConversationId(convId)
+      } catch {
+        setChatInput(text)
+        return
+      }
+    }
+    if (!convId) {
+      setChatInput(text)
+      return
+    }
+
     try {
-      await api.post('/api/support/message', { message: text, conversationId: chatConversationId })
+      await api.post('/api/support/message', { message: text, conversationId: convId })
       setChatMessages((prev) => [...prev, { _id: Date.now().toString(), message: text, sender: { _id: user?.id, fullName: user?.fullName }, createdAt: new Date().toISOString() }])
     } catch {
       // ignore

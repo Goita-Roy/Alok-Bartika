@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 const { SupportConversation } = require('../models/SupportConversation')
 const { SupportMessage } = require('../models/SupportMessage')
+const { getIo } = require('../socket/index')
 
 function sanitizeMessage(text) {
   return text
@@ -225,6 +226,25 @@ const sendStudentMessage = async (req, res) => {
     await SupportConversation.findByIdAndUpdate(conversation._id, updateOps)
 
     const populatedMessage = await SupportMessage.findById(newMessage._id).populate('sender', 'fullName email role')
+
+    // Broadcast to admin room via socket so admins receive the message in real-time
+    try {
+      const io = getIo()
+      if (io) {
+        const updatedConv = await SupportConversation.findById(conversation._id).lean()
+        const broadcastPayload = {
+          conversationId: conversation._id.toString(),
+          studentId: conversation.student.toString(),
+          message: populatedMessage.toObject ? populatedMessage.toObject() : populatedMessage,
+          clientMessageId: clientMessageId || undefined,
+          unreadStudent: updatedConv.unreadStudent,
+          unreadAdmin: updatedConv.unreadAdmin,
+        }
+        io.to('admin-support').emit('receive_message', broadcastPayload)
+      }
+    } catch (broadcastErr) {
+      console.error('broadcast receive_message error:', broadcastErr)
+    }
 
     res.status(201).json({
       message: 'Message sent successfully',

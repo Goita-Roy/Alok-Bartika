@@ -135,6 +135,7 @@ export function useSupportChat({ socket, userId, enabled }: UseSupportChatOption
       studentId: string
       message: SupportMessage
     }) => {
+      if (payload.conversationId !== conversationRef.current?._id) return
       const msg = payload.message
       if (!msg?._id) return
       if (seenIds.current.has(msg._id)) return // deduplicate
@@ -168,6 +169,7 @@ export function useSupportChat({ socket, userId, enabled }: UseSupportChatOption
        message: SupportMessage
        clientMessageId?: string
      }) => {
+       if (payload.conversationId !== conversationRef.current?._id) return
        console.log('[CHAT] message_sent received', { payload })
        const savedMsg = payload.message
        const matchedClientId = payload.clientMessageId

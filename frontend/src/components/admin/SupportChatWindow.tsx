@@ -32,17 +32,61 @@ export function SupportChatWindow({ conversationId }: SupportChatWindowProps) {
   const optimisticIds = useRef<Set<string>>(new Set())
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isTypingRef = useRef(false)
+  const conversationIdRef = useRef<string | null>(conversationId)
+  conversationIdRef.current = conversationId
+  const socketRef = useRef<Socket | null>(null)
+  socketRef.current = socket
 
-  const fetchMessages = async (convId: string) => {
+  // ── DEBUG: Mount/unmount ──────────────────────────────────────
+  useEffect(() => {
+    console.log('[DEBUG] SupportChatWindow MOUNTED', { conversationId })
+    return () => {
+      console.log('[DEBUG] SupportChatWindow UNMOUNTED', { conversationId })
+    }
+  }, [])
+
+  // ── DEBUG: Log every render ───────────────────────────────────
+  useEffect(() => {
+    console.log('[DEBUG] SupportChatWindow RENDER', {
+      messagesLength: messages.length,
+      conversationId,
+      sending,
+      socketConnected: socket?.connected ?? null,
+    })
+  })
+
+  // ── DEBUG: Log messages state changes ─────────────────────────
+  useEffect(() => {
+    console.log('[DEBUG] messages changed', {
+      count: messages.length,
+      lastMessage: messages[messages.length - 1] ?? null,
+      lastThree: messages.slice(-3).map(m => ({
+        _id: m._id,
+        senderRole: m.senderRole,
+        _optimistic: (m as any)._optimistic,
+        clientMessageId: (m as any).clientMessageId,
+      })),
+    })
+  }, [messages])
+
+  const fetchMessages = async (convId: string, caller: string = 'unknown') => {
+    console.log('[DEBUG] fetchMessages called', { convId, caller })
     try {
       setLoading(true)
       setError(null)
       const res = await api.get<{ messages: SupportMessage[]; conversation: SupportConversation }>(
         `/support/messages/${convId}`,
       )
+      console.log('[DEBUG] fetchMessages response', {
+        convId,
+        responseCount: res.data.messages?.length ?? 0,
+        hasConversation: !!res.data.conversation,
+        willOverwrite: true,
+      })
       setMessages(res.data.messages || [])
       setConversation(res.data.conversation || null)
       optimisticIds.current.clear()
+      console.log('[DEBUG] fetchMessages — state overwritten', { newCount: res.data.messages?.length ?? 0 })
     } catch (err: unknown) {
       setError('Failed to load messages')
       console.error('Fetch messages error:', err)
@@ -54,6 +98,7 @@ export function SupportChatWindow({ conversationId }: SupportChatWindowProps) {
   const connectSocket = useCallback(() => {
     if (!token || !conversationId) return
 
+    console.log('[DEBUG] connectSocket — creating new socket', { conversationId })
     const s = io(SOCKET_URL, {
       auth: { token },
       transports: ['websocket', 'polling'],
@@ -65,6 +110,7 @@ export function SupportChatWindow({ conversationId }: SupportChatWindowProps) {
     })
 
     s.on('connect', () => {
+      console.log('[DEBUG] socket connect event', { conversationId })
       s.emit('join_room', {})
     })
 
@@ -74,19 +120,36 @@ export function SupportChatWindow({ conversationId }: SupportChatWindowProps) {
       message: SupportMessage
       clientMessageId?: string
     }) => {
+      console.log('[DEBUG] message_sent handler fired', {
+        payload,
+        currentConversationId: conversationIdRef.current,
+        matchesConversation: payload.conversationId === conversationIdRef.current,
+      })
+      if (payload.conversationId !== conversationIdRef.current) return
       const savedMsg = payload.message
       const matchedClientId = payload.clientMessageId
+      console.log('[DEBUG] message_sent handler values', {
+        savedMsgId: savedMsg?._id,
+        matchedClientId,
+        optimisticIdsContents: Array.from(optimisticIds.current),
+        optimisticIdsHasSavedMsg: optimisticIds.current.has(savedMsg?._id ?? ''),
+      })
       if (!savedMsg?._id) return
 
       setMessages((prev) => {
+        // If the saved message is already in state, return unchanged (idempotent)
+        if (prev.some((m) => m._id === savedMsg._id)) return prev
+
+        // Replace the matching optimistic placeholder for this message
         const withoutOptimistic = prev.filter((m) => {
           if (m._optimistic && m.clientMessageId === matchedClientId) return false
           return true
         })
-        if (optimisticIds.current.has(savedMsg._id)) return withoutOptimistic
-        optimisticIds.current.add(savedMsg._id)
         return [...withoutOptimistic, savedMsg]
       })
+
+      // Track confirmed message IDs outside the state updater to keep it pure
+      optimisticIds.current.add(savedMsg._id)
     })
 
     s.on('receive_message', (payload: {
@@ -94,10 +157,23 @@ export function SupportChatWindow({ conversationId }: SupportChatWindowProps) {
       studentId: string
       message: SupportMessage
     }) => {
+      console.log('[DEBUG] receive_message handler fired', {
+        payload,
+        currentConversationId: conversationIdRef.current,
+        matchesConversation: payload.conversationId === conversationIdRef.current,
+      })
+      if (payload.conversationId !== conversationIdRef.current) return
       const msg = payload.message
       if (!msg?._id) return
       setMessages((prev) => {
-        if (prev.some((m) => m._id === msg._id)) return prev
+        const alreadyExists = prev.some((m) => m._id === msg._id)
+        console.log('[DEBUG] receive_message setMessages', {
+          prevLength: prev.length,
+          msgId: msg._id,
+          alreadyExists,
+          willAdd: !alreadyExists,
+        })
+        if (alreadyExists) return prev
         return [...prev, msg]
       })
     })
@@ -136,14 +212,17 @@ export function SupportChatWindow({ conversationId }: SupportChatWindowProps) {
     })
 
     s.on('disconnect', () => {
+      console.log('[DEBUG] socket disconnect event', { conversationId })
       setSocket(null)
       setStudentTyping(false)
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
     })
 
+    console.log('[DEBUG] connectSocket — registering all listeners, setting socket', { conversationId })
     setSocket(s)
 
     return () => {
+      console.log('[DEBUG] connectSocket cleanup — removing listeners and disconnecting', { conversationId })
       s.off()
       s.disconnect()
     }
@@ -151,7 +230,7 @@ export function SupportChatWindow({ conversationId }: SupportChatWindowProps) {
 
   useEffect(() => {
     if (conversationId) {
-      fetchMessages(conversationId)
+      fetchMessages(conversationId, 'useEffect-mount')
       const cleanup = connectSocket()
       return () => {
         if (cleanup) cleanup()
@@ -198,7 +277,16 @@ export function SupportChatWindow({ conversationId }: SupportChatWindowProps) {
   }, [emitTyping, emitStopTyping])
 
   const sendMessage = useCallback(async (text: string) => {
-    if (!text.trim() || !conversationId || !socket?.connected || sending) return
+    const s = socketRef.current
+    if (!text.trim() || !conversationId || !s?.connected || sending) {
+      console.log('[DEBUG] sendMessage — early return', {
+        hasText: !!text.trim(),
+        hasConversationId: !!conversationId,
+        socketConnected: s?.connected,
+        sending,
+      })
+      return
+    }
 
     const trimmed = text.trim()
     if (trimmed.length > 3000) return
@@ -214,6 +302,13 @@ export function SupportChatWindow({ conversationId }: SupportChatWindowProps) {
 
     const clientMessageId = crypto.randomUUID()
 
+    console.log('[DEBUG] sendMessage — before optimistic', {
+      conversationId,
+      clientMessageId,
+      currentMessagesLength: messages.length,
+      socketConnected: s?.connected,
+    })
+
     const optimisticMsg: SupportMessage = {
       _id: `opt_${Date.now()}`,
       conversation: conversationId,
@@ -226,15 +321,31 @@ export function SupportChatWindow({ conversationId }: SupportChatWindowProps) {
       clientMessageId,
     } as SupportMessage
 
-    setMessages((prev) => [...prev, optimisticMsg])
+    setMessages((prev) => {
+      const next = [...prev, optimisticMsg]
+      console.log('[DEBUG] sendMessage — after optimistic setMessages', {
+        prevLength: prev.length,
+        nextLength: next.length,
+        optimisticAdded: true,
+        optimisticMsgId: optimisticMsg._id,
+        optimisticMsgClientId: optimisticMsg.clientMessageId,
+      })
+      return next
+    })
 
-    socket.emit('send_message', { message: trimmed, conversationId, clientMessageId })
+    console.log('[DEBUG] sendMessage — before socket.emit', {
+      event: 'send_message',
+      payload: { message: trimmed, conversationId, clientMessageId },
+    })
+    s.emit('send_message', { message: trimmed, conversationId, clientMessageId })
+    console.log('[DEBUG] sendMessage — after socket.emit', { clientMessageId })
     setSending(false)
-  }, [conversationId, socket, sending, emitStopTyping, user?.id])
+  }, [conversationId, sending, emitStopTyping, user?.id])
 
   const handleSend = useCallback(async () => {
     const input = document.getElementById('admin-reply-input') as HTMLTextAreaElement | null
     const text = input?.value ?? ''
+    console.log('[DEBUG] handleSend called', { text: text?.slice(0, 50), hasText: !!text.trim() })
     if (!text.trim()) return
     if (input) input.value = ''
     await sendMessage(text)
