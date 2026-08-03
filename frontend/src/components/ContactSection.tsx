@@ -17,6 +17,7 @@ const contactInfo = {
 const ContactSection: React.FC = () => {
   const [showMap, setShowMap] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [supportUnread, setSupportUnread] = useState(0);
   const locationRef = useRef<HTMLElement>(null);
 
   const handleShowMap = () => {
@@ -170,6 +171,17 @@ const ContactSection: React.FC = () => {
                 className="bg-white text-[#1D9E75] px-6 py-3 rounded-xl font-bold hover:bg-[#F7FBF9] transition-all relative z-10 cursor-pointer">
                 লাইভ চ্যাট শুরু করুন
               </button>
+              {supportUnread > 0 && (
+                <span
+                  className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-black text-white rounded-full"
+                  style={{
+                    backgroundColor: 'var(--color-error, #FF6B4A)',
+                    zIndex: 11,
+                  }}
+                >
+                  {supportUnread > 99 ? '99+' : supportUnread}
+                </span>
+              )}
             </div>
           </div>
 
@@ -267,7 +279,11 @@ const ContactSection: React.FC = () => {
       </footer>
 
       {/* Live Chat Modal — portal-like overlay rendered at the end of the tree */}
-      <LiveChatModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+      <LiveChatModal
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        onUnreadCount={setSupportUnread}
+      />
     </div>
   );
 };

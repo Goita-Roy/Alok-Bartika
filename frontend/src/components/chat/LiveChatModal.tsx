@@ -26,13 +26,20 @@ import ChatInput from './ChatInput'
 interface LiveChatModalProps {
   isOpen: boolean
   onClose: () => void
+  onUnreadCount?: (count: number) => void
 }
 
 const LiveChatModal: React.FC<LiveChatModalProps> = ({ isOpen, onClose }) => {
   const { user, token } = useAuth()
 
+  // Guard: only students should use the live chat. If an admin token is
+  // accidentally present in localStorage (e.g. admin logged in in another tab),
+  // prevent the chat from opening to avoid the ADMIN_NEEDS_CONVERSATION_ID error.
+  const isStudent = user?.role === 'student'
+  const hasValidToken = !!token && isStudent
+
   // Socket connection — only active while modal is open
-  const { socket, status } = useSupportSocket({ token, enabled: isOpen })
+  const { socket, status } = useSupportSocket({ token, enabled: isOpen && hasValidToken })
 
   // Chat state — history, send, receive, typing, seen
   const {

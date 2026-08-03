@@ -207,21 +207,22 @@ async function saveAndBroadcastMessage(io, socket, payload) {
      // SECURITY: Only students, admins, and super-admins can use support chat
      const isSupportRole = user.role === 'student' || user.role === 'admin' || user.role === 'super-admin'
      if (!isSupportRole) {
+       console.warn('[socketEvents] ACCESS_DENIED — not a support role', { userRole: user.role, userId: user._id })
        return emitError(socket, 'ACCESS_DENIED', 'Your role does not have access to support chat')
      }
 
-    // ── Validate payload ──────────────────────────────────────────────────
-    if (!message || typeof message !== 'string' || !message.trim()) {
-      return emitError(socket, 'INVALID_MESSAGE', 'Message text is required')
-    }
+     // ── Validate payload ──────────────────────────────────────────────────
+     if (!message || typeof message !== 'string' || !message.trim()) {
+       return emitError(socket, 'INVALID_MESSAGE', 'Message text is required')
+     }
 
-    const trimmed = message.trim()
-    if (trimmed.length > 3000) {
-      return emitError(socket, 'MESSAGE_TOO_LONG', 'Message exceeds 3000 characters')
-    }
+     const trimmed = message.trim()
+     if (trimmed.length > 3000) {
+       return emitError(socket, 'MESSAGE_TOO_LONG', 'Message exceeds maximum length of 3000 characters')
+     }
 
-    // ── Resolve or create conversation ────────────────────────────────────
-    let conversation = null
+     // ── Resolve or create conversation ────────────────────────────────────
+     let conversation = null
 
     if (conversationId) {
       if (!isValidObjectId(conversationId)) {
@@ -242,6 +243,12 @@ async function saveAndBroadcastMessage(io, socket, payload) {
     } else {
       // Students who don't provide a conversationId get their active one (or a new one)
       if (user.role !== 'student') {
+        console.warn('[socketEvents] ADMIN_NEEDS_CONVERSATION_ID', {
+          userRole: user.role,
+          userId: user._id,
+          socketId: socket.id,
+          conversationIdProvided: !!conversationId,
+        })
         return emitError(socket, 'ADMIN_NEEDS_CONVERSATION_ID', 'Admins must provide a conversationId')
       }
 

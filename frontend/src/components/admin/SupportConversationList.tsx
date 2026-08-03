@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { io, Socket } from 'socket.io-client'
 import { Search, Filter, Clock, MessageCircle, CheckCircle, XCircle, AlertCircle, User, Loader2 } from 'lucide-react'
 import api from '../../config/api'
-import type { SupportConversation } from '../../types/support'
+import { useAuth } from '../../context/AuthContext'
+import type { SupportConversation, SupportMessage } from '../../types/support'
 
 interface SupportConversationListProps {
   onSelect: (conversationId: string) => void
@@ -10,12 +12,32 @@ interface SupportConversationListProps {
 
 type FilterStatus = 'all' | 'open' | 'unread' | 'resolved'
 
+interface ToastItem {
+  id: string
+  conversationId: string
+  studentName: string
+  messagePreview: string
+  createdAt: number
+}
+
+const SOCKET_URL =
+  import.meta.env.VITE_SOCKET_URL ||
+  import.meta.env.VITE_API_URL?.replace('/api', '') ||
+  'http://localhost:5000'
+
 export function SupportConversationList({ onSelect, selectedId }: SupportConversationListProps) {
   const [conversations, setConversations] = useState<SupportConversation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<FilterStatus>('all')
+  const [toasts, setToasts] = useState<ToastItem[]>([])
+
+  const { token } = useAuth()
+  const socketRef = useRef<Socket | null>(null)
+  const selectedIdRef = useRef(selectedId)
+  selectedIdRef.current = selectedId
+  const toastTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
 
   const fetchConversations = useCallback(async () => {
     try {
@@ -40,6 +62,99 @@ export function SupportConversationList({ onSelect, selectedId }: SupportConvers
   useEffect(() => {
     fetchConversations()
   }, [fetchConversations])
+
+  // ── Socket.IO: realtime conversation updates ────────────────────
+  useEffect(() => {
+    if (!token) return
+
+    // Guard: prevent duplicate socket connections
+    if (socketRef.current && socketRef.current.connected) return
+
+    const s = io(SOCKET_URL, {
+      auth: { token },
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000,
+    })
+
+    socketRef.current = s
+
+    s.on('connect', () => {
+      s.emit('join_room', {})
+    })
+
+     // New message from a student — bump unreadStudent and move to top
+     s.on('receive_message', (payload: {
+       conversationId: string
+       studentId: string
+       message: SupportMessage
+       unreadStudent?: number
+       unreadAdmin?: number
+     }) => {
+       setConversations((prev) => {
+         const existing = prev.find((c) => c._id === payload.conversationId)
+         if (!existing) return prev
+
+         const updated = {
+           ...existing,
+           unreadStudent: payload.unreadStudent ?? (existing.unreadStudent || 0) + 1,
+           lastMessage: payload.message?.message ?? existing.lastMessage,
+           lastMessageAt: payload.message?.createdAt ?? existing.lastMessageAt,
+           updatedAt: new Date().toISOString(),
+         }
+
+         return [updated, ...prev.filter((c) => c._id !== payload.conversationId)]
+       })
+
+       // Show toast notification
+       const studentName = payload.message?.sender?.fullName || 'Student'
+       const rawMessage = payload.message?.message || ''
+       const messagePreview = rawMessage.length > 60 ? rawMessage.slice(0, 60) + '...' : rawMessage
+       const toastId = `${payload.conversationId}-${Date.now()}`
+
+       setToasts((prev) => [...prev, {
+         id: toastId,
+         conversationId: payload.conversationId,
+         studentName,
+         messagePreview,
+         createdAt: Date.now(),
+       }])
+
+       // Auto-hide after 5 seconds
+       toastTimersRef.current[toastId] = setTimeout(() => {
+         delete toastTimersRef.current[toastId]
+         setToasts((prev) => prev.filter((t) => t.id !== toastId))
+       }, 5000)
+     })
+
+    // Student marked messages as read — reset unreadStudent
+    s.on('message_seen', (payload: {
+      conversationId: string
+      seenByRole?: string
+      unreadStudent?: number
+      unreadAdmin?: number
+    }) => {
+      setConversations((prev) =>
+        prev.map((c) =>
+          c._id === payload.conversationId
+            ? { ...c, unreadStudent: payload.unreadStudent ?? 0 }
+            : c,
+        ),
+      )
+    })
+
+     return () => {
+       s.off()
+       s.disconnect()
+       socketRef.current = null
+       // Clean up all pending toast timers
+       Object.values(toastTimersRef.current).forEach((timer) => clearTimeout(timer))
+       toastTimersRef.current = {}
+     }
+   }, [token])
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value)
@@ -118,6 +233,38 @@ export function SupportConversationList({ onSelect, selectedId }: SupportConvers
 
   return (
     <div className="flex flex-col h-full">
+      {/* Toast notifications (top-right overlay) */}
+      {toasts.length > 0 && (
+        <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+          {toasts.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => {
+                if (toastTimersRef.current[t.id]) {
+                  clearTimeout(toastTimersRef.current[t.id])
+                  delete toastTimersRef.current[t.id]
+                }
+                setToasts((prev) => prev.filter((x) => x.id !== t.id))
+                onSelect(t.conversationId)
+              }}
+              className="flex flex-col gap-1 px-4 py-2.5 rounded-xl text-left shadow-lg text-xs font-bengali cursor-pointer transition-opacity hover:opacity-90"
+              style={{
+                backgroundColor: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-text)',
+                maxWidth: '320px',
+                pointerEvents: 'auto',
+              }}
+            >
+              <span className="font-semibold text-sm" style={{ color: 'var(--color-accent)' }}>
+                {t.studentName}
+              </span>
+              <span style={{ color: 'var(--color-text-muted)' }}>sent a new message</span>
+              <span style={{ color: 'var(--color-text-muted)' }}>{t.messagePreview}</span>
+            </button>
+          ))}
+        </div>
+      )}
       {/* Search */}
       <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--color-border)' }}>
         <div className="relative">
