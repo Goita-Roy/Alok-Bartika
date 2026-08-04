@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const {
+  getAllLessons,
   getLessonsByCourse,
   getLessonById,
   createLesson,
@@ -10,6 +11,7 @@ const {
 const { protect, requireAdmin } = require('../middleware/auth')
 
 // Public routes
+router.get('/', getAllLessons)
 router.get('/course/:courseId', getLessonsByCourse)
 router.get('/:id', getLessonById)
 

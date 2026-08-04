@@ -1,6 +1,10 @@
+const mongoose = require('mongoose')
 const { Lesson } = require('../models/Lesson')
 const { Course } = require('../models/Course')
 const { auditService } = require('../services/auditService')
+
+const VALID_LEVELS = ['beginner', 'intermediate', 'advanced']
+const ALLOWED_SORT_FIELDS = ['title', 'order', 'level', 'courseId', 'createdAt']
 
 // SECURITY: the ONLY fields an admin may set when creating/updating a lesson.
 const LESSON_FIELDS = [
@@ -14,6 +18,108 @@ function pickLessonFields(body) {
     if (body[key] !== undefined) picked[key] = body[key]
   }
   return picked
+}
+
+// Summary counts by course level. lesson.level is not reliably populated, so the
+// parent course is the source of truth for beginner/intermediate/advanced totals.
+async function buildLessonSummary() {
+  const courses = await Course.find({}, { _id: 1, level: 1 }).lean()
+  const idsByLevel = { beginner: [], intermediate: [], advanced: [] }
+  for (const c of courses) {
+    if (idsByLevel[c.level]) idsByLevel[c.level].push(c._id)
+  }
+  const [total, beginner, intermediate, advanced] = await Promise.all([
+    Lesson.countDocuments({}),
+    Lesson.countDocuments({ courseId: { $in: idsByLevel.beginner } }),
+    Lesson.countDocuments({ courseId: { $in: idsByLevel.intermediate } }),
+    Lesson.countDocuments({ courseId: { $in: idsByLevel.advanced } }),
+  ])
+  return { total, beginner, intermediate, advanced }
+}
+
+// @desc    Get all lessons (search, course, level filters + pagination)
+// @route   GET /api/lessons
+// @access  Public
+// Query params:
+//   ?search=          text search across title + content
+//   ?courseId=        filter by course
+//   ?level=           filter by course level (beginner|intermediate|advanced)
+//   ?sortBy=          title|order|level|courseId|createdAt (default: order)
+//   ?sortOrder=       asc|desc (default: asc)
+//   ?page=&limit=     pagination (when provided, returns pagination + summary)
+const getAllLessons = async (req, res) => {
+  try {
+    const { search, courseId, level, page, limit, sortBy, sortOrder } = req.query
+
+    const allowedSortBy = ALLOWED_SORT_FIELDS.includes(sortBy) ? sortBy : 'order'
+    const allowedSortOrder = sortOrder === 'desc' ? -1 : 1
+
+    // Resolve level filter to the set of course _ids at that level.
+    let levelCourseIds = null
+    if (level && VALID_LEVELS.includes(level)) {
+      const levelCourses = await Course.find({ level }, { _id: 1 }).lean()
+      levelCourseIds = levelCourses.map((c) => c._id)
+    }
+
+    const filter = {}
+
+    if (courseId) {
+      filter.courseId = mongoose.Types.ObjectId.isValid(courseId)
+        ? new mongoose.Types.ObjectId(courseId)
+        : new mongoose.Types.ObjectId()
+    }
+
+    if (levelCourseIds) {
+      if (filter.courseId) {
+        if (!levelCourseIds.some((id) => id.equals(filter.courseId))) {
+          // The selected course is not at the selected level → no results.
+          filter._id = { $in: [] }
+        }
+      } else {
+        filter.courseId = { $in: levelCourseIds }
+      }
+    }
+
+    if (search && search.trim()) {
+      const regex = new RegExp(search.trim(), 'i')
+      filter.$or = [{ title: regex }, { content: regex }]
+    }
+
+    const sortObj = { [allowedSortBy]: allowedSortOrder }
+
+    const hasPagination = page !== undefined && limit !== undefined
+
+    if (hasPagination) {
+      const pageNum = Math.max(1, parseInt(page, 10) || 1)
+      const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 25))
+      const skip = (pageNum - 1) * limitNum
+
+      const [data, total] = await Promise.all([
+        Lesson.find(filter).sort(sortObj).skip(skip).limit(limitNum).lean(),
+        Lesson.countDocuments(filter),
+      ])
+
+      res.status(200).json({
+        data,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          pages: Math.ceil(total / limitNum),
+        },
+        summary: await buildLessonSummary(),
+      })
+    } else {
+      const lessons = await Lesson.find(filter).sort(sortObj).lean()
+      res.status(200).json({
+        data: lessons,
+        summary: await buildLessonSummary(),
+      })
+    }
+  } catch (error) {
+    console.error('Get All Lessons Error:', error)
+    res.status(500).json({ message: 'Internal Server Error' })
+  }
 }
 
 // @desc    Get all lessons for a course
@@ -110,6 +216,7 @@ const deleteLesson = async (req, res) => {
 }
 
 module.exports = {
+  getAllLessons,
   getLessonsByCourse,
   getLessonById,
   createLesson,
