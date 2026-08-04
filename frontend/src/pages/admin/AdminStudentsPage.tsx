@@ -52,6 +52,8 @@ export function AdminStudentsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [sortBy, setSortBy] = useState<string>('createdAt')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 25, total: 0, pages: 0 })
 
   const [detailTarget, setDetailTarget] = useState<Student | null>(null)
@@ -71,6 +73,40 @@ export function AdminStudentsPage() {
     setTimeout(() => setToast(null), 3000)
   }
 
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortBy(field)
+      setSortOrder('desc')
+    }
+  }
+
+  const SortableHeader = ({ field, label }: { field: string; label: string }) => (
+    <button
+      onClick={() => handleSort(field)}
+      className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider py-3 px-4 text-left transition-colors"
+      style={{
+        color: 'var(--color-text-muted)',
+        backgroundColor: 'transparent',
+        cursor: 'pointer',
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.color = 'var(--color-text)'
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.color = 'var(--color-text-muted)'
+      }}
+    >
+      {label}
+      {sortBy === field && (
+        <span style={{ color: 'var(--color-accent)' }}>
+          {sortOrder === 'asc' ? '↑' : '↓'}
+        </span>
+      )}
+    </button>
+  )
+
   const loadStudents = useCallback(async (page = 1) => {
     try {
       setLoading(true)
@@ -82,6 +118,8 @@ export function AdminStudentsPage() {
       if (statusFilter !== 'all') params.set('status', statusFilter)
       if (dateFrom) params.set('dateFrom', dateFrom)
       if (dateTo) params.set('dateTo', dateTo)
+      if (sortBy) params.set('sortBy', sortBy)
+      if (sortOrder) params.set('sortOrder', sortOrder)
 
       const res = await fetch(`${API_BASE_URL}/students?${params.toString()}`, { headers })
       if (!res.ok) throw new Error('Failed to load students')
@@ -94,13 +132,13 @@ export function AdminStudentsPage() {
       setLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, statusFilter, dateFrom, dateTo, token])
+  }, [debouncedSearch, statusFilter, dateFrom, dateTo, sortBy, sortOrder, token])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadStudents(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, statusFilter, dateFrom, dateTo, token])
+  }, [debouncedSearch, statusFilter, dateFrom, dateTo, sortBy, sortOrder, token])
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 350)
@@ -260,50 +298,68 @@ export function AdminStudentsPage() {
               {/* Desktop table */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="table table-sm w-full">
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                      {['Student', 'Email', 'Username', 'Phone', 'Stage', 'Status', 'Joined', 'Actions'].map(h => (
-                        <th key={h} className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
-                          style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {students.map(s => (
-                      <tr key={s.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0"
-                              style={{ backgroundColor: 'var(--color-accent-pale)', color: 'var(--color-accent)' }}>
-                              {s.fullName?.charAt(0).toUpperCase() || '?'}
-                            </div>
-                            <div>
-                              <span className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{s.fullName}</span>
-                              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Level {s.level} · {s.xp} points</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text)' }}>{s.email}</td>
-                        <td className="px-4 py-3 text-sm font-mono" style={{ color: 'var(--color-text-muted)' }}>{s.username}</td>
-                        <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>{s.phone || '—'}</td>
-                        <td className="px-4 py-3">
-                          <span className="badge badge-sm font-semibold capitalize" style={{
-                            backgroundColor: `${stageColors[s.currentStage] || '#6b7280'}20`,
-                            color: stageColors[s.currentStage] || '#6b7280',
-                            border: 'none',
-                          }}>
-                            {s.currentStage}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`badge badge-sm font-semibold ${s.isActive ? 'badge-success' : 'badge-error'}`}
-                            style={{ border: 'none' }}>
-                            {s.isActive ? 'Active' : 'Suspended'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>{formatDate(s.createdAt)}</td>
+                   <thead>
+                     <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
+                       <th key="Student" style={{ backgroundColor: 'transparent' }}>
+                         <SortableHeader field="fullName" label="Student" />
+                       </th>
+                       <th key="Email" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
+                         style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Email</th>
+                       <th key="Username" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
+                         style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Username</th>
+                       <th key="Phone" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
+                         style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Phone</th>
+                       <th key="Stage" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
+                         style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Stage</th>
+                       <th key="Level" style={{ backgroundColor: 'transparent' }}>
+                         <SortableHeader field="level" label="Level" />
+                       </th>
+                       <th key="XP" style={{ backgroundColor: 'transparent' }}>
+                         <SortableHeader field="xp" label="XP" />
+                       </th>
+                       <th key="Status" style={{ backgroundColor: 'transparent' }}>
+                         <SortableHeader field="isActive" label="Status" />
+                       </th>
+                       <th key="JoinDate" style={{ backgroundColor: 'transparent' }}>
+                         <SortableHeader field="createdAt" label="Join Date" />
+                       </th>
+                       <th key="Actions" className="text-xs font-semibold uppercase tracking-wider py-3 px-4 text-center"
+                         style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Actions</th>
+                     </tr>
+                   </thead>
+                   <tbody>
+                     {students.map(s => (
+                       <tr key={s.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                         <td className="px-4 py-3">
+                           <div className="flex items-center gap-2.5">
+                             <div className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0"
+                               style={{ backgroundColor: 'var(--color-accent-pale)', color: 'var(--color-accent)' }}>
+                               {s.fullName?.charAt(0).toUpperCase() || '?'}
+                             </div>
+                             <span className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{s.fullName}</span>
+                           </div>
+                         </td>
+                         <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text)' }}>{s.email}</td>
+                         <td className="px-4 py-3 text-sm font-mono" style={{ color: 'var(--color-text-muted)' }}>{s.username}</td>
+                         <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>{s.phone || '—'}</td>
+                         <td className="px-4 py-3">
+                           <span className="badge badge-sm font-semibold capitalize" style={{
+                             backgroundColor: `${stageColors[s.currentStage] || '#6b7280'}20`,
+                             color: stageColors[s.currentStage] || '#6b7280',
+                             border: 'none',
+                           }}>
+                             {s.currentStage}
+                           </span>
+                         </td>
+                         <td className="px-4 py-3 text-sm font-bold" style={{ color: 'var(--color-accent)' }}>{s.level}</td>
+                         <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text)' }}>{s.xp} pts</td>
+                         <td className="px-4 py-3">
+                           <span className={`badge badge-sm font-semibold ${s.isActive ? 'badge-success' : 'badge-error'}`}
+                             style={{ border: 'none' }}>
+                             {s.isActive ? 'Active' : 'Suspended'}
+                           </span>
+                         </td>
+                         <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>{formatDate(s.createdAt)}</td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1">
                             <button onClick={() => setDetailTarget(s)}

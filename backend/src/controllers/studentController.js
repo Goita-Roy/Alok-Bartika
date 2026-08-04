@@ -21,14 +21,19 @@ const sanitizeStudent = (u) => ({
   lastActivityTime: u.lastActivityTime,
 })
 
-// @desc    Get all students with search, filter, and pagination
+// @desc    Get all students with search, filter, sort, and pagination
 // @route   GET /api/students
 // @access  Private/Admin
 const getStudents = async (req, res) => {
   try {
-    const { search, status, dateFrom, dateTo, page = 1, limit = 25 } = req.query
+    const { search, status, dateFrom, dateTo, sortBy, sortOrder, page = 1, limit = 25 } = req.query
 
     const filter = { role: 'student' }
+
+    const ALLOWED_SORT_FIELDS = ['fullName', 'createdAt', 'level', 'xp', 'isActive']
+    const allowedSortBy = ALLOWED_SORT_FIELDS.includes(sortBy) ? sortBy : 'createdAt'
+    const allowedSortOrder = sortOrder === 'desc' ? -1 : 1
+    const sort = { [allowedSortBy]: allowedSortOrder }
 
     if (search) {
       const regex = new RegExp(search.trim(), 'i')
@@ -58,7 +63,7 @@ const getStudents = async (req, res) => {
     const skip = (pageNum - 1) * limitNum
 
     const [students, total] = await Promise.all([
-      User.find(filter).select('-password -resetOtp -resetOtpExpire').sort({ createdAt: -1 }).skip(skip).limit(limitNum),
+      User.find(filter).select('-password -resetOtp -resetOtpExpire').sort(sort).skip(skip).limit(limitNum),
       User.countDocuments(filter),
     ])
 
