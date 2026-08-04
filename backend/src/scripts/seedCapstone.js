@@ -21,6 +21,7 @@ async function seed() {
       level: 'beginner',
       description: 'Start your journey with the fundamentals of computing. Learn about hardware, software, and the digital world.',
       thumbnailUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80',
+      status: 'published',
     },
     { upsert: true, returnDocument: 'after' }
   )
@@ -53,6 +54,7 @@ async function seed() {
       level: 'intermediate',
       description: 'Dive deeper into logic, algorithms, and the building blocks of software development.',
       thumbnailUrl: 'https://images.unsplash.com/photo-1587620962725-abab7fe55159?auto=format&fit=crop&w=800&q=80',
+      status: 'published',
     },
     { upsert: true, returnDocument: 'after' }
   )
@@ -90,6 +92,7 @@ async function seed() {
       level: 'advanced',
       description: 'Master real-world Python programming with hands-on exercises across Hello World, Variables, Errors, Loops, Lists, Functions, OOP, and Modules.',
       thumbnailUrl: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80',
+      status: 'published',
     },
     { upsert: true, returnDocument: 'after' }
   )

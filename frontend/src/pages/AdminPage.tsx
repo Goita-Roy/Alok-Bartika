@@ -42,7 +42,7 @@ export function AdminPage() {
   const { data: coursesData, isLoading: isLoadingCourses } = useQuery<{ data: Course[] }>({
     queryKey: ['admin-courses'],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE_URL}/courses`)
+      const res = await fetch(`${API_BASE_URL}/courses?status=all`)
       if (!res.ok) throw new Error('Failed to fetch courses')
       return res.json()
     },

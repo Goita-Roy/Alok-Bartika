@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
+import { ThumbnailPreview } from '../../components/admin/ThumbnailPreview'
 import { useAuth } from '../../context/AuthContext'
 import { API_BASE_URL } from '../../config/api'
-import type { Course } from '../../types/course'
+import type { Course, CourseStatus } from '../../types/course'
 import {
   BookOpen, Edit3, Loader2, Trash2, Search,
   AlertTriangle, RefreshCw, ChevronLeft, ChevronRight,
+  CheckSquare, Square,
 } from 'lucide-react'
 
 interface CourseSummary {
@@ -28,6 +30,7 @@ interface CourseItem {
   level: string
   description: string
   thumbnailUrl: string
+  status: string
   createdAt?: string
 }
 
@@ -43,6 +46,7 @@ const emptyForm: CourseItem = {
   level: 'beginner',
   description: '',
   thumbnailUrl: '',
+  status: 'draft',
   createdAt: '',
 }
 
@@ -55,6 +59,8 @@ function toCourse(item: any): Course {
     thumbnailUrl: item.thumbnailUrl,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
+    lessonCount: item.lessonCount,
+    status: item.status || 'draft',
   }
 }
 
@@ -70,6 +76,7 @@ export function AdminCoursesPage() {
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [levelFilter, setLevelFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
   const [sortBy, setSortBy] = useState<string>('createdAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 25, total: 0, pages: 0 })
@@ -78,6 +85,11 @@ export function AdminCoursesPage() {
   const [deleteTarget, setDeleteTarget] = useState<Course | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+
+  // Bulk action state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkActionTarget, setBulkActionTarget] = useState<{ action: 'delete'; ids: string[] } | null>(null)
+  const [bulkProcessing, setBulkProcessing] = useState(false)
 
   const headers = {
     'Content-Type': 'application/json',
@@ -133,6 +145,7 @@ export function AdminCoursesPage() {
       params.set('limit', '25')
       if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim())
       if (levelFilter !== 'all') params.set('level', levelFilter)
+      params.set('status', statusFilter)
       if (sortBy) params.set('sortBy', sortBy)
       if (sortOrder) params.set('sortOrder', sortOrder)
 
@@ -157,12 +170,12 @@ export function AdminCoursesPage() {
       setLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, levelFilter, sortBy, sortOrder, token])
+  }, [debouncedSearch, levelFilter, statusFilter, sortBy, sortOrder, token])
 
   useEffect(() => {
     loadCourses(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, levelFilter, sortBy, sortOrder, token])
+  }, [debouncedSearch, levelFilter, statusFilter, sortBy, sortOrder, token])
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 350)
@@ -184,6 +197,7 @@ export function AdminCoursesPage() {
         level: form.level,
         description: form.description.trim(),
         thumbnailUrl: form.thumbnailUrl.trim(),
+        status: form.status,
       }
 
       let res: Response
@@ -221,6 +235,7 @@ export function AdminCoursesPage() {
       level: course.level,
       description: course.description,
       thumbnailUrl: course.thumbnailUrl,
+      status: course.status || 'draft',
       createdAt: course.createdAt,
     })
   }
@@ -252,6 +267,52 @@ export function AdminCoursesPage() {
       case 'advanced': return '#dc2626'
       default: return 'var(--color-text-muted)'
     }
+  }
+
+  const getStatusColor = (status: string): string => {
+    return status === 'published' ? '#22c55e' : '#f59e0b'
+  }
+
+  const handleBulkDelete = async () => {
+    if (!bulkActionTarget) return
+    setBulkProcessing(true)
+    try {
+      const res = await fetch(`${API_BASE_URL}/courses/bulk/delete`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ ids: bulkActionTarget.ids }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.message || 'Request failed')
+      showToast(json.message, 'success')
+      setBulkActionTarget(null)
+      setSelectedIds(new Set())
+      await loadCourses(pagination.page)
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'Request failed', 'error')
+    } finally {
+      setBulkProcessing(false)
+    }
+  }
+
+  // Clear selection when courses or filters change
+  useEffect(() => {
+    setSelectedIds(new Set())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courses, debouncedSearch, levelFilter, statusFilter, sortBy, sortOrder])
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const selectAll = () => {
+    if (selectedIds.size === courses.length) setSelectedIds(new Set())
+    else setSelectedIds(new Set(courses.map((c) => c._id)))
   }
 
   const formatDate = (d: string) => {
@@ -343,6 +404,16 @@ export function AdminCoursesPage() {
             <option value="intermediate">Intermediate</option>
             <option value="advanced">Advanced</option>
           </select>
+          <select
+            className="select select-sm"
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+          >
+            <option value="all">All Status</option>
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+          </select>
         </div>
 
         {/* Error */}
@@ -395,6 +466,19 @@ export function AdminCoursesPage() {
               </div>
 
               <div>
+                <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Status</label>
+                <select
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value as CourseStatus })}
+                  className="select select-sm w-full mt-1"
+                  style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+                >
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                </select>
+              </div>
+
+              <div>
                 <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Description</label>
                 <textarea
                   value={form.description}
@@ -408,13 +492,16 @@ export function AdminCoursesPage() {
 
               <div>
                 <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Thumbnail URL</label>
-                <input
-                  value={form.thumbnailUrl}
-                  onChange={(e) => setForm({ ...form, thumbnailUrl: e.target.value })}
-                  className="input input-sm w-full mt-1"
-                  style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
-                  placeholder="https://..."
-                />
+                <div className="flex items-start gap-3 mt-1">
+                  <ThumbnailPreview url={form.thumbnailUrl} alt={form.title || 'Course thumbnail'} size="md" />
+                  <input
+                    value={form.thumbnailUrl}
+                    onChange={(e) => setForm({ ...form, thumbnailUrl: e.target.value })}
+                    className="input input-sm w-full"
+                    style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+                    placeholder="https://..."
+                  />
+                </div>
               </div>
 
               <div className="flex gap-2">
@@ -433,6 +520,25 @@ export function AdminCoursesPage() {
 
           {/* Course List / Table */}
           <div className="space-y-4">
+            {/* Bulk Action Toolbar */}
+            {selectedIds.size > 0 && (
+              <div className="flex items-center justify-between px-4 py-3 rounded-xl"
+                style={{ backgroundColor: 'var(--color-accent-pale)' }}>
+                <span className="text-sm font-medium" style={{ color: 'var(--color-accent)' }}>
+                  {selectedIds.size} course{selectedIds.size !== 1 ? 's' : ''} selected
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setBulkActionTarget({ action: 'delete', ids: Array.from(selectedIds) })}
+                    className="btn btn-sm btn-error"
+                    disabled={bulkProcessing}
+                  >
+                    <Trash2 size={14} /> Delete
+                  </button>
+                </div>
+              </div>
+            )}
+
             {loading ? (
               <div className="card p-8 text-center shadow-sm" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
                 <Loader2 size={24} className="mx-auto animate-spin" style={{ color: 'var(--color-accent)' }} />
@@ -454,12 +560,25 @@ export function AdminCoursesPage() {
                     <table className="table table-sm w-full">
                       <thead>
                         <tr style={{ borderBottom: '1px solid var(--color-border)', position: 'sticky', top: 0, backgroundColor: 'var(--color-surface)', zIndex: 10 }}>
+                          <th key="Select" className="px-4 py-3 text-center" style={{ backgroundColor: 'transparent' }}>
+                            <button
+                              onClick={selectAll}
+                              className="btn btn-ghost btn-xs"
+                              style={{ color: selectedIds.size === courses.length && courses.length > 0 ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
+                            >
+                              {selectedIds.size === courses.length && courses.length > 0
+                                ? <CheckSquare size={16} />
+                                : <Square size={16} style={{ opacity: 0.4 }} />}
+                            </button>
+                          </th>
                           <th key="Title" style={{ backgroundColor: 'transparent' }}>
                             <SortableHeader field="title" label="Course Title" />
                           </th>
                           <th key="Level" style={{ backgroundColor: 'transparent' }}>
                             <SortableHeader field="level" label="Level" />
                           </th>
+                          <th key="Status" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
+                            style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Status</th>
                           <th key="Lessons" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
                             style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Lessons</th>
                           <th key="CreatedDate" style={{ backgroundColor: 'transparent' }}>
@@ -474,6 +593,17 @@ export function AdminCoursesPage() {
                           <tr key={course._id}
                             className="hover:bg-accent/30 transition-colors duration-150"
                             style={{ borderBottom: '1px solid var(--color-border)' }}>
+                            <td className="px-4 py-3 text-center">
+                              <button
+                                onClick={() => toggleSelect(course._id)}
+                                className="btn btn-ghost btn-xs"
+                                style={{ color: selectedIds.has(course._id) ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
+                              >
+                                {selectedIds.has(course._id)
+                                  ? <CheckSquare size={14} />
+                                  : <Square size={14} style={{ opacity: 0.4 }} />}
+                              </button>
+                            </td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2.5">
                                 <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
@@ -500,8 +630,20 @@ export function AdminCoursesPage() {
                                 {course.level}
                               </span>
                             </td>
+                            <td className="px-4 py-3">
+                              <span
+                                className="badge badge-sm font-semibold capitalize"
+                                style={{
+                                  backgroundColor: `${getStatusColor(course.status || 'draft')}20`,
+                                  color: getStatusColor(course.status || 'draft'),
+                                  border: 'none',
+                                }}
+                              >
+                                {course.status || 'draft'}
+                              </span>
+                            </td>
                             <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                              —
+                              {course.lessonCount ?? 0}
                             </td>
                             <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>
                               {formatDate(course.createdAt)}
@@ -546,6 +688,16 @@ export function AdminCoursesPage() {
                       <div className="card-body flex flex-col gap-3">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-center gap-2.5">
+                            <button
+                              type="button"
+                              onClick={() => toggleSelect(course._id)}
+                              className="btn btn-ghost btn-xs"
+                              style={{ color: selectedIds.has(course._id) ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
+                            >
+                              {selectedIds.has(course._id)
+                                ? <CheckSquare size={14} />
+                                : <Square size={14} style={{ opacity: 0.4 }} />}
+                            </button>
                             <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
                               style={{ backgroundColor: 'var(--color-accent-pale)' }}>
                               <BookOpen size={16} style={{ color: 'var(--color-accent)' }} />
@@ -557,18 +709,32 @@ export function AdminCoursesPage() {
                               </p>
                             </div>
                           </div>
-                          <span
-                            className="badge badge-sm font-semibold capitalize shrink-0"
-                            style={{
-                              backgroundColor: `${getLevelColor(course.level)}20`,
-                              color: getLevelColor(course.level),
-                              border: 'none',
-                            }}
-                          >
-                            {course.level}
-                          </span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span
+                              className="badge badge-sm font-semibold capitalize"
+                              style={{
+                                backgroundColor: `${getStatusColor(course.status || 'draft')}20`,
+                                color: getStatusColor(course.status || 'draft'),
+                                border: 'none',
+                              }}
+                            >
+                              {course.status || 'draft'}
+                            </span>
+                            <span
+                              className="badge badge-sm font-semibold capitalize"
+                              style={{
+                                backgroundColor: `${getLevelColor(course.level)}20`,
+                                color: getLevelColor(course.level),
+                                border: 'none',
+                              }}
+                            >
+                              {course.level}
+                            </span>
+                          </div>
                         </div>
                         <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                          <span>{course.lessonCount ?? 0} lessons</span>
+                          <span aria-hidden="true">•</span>
                           <span>{formatDate(course.createdAt)}</span>
                         </div>
                         <div className="flex gap-2">
@@ -658,8 +824,30 @@ export function AdminCoursesPage() {
                   <Trash2 size={24} style={{ color: 'var(--color-error)' }} />
                 </div>
                 <h3 className="text-lg font-bold" style={{ color: 'var(--color-text)' }}>Delete Course?</h3>
+                <div className="w-full flex items-center gap-3 p-3 rounded-xl text-left"
+                  style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
+                  <ThumbnailPreview url={deleteTarget.thumbnailUrl} alt={deleteTarget.title} size="md" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-sm truncate" style={{ color: 'var(--color-text)' }}>{deleteTarget.title}</p>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                      <span
+                        className="badge badge-xs font-semibold capitalize"
+                        style={{
+                          backgroundColor: `${getLevelColor(deleteTarget.level)}20`,
+                          color: getLevelColor(deleteTarget.level),
+                          border: 'none',
+                        }}
+                      >
+                        {deleteTarget.level}
+                      </span>
+                      <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                        {deleteTarget.lessonCount ?? 0} lesson{deleteTarget.lessonCount === 1 ? '' : 's'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
                 <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                  This action is permanent. All data for <strong>{deleteTarget.title}</strong> will be permanently removed, including its lessons.
+                  This action is permanent. Deleting <strong>{deleteTarget.title}</strong> will also permanently delete all <strong>{deleteTarget.lessonCount ?? 0} lessons</strong> in it. This cannot be undone.
                 </p>
               </div>
               <div className="flex justify-center gap-2 mt-4">
@@ -677,6 +865,47 @@ export function AdminCoursesPage() {
                   disabled={deleting}
                 >
                   {deleting ? <Loader2 size={14} className="animate-spin" /> : 'Delete Permanently'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Bulk Delete Confirmation Modal */}
+        {bulkActionTarget && (
+          <div className="modal modal-open" onClick={() => !bulkProcessing && setBulkActionTarget(null)}>
+            <div
+              className="modal-box max-w-sm"
+              style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex flex-col items-center text-center gap-3 py-2">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                  style={{ backgroundColor: 'rgba(226,75,74,0.10)' }}>
+                  <Trash2 size={24} style={{ color: 'var(--color-error)' }} />
+                </div>
+                <h3 className="text-lg font-bold" style={{ color: 'var(--color-text)' }}>
+                  Delete {bulkActionTarget.ids.length} Course{bulkActionTarget.ids.length !== 1 ? 's' : ''}?
+                </h3>
+                <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                  This action is permanent. Deleting these {bulkActionTarget.ids.length} course{bulkActionTarget.ids.length !== 1 ? 's' : ''} will also permanently delete all lessons in them. This cannot be undone.
+                </p>
+              </div>
+              <div className="flex justify-center gap-2 mt-4">
+                <button
+                  className="btn btn-sm btn-ghost"
+                  style={{ color: 'var(--color-text-muted)' }}
+                  onClick={() => setBulkActionTarget(null)}
+                  disabled={bulkProcessing}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-sm btn-error font-semibold"
+                  onClick={handleBulkDelete}
+                  disabled={bulkProcessing}
+                >
+                  {bulkProcessing ? <Loader2 size={14} className="animate-spin" /> : 'Delete Permanently'}
                 </button>
               </div>
             </div>

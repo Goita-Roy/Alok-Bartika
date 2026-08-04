@@ -5,7 +5,8 @@ const {
   getCourseById,
   createCourse,
   updateCourse,
-  deleteCourse
+  deleteCourse,
+  bulkDeleteCourses
 } = require('../controllers/courseController')
 const { protect, requireAdmin } = require('../middleware/auth')
 
@@ -15,6 +16,7 @@ router.get('/:id', getCourseById)
 
 // Admin only routes
 router.post('/', protect, requireAdmin, createCourse)
+router.post('/bulk/delete', protect, requireAdmin, bulkDeleteCourses)
 router.put('/:id', protect, requireAdmin, updateCourse)
 router.delete('/:id', protect, requireAdmin, deleteCourse)
 

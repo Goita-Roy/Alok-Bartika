@@ -1,11 +1,15 @@
 export type CourseLevel = 'beginner' | 'intermediate' | 'advanced'
 
+export type CourseStatus = 'draft' | 'published'
+
 export interface Course {
   _id: string
   title: string
   level: CourseLevel
   description: string
   thumbnailUrl: string
+  lessonCount?: number
+  status?: CourseStatus
   createdAt: string
   updatedAt: string
 }

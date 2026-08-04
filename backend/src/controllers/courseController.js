@@ -3,7 +3,7 @@ const { Lesson } = require('../models/Lesson')
 const { auditService } = require('../services/auditService')
 
 // SECURITY: the ONLY fields an admin may set when creating/updating a course.
-const COURSE_FIELDS = ['title', 'level', 'description', 'thumbnailUrl']
+const COURSE_FIELDS = ['title', 'level', 'description', 'thumbnailUrl', 'status']
 
 function pickCourseFields(body) {
   const picked = {}
@@ -37,86 +37,130 @@ function slugForLesson(lesson, level) {
 // Query params:
 //   ?search=          text search across title + description
 //   ?level=           filter by level (beginner|intermediate|advanced)
+//   ?status=          all|draft|published (default: published — public sees published only)
 //   ?sortBy=          title|level|createdAt (default: createdAt)
 //   ?sortOrder=       asc|desc (default: desc)
 //   ?page=&limit=     pagination (when provided, returns pagination + summary)
 const getAllCourses = async (req, res) => {
   try {
-    const { search, level, sortBy, sortOrder, page, limit } = req.query
+    const { search, level, sortBy, sortOrder, page, limit, status } = req.query
 
     const ALLOWED_SORT_FIELDS = ['title', 'level', 'createdAt']
     const allowedSortBy = ALLOWED_SORT_FIELDS.includes(sortBy) ? sortBy : 'createdAt'
     const allowedSortOrder = sortOrder === 'asc' ? 1 : -1
-    const sort = { [allowedSortBy]: allowedSortOrder }
 
-    // Build filter
-    const filter = {}
+    // Status resolution: admin may pass status=all|draft|published; otherwise
+    // only published courses are exposed (public behavior).
+    const statusFilter = status === 'all' || status === 'draft' || status === 'published'
+      ? status
+      : 'published'
+    const summaryFilter = statusFilter === 'all' ? {} : { status: statusFilter }
+
+    // Build $match stage for filtering
+    const matchStage = {}
 
     if (level && ['beginner', 'intermediate', 'advanced'].includes(level)) {
-      filter.level = level
+      matchStage.level = level
+    }
+
+    if (statusFilter !== 'all') {
+      matchStage.status = statusFilter
     }
 
     if (search && search.trim()) {
       const regex = new RegExp(search.trim(), 'i')
-      filter.$or = [
+      matchStage.$or = [
         { title: regex },
         { description: regex },
       ]
     }
 
-    // ── Pagination ────────────────────────────────────────────────────────
-    // Only paginate when page/limit params are explicitly provided.
-    // Without them, fall back to the legacy behaviour (return all courses).
+    // ── Pagination mode (aggregation with lookup for lessonCount) ───────────
     const hasPagination = page !== undefined && limit !== undefined
-    let courses, total, pagination
 
     if (hasPagination) {
       const pageNum = Math.max(1, parseInt(page, 10) || 1)
       const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 25))
       const skip = (pageNum - 1) * limitNum
 
-      const [coursesResult, countResult] = await Promise.all([
-        Course.find(filter).sort(sort).skip(skip).limit(limitNum).lean(),
-        Course.countDocuments(filter),
+      const [aggResult, countResult, summaryTotal, beginnerCount, intermediateCount, advancedCount] = await Promise.all([
+        Course.aggregate([
+          { $match: matchStage },
+          { $sort: { [allowedSortBy]: allowedSortOrder } },
+          { $skip: skip },
+          { $limit: limitNum },
+          {
+            $lookup: {
+              from: 'lessons',
+              localField: '_id',
+              foreignField: 'courseId',
+              as: 'lessonCount',
+            },
+          },
+          {
+            $addFields: {
+              lessonCount: { $size: '$lessonCount' },
+            },
+          },
+        ]),
+        Course.countDocuments(matchStage),
+        Course.countDocuments(summaryFilter),
+        Course.countDocuments({ ...summaryFilter, level: 'beginner' }),
+        Course.countDocuments({ ...summaryFilter, level: 'intermediate' }),
+        Course.countDocuments({ ...summaryFilter, level: 'advanced' }),
       ])
 
-      courses = coursesResult
-      total = countResult
-      pagination = {
-        page: pageNum,
-        limit: limitNum,
-        total,
-        pages: Math.ceil(total / limitNum),
-      }
+      res.status(200).json({
+        data: aggResult,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total: countResult,
+          pages: Math.ceil(countResult / limitNum),
+        },
+        summary: {
+          total: summaryTotal,
+          beginner: beginnerCount,
+          intermediate: intermediateCount,
+          advanced: advancedCount,
+        },
+      })
     } else {
-      courses = await Course.find(filter).sort(sort).lean()
-      total = courses.length
-    }
-
-    // ── Summary (unfiltered counts — always computed regardless of filters) ─
-    const [summaryTotal, beginnerCount, intermediateCount, advancedCount] =
-      await Promise.all([
-        Course.countDocuments({}),
-        Course.countDocuments({ level: 'beginner' }),
-        Course.countDocuments({ level: 'intermediate' }),
-        Course.countDocuments({ level: 'advanced' }),
+      // ── Legacy mode (no pagination — return all, but still include lessonCount) ─
+      const [courses, summaryTotal, beginnerCount, intermediateCount, advancedCount] = await Promise.all([
+        Course.aggregate([
+          { $match: matchStage },
+          { $sort: { [allowedSortBy]: allowedSortOrder } },
+          {
+            $lookup: {
+              from: 'lessons',
+              localField: '_id',
+              foreignField: 'courseId',
+              as: 'lessonCount',
+            },
+          },
+          {
+            $addFields: {
+              lessonCount: { $size: '$lessonCount' },
+            },
+          },
+          ]),
+        Course.countDocuments(summaryFilter),
+        Course.countDocuments({ ...summaryFilter, level: 'beginner' }),
+        Course.countDocuments({ ...summaryFilter, level: 'intermediate' }),
+        Course.countDocuments({ ...summaryFilter, level: 'advanced' }),
       ])
 
-    const response = {
-      data: courses,
-      summary: {
-        total: summaryTotal,
-        beginner: beginnerCount,
-        intermediate: intermediateCount,
-        advanced: advancedCount,
-      },
+      res.status(200).json({
+        data: courses,
+        summary: {
+          total: summaryTotal,
+          beginner: beginnerCount,
+          intermediate: intermediateCount,
+          advanced: advancedCount,
+        },
+      })
     }
-
-    if (hasPagination) {
-      response.pagination = pagination
-    }
-
-    res.status(200).json(response)
   } catch (error) {
     console.error('Get All Courses Error:', error)
     res.status(500).json({ message: 'Internal Server Error' })
@@ -207,10 +251,41 @@ const deleteCourse = async (req, res) => {
   }
 }
 
+// @desc    Bulk delete courses
+// @route   POST /api/courses/bulk/delete
+// @access  Private/Admin
+const bulkDeleteCourses = async (req, res) => {
+  try {
+    const { ids } = req.body
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'Course IDs are required' })
+    }
+
+    const courses = await Course.find({ _id: { $in: ids } })
+
+    await Promise.all(
+      courses.map((course) => {
+        auditService.logCourseCrud(req.user, 'delete', course, req)
+        return Lesson.deleteMany({ courseId: course._id }).then(() => Course.findByIdAndDelete(course._id))
+      })
+    )
+
+    res.json({
+      message: `${courses.length} course${courses.length !== 1 ? 's' : ''} deleted successfully`,
+      affected: courses.length,
+    })
+  } catch (error) {
+    console.error('Bulk Delete Courses Error:', error)
+    res.status(500).json({ message: 'Internal Server Error' })
+  }
+}
+
 module.exports = {
   getAllCourses,
   getCourseById,
   createCourse,
   updateCourse,
-  deleteCourse
+  deleteCourse,
+  bulkDeleteCourses,
 }
