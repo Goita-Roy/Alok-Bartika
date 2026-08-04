@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTheme } from '../../context/ThemeContext'
 import { useAuth } from '../../context/AuthContext'
+import { AdminMessageCenter } from './AdminMessageCenter'
 import type { ReactNode } from 'react'
 import {
   LayoutDashboard, Users, BookOpen, FileText, ClipboardList,
@@ -161,6 +162,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             >
               {resolvedTheme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
+
+            <AdminMessageCenter />
 
             {user && (
               <div className="dropdown dropdown-end">

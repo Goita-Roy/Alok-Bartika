@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, Outlet } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { SignInPage } from './pages/SignInPage'
 import { SignUpPage } from './pages/SignUpPage'
@@ -52,6 +52,7 @@ import { FeedbackSuccessPage } from './pages/FeedbackSuccessPage'
 import BeginnerCoursePage from './pages/beginner/BeginnerCoursePage'
 import { AdvancedCoursePage } from './pages/AdvancedCoursePage'
 import { ProgressProvider } from './context/ProgressContext'
+import { SocketProvider } from './context/SocketContext'
 
 function HealthPage() {
   const { data, isLoading, isError } = useQuery({
@@ -244,16 +245,24 @@ export default function App() {
       <Routes>
         {/* Admin routes - standalone, no student Layout wrapper */}
         <Route path="/admin/login" element={<AdminLoginPage />} />
-        <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminDashboardPage /></ProtectedRoute>} />
-        <Route path="/admin/students" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminStudentsPage /></ProtectedRoute>} />
-        <Route path="/admin/courses" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminCoursesPage /></ProtectedRoute>} />
-        <Route path="/admin/lessons" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminLessonsPage /></ProtectedRoute>} />
-        <Route path="/admin/questions" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminQuestionsPage /></ProtectedRoute>} />
-        <Route path="/admin/feedback" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminFeedbackPage /></ProtectedRoute>} />
-        <Route path="/admin/support" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminStudentSupportPage /></ProtectedRoute>} />
-        <Route path="/admin/notices" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminNoticesPage /></ProtectedRoute>} />
-        <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminAnalyticsPage /></ProtectedRoute>} />
-        <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login"><AdminSettingsPage /></ProtectedRoute>} />
+        <Route path="/admin" element={
+          <ProtectedRoute allowedRoles={['admin', 'super-admin']} redirectTo="/admin/login">
+            <SocketProvider>
+              <Outlet />
+            </SocketProvider>
+          </ProtectedRoute>
+        }>
+          <Route path="dashboard" element={<AdminDashboardPage />} />
+          <Route path="students" element={<AdminStudentsPage />} />
+          <Route path="courses" element={<AdminCoursesPage />} />
+          <Route path="lessons" element={<AdminLessonsPage />} />
+          <Route path="questions" element={<AdminQuestionsPage />} />
+          <Route path="feedback" element={<AdminFeedbackPage />} />
+          <Route path="support" element={<AdminStudentSupportPage />} />
+          <Route path="notices" element={<AdminNoticesPage />} />
+          <Route path="analytics" element={<AdminAnalyticsPage />} />
+          <Route path="settings" element={<AdminSettingsPage />} />
+        </Route>
 
         {/* Super admin routes - standalone, no student/admin Layout wrapper */}
         <Route path="/super-admin/login" element={<SuperAdminLoginPage />} />
