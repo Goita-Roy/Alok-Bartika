@@ -2,10 +2,11 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import type { ReactNode } from 'react'
-import { BookOpen, LayoutDashboard, LogOut, Menu, Moon, Sun, User, Settings, X } from 'lucide-react'
+import { BookOpen, LayoutDashboard, LogOut, Menu, Moon, Sun, User, Settings, X, MessageSquare } from 'lucide-react'
 import { useState } from 'react'
 import { BackButton } from './BackButton'
 import { NotificationBell } from './NotificationBell'
+import { StudentMessageCenter } from './student/StudentMessageCenter'
 
 interface LayoutProps { children: ReactNode }
 
@@ -34,6 +35,7 @@ export function Layout({ children }: LayoutProps) {
 
   const mobileUserLinks = user ? [
     { to: '/dashboard', label: 'ড্যাশবোর্ড', icon: LayoutDashboard },
+    { to: '/support',   label: 'বার্তা',     icon: MessageSquare },
     { to: '/profile',   label: 'প্রোফাইল',  icon: User },
     { to: '/settings',  label: 'সেটিংস',    icon: Settings },
   ] : []
@@ -83,6 +85,8 @@ export function Layout({ children }: LayoutProps) {
           <div className="hidden lg:flex items-center gap-2.5">
             {/* Notifications */}
             <NotificationBell />
+            {/* Messages */}
+            {user && <StudentMessageCenter />}
             {/* Theme toggle */}
             <button onClick={toggleTheme} aria-label={resolvedTheme === 'light' ? 'ডার্ক মোড' : 'লাইট মোড'}
               className="p-2.5 rounded-xl transition-all duration-200"

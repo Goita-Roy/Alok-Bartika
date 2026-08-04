@@ -53,6 +53,7 @@ import BeginnerCoursePage from './pages/beginner/BeginnerCoursePage'
 import { AdvancedCoursePage } from './pages/AdvancedCoursePage'
 import { ProgressProvider } from './context/ProgressContext'
 import { SocketProvider } from './context/SocketContext'
+import { StudentSupportPage } from './pages/StudentSupportPage'
 
 function HealthPage() {
   const { data, isLoading, isError } = useQuery({
@@ -133,6 +134,14 @@ function StudentRoutes() {
       />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/contact" element={<ContactPage />} />
+      <Route
+        path="/support"
+        element={
+          <ProtectedRoute allowedRoles={['student']}>
+            <StudentSupportPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/tests/:testId" element={<TestPage />} />
       <Route
         path="/exam/:level"
@@ -276,8 +285,8 @@ export default function App() {
         <Route path="/super-admin/backup" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminBackupPage /></ProtectedRoute>} />
         <Route path="/super-admin/profile" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminProfilePage /></ProtectedRoute>} />
 
-        {/* Everything else - wrapped in student Layout */}
-        <Route path="/*" element={<Layout><StudentRoutes /></Layout>} />
+        {/* Everything else - wrapped in student Layout + SocketProvider for message center */}
+        <Route path="/*" element={<SocketProvider><Layout><StudentRoutes /></Layout></SocketProvider>} />
       </Routes>
     </ProgressProvider>
   )
