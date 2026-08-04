@@ -31,13 +31,92 @@ function slugForLesson(lesson, level) {
   return `lesson-${order != null ? order : lesson._id}`
 }
 
-// @desc    Get all courses
+// @desc    Get all courses (with optional search, filter, sorting, pagination)
 // @route   GET /api/courses
 // @access  Public
+// Query params:
+//   ?search=          text search across title + description
+//   ?level=           filter by level (beginner|intermediate|advanced)
+//   ?sortBy=          title|level|createdAt (default: createdAt)
+//   ?sortOrder=       asc|desc (default: desc)
+//   ?page=&limit=     pagination (when provided, returns pagination + summary)
 const getAllCourses = async (req, res) => {
   try {
-    const courses = await Course.find({})
-    res.status(200).json({ data: courses })
+    const { search, level, sortBy, sortOrder, page, limit } = req.query
+
+    const ALLOWED_SORT_FIELDS = ['title', 'level', 'createdAt']
+    const allowedSortBy = ALLOWED_SORT_FIELDS.includes(sortBy) ? sortBy : 'createdAt'
+    const allowedSortOrder = sortOrder === 'asc' ? 1 : -1
+    const sort = { [allowedSortBy]: allowedSortOrder }
+
+    // Build filter
+    const filter = {}
+
+    if (level && ['beginner', 'intermediate', 'advanced'].includes(level)) {
+      filter.level = level
+    }
+
+    if (search && search.trim()) {
+      const regex = new RegExp(search.trim(), 'i')
+      filter.$or = [
+        { title: regex },
+        { description: regex },
+      ]
+    }
+
+    // ── Pagination ────────────────────────────────────────────────────────
+    // Only paginate when page/limit params are explicitly provided.
+    // Without them, fall back to the legacy behaviour (return all courses).
+    const hasPagination = page !== undefined && limit !== undefined
+    let courses, total, pagination
+
+    if (hasPagination) {
+      const pageNum = Math.max(1, parseInt(page, 10) || 1)
+      const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 25))
+      const skip = (pageNum - 1) * limitNum
+
+      const [coursesResult, countResult] = await Promise.all([
+        Course.find(filter).sort(sort).skip(skip).limit(limitNum).lean(),
+        Course.countDocuments(filter),
+      ])
+
+      courses = coursesResult
+      total = countResult
+      pagination = {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        pages: Math.ceil(total / limitNum),
+      }
+    } else {
+      courses = await Course.find(filter).sort(sort).lean()
+      total = courses.length
+    }
+
+    // ── Summary (unfiltered counts — always computed regardless of filters) ─
+    const [summaryTotal, beginnerCount, intermediateCount, advancedCount] =
+      await Promise.all([
+        Course.countDocuments({}),
+        Course.countDocuments({ level: 'beginner' }),
+        Course.countDocuments({ level: 'intermediate' }),
+        Course.countDocuments({ level: 'advanced' }),
+      ])
+
+    const response = {
+      data: courses,
+      summary: {
+        total: summaryTotal,
+        beginner: beginnerCount,
+        intermediate: intermediateCount,
+        advanced: advancedCount,
+      },
+    }
+
+    if (hasPagination) {
+      response.pagination = pagination
+    }
+
+    res.status(200).json(response)
   } catch (error) {
     console.error('Get All Courses Error:', error)
     res.status(500).json({ message: 'Internal Server Error' })
