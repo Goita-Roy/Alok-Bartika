@@ -20,21 +20,28 @@ function pickLessonFields(body) {
   return picked
 }
 
-// Summary counts by course level. lesson.level is not reliably populated, so the
-// parent course is the source of truth for beginner/intermediate/advanced totals.
-async function buildLessonSummary() {
-  const courses = await Course.find({}, { _id: 1, level: 1 }).lean()
-  const idsByLevel = { beginner: [], intermediate: [], advanced: [] }
-  for (const c of courses) {
-    if (idsByLevel[c.level]) idsByLevel[c.level].push(c._id)
-  }
-  const [total, beginner, intermediate, advanced] = await Promise.all([
-    Lesson.countDocuments({}),
-    Lesson.countDocuments({ courseId: { $in: idsByLevel.beginner } }),
-    Lesson.countDocuments({ courseId: { $in: idsByLevel.intermediate } }),
-    Lesson.countDocuments({ courseId: { $in: idsByLevel.advanced } }),
+// Summary counts respecting the current search/filter state.
+// Returns: total lessons, published, draft, and total courses (within filtered scope).
+async function buildLessonSummary(filter = {}) {
+  const [total, published, draft, courseCount] = await Promise.all([
+    Lesson.countDocuments(filter),
+    Lesson.countDocuments({ ...filter, status: 'published' }),
+    Lesson.countDocuments({ ...filter, status: 'draft' }),
+    Course.countDocuments(
+      filter.courseId && filter.courseId.$in
+        ? { _id: filter.courseId.$in }
+        : filter.courseId
+        ? { _id: filter.courseId }
+        : {}
+    ),
   ])
-  return { total, beginner, intermediate, advanced }
+
+  return {
+    total,
+    published,
+    draft,
+    totalCourses: courseCount,
+  }
 }
 
 // @desc    Get all lessons (search, course, level filters + pagination)
@@ -112,14 +119,14 @@ const getAllLessons = async (req, res) => {
           total,
           pages: Math.ceil(total / limitNum),
         },
-        summary: await buildLessonSummary(),
-      })
-    } else {
-      const lessons = await Lesson.find(filter).sort(sortObj).lean()
-      res.status(200).json({
-        data: lessons,
-        summary: await buildLessonSummary(),
-      })
+         summary: await buildLessonSummary(filter),
+       })
+     } else {
+       const lessons = await Lesson.find(filter).sort(sortObj).lean()
+       res.status(200).json({
+         data: lessons,
+         summary: await buildLessonSummary(filter),
+       })
     }
   } catch (error) {
     console.error('Get All Lessons Error:', error)
@@ -263,6 +270,115 @@ const duplicateLesson = async (req, res) => {
   }
 }
 
+// @desc    Reorder lessons within a course (renumbers all lessons sequentially)
+// @route   POST /api/lessons/reorder
+// @access  Private/Admin
+// Body:    { courseId: string, lessonIds: string[] }
+const reorderLessons = async (req, res) => {
+  const { courseId, lessonIds } = req.body || {}
+
+  if (!courseId || !Array.isArray(lessonIds) || lessonIds.length === 0) {
+    return res.status(400).json({ message: 'courseId and lessonIds are required' })
+  }
+  if (new Set(lessonIds.map((id) => String(id))).size !== lessonIds.length) {
+    return res.status(400).json({ message: 'lessonIds must not contain duplicates' })
+  }
+
+  const session = await mongoose.startSession()
+  session.startTransaction()
+  try {
+    const course = await Course.findById(courseId).session(session)
+    if (!course) {
+      await session.abortTransaction()
+      session.endSession()
+      return res.status(404).json({ message: 'Course not found' })
+    }
+
+    // Validate that every id belongs to the given course.
+    const courseLessons = await Lesson.find({ courseId: course._id }).session(session).select({ _id: 1 }).lean()
+    const validIds = new Set(courseLessons.map((l) => String(l._id)))
+    for (const id of lessonIds) {
+      if (!validIds.has(String(id))) {
+        await session.abortTransaction()
+        session.endSession()
+        return res.status(400).json({ message: 'All lessonIds must belong to the given course' })
+      }
+    }
+
+    // Renumber the provided lessons sequentially (1..N).
+    const ops = lessonIds.map((id, index) => ({
+      updateOne: { filter: { _id: id, courseId: course._id }, update: { $set: { order: index + 1 } } },
+    }))
+
+    // Append any lessons not included in the request, keeping their relative order,
+    // so the whole course stays sequential with no conflicting order values.
+    const excludedIds = courseLessons.filter((l) => !validIds.has(String(l._id)))
+    for (let i = 0; i < excludedIds.length; i++) {
+      ops.push({
+        updateOne: {
+          filter: { _id: excludedIds[i]._id },
+          update: { $set: { order: lessonIds.length + i + 1 } },
+        },
+      })
+    }
+
+    await Lesson.bulkWrite(ops, { session })
+    await session.commitTransaction()
+    session.endSession()
+
+    auditService.logLessonCrud(req.user, 'reorder', { _id: course._id, title: course.title, courseId: course._id }, req)
+
+    const updated = await Lesson.find({ courseId: course._id }).sort({ order: 1 }).lean()
+    res.status(200).json({ message: 'Lessons reordered', data: updated })
+  } catch (error) {
+    await session.abortTransaction()
+    session.endSession()
+    console.error('Reorder Lessons Error:', error)
+    res.status(500).json({ message: 'Internal Server Error' })
+  }
+}
+
+// @desc    Bulk update lesson status (publish/draft)
+// @route   POST /api/lessons/bulk/status
+// @access  Private/Admin
+// Body:    { ids: string[], status: 'published' | 'draft' }
+const bulkUpdateStatus = async (req, res) => {
+  const { ids, status } = req.body || {}
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ message: 'ids array is required' })
+  }
+  if (!status || !['published', 'draft'].includes(status)) {
+    return res.status(400).json({ message: "status must be 'published' or 'draft'" })
+  }
+
+  // Validate all ids are valid ObjectIds
+  const objectIds = []
+  for (const id of ids) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: `Invalid lesson id: ${id}` })
+    }
+    objectIds.push(new mongoose.Types.ObjectId(id))
+  }
+
+  try {
+    const result = await Lesson.updateMany(
+      { _id: { $in: objectIds } },
+      { $set: { status } }
+    )
+
+    auditService.logLessonCrud(req.user, 'bulk-status', { count: result.modifiedCount, status }, req)
+
+    res.status(200).json({
+      message: 'Bulk status update complete',
+      affected: result.modifiedCount,
+    })
+  } catch (error) {
+    console.error('Bulk Status Update Error:', error)
+    res.status(500).json({ message: 'Internal Server Error' })
+  }
+}
+
 // @desc    Delete a lesson
 // @route   DELETE /api/lessons/:id
 // @access  Private/Admin
@@ -280,6 +396,74 @@ const deleteLesson = async (req, res) => {
   }
 }
 
+// @desc    Bulk delete lessons
+// @route   POST /api/lessons/bulk/delete
+// @access  Private/Admin
+// Body:    { ids: string[] }
+const bulkDeleteLessons = async (req, res) => {
+  const { ids } = req.body || {}
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ message: 'ids array is required' })
+  }
+
+  // Validate all ids are valid ObjectIds and fetch lessons
+  const objectIds = []
+  for (const id of ids) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: `Invalid lesson id: ${id}` })
+    }
+    objectIds.push(new mongoose.Types.ObjectId(id))
+  }
+
+  const session = await mongoose.startSession()
+  session.startTransaction()
+  try {
+    // Fetch all lessons being deleted (for audit)
+    const lessonsToDelete = await Lesson.find({ _id: { $in: objectIds } }).session(session)
+
+    // Collect unique course IDs for renumbering
+    const courseIds = new Set(lessonsToDelete.map((l) => String(l.courseId)))
+
+    // Delete the lessons
+    await Lesson.deleteMany({ _id: { $in: objectIds } }).session(session)
+
+    // Renumber lessons within each affected course
+    for (const courseId of courseIds) {
+      const remaining = await Lesson.find({ courseId: new mongoose.Types.ObjectId(courseId) })
+        .sort({ order: 1 })
+        .session(session)
+        .select({ _id: 1 })
+        .lean()
+
+      await Lesson.bulkWrite(
+        remaining.map((lesson, index) => ({
+          updateOne: {
+            filter: { _id: lesson._id },
+            update: { $set: { order: index + 1 } },
+          },
+        })),
+        { session }
+      )
+    }
+
+    await session.commitTransaction()
+    session.endSession()
+
+    auditService.logLessonCrud(req.user, 'bulk-delete', { count: lessonsToDelete.length }, req)
+
+    res.status(200).json({
+      message: 'Lessons deleted successfully',
+      deleted: lessonsToDelete.length,
+    })
+  } catch (error) {
+    await session.abortTransaction()
+    session.endSession()
+    console.error('Bulk Delete Lessons Error:', error)
+    res.status(500).json({ message: 'Internal Server Error' })
+  }
+}
+
 module.exports = {
   getAllLessons,
   getLessonsByCourse,
@@ -287,5 +471,8 @@ module.exports = {
   createLesson,
   updateLesson,
   duplicateLesson,
+  reorderLessons,
+  bulkUpdateStatus,
+  bulkDeleteLessons,
   deleteLesson
 }

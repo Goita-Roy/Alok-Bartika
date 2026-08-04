@@ -1,11 +1,28 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import api from '../../config/api'
+import { CodeBlock } from '../../components/ai-buddy/code'
 import {
   FileText, Loader2, PlusCircle, Trash2, Edit3, Search, Copy,
   AlertTriangle, RefreshCw, ChevronLeft, ChevronRight,
-  BookOpen, Layers, Sparkles, GraduationCap,
-} from 'lucide-react'
+  BookOpen, Layers, Sparkles, GraduationCap, GripVertical, Eye, X,
+ } from 'lucide-react'
+import {
+   DndContext,
+   closestCenter,
+   KeyboardSensor,
+   PointerSensor,
+   useSensor,
+   useSensors,
+} from '@dnd-kit/core'
+import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 interface CourseItem {
   _id: string
@@ -24,9 +41,11 @@ interface LessonItem {
   audioUrl: string
   starterCode: string
   expectedOutput: string
+  codingProblem?: string
   level?: string
   status?: string
   createdAt?: string
+  updatedAt?: string
 }
 
 interface Pagination {
@@ -38,9 +57,9 @@ interface Pagination {
 
 interface LessonSummary {
   total: number
-  beginner: number
-  intermediate: number
-  advanced: number
+  published: number
+  draft: number
+  totalCourses: number
 }
 
 const LEVELS = [
@@ -48,6 +67,206 @@ const LEVELS = [
   { value: 'intermediate', label: 'Intermediate' },
   { value: 'advanced', label: 'Advanced' },
 ]
+
+interface SortableLessonRowProps {
+  lesson: LessonItem
+  onEdit: (lesson: LessonItem) => void
+  onPreview: (lesson: LessonItem) => void
+  onUpdateStatus: (lesson: LessonItem) => void
+  onDuplicate: (lessonId: string) => void
+  onDelete: (lessonId: string) => void
+  duplicatingId: string | null
+  draggingId: string | null
+  selectedLessons: Set<string>
+  onToggleSelection: (id: string) => void
+  recentlySavedId: string | null
+  getCourseForLesson: (lesson: LessonItem) => CourseItem | undefined
+  getStatusColor: (status: string) => string
+  getLevelColor: (level: string) => string
+  formatDate: (d?: string) => string
+}
+
+const SortableLessonRow = function SortableLessonRow({
+  lesson,
+  onEdit,
+  onPreview,
+  onUpdateStatus,
+  onDuplicate,
+  onDelete,
+  duplicatingId,
+  draggingId,
+  selectedLessons,
+  onToggleSelection,
+  recentlySavedId,
+  getCourseForLesson,
+  getStatusColor,
+  getLevelColor,
+  formatDate,
+}: SortableLessonRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: lesson._id })
+
+  const isRecentlySaved = recentlySavedId === lesson._id
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    borderWidth: draggingId === lesson._id ? '2px' : '1px',
+    borderColor: draggingId === lesson._id ? 'var(--color-accent)' : 'var(--color-border)',
+    borderStyle: 'solid',
+    backgroundColor: isRecentlySaved ? 'rgba(34, 197, 94, 0.08)' : undefined,
+  }
+
+  const course = getCourseForLesson(lesson)
+  const level = course?.level || lesson.level || ''
+
+  return (
+    <tr ref={setNodeRef} style={style} key={lesson._id}>
+      <td className="px-2 py-2">
+        <div className="flex items-center justify-center">
+           <input
+             type="checkbox"
+             className="checkbox checkbox-sm"
+             checked={selectedLessons.has(lesson._id)}
+             onChange={() => onToggleSelection(lesson._id)}
+             style={{ borderRadius: 'var(--rounded)' }}
+             onClick={(e) => e.stopPropagation()}
+           />
+        </div>
+      </td>
+      <td className="px-2 py-2">
+        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing touch-none select-none"
+          style={{ color: 'var(--color-text-muted)' }} title="Drag to reorder">
+          <GripVertical size={16} />
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+            style={{ backgroundColor: 'var(--color-accent-pale)' }}>
+            <FileText size={16} style={{ color: 'var(--color-accent)' }} />
+          </div>
+          <div>
+            <p className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{lesson.title}</p>
+            {lesson.content && (
+              <p className="text-xs max-w-xs truncate" style={{ color: 'var(--color-text-muted)' }}>{lesson.content}</p>
+            )}
+          </div>
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <span className="badge badge-sm font-semibold"
+          style={{ backgroundColor: 'var(--color-accent-pale)', color: 'var(--color-accent)', border: 'none' }}>
+          #{lesson.order}
+        </span>
+      </td>
+       <td className="px-4 py-3">
+         <button
+           type="button"
+           className="badge badge-sm font-semibold capitalize cursor-pointer"
+           style={{
+             backgroundColor: `${getStatusColor(lesson.status || 'draft')}20`,
+             color: getStatusColor(lesson.status || 'draft'),
+             border: 'none',
+           }}
+           onClick={(e) => {
+             e.stopPropagation()
+             onUpdateStatus(lesson)
+           }}
+           title={lesson.status === 'published' ? 'Unpublish' : 'Publish'}
+         >
+           {lesson.status || 'draft'}
+         </button>
+       </td>
+      <td className="px-4 py-3">
+        {level ? (
+          <span
+            className="badge badge-sm font-semibold capitalize"
+            style={{
+              backgroundColor: `${getLevelColor(level)}20`,
+              color: getLevelColor(level),
+              border: 'none',
+            }}
+          >
+            {level}
+          </span>
+        ) : (
+          <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>—</span>
+        )}
+      </td>
+       <td className="px-4 py-3">
+         {course?.title ? (
+           <span
+             className="badge badge-sm font-semibold capitalize cursor-pointer"
+             style={{
+               backgroundColor: `${getLevelColor(level)}20`,
+               color: getLevelColor(level),
+               border: 'none',
+             }}
+             title={`View ${course.title} lessons`}
+           >
+             {course.title}
+           </span>
+         ) : (
+           <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>—</span>
+         )}
+       </td>
+       <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>
+         {lesson.language || '—'}
+       </td>
+       <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>
+         {formatDate(lesson.createdAt)}
+       </td>
+       <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>
+         {lesson.updatedAt ? formatDate(lesson.updatedAt) : '—'}
+       </td>
+      <td className="px-4 py-3">
+        <div className="flex items-center justify-center gap-1">
+           <button
+             type="button"
+             className="btn btn-sm btn-ghost"
+             onClick={() => onEdit(lesson)}
+             style={{ color: 'var(--color-accent)' }}
+             title="Edit"
+           >
+             <Edit3 size={14} />
+           </button>
+           <button
+             type="button"
+             className="btn btn-sm btn-ghost"
+             onClick={() => onPreview(lesson)}
+             style={{ color: 'var(--color-text-muted)' }}
+             title="Preview"
+           >
+             <Eye size={14} />
+           </button>
+          <button
+            type="button"
+            className="btn btn-sm btn-ghost"
+            disabled={duplicatingId === lesson._id}
+            onClick={() => onDuplicate(lesson._id)}
+            style={{ color: 'var(--color-text-muted)' }}
+            title="Duplicate"
+          >
+            {duplicatingId === lesson._id ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Copy size={14} />
+            )}
+          </button>
+          <button
+            type="button"
+            className="btn btn-sm btn-ghost"
+            onClick={() => onDelete(lesson._id)}
+            style={{ color: 'var(--color-error)' }}
+            title="Delete"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      </td>
+    </tr>
+  )
+}
 
 const emptyForm = {
   _id: '',
@@ -74,6 +293,12 @@ export function AdminLessonsPage() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null)
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [reordering, setReordering] = useState(false)
+  const [selectedLessons, setSelectedLessons] = useState<Set<string>>(new Set())
+  const [recentlySavedId, setRecentlySavedId] = useState<string | null>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [previewLesson, setPreviewLesson] = useState<LessonItem | null>(null)
   const titleInputRef = useRef<HTMLInputElement>(null)
 
   // Search / filter / sort / pagination state
@@ -85,7 +310,25 @@ export function AdminLessonsPage() {
   const [sortBy, setSortBy] = useState<string>('order')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 25, total: 0, pages: 0 })
-  const [summary, setSummary] = useState<LessonSummary>({ total: 0, beginner: 0, intermediate: 0, advanced: 0 })
+  const [summary, setSummary] = useState<LessonSummary>({ total: 0, published: 0, draft: 0, totalCourses: 0 })
+
+   // Drag-and-drop sensors
+   const sensors = useSensors(
+     useSensor(PointerSensor, {
+       activationConstraint: {
+         distance: 5,
+       },
+     }),
+     useSensor(KeyboardSensor)
+   )
+
+   // Clear recently-saved highlight after 2 seconds
+   useEffect(() => {
+     if (recentlySavedId) {
+       const t = setTimeout(() => setRecentlySavedId(null), 2000)
+       return () => clearTimeout(t)
+     }
+   }, [recentlySavedId])
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type })
@@ -154,16 +397,17 @@ export function AdminLessonsPage() {
       params.set('sortBy', sortBy)
       params.set('sortOrder', sortOrder)
 
-      const response = await api.get(`/lessons?${params.toString()}`)
+       const response = await api.get(`/lessons?${params.toString()}`)
       const json = response.data
       setLessons(json.data || [])
+      setSelectedLessons(new Set())
       setPagination(json.pagination || { page: 1, limit: 25, total: 0, pages: 0 })
       if (json.summary) {
         setSummary({
           total: json.summary.total || 0,
-          beginner: json.summary.beginner || 0,
-          intermediate: json.summary.intermediate || 0,
-          advanced: json.summary.advanced || 0,
+          published: json.summary.published || 0,
+          draft: json.summary.draft || 0,
+          totalCourses: json.summary.totalCourses || 0,
         })
       }
     } catch (err: any) {
@@ -219,17 +463,21 @@ export function AdminLessonsPage() {
         status: form.status,
       }
 
-      if (form._id) {
-        await api.put(`/lessons/${form._id}`, payload)
-        showToast('Lesson updated', 'success')
-      } else {
-        await api.post('/lessons', payload)
-        showToast('Lesson created', 'success')
-        setForm(emptyForm)
-        setTimeout(() => titleInputRef.current?.focus(), 0)
-      }
+       if (form._id) {
+         await api.put(`/lessons/${form._id}`, payload)
+         showToast('Lesson updated', 'success')
+         setRecentlySavedId(form._id)
+       } else {
+         const res = await api.post('/lessons', payload)
+         showToast('Lesson created', 'success')
+         setForm(emptyForm)
+         setTimeout(() => titleInputRef.current?.focus(), 0)
+         if (res.data?.data?._id) {
+           setRecentlySavedId(res.data.data._id)
+         }
+       }
 
-      await loadLessons(pagination.page)
+       await loadLessons(pagination.page)
     } catch (err: any) {
       showToast(err.response?.data?.message || err.message || 'Failed to save lesson', 'error')
     } finally {
@@ -286,6 +534,134 @@ export function AdminLessonsPage() {
       showToast(err.response?.data?.message || err.message || 'Failed to duplicate lesson', 'error')
     } finally {
       setDuplicatingId(null)
+     }
+   }
+
+   const handleToggleSelection = (id: string) => {
+     setSelectedLessons(prev => {
+       const next = new Set(prev)
+       if (next.has(id)) {
+         next.delete(id)
+       } else {
+         next.add(id)
+       }
+       return next
+     })
+   }
+
+   const handleSelectAll = () => {
+     if (selectedLessons.size === lessons.length && lessons.length > 0) {
+       setSelectedLessons(new Set())
+     } else {
+       setSelectedLessons(new Set(lessons.map(l => l._id)))
+     }
+   }
+
+   const handleBulkStatus = async (status: 'published' | 'draft') => {
+     const ids = Array.from(selectedLessons)
+     if (ids.length === 0) return
+     try {
+       const { data } = await api.post('/lessons/bulk/status', { ids, status })
+       showToast(`${data.affected} lesson(s) ${status === 'published' ? 'published' : 'moved to draft'}`, 'success')
+       setSelectedLessons(new Set())
+       await loadLessons(pagination.page)
+      } catch (err: any) {
+        showToast(err.response?.data?.message || err.message || 'Failed to update status', 'error')
+      }
+    }
+
+    const handleBulkDelete = async () => {
+      const ids = Array.from(selectedLessons)
+      if (ids.length === 0) return
+      try {
+        const { data } = await api.post('/lessons/bulk/delete', { ids })
+        showToast(`${data.deleted} lesson(s) deleted`, 'success')
+        setSelectedLessons(new Set())
+        setShowDeleteModal(false)
+        await loadLessons(pagination.page)
+      } catch (err: any) {
+        showToast(err.response?.data?.message || err.message || 'Failed to delete lessons', 'error')
+        setShowDeleteModal(false)
+      }
+     }
+
+      const handlePreview = (lesson: LessonItem) => {
+        setPreviewLesson(lesson)
+      }
+
+      const handleUpdateStatus = async (lesson: LessonItem) => {
+        const newStatus = lesson.status === 'published' ? 'draft' : 'published'
+        const previousLessons = [...lessons]
+
+        // Optimistic update
+        setLessons(lessons.map(l =>
+          l._id === lesson._id ? { ...l, status: newStatus } : l
+        ))
+
+        try {
+          await api.put(`/lessons/${lesson._id}`, {
+            title: lesson.title,
+            content: lesson.content,
+            order: lesson.order,
+            language: lesson.language,
+            videoUrl: lesson.videoUrl,
+            audioUrl: lesson.audioUrl,
+            starterCode: lesson.starterCode,
+            expectedOutput: lesson.expectedOutput,
+            status: newStatus,
+          })
+          showToast(`Lesson ${newStatus === 'published' ? 'published' : 'moved to draft'}`, 'success')
+        } catch (err: any) {
+          // Revert on failure
+          setLessons(previousLessons)
+          showToast(err.response?.data?.message || err.message || 'Failed to update status', 'error')
+        }
+      }
+
+      const handleDragStart = (event: DragStartEvent) => {
+     setDraggingId(event.active.id as string)
+   }
+
+   const handleDragEnd = async (event: DragEndEvent) => {
+     const { active, over } = event
+     setDraggingId(null)
+
+     if (!over || active.id !== over.id) {
+       const oldIndex = lessons.findIndex(l => l._id === active.id)
+       const newIndex = lessons.findIndex(l => l._id === over!.id)
+
+       const courseId = lessons[oldIndex]?.courseId
+
+       // Cross-course drag prevention
+       if (!courseId || lessons[newIndex]?.courseId !== courseId) {
+        showToast('You can only reorder lessons within the same course', 'error')
+        return
+      }
+
+      // All lessons in the same course (sorted by order)
+      const courseLessons = lessons
+        .filter(l => l.courseId === courseId)
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+
+      const reordered = arrayMove(courseLessons, oldIndex, newIndex)
+      const lessonIds = reordered.map(l => l._id)
+
+      try {
+        setReordering(true)
+        await api.post('/lessons/reorder', { courseId, lessonIds })
+        showToast('Lesson order updated', 'success')
+
+        // Optimistically update local state while preserving current view filters
+        const otherLessons = lessons.filter(l => l.courseId !== courseId)
+        const updatedLessons = [...reordered, ...otherLessons]
+        setLessons(updatedLessons)
+
+        await loadLessons(pagination.page)
+      } catch (err: any) {
+        showToast(err.response?.data?.message || err.message || 'Failed to reorder lessons', 'error')
+      } finally {
+        setReordering(false)
+      }
     }
   }
 
@@ -348,10 +724,10 @@ export function AdminLessonsPage() {
         {/* Summary cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: 'Total Lessons', value: summary.total, icon: FileText, color: '#3b82f6' },
-            { label: 'Beginner', value: summary.beginner, icon: GraduationCap, color: '#3b82f6' },
-            { label: 'Intermediate', value: summary.intermediate, icon: Layers, color: '#f59e0b' },
-            { label: 'Advanced', value: summary.advanced, icon: Sparkles, color: '#dc2626' },
+             { label: 'Total Lessons', value: summary.total, icon: FileText, color: '#3b82f6' },
+             { label: 'Published', value: summary.published, icon: Layers, color: '#22c55e' },
+             { label: 'Draft', value: summary.draft, icon: Sparkles, color: '#f59e0b' },
+             { label: 'Total Courses', value: summary.totalCourses, icon: BookOpen, color: '#8b5cf6' },
           ].map(c => {
             const Icon = c.icon
             return (
@@ -426,6 +802,38 @@ export function AdminLessonsPage() {
           </select>
         </div>
 
+        {/* Bulk Action Toolbar */}
+        {selectedLessons.size > 0 && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold"
+            style={{ backgroundColor: 'rgba(59,130,246,0.10)', border: '1px solid rgba(59,130,246,0.30)' }}>
+            <span style={{ color: 'var(--color-accent)' }}>{selectedLessons.size} selected</span>
+            <button
+              type="button"
+              className="btn btn-sm btn-outline"
+              onClick={() => handleBulkStatus('published')}
+              style={{ borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
+            >
+              Publish Selected
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm btn-outline"
+              onClick={() => handleBulkStatus('draft')}
+              style={{ borderColor: 'var(--color-text-muted)', color: 'var(--color-text-muted)' }}
+            >
+              Move to Draft
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm btn-outline"
+              onClick={() => setShowDeleteModal(true)}
+              style={{ borderColor: 'var(--color-error)', color: 'var(--color-error)' }}
+            >
+              Delete Selected
+            </button>
+          </div>
+        )}
+
         {/* Error */}
         {error && (
           <div className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold"
@@ -444,182 +852,159 @@ export function AdminLessonsPage() {
                 <Loader2 size={24} className="mx-auto animate-spin" style={{ color: 'var(--color-accent)' }} />
                 <p className="mt-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>Loading lessons…</p>
               </div>
-            ) : lessons.length === 0 ? (
+             ) : lessons.length === 0 ? (
               <div className="card p-8 text-center shadow-sm" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-                <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                  {debouncedSearch || courseFilter !== 'all' || levelFilter !== 'all'
-                    ? 'No lessons match your search or filter criteria'
-                    : 'No lessons yet. Add the first one to start teaching.'}
-                </p>
+                {debouncedSearch || courseFilter !== 'all' || levelFilter !== 'all' ? (
+                  <div>
+                    <Search size={32} className="mx-auto mb-3" style={{ color: 'var(--color-text-muted)' }} />
+                    <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                      No lessons match your search or filter criteria
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <BookOpen size={40} className="mx-auto mb-4" style={{ color: 'var(--color-accent)', opacity: 0.3 }} />
+                    <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--color-text)' }}>No lessons yet</h3>
+                    <p className="text-sm mb-4" style={{ color: 'var(--color-text-muted)' }}>
+                      Add the first one to start teaching.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={openNewLesson}
+                      className="btn btn-sm btn-primary"
+                    >
+                      <PlusCircle size={16} />
+                      Create your first lesson
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
-              <>
-                {/* Desktop table */}
-                <div className="hidden md:block card shadow-sm overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-                  <div className="overflow-x-auto">
-                    <table className="table table-sm w-full">
-                      <thead>
-                        <tr style={{ borderBottom: '1px solid var(--color-border)', position: 'sticky', top: 0, backgroundColor: 'var(--color-surface)', zIndex: 10 }}>
-                          <th key="Title" style={{ backgroundColor: 'transparent' }}>
-                            <SortableHeader field="title" label="Lesson Title" />
-                          </th>
-                          <th key="Order" style={{ backgroundColor: 'transparent' }}>
-                            <SortableHeader field="order" label="Order" />
-                          </th>
-                          <th key="Status" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
-                            style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Status</th>
-                          <th key="Level" style={{ backgroundColor: 'transparent' }}>
-                            <SortableHeader field="level" label="Level" />
-                          </th>
-                          <th key="Course" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
-                            style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Course</th>
-                          <th key="Language" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
-                            style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Language</th>
-                          <th key="CreatedDate" style={{ backgroundColor: 'transparent' }}>
-                            <SortableHeader field="createdAt" label="Created Date" />
-                          </th>
-                          <th key="Actions" className="text-xs font-semibold uppercase tracking-wider py-3 px-4 text-center"
-                            style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {lessons.map(lesson => {
-                          const course = getCourseForLesson(lesson)
-                          const level = course?.level || lesson.level || ''
-                          return (
-                            <tr key={lesson._id}
-                              className="hover:bg-accent/30 transition-colors duration-150"
-                              style={{ borderBottom: '1px solid var(--color-border)' }}>
-                              <td className="px-4 py-3">
-                                <div className="flex items-center gap-2.5">
-                                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                                    style={{ backgroundColor: 'var(--color-accent-pale)' }}>
-                                    <FileText size={16} style={{ color: 'var(--color-accent)' }} />
+               <>
+                 {/* Desktop table */}
+                 <DndContext
+                   sensors={sensors}
+                   collisionDetection={closestCenter}
+                   onDragStart={handleDragStart}
+                   onDragEnd={handleDragEnd}
+                 >
+                   <SortableContext
+                     items={lessons.map((l) => l._id)}
+                     strategy={verticalListSortingStrategy}
+                   >
+                     <div className="hidden md:block card shadow-sm overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+                       <div className="overflow-x-auto">
+                         <table className="table table-sm w-full">
+                            <thead>
+                              <tr style={{ borderBottom: '1px solid var(--color-border)', position: 'sticky', top: 0, backgroundColor: 'var(--color-surface)', zIndex: 10 }}>
+                                <th key="Select" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
+                                  style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent', width: '36px' }}>
+                                  <div className="flex items-center justify-center">
+                                    <input
+                                      type="checkbox"
+                                      className="checkbox checkbox-sm"
+                                      checked={lessons.length > 0 && selectedLessons.size === lessons.length}
+                                      ref={checkbox => {
+                                        if (checkbox) checkbox.indeterminate = selectedLessons.size > 0 && selectedLessons.size < lessons.length
+                                      }}
+                                      onChange={handleSelectAll}
+                                      style={{ borderRadius: 'var(--rounded)' }}
+                                    />
                                   </div>
-                                  <div>
-                                    <p className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{lesson.title}</p>
-                                    {lesson.content && (
-                                      <p className="text-xs max-w-xs truncate" style={{ color: 'var(--color-text-muted)' }}>{lesson.content}</p>
-                                    )}
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                <span className="badge badge-sm font-semibold"
-                                  style={{ backgroundColor: 'var(--color-accent-pale)', color: 'var(--color-accent)', border: 'none' }}>
-                                  #{lesson.order}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3">
-                                <span
-                                  className="badge badge-sm font-semibold capitalize"
-                                  style={{
-                                    backgroundColor: `${getStatusColor(lesson.status || 'draft')}20`,
-                                    color: getStatusColor(lesson.status || 'draft'),
-                                    border: 'none',
-                                  }}
-                                >
-                                  {lesson.status || 'draft'}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3">
-                                {level ? (
-                                  <span
-                                    className="badge badge-sm font-semibold capitalize"
-                                    style={{
-                                      backgroundColor: `${getLevelColor(level)}20`,
-                                      color: getLevelColor(level),
-                                      border: 'none',
-                                    }}
-                                  >
-                                    {level}
-                                  </span>
-                                ) : (
-                                  <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>—</span>
-                                )}
-                              </td>
-                              <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                                {course?.title || '—'}
-                              </td>
-                              <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                                {lesson.language || '—'}
-                              </td>
-                              <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                                {formatDate(lesson.createdAt)}
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="flex items-center justify-center gap-1">
-                                  <button
-                                    type="button"
-                                    className="btn btn-sm btn-ghost"
-                                    onClick={() => handleEdit(lesson)}
-                                    style={{ color: 'var(--color-accent)' }}
-                                    title="Edit"
-                                  >
-                                    <Edit3 size={14} />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="btn btn-sm btn-ghost"
-                                    disabled={duplicatingId === lesson._id}
-                                    onClick={() => handleDuplicate(lesson._id)}
-                                    style={{ color: 'var(--color-text-muted)' }}
-                                    title="Duplicate"
-                                  >
-                                    {duplicatingId === lesson._id ? (
-                                      <Loader2 size={14} className="animate-spin" />
-                                    ) : (
-                                      <Copy size={14} />
-                                    )}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="btn btn-sm btn-ghost"
-                                    onClick={() => handleDelete(lesson._id)}
-                                    style={{ color: 'var(--color-error)' }}
-                                    title="Delete"
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                                </th>
+                                <th key="Drag" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
+                                  style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent', width: '32px' }}>
+                                </th>
+                                <th key="Title" style={{ backgroundColor: 'transparent' }}>
+                                  <SortableHeader field="title" label="Lesson Title" />
+                                </th>
+                                <th key="Order" style={{ backgroundColor: 'transparent' }}>
+                                  <SortableHeader field="order" label="Order" />
+                                </th>
+                                <th key="Status" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
+                                  style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Status</th>
+                                <th key="Level" style={{ backgroundColor: 'transparent' }}>
+                                  <SortableHeader field="level" label="Level" />
+                                </th>
+                                <th key="Course" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
+                                  style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Course</th>
+                                <th key="Language" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
+                                  style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Language</th>
+                                 <th key="CreatedDate" style={{ backgroundColor: 'transparent' }}>
+                                   <SortableHeader field="createdAt" label="Created Date" />
+                                 </th>
+                                 <th key="UpdatedDate" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
+                                   style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Last Updated</th>
+                                 <th key="Actions" className="text-xs font-semibold uppercase tracking-wider py-3 px-4 text-center"
+                                   style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {lessons.map(lesson => (
+                                  <SortableLessonRow
+                                    key={lesson._id}
+                                    lesson={lesson}
+                                    onEdit={handleEdit}
+                                    onPreview={handlePreview}
+                                    onUpdateStatus={handleUpdateStatus}
+                                    onDuplicate={handleDuplicate}
+                                    onDelete={handleDelete}
+                                    duplicatingId={duplicatingId}
+                                    draggingId={draggingId}
+                                    selectedLessons={selectedLessons}
+                                    onToggleSelection={handleToggleSelection}
+                                    recentlySavedId={recentlySavedId}
+                                    getCourseForLesson={getCourseForLesson}
+                                    getStatusColor={getStatusColor}
+                                    getLevelColor={getLevelColor}
+                                    formatDate={formatDate}
+                                  />
+                              ))}
+                            </tbody>
+                            </table>
+                          </div>
+                        </div>
+                        </SortableContext>
+                        </DndContext>
 
-                {/* Mobile cards */}
-                <div className="md:hidden space-y-3">
-                  {lessons.map(lesson => {
-                    const course = getCourseForLesson(lesson)
-                    const level = course?.level || lesson.level || ''
-                    return (
-                      <div
-                        key={lesson._id}
-                        className="card shadow-sm"
-                        style={{
-                          backgroundColor: 'var(--color-surface)',
-                          border: '1px solid var(--color-border)',
-                        }}
-                      >
-                        <div className="card-body flex flex-col gap-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                                style={{ backgroundColor: 'var(--color-accent-pale)' }}>
-                                <FileText size={16} style={{ color: 'var(--color-accent)' }} />
+                 {/* Mobile cards */}
+                 <div className="md:hidden space-y-3">
+                   {lessons.map(lesson => {
+                     const course = getCourseForLesson(lesson)
+                     const level = course?.level || lesson.level || ''
+                     return (
+                       <div
+                         key={lesson._id}
+                         className="card shadow-sm"
+                         style={{
+                           backgroundColor: 'var(--color-surface)',
+                           border: '1px solid var(--color-border)',
+                         }}
+                       >
+                         <div className="card-body flex flex-col gap-3">
+                           <div className="flex items-start justify-between gap-3">
+                             <div className="flex items-center gap-2.5">
+                               <div className="flex items-center justify-center">
+                                 <input
+                                   type="checkbox"
+                                   className="checkbox checkbox-sm"
+                                   checked={selectedLessons.has(lesson._id)}
+                                    onChange={() => handleToggleSelection(lesson._id)}
+                                   style={{ borderRadius: 'var(--rounded)' }}
+                                 />
+                               </div>
+                               <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                                 style={{ backgroundColor: 'var(--color-accent-pale)' }}>
+                                 <FileText size={16} style={{ color: 'var(--color-accent)' }} />
+                               </div>
+                               <div>
+                                 <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>{lesson.title}</h3>
+                                 <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                                   {course?.title || '—'} · {lesson.language || '—'}
+                                 </p>
+                               </div>
                               </div>
-                              <div>
-                                <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>{lesson.title}</h3>
-                                <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                                  {course?.title || '—'} · {lesson.language || '—'}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-1.5 shrink-0">
+                              <div className="flex items-center gap-1.5 shrink-0">
                               <span className="badge badge-sm font-semibold"
                                 style={{ backgroundColor: 'var(--color-accent-pale)', color: 'var(--color-accent)', border: 'none' }}>
                                 #{lesson.order}
@@ -917,6 +1302,169 @@ export function AdminLessonsPage() {
             <div className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'} shadow-lg text-sm font-semibold`}
               style={{ border: 'none' }}>
               {toast.message}
+            </div>
+          </div>
+        )}
+
+        {/* Bulk Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div
+              className="card shadow-xl max-w-md w-full mx-4"
+              style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+            >
+              <div className="card-body gap-4">
+                <div className="flex items-start gap-4">
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: 'rgba(226,75,74,0.10)' }}
+                  >
+                    <AlertTriangle size={20} style={{ color: 'var(--color-error)' }} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Delete {selectedLessons.size} lesson(s)?</h3>
+                    <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                      This action cannot be undone. The selected lessons will be permanently removed and lesson order will be renumbered within each affected course.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3 justify-end pt-2">
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-ghost"
+                    onClick={() => setShowDeleteModal(false)}
+                    style={{ color: 'var(--color-text-muted)' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-error"
+                    onClick={handleBulkDelete}
+                  >
+                    Delete Selected
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+         )}
+
+        {/* Lesson Preview Modal */}
+        {previewLesson && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div
+              className="card shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col"
+              style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+            >
+              <div className="px-6 py-4 border-b" style={{ borderBottomColor: 'var(--color-border)' }}>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold" style={{ color: 'var(--color-text)' }}>
+                    {previewLesson.title}
+                  </h2>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-ghost"
+                    onClick={() => setPreviewLesson(null)}
+                    style={{ color: 'var(--color-text-muted)' }}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="overflow-y-auto flex-1 min-h-0">
+                <div className="p-6 space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>Course</label>
+                      <p className="text-sm mt-1" style={{ color: 'var(--color-text)' }}>{getCourseForLesson(previewLesson)?.title || '—'}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>Status</label>
+                      <div className="mt-1">
+                        <span
+                          className="badge badge-sm font-semibold capitalize"
+                          style={{
+                            backgroundColor: `${getStatusColor(previewLesson.status || 'draft')}20`,
+                            color: getStatusColor(previewLesson.status || 'draft'),
+                            border: 'none',
+                          }}
+                        >
+                          {previewLesson.status || 'draft'}
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>Order</label>
+                      <p className="text-sm mt-1" style={{ color: 'var(--color-text)' }}>#{previewLesson.order}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>Language</label>
+                      <p className="text-sm mt-1" style={{ color: 'var(--color-text)' }}>{previewLesson.language || '—'}</p>
+                    </div>
+                    {previewLesson.videoUrl && (
+                      <div className="sm:col-span-2">
+                        <label className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>Video URL</label>
+                        <p className="text-sm mt-1 break-all" style={{ color: 'var(--color-text)' }}>{previewLesson.videoUrl}</p>
+                      </div>
+                    )}
+                    {previewLesson.audioUrl && (
+                      <div className="sm:col-span-2">
+                        <label className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>Audio URL</label>
+                        <p className="text-sm mt-1 break-all" style={{ color: 'var(--color-text)' }}>{previewLesson.audioUrl}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {previewLesson.content && (
+                    <div>
+                      <label className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>Lesson Content</label>
+                      <div className="mt-2 p-4 rounded-xl" style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
+                        <p className="text-sm whitespace-pre-wrap" style={{ color: 'var(--color-text)' }}>{previewLesson.content}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {previewLesson.codingProblem && (
+                    <div>
+                      <label className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>Coding Problem</label>
+                      <div className="mt-2 p-4 rounded-xl" style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
+                        <p className="text-sm whitespace-pre-wrap" style={{ color: 'var(--color-text)' }}>{previewLesson.codingProblem}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {previewLesson.starterCode && (
+                    <div>
+                      <label className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>Starter Code</label>
+                      <div className="mt-2 rounded-xl overflow-hidden border" style={{ borderColor: 'var(--color-border)' }}>
+                        <CodeBlock code={previewLesson.starterCode} language={previewLesson.language || 'python'} />
+                      </div>
+                    </div>
+                  )}
+
+                  {previewLesson.expectedOutput && (
+                    <div>
+                      <label className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>Expected Output</label>
+                      <div className="mt-2 p-4 rounded-xl" style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
+                        <p className="text-sm whitespace-pre-wrap font-mono" style={{ color: 'var(--color-text)' }}>{previewLesson.expectedOutput}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="px-6 py-4 border-t flex justify-end gap-2" style={{ borderTopColor: 'var(--color-border)' }}>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-ghost"
+                  onClick={() => setPreviewLesson(null)}
+                  style={{ color: 'var(--color-text-muted)' }}
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}
