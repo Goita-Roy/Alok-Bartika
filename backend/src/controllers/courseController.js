@@ -177,7 +177,9 @@ const getCourseById = async (req, res) => {
       return res.status(404).json({ message: 'Course not found' })
     }
 
-    const lessons = await Lesson.find({ courseId: course._id }).sort({ order: 1 })
+    // Student-facing: only published lessons are embedded. Draft lessons are
+    // authored/published through the admin module.
+    const lessons = await Lesson.find({ courseId: course._id, status: { $ne: 'draft' } }).sort({ order: 1 })
     const lessonsWithSlug = lessons.map((l) => ({
       ...l.toObject(),
       slug: slugForLesson(l, course.level),

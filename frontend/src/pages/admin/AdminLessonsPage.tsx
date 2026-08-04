@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import api from '../../config/api'
 import {
@@ -25,6 +25,7 @@ interface LessonItem {
   starterCode: string
   expectedOutput: string
   level?: string
+  status?: string
   createdAt?: string
 }
 
@@ -58,6 +59,7 @@ const emptyForm = {
   audioUrl: '',
   starterCode: '',
   expectedOutput: '',
+  status: 'draft',
 }
 
 export function AdminLessonsPage() {
@@ -70,12 +72,15 @@ export function AdminLessonsPage() {
   const [error, setError] = useState<string | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  const [panelOpen, setPanelOpen] = useState(false)
+  const titleInputRef = useRef<HTMLInputElement>(null)
 
   // Search / filter / sort / pagination state
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [courseFilter, setCourseFilter] = useState<string>('all')
   const [levelFilter, setLevelFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
   const [sortBy, setSortBy] = useState<string>('order')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 25, total: 0, pages: 0 })
@@ -144,6 +149,7 @@ export function AdminLessonsPage() {
       if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim())
       if (courseFilter !== 'all') params.set('courseId', courseFilter)
       if (levelFilter !== 'all') params.set('level', levelFilter)
+      if (statusFilter !== 'all') params.set('status', statusFilter)
       params.set('sortBy', sortBy)
       params.set('sortOrder', sortOrder)
 
@@ -164,7 +170,7 @@ export function AdminLessonsPage() {
     } finally {
       setLoadingLessons(false)
     }
-  }, [debouncedSearch, courseFilter, levelFilter, sortBy, sortOrder])
+  }, [debouncedSearch, courseFilter, levelFilter, statusFilter, sortBy, sortOrder])
 
   useEffect(() => {
     loadCourses()
@@ -173,7 +179,7 @@ export function AdminLessonsPage() {
   useEffect(() => {
     loadLessons(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, courseFilter, levelFilter, sortBy, sortOrder])
+  }, [debouncedSearch, courseFilter, levelFilter, statusFilter, sortBy, sortOrder])
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 350)
@@ -209,6 +215,7 @@ export function AdminLessonsPage() {
         audioUrl: form.audioUrl.trim(),
         starterCode: form.starterCode.trim(),
         expectedOutput: form.expectedOutput.trim(),
+        status: form.status,
       }
 
       if (form._id) {
@@ -217,15 +224,27 @@ export function AdminLessonsPage() {
       } else {
         await api.post('/lessons', payload)
         showToast('Lesson created', 'success')
+        setForm(emptyForm)
+        setTimeout(() => titleInputRef.current?.focus(), 0)
       }
 
-      setForm(emptyForm)
       await loadLessons(pagination.page)
     } catch (err: any) {
       showToast(err.response?.data?.message || err.message || 'Failed to save lesson', 'error')
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const openNewLesson = () => {
+    setForm(emptyForm)
+    setPanelOpen(true)
+    setTimeout(() => titleInputRef.current?.focus(), 0)
+  }
+
+  const closePanel = () => {
+    setPanelOpen(false)
+    setForm(emptyForm)
   }
 
   const handleEdit = (lesson: LessonItem) => {
@@ -240,7 +259,9 @@ export function AdminLessonsPage() {
       audioUrl: lesson.audioUrl,
       starterCode: lesson.starterCode,
       expectedOutput: lesson.expectedOutput,
+      status: lesson.status || 'draft',
     })
+    setPanelOpen(true)
   }
 
   const handleDelete = async (lessonId: string) => {
@@ -256,6 +277,10 @@ export function AdminLessonsPage() {
 
   const getCourseForLesson = (lesson: LessonItem) => {
     return courses.find(c => c._id === lesson.courseId)
+  }
+
+  const getStatusColor = (status: string): string => {
+    return status === 'published' ? '#22c55e' : '#f59e0b'
   }
 
   const getLevelColor = (level: string): string => {
@@ -296,7 +321,7 @@ export function AdminLessonsPage() {
             </button>
             <button
               type="button"
-              onClick={() => setForm(emptyForm)}
+              onClick={openNewLesson}
               className="btn btn-sm btn-outline"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
             >
@@ -375,6 +400,16 @@ export function AdminLessonsPage() {
               <option key={level.value} value={level.value}>{level.label}</option>
             ))}
           </select>
+          <select
+            className="select select-sm"
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+          >
+            <option value="all">All Statuses</option>
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+          </select>
         </div>
 
         {/* Error */}
@@ -386,140 +421,7 @@ export function AdminLessonsPage() {
           </div>
         )}
 
-        <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
-          {/* Create / Edit Form */}
-          <form
-            onSubmit={handleSubmit}
-            className="card shadow-sm"
-            style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
-          >
-            <div className="card-body gap-4">
-              <div className="flex items-center gap-2">
-                <FileText size={18} style={{ color: 'var(--color-accent)' }} />
-                <h2 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>
-                  {form._id ? 'Edit lesson' : 'Create lesson'}
-                </h2>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Course</label>
-                {loadingCourses ? (
-                  <div className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>Loading courses…</div>
-                ) : (
-                  <select
-                    value={selectedCourseId}
-                    onChange={(e) => setSelectedCourseId(e.target.value)}
-                    className="select select-sm w-full mt-1"
-                    style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
-                  >
-                    {courses.map(course => (
-                      <option key={course._id} value={course._id}>{course.title}</option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              <div>
-                <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Title</label>
-                <input
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="input input-sm w-full mt-1"
-                  style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Content</label>
-                <textarea
-                  value={form.content}
-                  onChange={(e) => setForm({ ...form, content: e.target.value })}
-                  className="textarea textarea-sm w-full mt-1"
-                  rows={4}
-                  style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
-                />
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Order</label>
-                  <input
-                    type="number"
-                    value={form.order}
-                    onChange={(e) => setForm({ ...form, order: Number(e.target.value) || 1 })}
-                    className="input input-sm w-full mt-1"
-                    style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Language</label>
-                  <select
-                    value={form.language}
-                    onChange={(e) => setForm({ ...form, language: e.target.value })}
-                    className="select select-sm w-full mt-1"
-                    style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
-                  >
-                    <option value="python">Python</option>
-                    <option value="javascript">JavaScript</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Video URL</label>
-                  <input
-                    value={form.videoUrl}
-                    onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
-                    className="input input-sm w-full mt-1"
-                    style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Audio URL</label>
-                  <input
-                    value={form.audioUrl}
-                    onChange={(e) => setForm({ ...form, audioUrl: e.target.value })}
-                    className="input input-sm w-full mt-1"
-                    style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Starter code</label>
-                <textarea
-                  value={form.starterCode}
-                  onChange={(e) => setForm({ ...form, starterCode: e.target.value })}
-                  className="textarea textarea-sm w-full mt-1"
-                  rows={3}
-                  style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Expected output</label>
-                <input
-                  value={form.expectedOutput}
-                  onChange={(e) => setForm({ ...form, expectedOutput: e.target.value })}
-                  className="input input-sm w-full mt-1"
-                  style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
-                />
-              </div>
-
-              <div className="flex gap-2">
-                <button className="btn btn-sm btn-primary" type="submit" disabled={submitting}>
-                  {submitting ? <Loader2 size={16} className="animate-spin" /> : null}
-                  {form._id ? 'Update lesson' : 'Save lesson'}
-                </button>
-                {form._id ? (
-                  <button type="button" className="btn btn-sm btn-ghost" onClick={() => setForm(emptyForm)}>
-                    Cancel
-                  </button>
-                ) : null}
-              </div>
-            </div>
-          </form>
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
 
           {/* Lesson List / Table */}
           <div className="space-y-4">
@@ -550,6 +452,8 @@ export function AdminLessonsPage() {
                           <th key="Order" style={{ backgroundColor: 'transparent' }}>
                             <SortableHeader field="order" label="Order" />
                           </th>
+                          <th key="Status" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
+                            style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Status</th>
                           <th key="Level" style={{ backgroundColor: 'transparent' }}>
                             <SortableHeader field="level" label="Level" />
                           </th>
@@ -590,6 +494,18 @@ export function AdminLessonsPage() {
                                 <span className="badge badge-sm font-semibold"
                                   style={{ backgroundColor: 'var(--color-accent-pale)', color: 'var(--color-accent)', border: 'none' }}>
                                   #{lesson.order}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span
+                                  className="badge badge-sm font-semibold capitalize"
+                                  style={{
+                                    backgroundColor: `${getStatusColor(lesson.status || 'draft')}20`,
+                                    color: getStatusColor(lesson.status || 'draft'),
+                                    border: 'none',
+                                  }}
+                                >
+                                  {lesson.status || 'draft'}
                                 </span>
                               </td>
                               <td className="px-4 py-3">
@@ -656,7 +572,10 @@ export function AdminLessonsPage() {
                       <div
                         key={lesson._id}
                         className="card shadow-sm"
-                        style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+                        style={{
+                          backgroundColor: 'var(--color-surface)',
+                          border: '1px solid var(--color-border)',
+                        }}
                       >
                         <div className="card-body flex flex-col gap-3">
                           <div className="flex items-start justify-between gap-3">
@@ -689,6 +608,16 @@ export function AdminLessonsPage() {
                                   {level}
                                 </span>
                               )}
+                              <span
+                                className="badge badge-sm font-semibold capitalize"
+                                style={{
+                                  backgroundColor: `${getStatusColor(lesson.status || 'draft')}20`,
+                                  color: getStatusColor(lesson.status || 'draft'),
+                                  border: 'none',
+                                }}
+                              >
+                                {lesson.status || 'draft'}
+                              </span>
                             </div>
                           </div>
                           {lesson.content && (
@@ -766,6 +695,176 @@ export function AdminLessonsPage() {
                     <ChevronRight size={16} />
                   </button>
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right panel: Create / Edit */}
+          <div className="flex flex-col gap-4">
+            {panelOpen ? (
+              <div
+                className="card shadow-sm flex flex-col transition-all duration-300 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)]"
+                style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+              >
+                {/* Sticky header */}
+                <div
+                  className="px-4 py-3 border-b shrink-0 lg:sticky lg:top-0"
+                  style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', zIndex: 10 }}
+                >
+                  <div className="flex items-center gap-2">
+                    <FileText size={18} style={{ color: 'var(--color-accent)' }} />
+                    <h2 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>
+                      {form._id ? 'Edit Lesson' : 'Create New Lesson'}
+                    </h2>
+                  </div>
+                </div>
+
+                {/* Scrollable body */}
+                <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+                  <div className="card-body gap-4 flex-1 overflow-y-auto">
+                    <div>
+                      <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Course</label>
+                      {loadingCourses ? (
+                        <div className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>Loading courses…</div>
+                      ) : (
+                        <select
+                          value={selectedCourseId}
+                          onChange={(e) => setSelectedCourseId(e.target.value)}
+                          className="select select-sm w-full mt-1"
+                          style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+                        >
+                          {courses.map(course => (
+                            <option key={course._id} value={course._id}>{course.title}</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Title</label>
+                      <input
+                        ref={titleInputRef}
+                        value={form.title}
+                        onChange={(e) => setForm({ ...form, title: e.target.value })}
+                        className="input input-sm w-full mt-1"
+                        style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Content</label>
+                      <textarea
+                        value={form.content}
+                        onChange={(e) => setForm({ ...form, content: e.target.value })}
+                        className="textarea textarea-sm w-full mt-1"
+                        rows={4}
+                        style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+                      />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Order</label>
+                        <input
+                          type="number"
+                          value={form.order}
+                          onChange={(e) => setForm({ ...form, order: Number(e.target.value) || 1 })}
+                          className="input input-sm w-full mt-1"
+                          style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Language</label>
+                        <select
+                          value={form.language}
+                          onChange={(e) => setForm({ ...form, language: e.target.value })}
+                          className="select select-sm w-full mt-1"
+                          style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+                        >
+                          <option value="python">Python</option>
+                          <option value="javascript">JavaScript</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Status</label>
+                        <select
+                          value={form.status}
+                          onChange={(e) => setForm({ ...form, status: e.target.value })}
+                          className="select select-sm w-full mt-1"
+                          style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+                        >
+                          <option value="draft">Draft</option>
+                          <option value="published">Published</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Video URL</label>
+                        <input
+                          value={form.videoUrl}
+                          onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
+                          className="input input-sm w-full mt-1"
+                          style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Audio URL</label>
+                        <input
+                          value={form.audioUrl}
+                          onChange={(e) => setForm({ ...form, audioUrl: e.target.value })}
+                          className="input input-sm w-full mt-1"
+                          style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Starter code</label>
+                      <textarea
+                        value={form.starterCode}
+                        onChange={(e) => setForm({ ...form, starterCode: e.target.value })}
+                        className="textarea textarea-sm w-full mt-1"
+                        rows={3}
+                        style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Expected output</label>
+                      <input
+                        value={form.expectedOutput}
+                        onChange={(e) => setForm({ ...form, expectedOutput: e.target.value })}
+                        className="input input-sm w-full mt-1"
+                        style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Sticky footer */}
+                  <div
+                    className="px-4 py-3 border-t flex gap-2 shrink-0 lg:sticky lg:bottom-0"
+                    style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', zIndex: 10 }}
+                  >
+                    <button className="btn btn-sm btn-primary" type="submit" disabled={submitting}>
+                      {submitting ? <Loader2 size={16} className="animate-spin" /> : null}
+                      {form._id ? 'Update lesson' : 'Save lesson'}
+                    </button>
+                    <button type="button" className="btn btn-sm btn-ghost" onClick={closePanel}>
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            ) : (
+              <div
+                className="card shadow-sm flex items-center justify-center p-8 transition-all duration-300 lg:sticky lg:top-4"
+                style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', minHeight: '240px' }}
+              >
+                <p className="text-sm text-center max-w-[14rem]" style={{ color: 'var(--color-text-muted)' }}>
+                  Select a lesson to edit or click New Lesson.
+                </p>
               </div>
             )}
           </div>

@@ -41,6 +41,15 @@ const lessonSchema = new mongoose.Schema(
       trim: true,
       index: true,
     },
+    status: {
+      // Visibility flag. New lessons default to draft and are only shown to
+      // students once published. Legacy documents without the field are treated
+      // as published when read through student-facing endpoints.
+      type: String,
+      enum: ['draft', 'published'],
+      default: 'draft',
+      index: true,
+    },
     slug: {
       // Canonical client-facing identifier for this lesson. The backend owns its
       // assignment (deterministic from `level`+`order`) so that every API,

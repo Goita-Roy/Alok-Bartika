@@ -9,7 +9,7 @@ const ALLOWED_SORT_FIELDS = ['title', 'order', 'level', 'courseId', 'createdAt']
 // SECURITY: the ONLY fields an admin may set when creating/updating a lesson.
 const LESSON_FIELDS = [
   'courseId', 'title', 'content', 'videoUrl', 'audioUrl', 'codingProblem',
-  'order', 'language', 'starterCode', 'expectedOutput', 'practice',
+  'order', 'language', 'starterCode', 'expectedOutput', 'practice', 'status',
 ]
 
 function pickLessonFields(body) {
@@ -46,10 +46,11 @@ async function buildLessonSummary() {
 //   ?level=           filter by course level (beginner|intermediate|advanced)
 //   ?sortBy=          title|order|level|courseId|createdAt (default: order)
 //   ?sortOrder=       asc|desc (default: asc)
+//   ?status=          all|draft|published (default: all -> admin sees everything)
 //   ?page=&limit=     pagination (when provided, returns pagination + summary)
 const getAllLessons = async (req, res) => {
   try {
-    const { search, courseId, level, page, limit, sortBy, sortOrder } = req.query
+    const { search, courseId, level, page, limit, sortBy, sortOrder, status } = req.query
 
     const allowedSortBy = ALLOWED_SORT_FIELDS.includes(sortBy) ? sortBy : 'order'
     const allowedSortOrder = sortOrder === 'desc' ? -1 : 1
@@ -67,6 +68,10 @@ const getAllLessons = async (req, res) => {
       filter.courseId = mongoose.Types.ObjectId.isValid(courseId)
         ? new mongoose.Types.ObjectId(courseId)
         : new mongoose.Types.ObjectId()
+    }
+
+    if (status === 'draft' || status === 'published') {
+      filter.status = status
     }
 
     if (levelCourseIds) {
@@ -122,12 +127,15 @@ const getAllLessons = async (req, res) => {
   }
 }
 
-// @desc    Get all lessons for a course
+// @desc    Get all lessons for a course (student-facing: published only)
 // @route   GET /api/lessons/course/:courseId
 // @access  Public
 const getLessonsByCourse = async (req, res) => {
   try {
-    const lessons = await Lesson.find({ courseId: req.params.courseId }).sort({ order: 1 })
+    const lessons = await Lesson.find({
+      courseId: req.params.courseId,
+      status: { $ne: 'draft' },
+    }).sort({ order: 1 })
     res.status(200).json({ data: lessons })
   } catch (error) {
     console.error('Get Lessons Error:', error)
@@ -135,12 +143,12 @@ const getLessonsByCourse = async (req, res) => {
   }
 }
 
-// @desc    Get single lesson
+// @desc    Get single lesson (student-facing: draft lessons are hidden)
 // @route   GET /api/lessons/:id
 // @access  Public
 const getLessonById = async (req, res) => {
   try {
-    const lesson = await Lesson.findById(req.params.id)
+    const lesson = await Lesson.findOne({ _id: req.params.id, status: { $ne: 'draft' } })
     if (!lesson) {
       return res.status(404).json({ message: 'Lesson not found' })
     }
