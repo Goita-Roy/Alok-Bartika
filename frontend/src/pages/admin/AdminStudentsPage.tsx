@@ -7,6 +7,7 @@ import {
   Search, Users, GraduationCap, UserX, UserCheck, Trash2,
   AlertTriangle, Eye, X, RefreshCw, Loader2, Calendar,
   ChevronLeft, ChevronRight, BookOpen, Trophy, Star,
+  CheckSquare, Square,
 } from 'lucide-react'
 
 interface Student {
@@ -36,6 +37,13 @@ interface Pagination {
   pages: number
 }
 
+interface StudentSummary {
+  total: number
+  active: number
+  suspended: number
+  new30d: number
+}
+
 const stageColors: Record<string, string> = {
   beginner: '#3b82f6',
   intermediate: '#f59e0b',
@@ -55,6 +63,7 @@ export function AdminStudentsPage() {
   const [sortBy, setSortBy] = useState<string>('createdAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 25, total: 0, pages: 0 })
+  const [summary, setSummary] = useState<StudentSummary>({ total: 0, active: 0, suspended: 0, new30d: 0 })
 
   const [detailTarget, setDetailTarget] = useState<Student | null>(null)
   const [suspendTarget, setSuspendTarget] = useState<Student | null>(null)
@@ -62,6 +71,11 @@ export function AdminStudentsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Student | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+
+  // Bulk action state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkActionTarget, setBulkActionTarget] = useState<{ action: 'suspend' | 'activate' | 'delete'; ids: string[] } | null>(null)
+  const [bulkProcessing, setBulkProcessing] = useState(false)
 
   const headers = {
     'Content-Type': 'application/json',
@@ -126,6 +140,14 @@ export function AdminStudentsPage() {
       const json = await res.json()
       setStudents(json.data || [])
       setPagination(json.pagination || { page: 1, limit: 25, total: 0, pages: 0 })
+      if (json.summary) {
+        setSummary({
+          total: json.summary.total || 0,
+          active: json.summary.active || 0,
+          suspended: json.summary.suspended || 0,
+          new30d: json.summary.new30d || 0,
+        })
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load students')
     } finally {
@@ -187,6 +209,57 @@ export function AdminStudentsPage() {
     }
   }
 
+  const handleBulkAction = async () => {
+    if (!bulkActionTarget) return
+    const { action, ids } = bulkActionTarget
+    setBulkProcessing(true)
+    try {
+      const endpoint = action === 'delete' ? '/bulk/delete' : '/bulk/suspend'
+      const payload = action === 'delete' ? { ids } : { ids, action: action === 'suspend' ? 'suspend' : 'activate' }
+      const res = await fetch(`${API_BASE_URL}/students${endpoint}`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.message || 'Request failed')
+      showToast(json.message, 'success')
+      setBulkActionTarget(null)
+      setSelectedIds(new Set())
+      loadStudents(pagination.page)
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'Request failed', 'error')
+    } finally {
+      setBulkProcessing(false)
+    }
+  }
+
+  // Clear selection when students or filters change
+  useEffect(() => {
+    setSelectedIds(new Set())
+  }, [students, debouncedSearch, statusFilter, dateFrom, dateTo, sortBy, sortOrder])
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const selectAll = () => {
+    if (selectedIds.size === students.length) setSelectedIds(new Set())
+    else setSelectedIds(new Set(students.map((s) => s.id)))
+  }
+
+  const getSelectedStudentNames = () => {
+    return students
+      .filter((s) => selectedIds.has(s.id))
+      .map((s) => s.fullName)
+      .join(', ')
+  }
+
   const formatDate = (d: string) => {
     try { return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) }
     catch { return '—' }
@@ -207,33 +280,40 @@ export function AdminStudentsPage() {
             <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>Student Management</h1>
             <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>View, manage, and monitor student accounts</p>
           </div>
-          <button onClick={() => loadStudents(pagination.page)}
-            className="btn btn-sm btn-ghost self-start"
-            style={{ color: 'var(--color-text-muted)' }}>
-            <RefreshCw size={16} />
-          </button>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <button onClick={() => loadStudents(pagination.page)}
+              className="btn btn-sm btn-ghost"
+              style={{ color: 'var(--color-text-muted)' }}>
+              <RefreshCw size={16} />
+            </button>
+          </div>
         </div>
 
         {/* Summary cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: 'Total Students', value: pagination.total, icon: Users, color: '#3b82f6', bg: 'rgba(59,130,246,0.10)' },
-            { label: 'Active', value: statusFilter === 'suspended' ? '—' : (statusFilter === 'active' ? pagination.total : '—'), icon: UserCheck, color: '#22c55e', bg: 'rgba(34,197,94,0.10)' },
-            { label: 'Suspended', value: statusFilter === 'active' ? '—' : (statusFilter === 'suspended' ? pagination.total : '—'), icon: UserX, color: '#dc2626', bg: 'rgba(220,38,38,0.10)' },
-            { label: 'Page', value: `${pagination.page}/${pagination.pages || 1}`, icon: GraduationCap, color: '#7c3aed', bg: 'rgba(124,58,237,0.10)' },
+            { label: 'Total Students', value: summary.total, description: 'All registered students', icon: Users, color: '#3b82f6' },
+            { label: 'Active', value: summary.active, description: 'Currently active', icon: UserCheck, color: '#22c55e' },
+            { label: 'Suspended', value: summary.suspended, description: 'Currently suspended', icon: UserX, color: '#dc2626' },
+            { label: 'New (30d)', value: summary.new30d, description: 'Joined last 30 days', icon: GraduationCap, color: '#7c3aed' },
           ].map(c => {
             const Icon = c.icon
             return (
-              <div key={c.label} className="card shadow-sm"
+              <div key={c.label}
+                className="group card shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
                 style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-                <div className="card-body p-4 flex flex-row items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: c.bg }}>
-                    <Icon size={18} style={{ color: c.color }} />
+                <div className="card-body p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110"
+                      style={{ backgroundColor: `${c.color}15` }}>
+                      <Icon size={20} style={{ color: c.color }} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>{c.label}</p>
+                      <p className="text-2xl font-bold" style={{ color: c.color }}>{c.value}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{c.label}</p>
-                    <p className="text-lg font-bold" style={{ color: c.color }}>{c.value}</p>
-                  </div>
+                  <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)', opacity: 0.7 }}>{c.description}</p>
                 </div>
               </div>
             )
@@ -279,114 +359,174 @@ export function AdminStudentsPage() {
           </div>
         )}
 
-        {/* Table */}
-        <div className="card shadow-sm overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-          {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 size={24} className="animate-spin" style={{ color: 'var(--color-accent)' }} />
+        {/* Bulk Action Toolbar */}
+        {selectedIds.size > 0 && (
+          <div className="flex items-center justify-between px-4 py-3 rounded-xl"
+            style={{ backgroundColor: 'var(--color-accent-pale)' }}>
+            <span className="text-sm font-medium" style={{ color: 'var(--color-accent)' }}>
+              {selectedIds.size} student{selectedIds.size !== 1 ? 's' : ''} selected
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setBulkActionTarget({ action: 'suspend', ids: Array.from(selectedIds) })}
+                className="btn btn-sm btn-warning"
+                disabled={bulkProcessing}
+              >
+                <UserX size={14} /> Suspend
+              </button>
+              <button
+                onClick={() => setBulkActionTarget({ action: 'activate', ids: Array.from(selectedIds) })}
+                className="btn btn-sm btn-success"
+                disabled={bulkProcessing}
+              >
+                <UserCheck size={14} /> Activate
+              </button>
+              <button
+                onClick={() => setBulkActionTarget({ action: 'delete', ids: Array.from(selectedIds) })}
+                className="btn btn-sm btn-error"
+                disabled={bulkProcessing}
+              >
+                <Trash2 size={14} /> Delete
+              </button>
             </div>
-          ) : students.length === 0 ? (
-            <div className="card-body items-center text-center py-16">
-              <Users size={40} style={{ color: 'var(--color-text-muted)', opacity: 0.4 }} />
-              <p className="text-sm mt-2" style={{ color: 'var(--color-text-muted)' }}>
-                {debouncedSearch || statusFilter !== 'all' || dateFrom || dateTo
-                  ? 'No students match your filters' : 'No students have registered yet'}
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* Desktop table */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="table table-sm w-full">
-                   <thead>
-                     <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                       <th key="Student" style={{ backgroundColor: 'transparent' }}>
-                         <SortableHeader field="fullName" label="Student" />
-                       </th>
-                       <th key="Email" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
-                         style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Email</th>
-                       <th key="Username" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
-                         style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Username</th>
-                       <th key="Phone" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
-                         style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Phone</th>
-                       <th key="Stage" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
-                         style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Stage</th>
-                       <th key="Level" style={{ backgroundColor: 'transparent' }}>
-                         <SortableHeader field="level" label="Level" />
-                       </th>
-                       <th key="XP" style={{ backgroundColor: 'transparent' }}>
-                         <SortableHeader field="xp" label="XP" />
-                       </th>
-                       <th key="Status" style={{ backgroundColor: 'transparent' }}>
-                         <SortableHeader field="isActive" label="Status" />
-                       </th>
-                       <th key="JoinDate" style={{ backgroundColor: 'transparent' }}>
-                         <SortableHeader field="createdAt" label="Join Date" />
-                       </th>
-                       <th key="Actions" className="text-xs font-semibold uppercase tracking-wider py-3 px-4 text-center"
-                         style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Actions</th>
-                     </tr>
-                   </thead>
-                   <tbody>
-                     {students.map(s => (
-                       <tr key={s.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                         <td className="px-4 py-3">
-                           <div className="flex items-center gap-2.5">
-                             <div className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0"
-                               style={{ backgroundColor: 'var(--color-accent-pale)', color: 'var(--color-accent)' }}>
-                               {s.fullName?.charAt(0).toUpperCase() || '?'}
-                             </div>
-                             <span className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{s.fullName}</span>
-                           </div>
-                         </td>
-                         <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text)' }}>{s.email}</td>
-                         <td className="px-4 py-3 text-sm font-mono" style={{ color: 'var(--color-text-muted)' }}>{s.username}</td>
-                         <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>{s.phone || '—'}</td>
-                         <td className="px-4 py-3">
-                           <span className="badge badge-sm font-semibold capitalize" style={{
-                             backgroundColor: `${stageColors[s.currentStage] || '#6b7280'}20`,
-                             color: stageColors[s.currentStage] || '#6b7280',
-                             border: 'none',
-                           }}>
-                             {s.currentStage}
-                           </span>
-                         </td>
-                         <td className="px-4 py-3 text-sm font-bold" style={{ color: 'var(--color-accent)' }}>{s.level}</td>
-                         <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text)' }}>{s.xp} pts</td>
-                         <td className="px-4 py-3">
-                           <span className={`badge badge-sm font-semibold ${s.isActive ? 'badge-success' : 'badge-error'}`}
-                             style={{ border: 'none' }}>
-                             {s.isActive ? 'Active' : 'Suspended'}
-                           </span>
-                         </td>
-                         <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>{formatDate(s.createdAt)}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-1">
-                            <button onClick={() => setDetailTarget(s)}
-                              className="btn btn-ghost btn-xs"
-                              style={{ color: 'var(--color-accent)' }}
-                              title="View details">
-                              <Eye size={14} />
-                            </button>
-                            <button onClick={() => setSuspendTarget(s)}
-                              className="btn btn-ghost btn-xs"
-                              style={{ color: s.isActive ? 'var(--color-warning, #f59e0b)' : '#22c55e' }}
-                              title={s.isActive ? 'Suspend' : 'Reactivate'}>
-                              {s.isActive ? <UserX size={14} /> : <UserCheck size={14} />}
-                            </button>
-                            <button onClick={() => setDeleteTarget(s)}
-                              className="btn btn-ghost btn-xs"
-                              style={{ color: 'var(--color-error)' }}
-                              title="Delete">
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          </div>
+        )}
+
+          {/* Table */}
+          <div className="card shadow-sm overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 size={24} className="animate-spin" style={{ color: 'var(--color-accent)' }} />
               </div>
+            ) : students.length === 0 ? (
+              <div className="card-body items-center text-center py-16">
+                <Users size={40} style={{ color: 'var(--color-text-muted)', opacity: 0.4 }} />
+                <p className="text-sm mt-2" style={{ color: 'var(--color-text-muted)' }}>
+                  {debouncedSearch || statusFilter !== 'all' || dateFrom || dateTo
+                    ? 'No students match your filters' : 'No students have registered yet'}
+                </p>
+                <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)', opacity: 0.6 }}>
+                  Try adjusting your search or filter criteria
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Desktop table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="table table-sm w-full">
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--color-border)', position: 'sticky', top: 0, backgroundColor: 'var(--color-surface)', zIndex: 10 }}>
+                        <th key="Select" className="px-4 py-3 text-center" style={{ backgroundColor: 'transparent' }}>
+                          <button
+                            onClick={selectAll}
+                            className="btn btn-ghost btn-xs"
+                            style={{ color: selectedIds.size === students.length && students.length > 0 ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
+                          >
+                            {selectedIds.size === students.length && students.length > 0
+                              ? <CheckSquare size={16} />
+                              : <Square size={16} style={{ opacity: 0.4 }} />}
+                          </button>
+                        </th>
+                        <th key="Student" style={{ backgroundColor: 'transparent' }}>
+                          <SortableHeader field="fullName" label="Student" />
+                        </th>
+                        <th key="Email" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
+                          style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Email</th>
+                        <th key="Username" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
+                          style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Username</th>
+                        <th key="Phone" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
+                          style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Phone</th>
+                        <th key="Stage" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
+                          style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Stage</th>
+                        <th key="Level" style={{ backgroundColor: 'transparent' }}>
+                          <SortableHeader field="level" label="Level" />
+                        </th>
+                        <th key="XP" style={{ backgroundColor: 'transparent' }}>
+                          <SortableHeader field="xp" label="XP" />
+                        </th>
+                        <th key="Status" style={{ backgroundColor: 'transparent' }}>
+                          <SortableHeader field="isActive" label="Status" />
+                        </th>
+                        <th key="JoinDate" style={{ backgroundColor: 'transparent' }}>
+                          <SortableHeader field="createdAt" label="Join Date" />
+                        </th>
+                        <th key="Actions" className="text-xs font-semibold uppercase tracking-wider py-3 px-4 text-center"
+                          style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {students.map(s => (
+                        <tr key={s.id}
+                          className="hover:bg-accent/30 transition-colors duration-150"
+                          style={{ borderBottom: '1px solid var(--color-border)' }}>
+                          <td className="px-4 py-3 text-center">
+                            <button
+                              onClick={() => toggleSelect(s.id)}
+                              className="btn btn-ghost btn-xs"
+                              style={{ color: selectedIds.has(s.id) ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
+                            >
+                              {selectedIds.has(s.id)
+                                ? <CheckSquare size={14} />
+                                : <Square size={14} style={{ opacity: 0.4 }} />}
+                            </button>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0"
+                                style={{ backgroundColor: 'var(--color-accent-pale)', color: 'var(--color-accent)' }}>
+                                {s.fullName?.charAt(0).toUpperCase() || '?'}
+                              </div>
+                              <span className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{s.fullName}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text)' }}>{s.email}</td>
+                          <td className="px-4 py-3 text-sm font-mono" style={{ color: 'var(--color-text-muted)' }}>{s.username}</td>
+                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>{s.phone || '—'}</td>
+                          <td className="px-4 py-3">
+                            <span className="badge badge-sm font-semibold capitalize" style={{
+                              backgroundColor: `${stageColors[s.currentStage] || '#6b7280'}20`,
+                              color: stageColors[s.currentStage] || '#6b7280',
+                              border: 'none',
+                            }}>
+                              {s.currentStage}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm font-bold" style={{ color: 'var(--color-accent)' }}>{s.level}</td>
+                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text)' }}>{s.xp} pts</td>
+                          <td className="px-4 py-3">
+                            <span className={`badge badge-sm font-semibold ${s.isActive ? 'badge-success' : 'badge-error'}`}
+                              style={{ border: 'none' }}>
+                              {s.isActive ? 'Active' : 'Suspended'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>{formatDate(s.createdAt)}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center justify-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity duration-200">
+                              <button onClick={() => setDetailTarget(s)}
+                                className="btn btn-ghost btn-xs"
+                                style={{ color: 'var(--color-accent)' }}
+                                title="View details">
+                                <Eye size={14} />
+                              </button>
+                              <button onClick={() => setSuspendTarget(s)}
+                                className="btn btn-ghost btn-xs"
+                                style={{ color: s.isActive ? 'var(--color-warning, #f59e0b)' : '#22c55e' }}
+                                title={s.isActive ? 'Suspend' : 'Reactivate'}>
+                                {s.isActive ? <UserX size={14} /> : <UserCheck size={14} />}
+                              </button>
+                              <button onClick={() => setDeleteTarget(s)}
+                                className="btn btn-ghost btn-xs"
+                                style={{ color: 'var(--color-error)' }}
+                                title="Delete">
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
               {/* Mobile cards */}
               <div className="md:hidden divide-y" style={{ borderColor: 'var(--color-border)' }}>
@@ -394,6 +534,15 @@ export function AdminStudentsPage() {
                   <div key={s.id} className="p-4 space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
+                        <button
+                          onClick={() => toggleSelect(s.id)}
+                          className="btn btn-ghost btn-xs"
+                          style={{ color: selectedIds.has(s.id) ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
+                        >
+                          {selectedIds.has(s.id)
+                            ? <CheckSquare size={14} />
+                            : <Square size={14} style={{ opacity: 0.4 }} />}
+                        </button>
                         <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold"
                           style={{ backgroundColor: 'var(--color-accent-pale)', color: 'var(--color-accent)' }}>
                           {s.fullName?.charAt(0).toUpperCase() || '?'}
@@ -415,6 +564,7 @@ export function AdminStudentsPage() {
                         color: stageColors[s.currentStage] || '#6b7280',
                         border: 'none',
                       }}>{s.currentStage}</span>
+                      <span>L{ s.level } · {s.xp}pts</span>
                       {s.phone && <span>{s.phone}</span>}
                       <span>{formatDate(s.createdAt)}</span>
                     </div>
@@ -609,6 +759,53 @@ export function AdminStudentsPage() {
               <button className="btn btn-sm btn-error font-semibold"
                 onClick={handleDelete} disabled={deleting}>
                 {deleting ? <Loader2 size={14} className="animate-spin" /> : 'Delete Permanently'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Bulk Action Confirmation ── */}
+      {bulkActionTarget && (
+        <div className="modal modal-open" onClick={() => !bulkProcessing && setBulkActionTarget(null)}>
+          <div className="modal-box max-w-sm"
+            style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+            onClick={e => e.stopPropagation()}>
+            <div className="flex flex-col items-center text-center gap-3 py-2">
+              {bulkActionTarget.action === 'delete' ? (
+                <>
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                    style={{ backgroundColor: 'rgba(226,75,74,0.10)' }}>
+                    <Trash2 size={24} style={{ color: 'var(--color-error)' }} />
+                  </div>
+                  <h3 className="text-lg font-bold" style={{ color: 'var(--color-text)' }}>Delete {selectedIds.size} Student{selectedIds.size !== 1 ? 's' : ''}?</h3>
+                  <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                    This action is permanent. All data for these {selectedIds.size} student{selectedIds.size !== 1 ? 's' : ''} will be permanently removed, including their progress, XP, badges, and notes.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                    style={{ backgroundColor: bulkActionTarget.action === 'suspend' ? 'rgba(226,75,74,0.10)' : 'rgba(34,197,94,0.10)' }}>
+                    {bulkActionTarget.action === 'suspend' ? <UserX size={24} style={{ color: 'var(--color-error)' }} /> : <UserCheck size={24} style={{ color: '#22c55e' }} />}
+                  </div>
+                  <h3 className="text-lg font-bold" style={{ color: 'var(--color-text)' }}>
+                    {bulkActionTarget.action === 'suspend' ? 'Suspend' : 'Activate'} {selectedIds.size} Student{selectedIds.size !== 1 ? 's' : ''}?
+                  </h3>
+                  <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                    {bulkActionTarget.action === 'suspend'
+                      ? `${selectedIds.size} student${selectedIds.size !== 1 ? 's' : ''} will lose access to the platform and their progress will be frozen.`
+                      : `${selectedIds.size} student${selectedIds.size !== 1 ? 's' : ''} will regain access to the platform.`}
+                  </p>
+                </>
+              )}
+            </div>
+            <div className="flex justify-center gap-2 mt-4">
+              <button className="btn btn-sm btn-ghost" style={{ color: 'var(--color-text-muted)' }}
+                onClick={() => setBulkActionTarget(null)} disabled={bulkProcessing}>Cancel</button>
+              <button className={`btn btn-sm font-semibold ${bulkActionTarget.action === 'delete' ? 'btn-error' : bulkActionTarget.action === 'suspend' ? 'btn-warning' : 'btn-success'}`}
+                onClick={handleBulkAction} disabled={bulkProcessing}>
+                {bulkProcessing ? <Loader2 size={14} className="animate-spin" /> : bulkActionTarget.action === 'delete' ? 'Delete Permanently' : bulkActionTarget.action === 'suspend' ? 'Suspend' : 'Activate'}
               </button>
             </div>
           </div>
