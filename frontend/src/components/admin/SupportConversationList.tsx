@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { io, Socket } from 'socket.io-client'
-import { Search, Filter, Clock, MessageCircle, CheckCircle, XCircle, AlertCircle, User, Loader2 } from 'lucide-react'
+import { Search, Filter, MessageCircle } from 'lucide-react'
 import api from '../../config/api'
-import { useAuth } from '../../context/AuthContext'
-import type { SupportConversation, SupportMessage } from '../../types/support'
+import { useSocket } from '../../hooks/useSocket'
+import type { SupportConversation, SupportMessage, SupportSender } from '../../types/support'
 
 interface SupportConversationListProps {
   onSelect: (conversationId: string) => void
@@ -20,10 +19,7 @@ interface ToastItem {
   createdAt: number
 }
 
-const SOCKET_URL =
-  import.meta.env.VITE_SOCKET_URL ||
-  import.meta.env.VITE_API_URL?.replace('/api', '') ||
-  'http://localhost:5000'
+const SEARCH_DEBOUNCE_MS = 300
 
 export function SupportConversationList({ onSelect, selectedId }: SupportConversationListProps) {
   const [conversations, setConversations] = useState<SupportConversation[]>([])
@@ -33,132 +29,54 @@ export function SupportConversationList({ onSelect, selectedId }: SupportConvers
   const [filter, setFilter] = useState<FilterStatus>('all')
   const [toasts, setToasts] = useState<ToastItem[]>([])
 
-  const { token } = useAuth()
-  const socketRef = useRef<Socket | null>(null)
-  const selectedIdRef = useRef(selectedId)
-  selectedIdRef.current = selectedId
+  const socket = useSocket()
   const toastTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const searchRef = useRef(search)
+  const nowRef = useRef(Date.now())
+  nowRef.current = Date.now()
+
+  useEffect(() => {
+    searchRef.current = search
+  }, [search])
 
   const fetchConversations = useCallback(async () => {
     try {
-      setLoading(true)
-      setError(null)
       const params = new URLSearchParams()
       if (filter !== 'all') params.set('status', filter === 'resolved' ? 'closed' : filter)
-      if (search.trim()) params.set('search', search.trim())
+      if (searchRef.current.trim()) params.set('search', searchRef.current.trim())
 
-      const res = await api.get<{ conversations: SupportConversation[]; pagination: any }>(
+      const res = await api.get<{ conversations: SupportConversation[]; pagination: Record<string, unknown> }>(
         `/support/admin/conversations?${params.toString()}`,
       )
-      setConversations(res.data.conversations || [])
-    } catch (err: unknown) {
-      setError('Failed to load conversations')
-      console.error('Fetch conversations error:', err)
-    } finally {
-      setLoading(false)
+      return res.data.conversations || []
+    } catch {
+      return null
     }
-  }, [search, filter])
+  }, [filter])
 
   useEffect(() => {
-    fetchConversations()
+    setLoading(true)
+    setError(null)
+    fetchConversations().then((result) => {
+      if (result === null) {
+        setError('Failed to load conversations')
+      } else {
+        setConversations(result)
+      }
+      setLoading(false)
+    })
   }, [fetchConversations])
 
-  // ── Socket.IO: realtime conversation updates ────────────────────
-  useEffect(() => {
-    if (!token) return
-
-    // Guard: prevent duplicate socket connections
-    if (socketRef.current && socketRef.current.connected) return
-
-    const s = io(SOCKET_URL, {
-      auth: { token },
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      timeout: 20000,
-    })
-
-    socketRef.current = s
-
-    s.on('connect', () => {
-      s.emit('join_room', {})
-    })
-
-     // New message from a student — bump unreadStudent and move to top
-     s.on('receive_message', (payload: {
-       conversationId: string
-       studentId: string
-       message: SupportMessage
-       unreadStudent?: number
-       unreadAdmin?: number
-     }) => {
-       setConversations((prev) => {
-         const existing = prev.find((c) => c._id === payload.conversationId)
-         if (!existing) return prev
-
-         const updated = {
-           ...existing,
-           unreadStudent: payload.unreadStudent ?? (existing.unreadStudent || 0) + 1,
-           lastMessage: payload.message?.message ?? existing.lastMessage,
-           lastMessageAt: payload.message?.createdAt ?? existing.lastMessageAt,
-           updatedAt: new Date().toISOString(),
-         }
-
-         return [updated, ...prev.filter((c) => c._id !== payload.conversationId)]
-       })
-
-       // Show toast notification
-       const studentName = payload.message?.sender?.fullName || 'Student'
-       const rawMessage = payload.message?.message || ''
-       const messagePreview = rawMessage.length > 60 ? rawMessage.slice(0, 60) + '...' : rawMessage
-       const toastId = `${payload.conversationId}-${Date.now()}`
-
-       setToasts((prev) => [...prev, {
-         id: toastId,
-         conversationId: payload.conversationId,
-         studentName,
-         messagePreview,
-         createdAt: Date.now(),
-       }])
-
-       // Auto-hide after 5 seconds
-       toastTimersRef.current[toastId] = setTimeout(() => {
-         delete toastTimersRef.current[toastId]
-         setToasts((prev) => prev.filter((t) => t.id !== toastId))
-       }, 5000)
-     })
-
-    // Student marked messages as read — reset unreadStudent
-    s.on('message_seen', (payload: {
-      conversationId: string
-      seenByRole?: string
-      unreadStudent?: number
-      unreadAdmin?: number
-    }) => {
-      setConversations((prev) =>
-        prev.map((c) =>
-          c._id === payload.conversationId
-            ? { ...c, unreadStudent: payload.unreadStudent ?? 0 }
-            : c,
-        ),
-      )
-    })
-
-     return () => {
-       s.off()
-       s.disconnect()
-       socketRef.current = null
-       // Clean up all pending toast timers
-       Object.values(toastTimersRef.current).forEach((timer) => clearTimeout(timer))
-       toastTimersRef.current = {}
-     }
-   }, [token])
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value)
-  }
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearch(value)
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
+    searchTimerRef.current = setTimeout(() => {
+      searchTimerRef.current = null
+      fetchConversations()
+    }, SEARCH_DEBOUNCE_MS)
+  }, [fetchConversations])
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFilter(e.target.value as FilterStatus)
@@ -178,16 +96,8 @@ export function SupportConversationList({ onSelect, selectedId }: SupportConvers
     }
   }
 
-  const formatDate = (iso: string) => {
-    try {
-      return new Date(iso).toLocaleDateString('bn-BD', { month: 'short', day: 'numeric' })
-    } catch {
-      return ''
-    }
-  }
-
   const getUnreadBadge = (conversation: SupportConversation) => {
-    const unread = conversation.unreadStudent || 0
+    const unread = conversation.unreadAdmin || 0
     if (unread === 0) return null
     return (
       <span className="flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-blue-500 rounded-full">
@@ -198,7 +108,7 @@ export function SupportConversationList({ onSelect, selectedId }: SupportConvers
 
   const getOnlineIndicator = (conversation: SupportConversation) => {
     const lastActivity = new Date(conversation.updatedAt).getTime()
-    const now = Date.now()
+    const now = nowRef.current
     const fiveMinutes = 5 * 60 * 1000
     const isOnline = now - lastActivity < fiveMinutes
     return (
@@ -328,8 +238,11 @@ export function SupportConversationList({ onSelect, selectedId }: SupportConvers
           </div>
         ) : (
           <div className="space-y-1 p-2">
-            {conversations.map((conv) => {
-              const student = conv.student as any
+             {conversations.map((conv) => {
+               const student =
+                typeof conv.student === 'object'
+                  ? (conv.student as SupportSender)
+                  : null
               const isSelected = selectedId === conv._id
               return (
                 <button

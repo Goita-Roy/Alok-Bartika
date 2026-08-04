@@ -54,7 +54,6 @@ const LiveChatModal: React.FC<LiveChatModalProps> = ({ isOpen, onClose }) => {
     sendMessage,
     emitTyping,
     emitStopTyping,
-    markRead,
     loadOlderMessages,
   } = useSupportChat({ socket, userId: user?.id ?? null, enabled: isOpen })
 
@@ -114,7 +113,6 @@ const LiveChatModal: React.FC<LiveChatModalProps> = ({ isOpen, onClose }) => {
           <div className="flex-1 overflow-hidden">
             <ChatMessages
               messages={messages}
-              studentId={user?.id ?? ''}
               loadingHistory={loadingHistory}
               historyError={historyError}
               adminTyping={adminTyping}

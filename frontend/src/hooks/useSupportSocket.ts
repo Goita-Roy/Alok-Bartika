@@ -18,7 +18,7 @@ const SOCKET_URL =
   import.meta.env.VITE_API_URL?.replace('/api', '') ||
   'http://localhost:5000'
 
-export type SocketStatus = 'idle' | 'connecting' | 'connected' | 'error' | 'disconnected'
+export type SocketStatus = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'error' | 'disconnected'
 
 interface UseSupportSocketOptions {
   /** JWT token from localStorage / AuthContext */
@@ -33,8 +33,9 @@ interface UseSupportSocketReturn {
 }
 
 export function useSupportSocket({ token, enabled }: UseSupportSocketOptions): UseSupportSocketReturn {
-  const socketRef = useRef<Socket | null>(null)
+  const [socket, setSocket] = useState<Socket | null>(null)
   const [status, setStatus] = useState<SocketStatus>('idle')
+  const socketRef = useRef<Socket | null>(null)
 
   useEffect(() => {
     // Only open a connection when enabled=true and we have a valid token
@@ -43,6 +44,7 @@ export function useSupportSocket({ token, enabled }: UseSupportSocketOptions): U
       if (socketRef.current) {
         socketRef.current.disconnect()
         socketRef.current = null
+        setSocket(null)
         setStatus('idle')
       }
       return
@@ -53,7 +55,7 @@ export function useSupportSocket({ token, enabled }: UseSupportSocketOptions): U
 
     setStatus('connecting')
 
-    const socket = io(SOCKET_URL, {
+    const newSocket = io(SOCKET_URL, {
       auth: { token },
       transports: ['websocket', 'polling'],
       reconnection: true,
@@ -63,46 +65,55 @@ export function useSupportSocket({ token, enabled }: UseSupportSocketOptions): U
       timeout: 20000,
     })
 
-    socketRef.current = socket
+    socketRef.current = newSocket
+    setSocket(newSocket)
 
-    socket.on('connect', () => {
+    newSocket.on('connect', () => {
       setStatus('connected')
       // Join own support room immediately on (re)connect
-      socket.emit('join_room', {})
+      newSocket.emit('join_room', {})
     })
 
-    socket.on('connect_error', (err) => {
-      console.error('[useSupportSocket] connect_error:', err.message)
+    newSocket.on('connect_error', () => {
       setStatus('error')
     })
 
-    socket.on('error', (err) => {
-      console.error('[useSupportSocket] error:', err)
+    newSocket.on('reconnect_attempt', () => {
+      setStatus('reconnecting')
+    })
+
+    newSocket.on('reconnecting', () => {
+      setStatus('reconnecting')
+    })
+
+    newSocket.on('error', () => {
       setStatus('error')
     })
 
-    socket.on('disconnect', (reason) => {
-      setStatus('disconnected')
+    newSocket.on('disconnect', (reason) => {
       if (reason === 'io server disconnect') {
-        // Server forcibly disconnected us (e.g., JWT expired) — don't auto-reconnect
-        socket.off()
+        setStatus('disconnected')
+        newSocket.off()
+      } else {
+        setStatus('reconnecting')
       }
     })
 
-    socket.on('reconnect', () => {
+    newSocket.on('reconnect', () => {
       setStatus('connected')
       // Re-join room after reconnect
-      socket.emit('join_room', {})
+      newSocket.emit('join_room', {})
     })
 
     return () => {
       // Cleanup: remove all listeners and disconnect on unmount / dependency change
-      socket.off()
-      socket.disconnect()
+      newSocket.off()
+      newSocket.disconnect()
       socketRef.current = null
+      setSocket(null)
       setStatus('idle')
     }
   }, [token, enabled])
 
-  return { socket: socketRef.current, status }
+  return { socket, status }
 }

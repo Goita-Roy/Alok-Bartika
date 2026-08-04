@@ -10,11 +10,16 @@
  *  - Auto-marks messages read when conversation is viewed
  *  - Cleans up all socket listeners on unmount to prevent memory leaks
  *  - Deduplicates messages using _id tracking
+ *  - Reconnection sync: refreshes conversation + messages + emits seen on reconnect
+ *  - Clears typing indicator on disconnect/reconnect to prevent stuck states
+ *  - Plays notification sound for incoming messages when tab is inactive
+ *  - Shows browser notification for incoming messages when tab is inactive
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Socket } from 'socket.io-client'
 import api from '../config/api'
+import { sanitizeText } from '../utils/sanitize'
 import type { SupportMessage, SupportConversation } from '../types/support'
 
 interface UseSupportChatOptions {
@@ -39,6 +44,38 @@ interface UseSupportChatReturn {
   loadOlderMessages: () => Promise<void>
 }
 
+// ── Notification sound (Web Audio API sine wave) ────────────────────────
+let audioCtx: AudioContext | null = null
+function playNotificationSound() {
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
+    }
+    const oscillator = audioCtx.createOscillator()
+    const gainNode = audioCtx.createGain()
+    oscillator.connect(gainNode)
+    gainNode.connect(audioCtx.destination)
+    oscillator.frequency.value = 800
+    oscillator.type = 'sine'
+    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime)
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3)
+    oscillator.start(audioCtx.currentTime)
+    oscillator.stop(audioCtx.currentTime + 0.3)
+  } catch {
+    // Audio not available
+  }
+}
+
+function showBrowserNotification(title: string, body: string, tag: string) {
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
+  if (document.visibilityState === 'visible') return
+  try {
+    new Notification(title, { body, tag })
+  } catch {
+    // Notifications not available
+  }
+}
+
 export function useSupportChat({ socket, userId, enabled }: UseSupportChatOptions): UseSupportChatReturn {
   const [conversation, setConversation] = useState<SupportConversation | null>(null)
   const [messages, setMessages] = useState<SupportMessage[]>([])
@@ -57,10 +94,46 @@ export function useSupportChat({ socket, userId, enabled }: UseSupportChatOption
   const adminTypingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Track conversation ref for use inside socket callbacks
   const conversationRef = useRef<SupportConversation | null>(null)
-  conversationRef.current = conversation
   // Track loading state via ref so socket handlers always see the latest value
   const loadingHistoryRef = useRef(loadingHistory)
-  loadingHistoryRef.current = loadingHistory
+  // Track whether initial history has been loaded (for reconnection sync)
+  const hasLoadedHistoryRef = useRef(false)
+  // Track enabled state for use inside socket callbacks
+  const enabledRef = useRef(enabled)
+
+  useEffect(() => {
+    conversationRef.current = conversation
+  }, [conversation])
+
+  useEffect(() => {
+    loadingHistoryRef.current = loadingHistory
+  }, [loadingHistory])
+
+  useEffect(() => {
+    enabledRef.current = enabled
+  }, [enabled])
+
+  // ── Helper: refresh conversation + messages (used by reconnection sync) ──
+  const refreshConversation = useCallback(async () => {
+    try {
+      const convRes = await api.get<{ conversation: SupportConversation | null }>('/support/conversation')
+      const conv = convRes.data.conversation
+      if (conv) {
+        setConversation(conv)
+        const msgRes = await api.get<{ messages: SupportMessage[]; hasMore: boolean }>(`/support/messages/${conv._id}`)
+        const msgs = msgRes.data.messages || []
+        const mergedById = new Map<string, SupportMessage>()
+        msgs.forEach((m) => {
+          seenIds.current.add(m._id)
+          mergedById.set(m._id, m)
+        })
+        setMessages(Array.from(mergedById.values()))
+        setHasMore(msgRes.data.hasMore ?? false)
+      }
+    } catch {
+      // Non-critical — keep existing messages
+    }
+  }, [])
 
   // ── Load conversation + message history ────────────────────────────────────
   useEffect(() => {
@@ -85,6 +158,7 @@ export function useSupportChat({ socket, userId, enabled }: UseSupportChatOption
           // No conversation yet — nothing to load, will be created on first send
           setConversation(null)
           setLoadingHistory(false)
+          hasLoadedHistoryRef.current = true
           return
         }
 
@@ -112,7 +186,8 @@ export function useSupportChat({ socket, userId, enabled }: UseSupportChatOption
 
          setMessages(deduped)
          setHasMore(msgRes.data.hasMore ?? false)
-      } catch (err: unknown) {
+         hasLoadedHistoryRef.current = true
+      } catch {
         if (!cancelled) {
           setHistoryError('বার্তা লোড করা যায়নি। পুনরায় চেষ্টা করুন।')
         }
@@ -140,6 +215,11 @@ export function useSupportChat({ socket, userId, enabled }: UseSupportChatOption
       if (!msg?._id) return
       if (seenIds.current.has(msg._id)) return // deduplicate
 
+      // Defense-in-depth: sanitize message text on client
+      if (msg.message) {
+        msg.message = sanitizeText(msg.message)
+      }
+
       // If history is still loading, buffer the message for later merge
       if (loadingHistoryRef.current) {
         messageBuffer.current = [...messageBuffer.current, msg]
@@ -160,6 +240,16 @@ export function useSupportChat({ socket, userId, enabled }: UseSupportChatOption
             }
           : prev,
       )
+
+      // Play notification sound when document is not visible (tab inactive)
+      if (document.visibilityState !== 'visible') {
+        playNotificationSound()
+        showBrowserNotification(
+          'আলোকবর্তিকা সহায়তা',
+          `${msg.sender?.fullName || 'সহায়তা'}: ${msg.message}`,
+          `conv-${payload.conversationId}`,
+        )
+      }
     }
 
      // Sender confirmation (our own message was saved successfully)
@@ -178,6 +268,11 @@ export function useSupportChat({ socket, userId, enabled }: UseSupportChatOption
         const savedMsg = payload.message
         const matchedClientId = payload.clientMessageId
         if (!savedMsg?._id) return
+
+        // Defense-in-depth: sanitize message text on client
+        if (savedMsg.message) {
+          savedMsg.message = sanitizeText(savedMsg.message)
+        }
 
          setMessages((prev) => {
           // If the saved message is already in state, return unchanged (idempotent)
@@ -243,11 +338,35 @@ export function useSupportChat({ socket, userId, enabled }: UseSupportChatOption
       )
     }
 
-    // Socket disconnect — clear any stuck optimistic messages and sending state
+    // Socket disconnect — clear typing state, remove optimistic messages
     const onDisconnect = () => {
       setMessages((prev) => prev.filter((m) => !m._optimistic))
       setSending(false)
       setSendError('সংযোগ হারিয়ে গেছে। বার্তা পাঠানো ব্যর্থ হয়েছে।')
+      // Clear typing indicator to prevent stuck state after reconnect
+      setAdminTyping(false)
+      if (adminTypingTimeout.current) {
+        clearTimeout(adminTypingTimeout.current)
+        adminTypingTimeout.current = null
+      }
+    }
+
+    // Reconnection sync — refresh conversation + messages + emit seen
+    const onConnect = () => {
+      if (!hasLoadedHistoryRef.current || !enabledRef.current) return
+      // Clear any stale typing state from previous session
+      setAdminTyping(false)
+      if (adminTypingTimeout.current) {
+        clearTimeout(adminTypingTimeout.current)
+        adminTypingTimeout.current = null
+      }
+      // Refresh data from server (deduplication prevents message duplication)
+      refreshConversation()
+      // Re-emit message_seen to sync read status
+      const convId = conversationRef.current?._id
+      if (convId) {
+        socket.emit('message_seen', { conversationId: convId })
+      }
     }
 
     socket.on('receive_message', onReceiveMessage)
@@ -257,6 +376,7 @@ export function useSupportChat({ socket, userId, enabled }: UseSupportChatOption
     socket.on('message_seen', onMessageSeen)
     socket.on('error', onError)
     socket.on('disconnect', onDisconnect)
+    socket.on('connect', onConnect)
 
     return () => {
       socket.off('receive_message', onReceiveMessage)
@@ -266,9 +386,10 @@ export function useSupportChat({ socket, userId, enabled }: UseSupportChatOption
        socket.off('message_seen', onMessageSeen)
        socket.off('error', onError)
        socket.off('disconnect', onDisconnect)
+       socket.off('connect', onConnect)
        if (adminTypingTimeout.current) clearTimeout(adminTypingTimeout.current)
      }
-  }, [socket, userId])
+  }, [socket, userId, refreshConversation])
 
 // ── Send message ───────────────────────────────────────────────────────────
    const sendMessage = useCallback(
@@ -297,7 +418,7 @@ export function useSupportChat({ socket, userId, enabled }: UseSupportChatOption
        }
        setMessages((prev) => [...prev, optimisticMsg])
 
-        try {
+       try {
            if (socket?.connected) {
              socket.emit('send_message', { message: trimmed, conversationId, clientMessageId })
          } else {
@@ -310,6 +431,10 @@ export function useSupportChat({ socket, userId, enabled }: UseSupportChatOption
 
           const savedMsg = res.data.data
           if (savedMsg?._id) {
+            // Defense-in-depth: sanitize message text on client
+            if (savedMsg.message) {
+              savedMsg.message = sanitizeText(savedMsg.message)
+            }
             // Remove optimistic, add real message
             setMessages((prev) => {
               const without = prev.filter((m) => !m._optimistic || m.message !== trimmed)
@@ -336,7 +461,7 @@ export function useSupportChat({ socket, userId, enabled }: UseSupportChatOption
             }
           }
         }
-      } catch (err: unknown) {
+      } catch {
         // Remove optimistic on failure
         setMessages((prev) => prev.filter((m) => !m._optimistic || m.message !== trimmed))
         setSendError('বার্তা পাঠানো যায়নি। পুনরায় চেষ্টা করুন।')

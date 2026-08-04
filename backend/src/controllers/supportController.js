@@ -2,16 +2,7 @@ const mongoose = require('mongoose')
 const { SupportConversation } = require('../models/SupportConversation')
 const { SupportMessage } = require('../models/SupportMessage')
 const { getIo } = require('../socket/index')
-
-function sanitizeMessage(text) {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .trim()
-}
+const { sanitizeMessage } = require('../utils/sanitize')
 
 // ── Conversation ownership validation ──────────────────────────────────
 // Ensures the authenticated user owns the conversation (or is admin/super-admin).
@@ -45,16 +36,6 @@ const validateConversationOwnership = async (req, res, next) => {
     console.error('validateConversationOwnership Error:', error)
     res.status(500).json({ message: error.message || 'Internal Server Error' })
   }
-}
-
-function sanitizeMessage(text) {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .trim()
 }
 
 // ── GET /api/support/conversation ───────────────────────────────────────────
@@ -208,7 +189,7 @@ const sendStudentMessage = async (req, res) => {
       conversation: conversation._id,
       sender: userId,
       senderRole: userRole,
-      message: trimmedMessage,
+      message: sanitizeMessage(trimmedMessage),
       read: false,
     })
 

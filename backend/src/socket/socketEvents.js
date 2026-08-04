@@ -27,6 +27,7 @@ const { SupportConversation } = require('../models/SupportConversation')
 const { SupportMessage } = require('../models/SupportMessage')
 const { CheatingReport } = require('../models/CheatingReport')
 const { env } = require('../config/env')
+const { sanitizeMessage } = require('../utils/sanitize')
 
 const isDev = env.nodeEnv !== 'production'
 
@@ -268,7 +269,7 @@ async function saveAndBroadcastMessage(io, socket, payload) {
       conversation: conversation._id,
       sender: user._id,
       senderRole: user.role,
-      message: trimmed,
+      message: sanitizeMessage(trimmed),
       read: false,
     })
 
@@ -308,9 +309,7 @@ async function saveAndBroadcastMessage(io, socket, payload) {
 
       // ── Also confirm back to the sender ──────────────────────────────────
       socket.emit('message_sent', broadcastPayload)
-
-    devLog(`Message saved & broadcast: conv=${conversation._id} sender=${user._id}`)
-  } catch (error) {
+    } catch (error) {
     console.error('[socket] send_message error:', error.message)
     emitError(socket, 'SEND_FAILED', 'Failed to send message. Please try again.')
   }
@@ -360,7 +359,6 @@ async function handleMessageSeen(io, socket, payload) {
   try {
     const { user } = socket
 
-    // SECURITY: Only students, admins, and super-admins can use support chat
     const isSupportRole = user.role === 'student' || user.role === 'admin' || user.role === 'super-admin'
     if (!isSupportRole) {
       return emitError(socket, 'ACCESS_DENIED', 'Your role does not have access to support chat')
@@ -377,27 +375,22 @@ async function handleMessageSeen(io, socket, payload) {
       return emitError(socket, 'CONVERSATION_NOT_FOUND', 'Conversation not found')
     }
 
-    // SECURITY: only the owner (student) or admin may mark messages read
     const isOwner = conversation.student.toString() === user._id
     const isAdmin = user.role === 'admin' || user.role === 'super-admin'
     if (!isOwner && !isAdmin) {
       return emitError(socket, 'ACCESS_DENIED', 'Access denied')
     }
 
-    // Mark all messages sent by the OTHER party as read
     await SupportMessage.updateMany(
       { conversation: conversationId, sender: { $ne: user._id }, read: false },
       { $set: { read: true } },
     )
 
-    // Reset the unread counter for the viewer
     const resetField = user.role === 'student' ? { unreadStudent: 0 } : { unreadAdmin: 0 }
     await SupportConversation.findByIdAndUpdate(conversationId, { $set: resetField })
 
-    // Re-fetch conversation to get updated unread counts
     const updatedConv = await SupportConversation.findById(conversationId).lean()
 
-    // Broadcast seen status to the counterpart room
     const counterpartRoom = resolveCounterpartRoom(user.role, conversation.student.toString())
     const seenPayload = {
       conversationId,
@@ -410,7 +403,9 @@ async function handleMessageSeen(io, socket, payload) {
     if (counterpartRoom) {
       io.to(counterpartRoom).emit('message_seen', seenPayload)
     }
-    // Confirm back to sender
+    if (isAdmin) {
+      io.to('admin-support').emit('message_seen', seenPayload)
+    }
     socket.emit('message_seen', seenPayload)
 
     devLog(`message_seen: conv=${conversationId} seenBy=${user._id}`)

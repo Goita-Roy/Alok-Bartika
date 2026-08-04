@@ -1,10 +1,10 @@
 /**
  * ChatHeader — top bar of the live chat modal.
- * Shows status (connected / reconnecting), admin name if assigned, and close button.
+ * Shows connection status with emoji indicators, admin name if assigned, and close button.
  */
 
 import React from 'react'
-import { X, Wifi, WifiOff, Loader2 } from 'lucide-react'
+import { X, Wifi, WifiOff, Loader2, RefreshCw } from 'lucide-react'
 import type { SocketStatus } from '../../hooks/useSupportSocket'
 
 interface ChatHeaderProps {
@@ -13,17 +13,17 @@ interface ChatHeaderProps {
   onClose: () => void
 }
 
-const statusLabel: Record<SocketStatus, string> = {
-  idle: 'অপ্রস্তুত',
-  connecting: 'সংযুক্ত হচ্ছে...',
-  connected: 'অনলাইন',
-  error: 'সংযোগ ত্রুটি',
-  disconnected: 'সংযোগ বিচ্ছিন্ন',
+const statusConfig: Record<SocketStatus, { label: string; emoji: string; color: string }> = {
+  idle: { label: 'অপ্রস্তুত', emoji: '🔴', color: '#6B7280' },
+  connecting: { label: 'সংযুক্ত হচ্ছে...', emoji: '🟡', color: '#FBBF24' },
+  connected: { label: 'অনলাইন', emoji: '🟢', color: '#34D399' },
+  reconnecting: { label: 'পুনঃসংযোগ হচ্ছে...', emoji: '🟡', color: '#FBBF24' },
+  error: { label: 'সংযোগ ত্রুটি', emoji: '🔴', color: '#EF4444' },
+  disconnected: { label: 'অফলাইন', emoji: '🔴', color: '#6B7280' },
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({ status, adminName, onClose }) => {
-  const isOnline = status === 'connected'
-  const isConnecting = status === 'connecting'
+  const config = statusConfig[status] || statusConfig.disconnected
 
   return (
     <div
@@ -39,23 +39,26 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ status, adminName, onClose }) =
           {/* Online dot */}
           <span
             className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#04342C]"
-            style={{ backgroundColor: isOnline ? '#34D399' : isConnecting ? '#FBBF24' : '#6B7280' }}
+            style={{ backgroundColor: config.color }}
           />
         </div>
         <div>
           <p className="font-bold text-white text-sm leading-tight">
             {adminName ? adminName : 'আলোকবর্তিকা সহায়তা'}
           </p>
-          <div className="flex items-center gap-1 mt-0.5">
-            {isConnecting ? (
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className="text-xs leading-none" aria-hidden="true">{config.emoji}</span>
+            {status === 'connecting' || status === 'reconnecting' ? (
               <Loader2 className="w-3 h-3 text-yellow-300 animate-spin" />
-            ) : isOnline ? (
+            ) : status === 'connected' ? (
               <Wifi className="w-3 h-3 text-emerald-300" />
+            ) : status === 'error' ? (
+              <RefreshCw className="w-3 h-3 text-red-400" />
             ) : (
               <WifiOff className="w-3 h-3 text-gray-400" />
             )}
-            <span className="text-xs" style={{ color: isOnline ? '#6EE7B7' : '#9CA3AF' }}>
-              {statusLabel[status]}
+            <span className="text-xs" style={{ color: status === 'connected' ? '#6EE7B7' : '#9CA3AF' }}>
+              {config.label}
             </span>
           </div>
         </div>

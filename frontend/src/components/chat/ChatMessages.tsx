@@ -4,11 +4,12 @@
  *  - Grouping student vs admin messages (bubble alignment)
  *  - Optimistic messages styled differently (slightly faded)
  *  - Read receipts (double-tick for student's own messages)
- *  - Auto-scroll to bottom on new message
+ *  - Infinite scroll: auto-loads older messages when scrolled to top
+ *  - Scroll stability: only auto-scrolls when user is already at the bottom
  *  - Timestamps
  */
 
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Check, CheckCheck, Loader2 } from 'lucide-react'
 import type { SupportMessage } from '../../types/support'
 import EmptyChatState from './EmptyChatState'
@@ -24,7 +25,6 @@ function formatTime(iso: string) {
 
 interface ChatMessagesProps {
   messages: SupportMessage[]
-  studentId: string
   loadingHistory: boolean
   historyError: string | null
   adminTyping: boolean
@@ -34,7 +34,6 @@ interface ChatMessagesProps {
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({
   messages,
-  studentId,
   loadingHistory,
   historyError,
   adminTyping,
@@ -43,34 +42,78 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
 }) => {
   const bottomRef = useRef<HTMLDivElement>(null)
   const scrollableRef = useRef<HTMLDivElement>(null)
-  const isPaginationLoadingRef = useRef(false)
+  const topSentinelRef = useRef<HTMLDivElement>(null)
+  const isLoadingOlderRef = useRef(false)
   const savedScrollHeightRef = useRef(0)
   const savedScrollTopRef = useRef(0)
+  const [loadingOlder, setLoadingOlder] = useState(false)
 
-  const handleLoadOlder = useCallback(() => {
+  // Track whether user is at the bottom of the scroll area
+  const isAtBottomRef = useRef(true)
+
+  // Check if the user is currently scrolled to the bottom (within 60px threshold)
+  const checkIsAtBottom = useCallback(() => {
     const el = scrollableRef.current
-    if (el) {
-      savedScrollHeightRef.current = el.scrollHeight
-      savedScrollTopRef.current = el.scrollTop
-    }
-    isPaginationLoadingRef.current = true
-    onLoadOlder()
-  }, [onLoadOlder])
+    if (!el) return true
+    const { scrollTop, scrollHeight, clientHeight } = el
+    return scrollHeight - scrollTop - clientHeight < 60
+  }, [])
 
-  // Auto-scroll for realtime messages; restore scroll position after pagination
+  // Track scroll position
+  const handleScroll = useCallback(() => {
+    isAtBottomRef.current = checkIsAtBottom()
+  }, [checkIsAtBottom])
+
+  // Auto-load older messages when scrolled to top (IntersectionObserver)
   useEffect(() => {
-    if (isPaginationLoadingRef.current) {
+    const sentinel = topSentinelRef.current
+    const scrollable = scrollableRef.current
+    if (!sentinel || !scrollable || !hasMore) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        if (entry.isIntersecting && !isLoadingOlderRef.current && hasMore) {
+          isLoadingOlderRef.current = true
+          setLoadingOlder(true)
+          // Save scroll position before loading
+          savedScrollHeightRef.current = scrollable.scrollHeight
+          savedScrollTopRef.current = scrollable.scrollTop
+          onLoadOlder()
+        }
+      },
+      { root: scrollable, threshold: 0.1 },
+    )
+
+    observer.observe(sentinel)
+    return () => {
+      observer.disconnect()
+    }
+  }, [hasMore, onLoadOlder])
+
+  // Restore scroll position after older messages are loaded
+  useEffect(() => {
+    if (isLoadingOlderRef.current && messages.length > 0) {
       const el = scrollableRef.current
       if (el && savedScrollHeightRef.current > 0) {
         const heightDelta = el.scrollHeight - savedScrollHeightRef.current
         el.scrollTop = savedScrollTopRef.current + heightDelta
       }
-      isPaginationLoadingRef.current = false
+      isLoadingOlderRef.current = false
+      setLoadingOlder(false)
       savedScrollHeightRef.current = 0
       savedScrollTopRef.current = 0
-      return
     }
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages.length])
+
+  // Auto-scroll for realtime messages ONLY when user is at the bottom
+  useEffect(() => {
+    // Skip scroll restoration during pagination (handled above)
+    if (isLoadingOlderRef.current) return
+    // Only auto-scroll if user is already at the bottom
+    if (isAtBottomRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
   }, [messages.length, adminTyping])
 
   if (loadingHistory) {
@@ -102,23 +145,21 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   }
 
   return (
-    <div className="flex flex-col gap-1 px-4 py-4 overflow-y-auto h-full font-bengali" ref={scrollableRef}>
-      {/* Load Older Messages button */}
-      {hasMore && (
+    <div
+      className="flex flex-col gap-1 px-4 py-4 overflow-y-auto h-full font-bengali"
+      ref={scrollableRef}
+      onScroll={handleScroll}
+    >
+      {/* Top sentinel for infinite scroll — triggers load when visible */}
+      {hasMore && <div ref={topSentinelRef} className="h-1 w-full" />}
+
+      {/* Loading older messages indicator */}
+      {loadingOlder && (
         <div className="flex justify-center py-2">
-          <button
-            onClick={handleLoadOlder}
-            className="px-4 py-1.5 rounded-full text-xs font-bengali font-medium transition-all"
-            style={{
-              backgroundColor: 'var(--color-surface)',
-              color: 'var(--color-accent)',
-              border: '1px solid var(--color-border)',
-            }}
-          >
-            পুরনো বার্তা লোড করুন
-          </button>
+          <Loader2 className="w-5 h-5 animate-spin" style={{ color: 'var(--color-accent)' }} />
         </div>
       )}
+
       {messages.map((msg) => {
         const isMine = msg.senderRole === 'student'
         const isOptimistic = msg._optimistic === true
