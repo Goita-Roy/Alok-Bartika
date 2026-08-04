@@ -206,6 +206,63 @@ const updateLesson = async (req, res) => {
   }
 }
 
+// @desc    Duplicate a lesson (copies it immediately after the original and
+//          renumbers the course's lesson order)
+// @route   POST /api/lessons/:id/duplicate
+// @access  Private/Admin
+const duplicateLesson = async (req, res) => {
+  try {
+    const original = await Lesson.findById(req.params.id)
+    if (!original) {
+      return res.status(404).json({ message: 'Lesson not found' })
+    }
+
+    // Snapshot the fields an admin may set (mirrors LESSON_FIELDS whitelist).
+    const copyFields = {
+      courseId: original.courseId,
+      title: `${original.title} (Copy)`,
+      content: original.content,
+      videoUrl: original.videoUrl,
+      audioUrl: original.audioUrl,
+      codingProblem: original.codingProblem,
+      language: original.language,
+      starterCode: original.starterCode,
+      expectedOutput: original.expectedOutput,
+      practice: original.practice,
+      status: original.status,
+    }
+
+    const copy = new Lesson(copyFields)
+    await copy.save()
+
+    // All lessons in the course, ordered for stable renumbering.
+    const siblings = await Lesson.find({ courseId: original.courseId }).sort({ order: 1 }).lean()
+
+    // Build the new ordered id list with the copy inserted right after the original.
+    const orderedIds = []
+    for (const s of siblings) {
+      if (String(s._id) === String(copy._id)) continue // skip the new copy here; it is added below
+      orderedIds.push(s._id)
+      if (String(s._id) === String(original._id)) {
+        orderedIds.push(copy._id)
+      }
+    }
+
+    // Renumber sequentially (1..N) across the whole course.
+    await Lesson.bulkWrite(
+      orderedIds.map((id, index) => ({
+        updateOne: { filter: { _id: id }, update: { $set: { order: index + 1 } } },
+      }))
+    )
+
+    auditService.logLessonCrud(req.user, 'duplicate', copy, req)
+    res.status(201).json({ message: 'Lesson duplicated', data: copy })
+  } catch (error) {
+    console.error('Duplicate Lesson Error:', error)
+    res.status(400).json({ message: 'Validation Error', errors: error.message })
+  }
+}
+
 // @desc    Delete a lesson
 // @route   DELETE /api/lessons/:id
 // @access  Private/Admin
@@ -229,5 +286,6 @@ module.exports = {
   getLessonById,
   createLesson,
   updateLesson,
+  duplicateLesson,
   deleteLesson
 }

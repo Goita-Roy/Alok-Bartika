@@ -6,7 +6,8 @@ const {
   getLessonById,
   createLesson,
   updateLesson,
-  deleteLesson
+  deleteLesson,
+  duplicateLesson
 } = require('../controllers/lessonController')
 const { protect, requireAdmin } = require('../middleware/auth')
 
@@ -17,6 +18,7 @@ router.get('/:id', getLessonById)
 
 // Admin only routes
 router.post('/', protect, requireAdmin, createLesson)
+router.post('/:id/duplicate', protect, requireAdmin, duplicateLesson)
 router.put('/:id', protect, requireAdmin, updateLesson)
 router.delete('/:id', protect, requireAdmin, deleteLesson)
 

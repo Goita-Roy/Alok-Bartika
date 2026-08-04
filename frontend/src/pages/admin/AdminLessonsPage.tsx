@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import api from '../../config/api'
 import {
-  FileText, Loader2, PlusCircle, Trash2, Edit3, Search,
+  FileText, Loader2, PlusCircle, Trash2, Edit3, Search, Copy,
   AlertTriangle, RefreshCw, ChevronLeft, ChevronRight,
   BookOpen, Layers, Sparkles, GraduationCap,
 } from 'lucide-react'
@@ -73,6 +73,7 @@ export function AdminLessonsPage() {
   const [form, setForm] = useState(emptyForm)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null)
   const titleInputRef = useRef<HTMLInputElement>(null)
 
   // Search / filter / sort / pagination state
@@ -272,6 +273,19 @@ export function AdminLessonsPage() {
       await loadLessons(pagination.page)
     } catch (err: any) {
       showToast(err.response?.data?.message || err.message || 'Failed to delete lesson', 'error')
+    }
+  }
+
+  const handleDuplicate = async (lessonId: string) => {
+    try {
+      setDuplicatingId(lessonId)
+      await api.post(`/lessons/${lessonId}/duplicate`)
+      showToast('Lesson duplicated', 'success')
+      await loadLessons(pagination.page)
+    } catch (err: any) {
+      showToast(err.response?.data?.message || err.message || 'Failed to duplicate lesson', 'error')
+    } finally {
+      setDuplicatingId(null)
     }
   }
 
@@ -547,6 +561,20 @@ export function AdminLessonsPage() {
                                   <button
                                     type="button"
                                     className="btn btn-sm btn-ghost"
+                                    disabled={duplicatingId === lesson._id}
+                                    onClick={() => handleDuplicate(lesson._id)}
+                                    style={{ color: 'var(--color-text-muted)' }}
+                                    title="Duplicate"
+                                  >
+                                    {duplicatingId === lesson._id ? (
+                                      <Loader2 size={14} className="animate-spin" />
+                                    ) : (
+                                      <Copy size={14} />
+                                    )}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn btn-sm btn-ghost"
                                     onClick={() => handleDelete(lesson._id)}
                                     style={{ color: 'var(--color-error)' }}
                                     title="Delete"
@@ -630,6 +658,19 @@ export function AdminLessonsPage() {
                             <button type="button" className="btn btn-sm btn-ghost" onClick={() => handleEdit(lesson)}>
                               <Edit3 size={14} />
                               Edit
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-ghost"
+                              disabled={duplicatingId === lesson._id}
+                              onClick={() => handleDuplicate(lesson._id)}
+                            >
+                              {duplicatingId === lesson._id ? (
+                                <Loader2 size={14} className="animate-spin" />
+                              ) : (
+                                <Copy size={14} />
+                              )}
+                              Duplicate
                             </button>
                             <button
                               type="button"
