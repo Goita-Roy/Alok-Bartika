@@ -200,6 +200,9 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    lastLogin: {
+      type: Date,
+    },
     // Course ObjectIds ONLY. Never lesson ids / slugs.
     completedCourses: [
       {

@@ -207,6 +207,8 @@ const loginUser = async (req, res) => {
     }
 
     auditService.logLogin(user, req)
+    user.lastLogin = new Date()
+    await user.save()
     res.json(userResponse(user))
   } catch (error) {
     res.status(500).json({ message: error.message })
