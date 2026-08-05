@@ -1,5 +1,9 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
-import { Settings, Globe, Shield, Key, Mail, Save, Loader2, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
+import {
+  Settings, Globe, Shield, Key, Mail, Database, Save, Loader2,
+  CheckCircle, AlertTriangle, RefreshCw, CalendarRange,
+  Info, ToggleLeft, ToggleRight, UserPlus,
+} from 'lucide-react'
 import { SuperAdminLayout } from '../../components/super-admin/SuperAdminLayout'
 import { useAuth } from '../../context/AuthContext'
 import { API_BASE_URL } from '../../config/api'
@@ -72,95 +76,21 @@ function normalize(d: Partial<Settings>): Settings {
   }
 }
 
-function FieldRow({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label style={labelStyle}>{label}</label>
-      {hint && <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '8px' }}>{hint}</p>}
-      {children}
-    </div>
-  )
-}
+type TabId = 'general' | 'security' | 'email' | 'maintenance' | 'backup'
 
-function ToggleRow({
-  title,
-  description,
-  checked,
-  onChange,
-}: {
-  title: string
-  description: string
-  checked: boolean
-  onChange: (v: boolean) => void
-}) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '16px',
-        borderRadius: '8px',
-        border: '1px solid var(--color-border)',
-        backgroundColor: 'var(--color-bg)',
-      }}
-    >
-      <div>
-        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--color-text)', marginBottom: '2px' }}>
-          {title}
-        </label>
-        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: 0 }}>{description}</p>
-      </div>
-      <button
-        type="button"
-        onClick={() => onChange(!checked)}
-        style={{
-          width: '44px',
-          height: '24px',
-          borderRadius: '12px',
-          border: 'none',
-          cursor: 'pointer',
-          backgroundColor: checked ? 'var(--color-accent)' : 'var(--color-border)',
-          position: 'relative',
-          transition: 'background-color 0.2s ease',
-          flexShrink: 0,
-          marginLeft: '16px',
-        }}
-      >
-        <div
-          style={{
-            width: '18px',
-            height: '18px',
-            borderRadius: '50%',
-            backgroundColor: 'white',
-            position: 'absolute',
-            top: '3px',
-            left: checked ? '23px' : '3px',
-            transition: 'left 0.2s ease',
-          }}
-        />
-      </button>
-    </div>
-  )
-}
+const TABS: { id: TabId; label: string; icon: React.ReactElement }[] = [
+  { id: 'general', label: 'General', icon: <Globe size={16} /> },
+  { id: 'security', label: 'Security', icon: <Shield size={16} /> },
+  { id: 'email', label: 'Email', icon: <Mail size={16} /> },
+  { id: 'maintenance', label: 'Maintenance', icon: <Settings size={16} /> },
+  { id: 'backup', label: 'Backup', icon: <Database size={16} /> },
+]
 
-function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-        padding: '20px 24px',
-        borderBottom: '1px solid var(--color-border)',
-        backgroundColor: 'var(--color-accent-pale)',
-      }}
-    >
-      {icon}
-      <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text)', margin: 0 }}>{title}</h3>
-    </div>
-  )
-}
+const inputCls =
+  'w-full rounded-xl border bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)] placeholder-[var(--color-text-muted)]/50 outline-none transition-all duration-200 focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)]/15'
+
+const labelCls =
+  'block text-xs font-medium uppercase tracking-wider text-[var(--color-text-muted)] mb-1'
 
 export function SuperAdminPlatformPage() {
   const { token } = useAuth()
@@ -172,6 +102,7 @@ export function SuperAdminPlatformPage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  const [activeTab, setActiveTab] = useState<TabId>('general')
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type })
@@ -255,437 +186,639 @@ export function SuperAdminPlatformPage() {
     setSaved(true)
   }
 
-  const statusBadge = loading
-    ? null
-    : loadError
-      ? null
-      : isDirty
-        ? {
-            bg: 'var(--color-surface)',
-            color: 'var(--color-text-muted)',
-            border: '1px solid var(--color-border)',
-            icon: <Shield size={16} />,
-            text: 'Changes unsaved',
-          }
-        : {
-            bg: 'var(--color-accent-pale)',
-            color: 'var(--color-accent)',
-            border: '1px solid var(--color-border)',
-            icon: <Settings size={16} />,
-            text: 'Settings saved',
-          }
+  const today = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
 
-  return (
-    <SuperAdminLayout>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-          <div>
-            <h1
-              style={{
-                fontSize: '24px',
-                fontWeight: 700,
-                color: 'var(--color-text)',
-                marginBottom: '4px',
-              }}
-            >
-              Platform Settings
-            </h1>
-            <p style={{ fontSize: '14px', color: 'var(--color-text-muted)' }}>
-              Configure system-wide settings
-            </p>
-          </div>
+  // ── Tab panel renderers ──────────────────────────────────────────────────
+
+  function renderGeneralTab() {
+    return (
+      <>
+        {/* Platform Identity */}
+        <div
+          className="rounded-2xl border shadow-sm transition-all duration-200 hover:shadow-md mb-6"
+          style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+        >
           <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px 16px',
-              borderRadius: '8px',
-              backgroundColor: statusBadge?.bg ?? 'var(--color-surface)',
-              border: statusBadge?.border ?? '1px solid var(--color-border)',
-              fontSize: '13px',
-              fontWeight: 500,
-              color: statusBadge?.color ?? 'var(--color-text-muted)',
-              transition: 'all 0.3s ease',
-            }}
+            className="flex items-center gap-3 px-6 py-4 border-b"
+            style={{ borderBottomColor: 'var(--color-border)', backgroundColor: 'var(--color-accent-pale)' }}
           >
-            {statusBadge && (
-              <>
-                {statusBadge.icon}
-                {statusBadge.text}
-              </>
-            )}
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0">
+              <span style={{ color: 'var(--color-accent)' }}><Globe size={20} /></span>
+            </div>
+            <div>
+              <h3 className="text-base font-semibold" style={{ color: 'var(--color-text)' }}>Platform Identity</h3>
+              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Basic platform information visible to users</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 p-6">
+            <div>
+              <label className={labelCls}>Platform Name</label>
+              <input
+                type="text"
+                value={form.platformName}
+                onChange={(e) => update('platformName', e.target.value)}
+                className={inputCls}
+                placeholder="Alokbartika"
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Support Email</label>
+              <input
+                type="email"
+                value={form.supportEmail}
+                onChange={(e) => update('supportEmail', e.target.value)}
+                className={inputCls}
+                placeholder="support@alokbartika.com"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className={labelCls}>Platform Description</label>
+              <input
+                type="text"
+                value={form.platformDescription}
+                onChange={(e) => update('platformDescription', e.target.value)}
+                className={inputCls}
+                placeholder="Short description of your platform"
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Support Phone</label>
+              <input
+                type="tel"
+                value={form.supportPhone}
+                onChange={(e) => update('supportPhone', e.target.value)}
+                className={inputCls}
+                placeholder="+880..."
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Logo URL</label>
+              <input
+                type="text"
+                value={form.logo}
+                onChange={(e) => update('logo', e.target.value)}
+                className={inputCls}
+                placeholder="https://..."
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Favicon URL</label>
+              <input
+                type="text"
+                value={form.favicon}
+                onChange={(e) => update('favicon', e.target.value)}
+                className={inputCls}
+                placeholder="https://..."
+              />
+            </div>
           </div>
         </div>
 
-        {loadError && (
+        {/* Registration */}
+        <div
+          className="rounded-2xl border shadow-sm transition-all duration-200 hover:shadow-md"
+          style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+        >
           <div
+            className="flex items-center gap-3 px-6 py-4 border-b"
+            style={{ borderBottomColor: 'var(--color-border)', backgroundColor: 'var(--color-accent-pale)' }}
+          >
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0">
+              <span style={{ color: 'var(--color-accent)' }}><UserPlus size={20} /></span>
+            </div>
+            <div>
+              <h3 className="text-base font-semibold" style={{ color: 'var(--color-text)' }}>Registration & Access</h3>
+              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Who can join and how they authenticate</p>
+            </div>
+          </div>
+          <div className="p-6 space-y-4">
+            <ToggleRow
+              title="Allow New Registrations"
+              description="Allow new users to register accounts on the platform"
+              checked={form.registrationEnabled}
+              onChange={(v) => update('registrationEnabled', v)}
+            />
+            <ToggleRow
+              title="Google OAuth Login"
+              description="Allow users to sign in with their Google accounts"
+              checked={form.googleOAuthEnabled}
+              onChange={(v) => update('googleOAuthEnabled', v)}
+            />
+            <ToggleRow
+              title="Email Verification Required"
+              description="Require email verification before users can access the platform"
+              checked={form.emailVerificationRequired}
+              onChange={(v) => update('emailVerificationRequired', v)}
+            />
+            <ToggleRow
+              title="OTP Verification"
+              description="Enable OTP-based verification for password reset and login"
+              checked={form.otpEnabled}
+              onChange={(v) => update('otpEnabled', v)}
+            />
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  function renderSecurityTab() {
+    return (
+      <div className="space-y-6">
+        {/* Authentication Policy */}
+        <div
+          className="rounded-2xl border shadow-sm transition-all duration-200 hover:shadow-md"
+          style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+        >
+          <div
+            className="flex items-center gap-3 px-6 py-4 border-b"
+            style={{ borderBottomColor: 'var(--color-border)', backgroundColor: 'var(--color-accent-pale)' }}
+          >
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0">
+              <span style={{ color: 'var(--color-accent)' }}><Key size={20} /></span>
+            </div>
+            <div>
+              <h3 className="text-base font-semibold" style={{ color: 'var(--color-text)' }}>Authentication Policy</h3>
+              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Password, session, and login attempt settings</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 p-6">
+            <div>
+              <label className={labelCls}>Maximum Login Attempts</label>
+              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }} mb-1>
+                Lock an account after this many failed login attempts
+              </p>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={form.maxLoginAttempts ?? ''}
+                onChange={updateNumber('maxLoginAttempts')}
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Session Timeout (minutes)</label>
+              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }} mb-1>
+                Inactive sessions expire after this many minutes
+              </p>
+              <input
+                type="number"
+                min={5}
+                max={1440}
+                value={form.sessionTimeout ?? ''}
+                onChange={updateNumber('sessionTimeout')}
+                className={inputCls}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  function renderEmailTab() {
+    return (
+      <div className="space-y-6">
+        {/* SMTP Configuration */}
+        <div
+          className="rounded-2xl border shadow-sm transition-all duration-200 hover:shadow-md"
+          style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+        >
+          <div
+            className="flex items-center gap-3 px-6 py-4 border-b"
+            style={{ borderBottomColor: 'var(--color-border)', backgroundColor: 'var(--color-accent-pale)' }}
+          >
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0">
+              <span style={{ color: 'var(--color-accent)' }}><Mail size={20} /></span>
+            </div>
+            <div>
+              <h3 className="text-base font-semibold" style={{ color: 'var(--color-text)' }}>SMTP Configuration</h3>
+              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Outgoing mail server settings for email delivery</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 p-6">
+            <div>
+              <label className={labelCls}>SMTP Host</label>
+              <input
+                type="text"
+                value={form.smtpHost}
+                onChange={(e) => update('smtpHost', e.target.value)}
+                className={inputCls}
+                placeholder="smtp.gmail.com"
+              />
+            </div>
+            <div>
+              <label className={labelCls}>SMTP Port</label>
+              <input
+                type="number"
+                min={1}
+                max={65535}
+                value={form.smtpPort ?? ''}
+                onChange={updateNumber('smtpPort')}
+                className={inputCls}
+                placeholder="587"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className={labelCls}>SMTP User (Sender Identity)</label>
+              <input
+                type="text"
+                value={form.smtpUser}
+                onChange={(e) => update('smtpUser', e.target.value)}
+                className={inputCls}
+                placeholder="noreply@yourplatform.com"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <ToggleRow
+                title="SMTP Secure (TLS/SSL)"
+                description="Use a secure encrypted connection for email delivery"
+                checked={form.smtpSecure}
+                onChange={(v) => update('smtpSecure', v)}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className={labelCls}>Sender Email</label>
+              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }} mb-1>
+                The email address from which system notifications are sent (uses Support Email)
+              </p>
+              <input
+                type="email"
+                value={form.supportEmail}
+                onChange={(e) => update('supportEmail', e.target.value)}
+                className={inputCls}
+                readOnly
+                style={{ backgroundColor: 'rgba(128,128,128,0.06)', cursor: 'default' }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  function renderMaintenanceTab() {
+    return (
+      <div className="space-y-6">
+        {/* Maintenance Mode */}
+        <div
+          className="rounded-2xl border shadow-sm transition-all duration-200 hover:shadow-md"
+          style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+        >
+          <div
+            className="flex items-center gap-3 px-6 py-4 border-b"
+            style={{ borderBottomColor: 'var(--color-border)', backgroundColor: 'var(--color-accent-pale)' }}
+          >
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0">
+              <span style={{ color: 'var(--color-accent)' }}><Settings size={20} /></span>
+            </div>
+            <div>
+              <h3 className="text-base font-semibold" style={{ color: 'var(--color-text)' }}>Maintenance Mode</h3>
+              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Temporarily restrict access while performing updates</p>
+            </div>
+          </div>
+          <div className="p-6">
+            <ToggleRow
+              title="Enable Maintenance Mode"
+              description="Block non-admin access and display a maintenance message to visitors"
+              checked={form.maintenanceMode}
+              onChange={(v) => update('maintenanceMode', v)}
+            />
+
+            {!form.maintenanceMode ? null : (
+              <div
+                className="mt-4 p-4 rounded-xl border"
+                style={{
+                  backgroundColor: 'rgba(245,158,11,0.08)',
+                  borderColor: 'rgba(245,158,11,0.3)',
+                }}
+              >
+                <div className="flex items-start gap-3">
+                  <AlertTriangle size={20} style={{ color: '#f59e0b', marginTop: '2px' }} />
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: '#f59e0b' }}>
+                      Maintenance mode is active
+                    </p>
+                    <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                      When enabled, the platform will be inaccessible to students and regular users.
+                      Only Super Admins and administrators can access the platform.
+                      Ensure the maintenance message below is clear and helpful.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4">
+              <label className={labelCls}>Maintenance Message</label>
+              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }} mb-1>
+                Message shown to users while maintenance mode is active
+              </p>
+              <textarea
+                value={form.maintenanceMessage}
+                onChange={(e) => update('maintenanceMessage', e.target.value)}
+                className={inputCls}
+                placeholder="We are currently performing scheduled maintenance. Please check back soon."
+                rows={3}
+                disabled={!form.maintenanceMode}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  function renderBackupTab() {
+    return (
+      <div
+        className="rounded-2xl border shadow-sm transition-all duration-200 hover:shadow-md"
+        style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+      >
+        <div
+          className="flex items-center gap-3 px-6 py-4 border-b"
+          style={{ borderBottomColor: 'var(--color-border)', backgroundColor: 'var(--color-accent-pale)' }}
+        >
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0">
+            <span style={{ color: 'var(--color-accent)' }}><Database size={20} /></span>
+          </div>
+          <div>
+            <h3 className="text-base font-semibold" style={{ color: 'var(--color-text)' }}>Backup Configuration</h3>
+            <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Database and platform backup settings</p>
+          </div>
+        </div>
+        <div className="p-6">
+          <div
+            className="flex items-start gap-3 p-4 rounded-xl border"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '12px',
-              padding: '14px 18px',
-              borderRadius: '10px',
-              backgroundColor: 'rgba(226,75,74,0.10)',
-              border: '1px solid rgba(226,75,74,0.2)',
-              color: 'var(--color-error)',
-              fontSize: '14px',
+              backgroundColor: 'rgba(59,130,246,0.06)',
+              borderColor: 'rgba(59,130,246,0.2)',
             }}
           >
-            <span className="flex items-center gap-2 font-semibold">
+            <Info size={20} style={{ color: '#3b82f6', marginTop: '2px' }} />
+            <div>
+              <p className="text-sm font-semibold" style={{ color: '#3b82f6' }}>
+                Automatic backup configuration is not available in the current backend.
+              </p>
+              <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                Backup scheduling and retention settings will appear here once the backend supports them.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const tabRenderers: Record<TabId, () => React.ReactNode> = {
+    general: renderGeneralTab,
+    security: renderSecurityTab,
+    email: renderEmailTab,
+    maintenance: renderMaintenanceTab,
+    backup: renderBackupTab,
+  }
+
+  return (
+    <SuperAdminLayout>
+      <div className="space-y-6">
+        {/* ── Premium hero header ── */}
+        <div
+          className="rounded-2xl border shadow-sm transition-all duration-200 hover:shadow-md p-6 lg:p-8"
+          style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0"
+                style={{ backgroundColor: 'var(--color-accent-pale)', color: 'var(--color-accent)' }}
+              >
+                <Settings size={26} />
+              </div>
+              <div>
+                <h1
+                  className="text-2xl lg:text-3xl font-bold leading-tight"
+                  style={{ color: 'var(--color-text)', fontFamily: "'Hind Siliguri', sans-serif" }}
+                >
+                  Platform Settings
+                </h1>
+                <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                  Configure system-wide platform preferences and policies
+                </p>
+                <p
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold mt-2.5"
+                  style={{ color: 'var(--color-text-muted)' }}
+                >
+                  <CalendarRange size={14} />
+                  {today}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => loadSettings()}
+                className="btn btn-sm btn-ghost transition-transform duration-200 hover:scale-110"
+                style={{ color: 'var(--color-text-muted)' }}
+              >
+                <RefreshCw size={16} />
+              </button>
+              <div
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200"
+                style={{
+                  backgroundColor: isDirty ? 'rgba(245,158,11,0.08)' : 'var(--color-accent-pale)',
+                  color: isDirty ? '#f59e0b' : 'var(--color-accent)',
+                  border: '1px solid var(--color-border)',
+                }}
+              >
+                {isDirty ? <Settings size={14} /> : <CheckCircle size={14} />}
+                {isDirty ? 'Unsaved Changes' : 'All Changes Saved'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Error state ── */}
+        {loadError && (
+          <div
+            className="flex items-center justify-between gap-3 px-5 py-3 rounded-xl text-sm font-semibold"
+            style={{ backgroundColor: 'rgba(220,38,38,0.08)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.2)' }}
+          >
+            <span className="flex items-center gap-2">
               <AlertTriangle size={16} />
               {loadError}
             </span>
-            <button onClick={() => loadSettings()} className="btn btn-sm btn-ghost" style={{ color: 'var(--color-error)' }}>
+            <button onClick={() => loadSettings()} className="btn btn-sm btn-ghost" style={{ color: '#dc2626' }}>
               <RefreshCw size={16} />
             </button>
           </div>
         )}
 
         {loading ? (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '4rem 1rem',
-              gap: '16px',
-            }}
-          >
-            <Loader2 size={36} style={{ color: 'var(--color-accent)', animation: 'spin 1s linear infinite' }} />
-            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>Loading settings…</p>
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <Loader2 size={38} className="animate-spin" style={{ color: 'var(--color-accent)' }} />
+            <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Loading settings…</p>
           </div>
         ) : (
           <>
+            {/* ── Tab navigation ── */}
             <div
-              style={{
-                backgroundColor: 'var(--color-surface)',
-                border: '1px solid var(--color-border)',
-                borderRadius: '12px',
-                overflow: 'hidden',
-              }}
+              className="rounded-2xl border shadow-sm transition-all duration-200 hover:shadow-md overflow-hidden"
+              style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
             >
-              {/* General Settings */}
-              <div style={{ borderBottom: '1px solid var(--color-border)' }}>
-                <SectionHeader
-                  icon={<Globe size={18} style={{ color: 'var(--color-accent)' }} />}
-                  title="General Settings"
-                />
-                <div style={{ padding: '24px' }}>
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))',
-                      gap: '24px',
-                    }}
-                  >
-                    <FieldRow label="Platform Name" hint="The public name of your platform shown to all users">
-                      <input
-                        type="text"
-                        value={form.platformName}
-                        onChange={(e) => update('platformName', e.target.value)}
-                        style={inputStyle}
-                      />
-                    </FieldRow>
-                    <FieldRow label="Platform Description" hint="Short description shown on the platform">
-                      <input
-                        type="text"
-                        value={form.platformDescription}
-                        onChange={(e) => update('platformDescription', e.target.value)}
-                        style={inputStyle}
-                      />
-                    </FieldRow>
-                    <FieldRow label="Support Email" hint="Contact email for support inquiries and system notifications">
-                      <input
-                        type="email"
-                        value={form.supportEmail}
-                        onChange={(e) => update('supportEmail', e.target.value)}
-                        style={inputStyle}
-                      />
-                    </FieldRow>
-                    <FieldRow label="Support Phone" hint="Contact phone number for support inquiries">
-                      <input
-                        type="tel"
-                        value={form.supportPhone}
-                        placeholder="+880..."
-                        onChange={(e) => update('supportPhone', e.target.value)}
-                        style={inputStyle}
-                      />
-                    </FieldRow>
-                    <FieldRow label="Logo URL" hint="URL of the platform logo">
-                      <input
-                        type="text"
-                        value={form.logo}
-                        onChange={(e) => update('logo', e.target.value)}
-                        style={inputStyle}
-                      />
-                    </FieldRow>
-                    <FieldRow label="Favicon URL" hint="URL of the platform favicon">
-                      <input
-                        type="text"
-                        value={form.favicon}
-                        onChange={(e) => update('favicon', e.target.value)}
-                        style={inputStyle}
-                      />
-                    </FieldRow>
-                  </div>
-                </div>
-              </div>
-
-              {/* Registration & Access */}
-              <div style={{ borderBottom: '1px solid var(--color-border)' }}>
-                <SectionHeader
-                  icon={<Shield size={18} style={{ color: 'var(--color-accent)' }} />}
-                  title="Registration & Access"
-                />
-                <div style={{ padding: '24px' }}>
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))',
-                      gap: '16px',
-                    }}
-                  >
-                    <ToggleRow
-                      title="Allow Registration"
-                      description="Allow new users to register accounts on the platform"
-                      checked={form.registrationEnabled}
-                      onChange={(v) => update('registrationEnabled', v)}
-                    />
-                    <ToggleRow
-                      title="Email Verification Required"
-                      description="Require users to verify their email before accessing the platform"
-                      checked={form.emailVerificationRequired}
-                      onChange={(v) => update('emailVerificationRequired', v)}
-                    />
-                    <ToggleRow
-                      title="OTP Enabled"
-                      description="Allow OTP-based verification for password reset and login"
-                      checked={form.otpEnabled}
-                      onChange={(v) => update('otpEnabled', v)}
-                    />
-                    <ToggleRow
-                      title="Google OAuth"
-                      description="Allow sign in with Google accounts"
-                      checked={form.googleOAuthEnabled}
-                      onChange={(v) => update('googleOAuthEnabled', v)}
-                    />
-                    <ToggleRow
-                      title="Maintenance Mode"
-                      description="Temporarily disable access to the platform for non-admin users"
-                      checked={form.maintenanceMode}
-                      onChange={(v) => update('maintenanceMode', v)}
-                    />
-                    <div style={{ display: 'flex', alignItems: 'stretch', flexDirection: 'column' }}>
-                      <ToggleRow
-                        title="Maintenance Message"
-                        description="Message shown to users while maintenance mode is active"
-                        checked={form.maintenanceMode}
-                        onChange={(v) => update('maintenanceMode', v)}
-                      />
-                      <div style={{ marginTop: '12px' }}>
-                        <input
-                          type="text"
-                          value={form.maintenanceMessage}
-                          placeholder="We are currently performing scheduled maintenance..."
-                          onChange={(e) => update('maintenanceMessage', e.target.value)}
-                          style={inputStyle}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Security & Session */}
-              <div style={{ borderBottom: '1px solid var(--color-border)' }}>
-                <SectionHeader
-                  icon={<Key size={18} style={{ color: 'var(--color-accent)' }} />}
-                  title="Security & Session"
-                />
-                <div style={{ padding: '24px' }}>
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))',
-                      gap: '24px',
-                    }}
-                  >
-                    <FieldRow label="Maximum Login Attempts" hint="Lock an account after this many failed login attempts">
-                      <input
-                        type="number"
-                        min={1}
-                        max={100}
-                        value={form.maxLoginAttempts ?? ''}
-                        onChange={updateNumber('maxLoginAttempts')}
-                        style={inputStyle}
-                      />
-                    </FieldRow>
-                    <FieldRow label="Session Timeout (minutes)" hint="Inactive sessions are logged out after this many minutes">
-                      <input
-                        type="number"
-                        min={5}
-                        max={1440}
-                        value={form.sessionTimeout ?? ''}
-                        onChange={updateNumber('sessionTimeout')}
-                        style={inputStyle}
-                      />
-                    </FieldRow>
-                  </div>
-                </div>
-              </div>
-
-              {/* SMTP Settings */}
-              <div>
-                <SectionHeader
-                  icon={<Mail size={18} style={{ color: 'var(--color-accent)' }} />}
-                  title="SMTP Settings"
-                />
-                <div style={{ padding: '24px' }}>
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))',
-                      gap: '24px',
-                    }}
-                  >
-                    <FieldRow label="SMTP Host" hint="Outgoing mail server hostname">
-                      <input
-                        type="text"
-                        value={form.smtpHost}
-                        placeholder="smtp.gmail.com"
-                        onChange={(e) => update('smtpHost', e.target.value)}
-                        style={inputStyle}
-                      />
-                    </FieldRow>
-                    <FieldRow label="SMTP Port" hint="Outgoing mail server port (1–65535)">
-                      <input
-                        type="number"
-                        min={1}
-                        max={65535}
-                        value={form.smtpPort ?? ''}
-                        onChange={updateNumber('smtpPort')}
-                        style={inputStyle}
-                      />
-                    </FieldRow>
-                    <FieldRow label="SMTP User" hint="Username for SMTP authentication">
-                      <input
-                        type="text"
-                        value={form.smtpUser}
-                        onChange={(e) => update('smtpUser', e.target.value)}
-                        style={inputStyle}
-                      />
-                    </FieldRow>
-                    <ToggleRow
-                      title="SMTP Secure"
-                      description="Use a secure TLS connection (SSL/TLS)"
-                      checked={form.smtpSecure}
-                      onChange={(v) => update('smtpSecure', v)}
-                    />
-                  </div>
-                </div>
+              <div className="flex items-center gap-1 p-2 overflow-x-auto scrollbar-hide">
+                {TABS.map((tab) => {
+                  const Icon = tab.icon
+                  const isActive = activeTab === tab.id
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-200"
+                      style={{
+                        backgroundColor: isActive ? 'var(--color-accent-pale)' : 'transparent',
+                        color: isActive ? 'var(--color-accent)' : 'var(--color-text-muted)',
+                        borderBottom: isActive ? '2px solid var(--color-accent)' : 'transparent',
+                      }}
+                    >
+                      {tab.icon}
+                      {tab.label}
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
-            {/* Actions */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-              {isDirty && (
-                <button
-                  onClick={handleCancel}
-                  disabled={saving}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '10px 24px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--color-border)',
-                    backgroundColor: 'var(--color-surface)',
-                    color: 'var(--color-text-muted)',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    cursor: saving ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  Cancel
-                </button>
-              )}
-              <button
-                onClick={handleSave}
-                disabled={saving || !isDirty}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 24px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  backgroundColor: saving || !isDirty ? 'var(--color-border)' : 'var(--color-accent)',
-                  color: 'white',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: saving || !isDirty ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                {saving ? (
-                  <>
-                    <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save size={16} />
-                    Save Changes
-                  </>
-                )}
-              </button>
+            {/* ── Tab content ── */}
+            <div className="pb-20">
+              {tabRenderers[activeTab]()}
+            </div>
+
+            {/* ── Sticky bottom action bar ── */}
+            <div
+              className="fixed bottom-0 left-0 right-0 border-t shadow-lg transition-all duration-200"
+              style={{
+                backgroundColor: 'var(--color-surface)',
+                borderColor: 'var(--color-border)',
+                boxShadow: '0 -4px 20px rgba(0,0,0,0.08)',
+              }}
+            >
+              <div className="max-w-7xl mx-auto flex items-center justify-between px-4 lg:px-6 py-4 gap-4">
+                <div className="flex items-center gap-3">
+                  {isDirty ? (
+                    <>
+                      <Settings size={16} style={{ color: '#f59e0b' }} />
+                      <span className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>
+                        You have unsaved changes
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle size={16} style={{ color: 'var(--color-accent)' }} />
+                      <span className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>
+                        All changes saved
+                      </span>
+                    </>
+                  )}
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleCancel}
+                    disabled={!isDirty || saving}
+                    className="btn btn-sm btn-ghost transition-transform duration-200 hover:scale-105 disabled:opacity-50"
+                    style={{ color: 'var(--color-text-muted)' }}
+                  >
+                    Reset
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={saving || !isDirty}
+                    className="btn btn-sm transition-all duration-200 hover:scale-105 disabled:opacity-50 flex items-center gap-2"
+                    style={{
+                      backgroundColor: saving || !isDirty ? 'var(--color-border)' : 'var(--color-accent)',
+                      color: 'white',
+                      border: 'none',
+                    }}
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save size={16} />
+                        Save Changes
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
           </>
         )}
-      </div>
 
-      {toast && (
-        <div className="toast toast-end toast-bottom z-50">
-          <div
-            className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'} shadow-lg text-sm font-semibold`}
-            style={{ border: 'none' }}
-          >
-            {toast.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
-            {toast.message}
+        {/* ── Toast ── */}
+        {toast && (
+          <div className="toast toast-end toast-bottom z-50">
+            <div
+              className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'} shadow-lg text-sm font-semibold`}
+              style={{ border: 'none' }}
+            >
+              {toast.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+              {toast.message}
+            </div>
           </div>
-        </div>
-      )}
-
-      <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
+        )}
+      </div>
     </SuperAdminLayout>
   )
 }
 
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: '13px',
-  fontWeight: 600,
-  color: 'var(--color-text)',
-  marginBottom: '4px',
-}
+// ── Reusable sub-components ───────────────────────────────────────────────
 
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '10px 12px',
-  borderRadius: '8px',
-  border: '1px solid var(--color-border)',
-  backgroundColor: 'var(--color-bg)',
-  color: 'var(--color-text)',
-  fontSize: '14px',
-  outline: 'none',
-  boxSizing: 'border-box',
+function ToggleRow({
+  title,
+  description,
+  checked,
+  onChange,
+}: {
+  title: string
+  description: string
+  checked: boolean
+  onChange: (v: boolean) => void
+}) {
+  return (
+    <div
+      className="flex items-center justify-between rounded-xl border p-4 transition-all duration-200"
+      style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}
+    >
+      <div>
+        <label className="block text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
+          {title}
+        </label>
+        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>{description}</p>
+      </div>
+      <button
+        type="button"
+        onClick={() => onChange(!checked)}
+        className="relative flex-shrink-0 w-44 h-24 rounded-full transition-all duration-200 focus:outline-none"
+        style={{
+          backgroundColor: checked ? 'var(--color-accent)' : 'var(--color-border)',
+          cursor: 'pointer',
+        }}
+      >
+        {checked ? (
+          <ToggleRight size={20} style={{ position: 'absolute', right: '4px', top: '2px', color: 'white' }} />
+        ) : (
+          <ToggleLeft size={20} style={{ position: 'absolute', left: '4px', top: '2px', color: 'var(--color-text-muted)' }} />
+        )}
+      </button>
+    </div>
+  )
 }
