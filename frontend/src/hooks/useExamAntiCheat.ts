@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { reportViolation } from '../utils/reportViolation'
 
 export interface ExamTerminationInfo {
   terminated: boolean
@@ -44,6 +45,7 @@ export function useExamAntiCheat(active: boolean) {
     const handleVisibilityChange = () => {
       if (!activeRef.current) return
       if (document.visibilityState === 'hidden') {
+        reportViolation('tab_switch', { action: 'visibilitychange' })
         terminate('আপনি পরীক্ষার নিয়ম ভঙ্গ করেছেন। ব্রাউজার ট্যাব পরিবর্তন করা হয়েছে।')
       }
     }
@@ -53,17 +55,20 @@ export function useExamAntiCheat(active: boolean) {
       if (document.fullscreenElement || (document as any).webkitFullscreenElement) return
       if (Date.now() - lastFullscreenChangeRef.current < FULLSCREEN_BLUR_GRACE_MS) return
       if (document.hidden) return
+      reportViolation('window_blur')
       terminate('আপনি পরীক্ষার নিয়ম ভঙ্গ করেছেন। ব্রাউজার ফোকাস হারানো হয়েছে।')
     }
 
     const handlePageHide = () => {
       if (!activeRef.current) return
+      reportViolation('tab_switch', { action: 'page_hide' })
       terminate('আপনি পরীক্ষার নিয়ম ভঙ্গ করেছেন। পৃষ্ঠা বন্ধ করা হয়েছে।')
     }
 
     // Prevent page refresh or tab close during active exam
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (!activeRef.current) return
+      reportViolation('tab_switch', { action: 'refresh' })
       e.preventDefault()
       e.returnValue = 'পরীক্ষা চলাকালীন রিফ্রেশ বা ট্যাব বন্ধ করা যাবে না।'
       return 'পরীক্ষা চলাকালীন রিফ্রেশ বা ট্যাব বন্ধ করা যাবে না।'
@@ -73,6 +78,7 @@ export function useExamAntiCheat(active: boolean) {
     window.history.pushState(null, '', window.location.href)
     const handlePopState = () => {
       if (!activeRef.current) return
+      reportViolation('tab_switch', { action: 'back' })
       window.history.pushState(null, '', window.location.href)
     }
 

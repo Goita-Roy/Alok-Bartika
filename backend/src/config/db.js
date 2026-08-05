@@ -21,10 +21,11 @@ async function ensureIndexes() {
   const { Lesson } = require('../models/Lesson')
   const { Exam } = require('../models/Exam')
   const { AuditLog } = require('../models/AuditLog')
+  const { ExamViolation } = require('../models/ExamViolation')
 
-  const models = [User, Course, Lesson, Exam, AuditLog]
+  const models = [User, Course, Lesson, Exam, AuditLog, ExamViolation]
   await Promise.all(models.map((m) => m.createIndexes()))
-  console.log('[db] indexes ensured for User, Course, Lesson, Exam, AuditLog')
+  console.log('[db] indexes ensured for User, Course, Lesson, Exam, AuditLog, ExamViolation')
 }
 
 async function connectDb(mongoUri) {

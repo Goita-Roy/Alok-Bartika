@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { API_BASE_URL } from '../config/api'
 import { useAuth } from '../context/AuthContext'
+import { setExamContext, clearExamContext } from '../utils/reportViolation'
 import { useCopyProtection } from '../hooks/useCopyProtection'
 import { useExamAntiCheat } from '../hooks/useExamAntiCheat'
 import { useExamFullscreenSecurity, requestDocumentFullscreen, exitDocumentFullscreenSafe, MAX_FULLSCREEN_VIOLATIONS } from '../hooks/useExamFullscreenSecurity'
@@ -844,7 +845,7 @@ export function ExamPage() {
   useCopyProtection()
   const { level } = useParams<{ level: string }>()
   const navigate = useNavigate()
-  const { token, updateUser } = useAuth()
+  const { token, user, updateUser } = useAuth()
 
   // Wire into the shared progress system so passing the exam unlocks the next level
   const { completeLevel, markExamPassed } = useCourseProgress(
@@ -930,6 +931,15 @@ export function ExamPage() {
     setSecondsLeft(secs)
     setStartTime(Date.now())
   }, [exam])
+
+  // Publish the active exam identity so the anti-cheat hooks can report
+  // violations to the monitoring intake. Fire-and-forget: never blocks or
+  // interrupts the exam itself.
+  useEffect(() => {
+    if (!exam || !user?.id) return
+    setExamContext(user.id, exam._id)
+    return () => clearExamContext()
+  }, [exam, user?.id])
 
   // Countdown tick (only runs after exam starts).
   useEffect(() => {

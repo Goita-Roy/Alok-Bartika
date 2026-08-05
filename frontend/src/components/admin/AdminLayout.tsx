@@ -7,7 +7,7 @@ import type { ReactNode } from 'react'
 import {
   LayoutDashboard, Users, BookOpen, FileText, ClipboardList,
   MessageSquare, Megaphone, Star, BarChart3, Settings, User,
-  LogOut, Menu, X, Moon, Sun, ChevronDown, Shield,
+  LogOut, Menu, X, Moon, Sun, ChevronDown, Shield, Radar,
 } from 'lucide-react'
 
 const navItems = [
@@ -16,6 +16,7 @@ const navItems = [
   { to: '/admin/courses', label: 'Course Management', icon: BookOpen },
   { to: '/admin/lessons', label: 'Lesson Management', icon: FileText },
   { to: '/admin/questions', label: 'Question and Exam Management', icon: ClipboardList },
+  { to: '/admin/exam-monitoring', label: 'Exam Monitoring', icon: Radar },
   { to: '/admin/feedback', label: 'Student Feedback', icon: Star },
   { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { to: '/admin/support', label: 'Student Support', icon: MessageSquare },

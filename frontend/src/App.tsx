@@ -19,6 +19,7 @@ import { AdminStudentSupportPage } from './pages/admin/AdminStudentSupportPage'
 import { AdminFeedbackPage } from './pages/admin/AdminFeedbackPage'
 import { AdminNoticesPage } from './pages/admin/AdminNoticesPage'
 import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage'
+import { AdminExamMonitoringPage } from './pages/admin/AdminExamMonitoringPage'
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage'
 import { SuperAdminLoginPage } from './pages/super-admin/SuperAdminLoginPage'
 import { SuperAdminDashboardPage } from './pages/super-admin/SuperAdminDashboardPage'
@@ -266,6 +267,7 @@ export default function App() {
           <Route path="courses" element={<AdminCoursesPage />} />
           <Route path="lessons" element={<AdminLessonsPage />} />
           <Route path="questions" element={<AdminQuestionsPage />} />
+          <Route path="exam-monitoring" element={<AdminExamMonitoringPage />} />
           <Route path="feedback" element={<AdminFeedbackPage />} />
           <Route path="support" element={<AdminStudentSupportPage />} />
           <Route path="notices" element={<AdminNoticesPage />} />

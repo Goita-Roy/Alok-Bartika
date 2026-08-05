@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { reportViolation } from '../utils/reportViolation'
 
 export function useCopyProtection(enabled = true) {
   const { user } = useAuth()
@@ -65,9 +66,10 @@ export function useCopyProtection(enabled = true) {
         element.closest('.monaco-editor') ||
         element.closest('.cm-content')
       ) {
-        return
+        return false
       }
       e.preventDefault()
+      return true
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -88,16 +90,19 @@ export function useCopyProtection(enabled = true) {
       const key = e.key.toLowerCase()
       const ctrlOrCmd = e.ctrlKey || e.metaKey
       const shift = e.shiftKey
+      const keys = `${ctrlOrCmd ? 'ctrl+' : ''}${shift ? 'shift+' : ''}${key}`
 
       // Save: Ctrl+S
       if (ctrlOrCmd && key === 's') {
         e.preventDefault()
+        reportViolation('keyboard_shortcut', { keys })
         return
       }
 
       // Print: Ctrl+P
       if (ctrlOrCmd && key === 'p') {
         e.preventDefault()
+        reportViolation('keyboard_shortcut', { keys })
         return
       }
 
@@ -108,18 +113,21 @@ export function useCopyProtection(enabled = true) {
         (ctrlOrCmd && key === 'u')
       ) {
         e.preventDefault()
+        reportViolation('devtools', { keys })
         return
       }
 
       // Copy, Cut & Paste: Ctrl+C, Ctrl+X, Ctrl+V (block outside input/code-editor)
       if (ctrlOrCmd && (key === 'c' || key === 'x' || key === 'v') && !isInput) {
         e.preventDefault()
+        reportViolation('keyboard_shortcut', { keys })
         return
       }
 
       // Select All: Ctrl+A (block outside input/code-editor)
       if (ctrlOrCmd && key === 'a' && !isInput) {
         e.preventDefault()
+        reportViolation('keyboard_shortcut', { keys })
         return
       }
     }
@@ -135,7 +143,19 @@ export function useCopyProtection(enabled = true) {
             ? node.parentElement
             : null
       if (element && element.closest('.tts-selectable')) return
-      preventDefault(e)
+      if (preventDefault(e)) reportViolation('right_click')
+    }
+
+    const handleCopy = (e: ClipboardEvent) => {
+      if (preventDefault(e)) reportViolation('copy')
+    }
+
+    const handleCut = (e: ClipboardEvent) => {
+      if (preventDefault(e)) reportViolation('copy', { action: 'cut' })
+    }
+
+    const handlePaste = (e: ClipboardEvent) => {
+      if (preventDefault(e)) reportViolation('paste')
     }
 
     // Drag and drop block
@@ -158,9 +178,9 @@ export function useCopyProtection(enabled = true) {
     }
 
     document.addEventListener('contextmenu', handleContextMenu)
-    document.addEventListener('copy', preventDefault)
-    document.addEventListener('cut', preventDefault)
-    document.addEventListener('paste', preventDefault)
+    document.addEventListener('copy', handleCopy)
+    document.addEventListener('cut', handleCut)
+    document.addEventListener('paste', handlePaste)
     document.addEventListener('dragstart', handleDragStart)
     document.addEventListener('selectstart', handleSelectStart)
     document.addEventListener('keydown', handleKeyDown)
@@ -171,9 +191,9 @@ export function useCopyProtection(enabled = true) {
       }
       document.body.classList.remove('no-copy-zone')
       document.removeEventListener('contextmenu', handleContextMenu)
-      document.removeEventListener('copy', preventDefault)
-      document.removeEventListener('cut', preventDefault)
-      document.removeEventListener('paste', preventDefault)
+      document.removeEventListener('copy', handleCopy)
+      document.removeEventListener('cut', handleCut)
+      document.removeEventListener('paste', handlePaste)
       document.removeEventListener('dragstart', handleDragStart)
       document.removeEventListener('selectstart', handleSelectStart)
       document.removeEventListener('keydown', handleKeyDown)

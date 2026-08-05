@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { reportViolation } from '../utils/reportViolation'
 
 // Number of fullscreen exits allowed before the exam is auto-submitted.
 export const MAX_FULLSCREEN_VIOLATIONS = 3
@@ -163,7 +164,8 @@ export function useExamFullscreenSecurity(
       wasInFullscreenRef.current = false
       if (!activeRef.current || !wasInFullscreen) return
 
-      // ── Unexpected exit (ESC / browser chrome) — attempt re-entry ─────────
+      // ── Unexpected exit (ESC / browser chrome) — report + attempt re-entry ──
+      reportViolation('fullscreen_exit')
       const reEntered = await requestDocumentFullscreen()
       if (reEntered && !!(document.fullscreenElement || (document as any).webkitFullscreenElement)) {
         wasInFullscreenRef.current = true
