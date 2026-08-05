@@ -721,38 +721,40 @@ export function AdminLessonsPage() {
           </div>
         </div>
 
-        {/* Summary cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {[
-             { label: 'Total Lessons', value: summary.total, icon: FileText, color: '#3b82f6' },
-             { label: 'Published', value: summary.published, icon: Layers, color: '#22c55e' },
-             { label: 'Draft', value: summary.draft, icon: Sparkles, color: '#f59e0b' },
-             { label: 'Total Courses', value: summary.totalCourses, icon: BookOpen, color: '#8b5cf6' },
-          ].map(c => {
-            const Icon = c.icon
-            return (
-              <div
-                key={c.label}
-                className="group card shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
-                style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
-              >
-                <div className="card-body p-4">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110"
-                      style={{ backgroundColor: `${c.color}15` }}
-                    >
-                      <Icon size={20} style={{ color: c.color }} />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>{c.label}</p>
-                      <p className="text-2xl font-bold" style={{ color: c.color }}>{c.value}</p>
+        {/* Summary cards — visually hidden but kept in code */}
+        <div className="hidden">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[
+              { label: 'Total Lessons', value: summary.total, icon: FileText, color: '#3b82f6' },
+              { label: 'Published', value: summary.published, icon: Layers, color: '#22c55e' },
+              { label: 'Draft', value: summary.draft, icon: Sparkles, color: '#f59e0b' },
+              { label: 'Total Courses', value: summary.totalCourses, icon: BookOpen, color: '#8b5cf6' },
+            ].map(c => {
+              const Icon = c.icon
+              return (
+                <div
+                  key={c.label}
+                  className="group card shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
+                  style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+                >
+                  <div className="card-body p-4">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110"
+                        style={{ backgroundColor: `${c.color}15` }}
+                      >
+                        <Icon size={20} style={{ color: c.color }} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>{c.label}</p>
+                        <p className="text-2xl font-bold" style={{ color: c.color }}>{c.value}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
 
         {/* Filters */}
@@ -843,58 +845,37 @@ export function AdminLessonsPage() {
           </div>
         )}
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
+        <div className={`grid gap-6 ${panelOpen ? 'xl:grid-cols-[minmax(0,1fr)_400px]' : ''}`}>
 
           {/* Lesson List / Table */}
           <div className="space-y-4">
-            {loadingLessons ? (
-              <div className="card p-8 text-center shadow-sm" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-                <Loader2 size={24} className="mx-auto animate-spin" style={{ color: 'var(--color-accent)' }} />
-                <p className="mt-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>Loading lessons…</p>
-              </div>
-             ) : lessons.length === 0 ? (
-              <div className="card p-8 text-center shadow-sm" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-                {debouncedSearch || courseFilter !== 'all' || levelFilter !== 'all' ? (
-                  <div>
-                    <Search size={32} className="mx-auto mb-3" style={{ color: 'var(--color-text-muted)' }} />
-                    <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                      No lessons match your search or filter criteria
-                    </p>
-                  </div>
-                ) : (
-                  <div>
-                    <BookOpen size={40} className="mx-auto mb-4" style={{ color: 'var(--color-accent)', opacity: 0.3 }} />
-                    <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--color-text)' }}>No lessons yet</h3>
-                    <p className="text-sm mb-4" style={{ color: 'var(--color-text-muted)' }}>
-                      Add the first one to start teaching.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={openNewLesson}
-                      className="btn btn-sm btn-primary"
+            {/* ── Grouped by Level → Course → Lessons ── */}
+            {(() => {
+              const groupedByLevel = new Map<string, LessonItem[]>()
+              lessons.forEach(l => {
+                const course = getCourseForLesson(l)
+                const level = course?.level || l.level || 'beginner'
+                if (!groupedByLevel.has(level)) groupedByLevel.set(level, [])
+                groupedByLevel.get(level)!.push(l)
+              })
+              const sortedLevels = LEVELS.filter(lv => groupedByLevel.has(lv.value))
+
+              return (
+                <>
+                  {/* Desktop grouped table */}
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={lessons.map((l) => l._id)}
+                      strategy={verticalListSortingStrategy}
                     >
-                      <PlusCircle size={16} />
-                      Create your first lesson
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-               <>
-                 {/* Desktop table */}
-                 <DndContext
-                   sensors={sensors}
-                   collisionDetection={closestCenter}
-                   onDragStart={handleDragStart}
-                   onDragEnd={handleDragEnd}
-                 >
-                   <SortableContext
-                     items={lessons.map((l) => l._id)}
-                     strategy={verticalListSortingStrategy}
-                   >
-                     <div className="hidden md:block card shadow-sm overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-                       <div className="overflow-x-auto">
-                         <table className="table table-sm w-full">
+                      <div className="hidden md:block card shadow-sm overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+                        <div className="overflow-x-auto">
+                          <table className="table table-sm w-full">
                             <thead>
                               <tr style={{ borderBottom: '1px solid var(--color-border)', position: 'sticky', top: 0, backgroundColor: 'var(--color-surface)', zIndex: 10 }}>
                                 <th key="Select" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
@@ -930,150 +911,234 @@ export function AdminLessonsPage() {
                                   style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Course</th>
                                 <th key="Language" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
                                   style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Language</th>
-                                 <th key="CreatedDate" style={{ backgroundColor: 'transparent' }}>
-                                   <SortableHeader field="createdAt" label="Created Date" />
-                                 </th>
-                                 <th key="UpdatedDate" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
-                                   style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Last Updated</th>
-                                 <th key="Actions" className="text-xs font-semibold uppercase tracking-wider py-3 px-4 text-center"
-                                   style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Actions</th>
+                                  <th key="CreatedDate" style={{ backgroundColor: 'transparent' }}>
+                                    <SortableHeader field="createdAt" label="Created Date" />
+                                  </th>
+                                  <th key="UpdatedDate" className="text-xs font-semibold uppercase tracking-wider py-3 px-4"
+                                    style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Last Updated</th>
+                                  <th key="Actions" className="text-xs font-semibold uppercase tracking-wider py-3 px-4 text-center"
+                                    style={{ color: 'var(--color-text-muted)', backgroundColor: 'transparent' }}>Actions</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {lessons.map(lesson => (
-                                  <SortableLessonRow
-                                    key={lesson._id}
-                                    lesson={lesson}
-                                    onEdit={handleEdit}
-                                    onPreview={handlePreview}
-                                    onUpdateStatus={handleUpdateStatus}
-                                    onDuplicate={handleDuplicate}
-                                    onDelete={handleDelete}
-                                    duplicatingId={duplicatingId}
-                                    draggingId={draggingId}
-                                    selectedLessons={selectedLessons}
-                                    onToggleSelection={handleToggleSelection}
-                                    recentlySavedId={recentlySavedId}
-                                    getCourseForLesson={getCourseForLesson}
-                                    getStatusColor={getStatusColor}
-                                    getLevelColor={getLevelColor}
-                                    formatDate={formatDate}
-                                  />
-                              ))}
-                            </tbody>
-                            </table>
-                          </div>
-                        </div>
-                        </SortableContext>
-                        </DndContext>
+                              {sortedLevels.map(level => {
+                                const levelLessons = groupedByLevel.get(level.value) || []
+                                const levelColor = getLevelColor(level.value)
 
-                 {/* Mobile cards */}
-                 <div className="md:hidden space-y-3">
-                   {lessons.map(lesson => {
-                     const course = getCourseForLesson(lesson)
-                     const level = course?.level || lesson.level || ''
-                     return (
-                       <div
-                         key={lesson._id}
-                         className="card shadow-sm"
-                         style={{
-                           backgroundColor: 'var(--color-surface)',
-                           border: '1px solid var(--color-border)',
-                         }}
-                       >
-                         <div className="card-body flex flex-col gap-3">
-                           <div className="flex items-start justify-between gap-3">
-                             <div className="flex items-center gap-2.5">
-                               <div className="flex items-center justify-center">
-                                 <input
-                                   type="checkbox"
-                                   className="checkbox checkbox-sm"
-                                   checked={selectedLessons.has(lesson._id)}
-                                    onChange={() => handleToggleSelection(lesson._id)}
-                                   style={{ borderRadius: 'var(--rounded)' }}
-                                 />
-                               </div>
-                               <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                                 style={{ backgroundColor: 'var(--color-accent-pale)' }}>
-                                 <FileText size={16} style={{ color: 'var(--color-accent)' }} />
-                               </div>
-                               <div>
-                                 <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>{lesson.title}</h3>
-                                 <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                                   {course?.title || '—'} · {lesson.language || '—'}
-                                 </p>
-                               </div>
-                              </div>
-                              <div className="flex items-center gap-1.5 shrink-0">
-                              <span className="badge badge-sm font-semibold"
-                                style={{ backgroundColor: 'var(--color-accent-pale)', color: 'var(--color-accent)', border: 'none' }}>
-                                #{lesson.order}
-                              </span>
-                              {level && (
-                                <span
-                                  className="badge badge-sm font-semibold capitalize"
-                                  style={{
-                                    backgroundColor: `${getLevelColor(level)}20`,
-                                    color: getLevelColor(level),
-                                    border: 'none',
-                                  }}
-                                >
-                                  {level}
-                                </span>
-                              )}
-                              <span
-                                className="badge badge-sm font-semibold capitalize"
-                                style={{
-                                  backgroundColor: `${getStatusColor(lesson.status || 'draft')}20`,
-                                  color: getStatusColor(lesson.status || 'draft'),
-                                  border: 'none',
-                                }}
-                              >
-                                {lesson.status || 'draft'}
-                              </span>
-                            </div>
-                          </div>
-                          {lesson.content && (
-                            <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{lesson.content}</p>
-                          )}
-                          <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                            <span>{formatDate(lesson.createdAt)}</span>
-                          </div>
-                          <div className="flex gap-2">
-                            <button type="button" className="btn btn-sm btn-ghost" onClick={() => handleEdit(lesson)}>
-                              <Edit3 size={14} />
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-sm btn-ghost"
-                              disabled={duplicatingId === lesson._id}
-                              onClick={() => handleDuplicate(lesson._id)}
-                            >
-                              {duplicatingId === lesson._id ? (
-                                <Loader2 size={14} className="animate-spin" />
-                              ) : (
-                                <Copy size={14} />
-                              )}
-                              Duplicate
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-sm btn-ghost"
-                              onClick={() => handleDelete(lesson._id)}
-                              style={{ color: 'var(--color-error)' }}
-                            >
-                              <Trash2 size={14} />
-                              Delete
-                            </button>
-                          </div>
+                                // Group by course within this level
+                                const coursesMap = new Map<string, LessonItem[]>()
+                                levelLessons.forEach(l => {
+                                  const cid = l.courseId || 'no-course'
+                                  if (!coursesMap.has(cid)) coursesMap.set(cid, [])
+                                  coursesMap.get(cid)!.push(l)
+                                })
+                                const sortedCourses = Array.from(coursesMap.entries()).sort((a, b) => {
+                                  const aCourse = getCourseForLesson(a[1][0])
+                                  const bCourse = getCourseForLesson(b[1][0])
+                                  return (aCourse?.title || '').localeCompare(bCourse?.title || '')
+                                })
+
+                                return (
+                                  <>
+                                    {/* Level header row */}
+                                    <tr>
+                                      <td colSpan={10} className="px-4 py-2"
+                                        style={{ backgroundColor: `${levelColor}12`, borderBottom: `2px solid ${levelColor}40` }}>
+                                        <div className="flex items-center gap-2">
+                                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: levelColor }} />
+                                          <span className="font-black text-sm uppercase tracking-wider" style={{ color: levelColor }}>
+                                            {level.label}
+                                          </span>
+                                          <span className="text-xs font-semibold" style={{ color: 'var(--color-text-muted)' }}>
+                                            {levelLessons.length} lesson{levelLessons.length !== 1 ? 's' : ''}
+                                          </span>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                    {sortedCourses.map(([courseId, courseLessons]) => {
+                                      const course = getCourseForLesson(courseLessons[0])
+                                      const sortedLessons = [...courseLessons].sort((a, b) => (a.order || 0) - (b.order || 0))
+return (
+                                <>
+                                  {/* Course sub-header row */}
+                                          <tr>
+                                            <td colSpan={10} className="px-4 py-1.5"
+                                              style={{ backgroundColor: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)' }}>
+                                              <div className="flex items-center gap-2 pl-2">
+                                                <BookOpen size={13} style={{ color: 'var(--color-text-muted)' }} />
+                                                <span className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>
+                                                  {course?.title || 'Unknown Course'}
+                                                </span>
+                                                <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                                                  ({sortedLessons.length} lesson{sortedLessons.length !== 1 ? 's' : ''})
+                                                </span>
+                                              </div>
+                                            </td>
+                                          </tr>
+                                          {sortedLessons.map(lesson => (
+                                            <SortableLessonRow
+                                              key={lesson._id}
+                                              lesson={lesson}
+                                              onEdit={handleEdit}
+                                              onPreview={handlePreview}
+                                              onUpdateStatus={handleUpdateStatus}
+                                              onDuplicate={handleDuplicate}
+                                              onDelete={handleDelete}
+                                              duplicatingId={duplicatingId}
+                                              draggingId={draggingId}
+                                              selectedLessons={selectedLessons}
+                                              onToggleSelection={handleToggleSelection}
+                                              recentlySavedId={recentlySavedId}
+                                              getCourseForLesson={getCourseForLesson}
+                                              getStatusColor={getStatusColor}
+                                              getLevelColor={getLevelColor}
+                                              formatDate={formatDate}
+                                            />
+                                          ))}
+</>
+                                       )
+                                     })}
+                                  </>
+                                )
+                              })}
+                            </tbody>
+                          </table>
                         </div>
                       </div>
-                    )
-                  })}
-                </div>
-              </>
-            )}
+                    </SortableContext>
+                  </DndContext>
+
+                  {/* Mobile grouped cards */}
+                  <div className="md:hidden space-y-4">
+                    {sortedLevels.map(level => {
+                      const levelLessons = groupedByLevel.get(level.value) || []
+                      const levelColor = getLevelColor(level.value)
+
+                      const coursesMap = new Map<string, LessonItem[]>()
+                      levelLessons.forEach(l => {
+                        const cid = l.courseId || 'no-course'
+                        if (!coursesMap.has(cid)) coursesMap.set(cid, [])
+                        coursesMap.get(cid)!.push(l)
+                      })
+                      const sortedCourses = Array.from(coursesMap.entries()).sort((a, b) => {
+                        const aCourse = getCourseForLesson(a[1][0])
+                        const bCourse = getCourseForLesson(b[1][0])
+                        return (aCourse?.title || '').localeCompare(bCourse?.title || '')
+                      })
+
+                      return (
+                        <div key={level.value} className="space-y-3">
+                          {/* Level header */}
+                          <div className="flex items-center gap-2 px-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: levelColor }} />
+                            <span className="font-black text-sm uppercase tracking-wider" style={{ color: levelColor }}>
+                              {level.label}
+                            </span>
+                            <span className="text-xs font-semibold" style={{ color: 'var(--color-text-muted)' }}>
+                              {levelLessons.length} lesson{levelLessons.length !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+
+                          {sortedCourses.map(([courseId, courseLessons]) => {
+                            const course = getCourseForLesson(courseLessons[0])
+                            const sortedLessons = [...courseLessons].sort((a, b) => (a.order || 0) - (b.order || 0))
+                            return (
+                              <div key={courseId} className="ml-2 pl-3 border-l-2" style={{ borderColor: `${levelColor}40` }}>
+                                <p className="text-xs font-semibold mb-2" style={{ color: 'var(--color-text-muted)' }}>
+                                  {course?.title || 'Unknown Course'}
+                                </p>
+                                <div className="space-y-2">
+                                  {sortedLessons.map(lesson => (
+                                    <div
+                                      key={lesson._id}
+                                      className="card shadow-sm"
+                                      style={{
+                                        backgroundColor: 'var(--color-surface)',
+                                        border: '1px solid var(--color-border)',
+                                      }}
+                                    >
+                                      <div className="card-body flex flex-col gap-3">
+                                        <div className="flex items-start justify-between gap-3">
+                                          <div className="flex items-center gap-2.5">
+                                            <div className="flex items-center justify-center">
+                                              <input
+                                                type="checkbox"
+                                                className="checkbox checkbox-sm"
+                                                checked={selectedLessons.has(lesson._id)}
+                                                onChange={() => handleToggleSelection(lesson._id)}
+                                                style={{ borderRadius: 'var(--rounded)' }}
+                                              />
+                                            </div>
+                                            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                                              style={{ backgroundColor: 'var(--color-accent-pale)' }}>
+                                              <FileText size={16} style={{ color: 'var(--color-accent)' }} />
+                                            </div>
+                                            <div>
+                                              <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>{lesson.title}</h3>
+                                              <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                                                {lesson.language || '—'}
+                                              </p>
+                                            </div>
+                                          </div>
+                                          <div className="flex items-center gap-1.5 shrink-0">
+                                            <span className="badge badge-sm font-semibold"
+                                              style={{ backgroundColor: 'var(--color-accent-pale)', color: 'var(--color-accent)', border: 'none' }}>
+                                              #{lesson.order}
+                                            </span>
+                                            <span
+                                              className="badge badge-sm font-semibold capitalize"
+                                              style={{
+                                                backgroundColor: `${getStatusColor(lesson.status || 'draft')}20`,
+                                                color: getStatusColor(lesson.status || 'draft'),
+                                                border: 'none',
+                                              }}
+                                            >
+                                              {lesson.status || 'draft'}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                          <button type="button" className="btn btn-sm btn-ghost" onClick={() => handleEdit(lesson)}>
+                                            <Edit3 size={14} />
+                                            Edit
+                                          </button>
+                                          <button
+                                            type="button"
+                                            className="btn btn-sm btn-ghost"
+                                            disabled={duplicatingId === lesson._id}
+                                            onClick={() => handleDuplicate(lesson._id)}
+                                          >
+                                            {duplicatingId === lesson._id ? (
+                                              <Loader2 size={14} className="animate-spin" />
+                                            ) : (
+                                              <Copy size={14} />
+                                            )}
+                                            Duplicate
+                                          </button>
+                                          <button
+                                            type="button"
+                                            className="btn btn-sm btn-ghost"
+                                            onClick={() => handleDelete(lesson._id)}
+                                            style={{ color: 'var(--color-error)' }}
+                                          >
+                                            <Trash2 size={14} />
+                                            Delete
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </>
+              )
+            })()}
 
             {/* Pagination */}
             {pagination.pages > 1 && (
@@ -1125,10 +1190,10 @@ export function AdminLessonsPage() {
             )}
           </div>
 
-          {/* Right panel: Create / Edit */}
-          <div className="flex flex-col gap-4">
-            {panelOpen ? (
-              <div
+{/* Right panel: Create / Edit */}
+           {panelOpen && (
+           <div className="flex flex-col gap-4">
+             <div
                 className="card shadow-sm flex flex-col transition-all duration-300 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)]"
                 style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
               >
@@ -1283,17 +1348,8 @@ export function AdminLessonsPage() {
                   </div>
                 </form>
               </div>
-            ) : (
-              <div
-                className="card shadow-sm flex items-center justify-center p-8 transition-all duration-300 lg:sticky lg:top-4"
-                style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', minHeight: '240px' }}
-              >
-                <p className="text-sm text-center max-w-[14rem]" style={{ color: 'var(--color-text-muted)' }}>
-                  Select a lesson to edit or click New Lesson.
-                </p>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Toast */}

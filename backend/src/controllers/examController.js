@@ -287,7 +287,14 @@ const getExamByLevel = async (req, res) => {
     const exam = await Exam.findOne({ level, isActive: true })
     if (!exam) return res.status(404).json({ message: 'No exam found for this level' })
 
-    if (isReview) {
+    // SECURITY: students may only view an exam they can currently access (or
+    // one they have already attempted). Admins may load any level's active
+    // exam — the Admin Question/Exam builder depends on this endpoint for CRUD,
+    // and an admin's own progression (e.g. already passing a level) must never
+    // lock them out of managing that level's exam.
+    const isPrivileged = req.user.role === 'admin' || req.user.role === 'super-admin'
+
+    if (isReview && !isPrivileged) {
       // SECURITY: "review" must NOT be a blanket access-control bypass. Exam
       // metadata/questions are only returned after the user actually attempted
       // this exam (they can then legitimately review it).
@@ -296,7 +303,7 @@ const getExamByLevel = async (req, res) => {
       if (!hasGradedAttempt) {
         return res.status(403).json({ message: 'Review is available only after you have attempted this exam.' })
       }
-    } else {
+    } else if (!isPrivileged) {
       const access = await checkExamAccess(req.user, level)
       if (!access.ok) {
         return res.status(access.status).json({
