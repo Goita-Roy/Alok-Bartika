@@ -1,14 +1,14 @@
-/* ── Google Fonts (must be first) ─────────────────────────────── */
+﻿/* â”€â”€ Google Fonts (must be first) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Hind+Siliguri:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ── Smooth theme transitions ─────────────────────────────────── */
+/* â”€â”€ Smooth theme transitions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 html { transition: background-color 0.25s ease, color 0.25s ease; }
 
-/* ── Design Tokens — Light ───────────────────────────────────── */
+/* â”€â”€ Design Tokens â€” Light â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 :root {
   --color-bg:           #FBF8F1;
   --color-sidebar:      #E8F4F1;
@@ -69,7 +69,7 @@ html { transition: background-color 0.25s ease, color 0.25s ease; }
   --color-home-stage-locked-accent: #B8A876;
 }
 
-/* ── Design Tokens — Dark ────────────────────────────────────── */
+/* â”€â”€ Design Tokens â€” Dark â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 [data-theme="dark"] {
   --color-bg:           #0F172A;
   --color-sidebar:      #1E293B;
@@ -132,7 +132,7 @@ html { transition: background-color 0.25s ease, color 0.25s ease; }
   --color-home-stage-locked-accent: #64748B;
 }
 
-/* ── Base ─────────────────────────────────────────────────────── */
+/* â”€â”€ Base â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 html {
   margin: 0;
   overflow-x: hidden;
@@ -164,7 +164,7 @@ img, video, svg, canvas, iframe {
   height: auto;
 }
 
-/* ── Scrollbar ────────────────────────────────────────────────── */
+/* â”€â”€ Scrollbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 ::-webkit-scrollbar               { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track         { background: var(--color-bg); }
 ::-webkit-scrollbar-thumb         { background: var(--color-accent-light); border-radius: 99px; }
@@ -172,10 +172,10 @@ img, video, svg, canvas, iframe {
 [data-theme="dark"] ::-webkit-scrollbar-thumb { background: #334155; }
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
-/* ── Selection ────────────────────────────────────────────────── */
+/* â”€â”€ Selection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 ::selection { background: rgba(14,124,102,0.18); color: var(--color-text); }
 
-/* ── DaisyUI overrides ────────────────────────────────────────── */
+/* â”€â”€ DaisyUI overrides â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .btn-primary {
   background-color: var(--color-accent) !important;
   border-color: var(--color-accent) !important;
@@ -202,7 +202,7 @@ img, video, svg, canvas, iframe {
   border-color: var(--color-border) !important;
 }
 
-/* ── Utility classes ──────────────────────────────────────────── */
+/* â”€â”€ Utility classes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @layer utilities {
   /* Card */
   .card-white {
@@ -312,10 +312,10 @@ img, video, svg, canvas, iframe {
   }
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   Intermediate05 — Animations & Utility Classes
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   Intermediate05 â€” Animations & Utility Classes
    (ported from intermediate05/course02/src/index.css)
-   ══════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
@@ -437,7 +437,7 @@ img, video, svg, canvas, iframe {
   background-clip: text;
 }
 
-/* ── Beginner Content Styles (from begginer-content01) ────────────────── */
+/* â”€â”€ Beginner Content Styles (from begginer-content01) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .text-accent-1 {
   color: #c084fc;
 }
@@ -469,7 +469,7 @@ img, video, svg, canvas, iframe {
   font-weight: 600;
 }
 
-/* ── Beginner-content text overrides ──────────────────── */
+/* â”€â”€ Beginner-content text overrides â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .beginner-content p,
 .beginner-content li {
@@ -486,7 +486,7 @@ img, video, svg, canvas, iframe {
 .beginner-content .text-5xl { font-size: calc(3rem * var(--reading-scale, 1)); }
 .beginner-content .text-6xl { font-size: calc(3.75rem * var(--reading-scale, 1)); }
 
-/* ── Beginner lesson experience ──────────────────────────────────────── */
+/* â”€â”€ Beginner lesson experience â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .beginner-content {
   color: #374151;
   font-family: 'Hind Siliguri', 'Inter', system-ui, sans-serif;
@@ -709,7 +709,7 @@ img, video, svg, canvas, iframe {
   }
 }
 
-/* ── Text-to-Speech Highlighting ──────────────────────────────── */
+/* â”€â”€ Text-to-Speech Highlighting â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .tts-highlighting {
   background-color: rgba(29, 158, 117, 0.15) !important;
   transition: background-color 0.25s ease;
@@ -778,9 +778,9 @@ img, video, svg, canvas, iframe {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   AI Buddy V4 — Responsive / Cross-device helpers
-   ══════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   AI Buddy V4 â€” Responsive / Cross-device helpers
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 /* Safe-area (notch, Dynamic Island, gesture bars) */
 .pt-safe { padding-top: env(safe-area-inset-top); }
