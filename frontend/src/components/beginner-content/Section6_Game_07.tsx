@@ -4,9 +4,10 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Gamepad2, Sparkles, RefreshCw, Repeat, Infinity as InfinityIcon,
-  Flag, Lightbulb
+  Flag, Lightbulb, Volume2, VolumeX
 } from "lucide-react";
 import SectionWrapper from "./SectionWrapper";
+import loopMusic from "../../assets/audio/loop.mp3";
 
 type GameState = "intro" | "playing" | "animating" | "result";
 type LoopType = "repeat10" | "forever";
@@ -222,8 +223,68 @@ export default function Section6_Game_07() {
   const [legPhase, setLegPhase] = useState(0);
   const [bounce, setBounce] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [musicOn, setMusicOn] = useState(true);
   const timerRef = useRef<number | null>(null);
   const stepIntervalRef = useRef<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const audio = new Audio(loopMusic);
+    audio.loop = true;
+    audio.volume = 0;
+    audioRef.current = audio;
+
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+      audioRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const isActive = gameState === "playing" || gameState === "animating" || gameState === "result";
+    if (!isActive) return;
+
+    if (musicOn) {
+      audio.volume = 0.3;
+      const playPromise = audio.play();
+      if (playPromise) {
+        playPromise.catch(() => {});
+      }
+    } else {
+      audio.pause();
+    }
+  }, [musicOn, gameState]);
+
+  useEffect(() => {
+    if (gameState !== "result") return;
+
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    let fadeOutInterval: ReturnType<typeof setInterval> | null = null;
+    const fadeStep = 0.02;
+
+    fadeOutInterval = setInterval(() => {
+      audio.volume = Math.max(0, audio.volume - fadeStep);
+      if (audio.volume <= 0) {
+        if (fadeOutInterval) clearInterval(fadeOutInterval);
+        fadeOutInterval = null;
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    }, 50);
+
+    return () => {
+      if (fadeOutInterval) clearInterval(fadeOutInterval);
+      audio.pause();
+      audio.currentTime = 0;
+      audio.volume = 0;
+    };
+  }, [gameState]);
 
   const cleanupTimers = useCallback(() => {
     if (timerRef.current !== null) {
@@ -237,16 +298,16 @@ export default function Section6_Game_07() {
   }, []);
 
   useEffect(() => {
+    return cleanupTimers;
+  }, [cleanupTimers]);
+
+  useEffect(() => {
     if (gameState === "result" && selectedLoop === "repeat10") {
       setShowConfetti(true);
       const t = window.setTimeout(() => setShowConfetti(false), 2000);
       return () => clearTimeout(t);
     }
   }, [gameState, selectedLoop]);
-
-  useEffect(() => {
-    return cleanupTimers;
-  }, [cleanupTimers]);
 
   const startGame = useCallback(() => {
     setCurrentStep(0);
@@ -258,7 +319,35 @@ export default function Section6_Game_07() {
     setShowConfetti(false);
     cleanupTimers();
     setGameState("playing");
-  }, [cleanupTimers]);
+
+    const audio = audioRef.current;
+    if (audio && musicOn) {
+      audio.currentTime = 0;
+      audio.volume = 0;
+      let fadeInInterval: ReturnType<typeof setInterval> | null = null;
+      let currentVolume = 0;
+      const targetVolume = 0.3;
+      const fadeStep = 0.01;
+
+      const playAudio = async () => {
+        try {
+          await audio.play();
+        } catch {
+        }
+      };
+
+      playAudio();
+
+      fadeInInterval = setInterval(() => {
+        currentVolume = Math.min(currentVolume + fadeStep, targetVolume);
+        audio.volume = currentVolume;
+        if (currentVolume >= targetVolume) {
+          if (fadeInInterval) clearInterval(fadeInInterval);
+          fadeInInterval = null;
+        }
+      }, 50);
+    }
+  }, [cleanupTimers, musicOn]);
 
   const executeRepeat10 = useCallback(() => {
     setGameState("animating");
@@ -321,6 +410,13 @@ export default function Section6_Game_07() {
     setBounce(0);
     setShowConfetti(false);
     setGameState("intro");
+
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.volume = 0;
+    }
   }, [cleanupTimers]);
 
   const playAgain = useCallback(() => {
@@ -332,8 +428,43 @@ export default function Section6_Game_07() {
     setLegPhase(0);
     setBounce(0);
     setShowConfetti(false);
+
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.volume = 0;
+    }
+
     setGameState("playing");
-  }, [cleanupTimers]);
+
+    if (audio && musicOn) {
+      audio.currentTime = 0;
+      audio.volume = 0;
+      let fadeInInterval: ReturnType<typeof setInterval> | null = null;
+      let currentVolume = 0;
+      const targetVolume = 0.3;
+      const fadeStep = 0.01;
+
+      const playAudio = async () => {
+        try {
+          await audio.play();
+        } catch {
+        }
+      };
+
+      playAudio();
+
+      fadeInInterval = setInterval(() => {
+        currentVolume = Math.min(currentVolume + fadeStep, targetVolume);
+        audio.volume = currentVolume;
+        if (currentVolume >= targetVolume) {
+          if (fadeInInterval) clearInterval(fadeInInterval);
+          fadeInInterval = null;
+        }
+      }, 50);
+    }
+  }, [cleanupTimers, musicOn]);
 
   const spriteX = Math.min(START_X + currentStep * STEP_PCT, 94);
   const isAnimating = gameState === "animating";
@@ -346,6 +477,16 @@ export default function Section6_Game_07() {
       icon={<Gamepad2 className="w-5 h-5" />}
     >
       <div className="glass rounded-2xl p-3 md:p-6 relative overflow-hidden">
+        <button
+          onClick={() => setMusicOn((prev) => !prev)}
+          className="absolute top-3 right-3 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-hover text-sm font-medium transition-all"
+          style={{ color: musicOn ? "#34d399" : "#94a3b8" }}
+          aria-label={musicOn ? "Music OFF" : "Music ON"}
+          title={musicOn ? "Music ON" : "Music OFF"}
+        >
+          {musicOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          <span className="text-xs">{musicOn ? "ON" : "OFF"}</span>
+        </button>
         <BackgroundEffects />
 
         <div className="relative z-10">

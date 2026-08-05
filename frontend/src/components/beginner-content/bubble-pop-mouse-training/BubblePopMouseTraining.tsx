@@ -1,7 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Gamepad2, RefreshCw, ArrowRight, Star } from "lucide-react";
+import { Sparkles, Gamepad2, RefreshCw, ArrowRight, Star, Volume2, VolumeX } from "lucide-react";
 import SectionWrapper from "../SectionWrapper";
+import inputDeviceMusic from "../../../assets/audio/input-device.mp3";
 
 type GameState = "intro" | "playing" | "gameOver";
 
@@ -201,6 +202,65 @@ export default function BubblePopMouseTraining() {
   const [bubbles, setBubbles] = useState<PopBubble[]>([]);
   const [splash, setSplash] = useState<SplashParticle[]>([]);
   const [totalClicks, setTotalClicks] = useState(0);
+  const [musicOn, setMusicOn] = useState(true);
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const audio = new Audio(inputDeviceMusic);
+    audio.loop = true;
+    audio.volume = 0;
+    audioRef.current = audio;
+
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+      audioRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (gameState === "playing" && musicOn) {
+      audio.currentTime = 0;
+      audio.volume = 0;
+      let fadeInInterval: ReturnType<typeof setInterval> | null = null;
+      let currentVolume = 0;
+      const targetVolume = 0.3;
+      const fadeStep = 0.01;
+
+      const playAudio = async () => {
+        try {
+          await audio.play();
+        } catch {
+        }
+      };
+
+      playAudio();
+
+      fadeInInterval = setInterval(() => {
+        currentVolume = Math.min(currentVolume + fadeStep, targetVolume);
+        audio.volume = currentVolume;
+        if (currentVolume >= targetVolume) {
+          if (fadeInInterval) clearInterval(fadeInInterval);
+          fadeInInterval = null;
+        }
+      }, 50);
+
+      return () => {
+        if (fadeInInterval) clearInterval(fadeInInterval);
+        audio.pause();
+        audio.currentTime = 0;
+        audio.volume = 0;
+      };
+    } else {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.volume = 0;
+    }
+  }, [gameState, musicOn]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(400);
@@ -349,6 +409,16 @@ export default function BubblePopMouseTraining() {
       icon={<Gamepad2 className="w-5 h-5" />}
     >
       <div className="glass rounded-2xl p-4 md:p-8 relative overflow-hidden">
+        <button
+          onClick={() => setMusicOn((prev) => !prev)}
+          className="absolute top-3 right-3 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-hover text-sm font-medium transition-all"
+          style={{ color: musicOn ? "#34d399" : "#94a3b8" }}
+          aria-label={musicOn ? "Music OFF" : "Music ON"}
+          title={musicOn ? "Music ON" : "Music OFF"}
+        >
+          {musicOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          <span className="text-xs">{musicOn ? "ON" : "OFF"}</span>
+        </button>
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <motion.div
             animate={{ x: [0, 30, 0] }}
