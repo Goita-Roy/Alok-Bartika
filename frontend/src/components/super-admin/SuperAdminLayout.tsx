@@ -4,9 +4,9 @@ import { useTheme } from '../../context/ThemeContext'
 import { useAuth } from '../../context/AuthContext'
 import type { ReactNode } from 'react'
 import {
-  LayoutDashboard, Shield, Users, Key, Settings, ClipboardList,
-  BarChart3, Database, UserCog, Star,
-  LogOut, Menu, X, Moon, Sun, ChevronDown,
+  LayoutDashboard, Shield, Users, Key, Settings,
+  BarChart3, Database, UserCog, ScrollText,
+  LogOut, Menu, X, Moon, Sun, ChevronDown, HeartPulse,
 } from 'lucide-react'
 
 const navItems = [
@@ -15,10 +15,10 @@ const navItems = [
   { to: '/super-admin/users',     label: 'User Management',          icon: Users },
   { to: '/super-admin/roles',     label: 'Role & Permissions',       icon: Key },
   { to: '/super-admin/platform',  label: 'Platform Settings',        icon: Settings },
-  { to: '/super-admin/security',  label: 'Security & Audit Logs',    icon: ClipboardList },
+  { to: '/super-admin/audit-logs', label: 'Audit Logs',                icon: ScrollText },
   { to: '/super-admin/analytics', label: 'System Analytics',          icon: BarChart3 },
-  { to: '/admin/feedback',       label: 'Student Feedback',          icon: Star },
   { to: '/super-admin/backup',    label: 'Backup & Restore',         icon: Database },
+  { to: '/super-admin/system-health', label: 'System Health',       icon: HeartPulse },
   { to: '/super-admin/profile',   label: 'Profile & Settings',       icon: UserCog },
 ]
 

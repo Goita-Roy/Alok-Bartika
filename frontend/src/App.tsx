@@ -27,9 +27,10 @@ import { SuperAdminAdminsPage } from './pages/super-admin/SuperAdminAdminsPage'
 import { SuperAdminUsersPage } from './pages/super-admin/SuperAdminUsersPage'
 import { SuperAdminRolesPage } from './pages/super-admin/SuperAdminRolesPage'
 import { SuperAdminPlatformPage } from './pages/super-admin/SuperAdminPlatformPage'
-import { SuperAdminSecurityPage } from './pages/super-admin/SuperAdminSecurityPage'
+import { SuperAdminAuditLogsPage } from './pages/super-admin/SuperAdminAuditLogsPage'
 import { SuperAdminPlatformAnalyticsPage } from './pages/super-admin/SuperAdminPlatformAnalyticsPage'
-import { SuperAdminBackupPage } from './pages/super-admin/SuperAdminBackupPage'
+import { SuperAdminBackupRestorePage } from './pages/super-admin/SuperAdminBackupRestorePage'
+import { SuperAdminSystemHealthPage } from './pages/super-admin/SuperAdminSystemHealthPage'
 import { SuperAdminProfilePage } from './pages/super-admin/SuperAdminProfilePage'
 import { CourseListPage } from './pages/CourseListPage'
 import { LessonViewPage } from './pages/LessonViewPage'
@@ -282,9 +283,10 @@ export default function App() {
         <Route path="/super-admin/users" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminUsersPage /></ProtectedRoute>} />
         <Route path="/super-admin/roles" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminRolesPage /></ProtectedRoute>} />
         <Route path="/super-admin/platform" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminPlatformPage /></ProtectedRoute>} />
-        <Route path="/super-admin/security" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminSecurityPage /></ProtectedRoute>} />
+        <Route path="/super-admin/audit-logs" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminAuditLogsPage /></ProtectedRoute>} />
         <Route path="/super-admin/analytics" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminPlatformAnalyticsPage /></ProtectedRoute>} />
-        <Route path="/super-admin/backup" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminBackupPage /></ProtectedRoute>} />
+        <Route path="/super-admin/backup" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminBackupRestorePage /></ProtectedRoute>} />
+        <Route path="/super-admin/system-health" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminSystemHealthPage /></ProtectedRoute>} />
         <Route path="/super-admin/profile" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminProfilePage /></ProtectedRoute>} />
 
         {/* Everything else - wrapped in student Layout + SocketProvider for message center */}
