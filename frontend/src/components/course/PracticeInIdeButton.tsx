@@ -2,18 +2,14 @@ import { Link } from 'react-router-dom';
 import { Cpu } from 'lucide-react';
 
 type PracticeInIdeButtonProps = {
-  lessonId?: string;
-  courseId?: string;
   className?: string;
 };
 
-// Reusable shortcut that opens the existing IDE (/development) from a lesson
-// page. Reuses the same route already used by LessonViewPage / PracticeSection
+// Reusable shortcut that opens the Free Practice IDE (/practice) from a lesson
+// page. Reuses the same route already used by CourseListPage.
 // — it does NOT create a new IDE.
-export function PracticeInIdeButton({ lessonId, courseId, className }: PracticeInIdeButtonProps) {
-  const to = lessonId && courseId
-    ? `/development?lessonId=${lessonId}&courseId=${courseId}`
-    : '/development';
+export function PracticeInIdeButton({ className }: PracticeInIdeButtonProps) {
+  const to = '/practice';
 
   return (
     <div className="flex justify-center pb-2 pt-2">
