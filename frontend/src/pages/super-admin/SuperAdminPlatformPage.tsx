@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react'
 import {
   Settings, Globe, Shield, Key, Mail, Database, Save, Loader2,
   CheckCircle, AlertTriangle, RefreshCw, CalendarRange,
-  Info, ToggleLeft, ToggleRight, UserPlus,
+  Info, UserPlus,
 } from 'lucide-react'
 import { SuperAdminLayout } from '../../components/super-admin/SuperAdminLayout'
 import { useAuth } from '../../context/AuthContext'
@@ -217,8 +217,9 @@ export function SuperAdminPlatformPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 p-6">
             <div>
-              <label className={labelCls}>Platform Name</label>
+              <label className={labelCls} htmlFor="platformName">Platform Name</label>
               <input
+                id="platformName"
                 type="text"
                 value={form.platformName}
                 onChange={(e) => update('platformName', e.target.value)}
@@ -227,8 +228,9 @@ export function SuperAdminPlatformPage() {
               />
             </div>
             <div>
-              <label className={labelCls}>Support Email</label>
+              <label className={labelCls} htmlFor="supportEmail">Support Email</label>
               <input
+                id="supportEmail"
                 type="email"
                 value={form.supportEmail}
                 onChange={(e) => update('supportEmail', e.target.value)}
@@ -237,8 +239,9 @@ export function SuperAdminPlatformPage() {
               />
             </div>
             <div className="sm:col-span-2">
-              <label className={labelCls}>Platform Description</label>
+              <label className={labelCls} htmlFor="platformDescription">Platform Description</label>
               <input
+                id="platformDescription"
                 type="text"
                 value={form.platformDescription}
                 onChange={(e) => update('platformDescription', e.target.value)}
@@ -247,8 +250,9 @@ export function SuperAdminPlatformPage() {
               />
             </div>
             <div>
-              <label className={labelCls}>Support Phone</label>
+              <label className={labelCls} htmlFor="supportPhone">Support Phone</label>
               <input
+                id="supportPhone"
                 type="tel"
                 value={form.supportPhone}
                 onChange={(e) => update('supportPhone', e.target.value)}
@@ -257,8 +261,9 @@ export function SuperAdminPlatformPage() {
               />
             </div>
             <div>
-              <label className={labelCls}>Logo URL</label>
+              <label className={labelCls} htmlFor="logo">Logo URL</label>
               <input
+                id="logo"
                 type="text"
                 value={form.logo}
                 onChange={(e) => update('logo', e.target.value)}
@@ -267,8 +272,9 @@ export function SuperAdminPlatformPage() {
               />
             </div>
             <div>
-              <label className={labelCls}>Favicon URL</label>
+              <label className={labelCls} htmlFor="favicon">Favicon URL</label>
               <input
+                id="favicon"
                 type="text"
                 value={form.favicon}
                 onChange={(e) => update('favicon', e.target.value)}
@@ -349,11 +355,12 @@ export function SuperAdminPlatformPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 p-6">
             <div>
-              <label className={labelCls}>Maximum Login Attempts</label>
-              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }} mb-1>
+              <label className={labelCls} htmlFor="maxLoginAttempts">Maximum Login Attempts</label>
+              <p className="text-xs mb-1" style={{ color: 'var(--color-text-muted)' }}>
                 Lock an account after this many failed login attempts
               </p>
               <input
+                id="maxLoginAttempts"
                 type="number"
                 min={1}
                 max={100}
@@ -363,11 +370,12 @@ export function SuperAdminPlatformPage() {
               />
             </div>
             <div>
-              <label className={labelCls}>Session Timeout (minutes)</label>
-              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }} mb-1>
+              <label className={labelCls} htmlFor="sessionTimeout">Session Timeout (minutes)</label>
+              <p className="text-xs mb-1" style={{ color: 'var(--color-text-muted)' }}>
                 Inactive sessions expire after this many minutes
               </p>
               <input
+                id="sessionTimeout"
                 type="number"
                 min={5}
                 max={1440}
@@ -404,8 +412,9 @@ export function SuperAdminPlatformPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 p-6">
             <div>
-              <label className={labelCls}>SMTP Host</label>
+              <label className={labelCls} htmlFor="smtpHost">SMTP Host</label>
               <input
+                id="smtpHost"
                 type="text"
                 value={form.smtpHost}
                 onChange={(e) => update('smtpHost', e.target.value)}
@@ -414,8 +423,9 @@ export function SuperAdminPlatformPage() {
               />
             </div>
             <div>
-              <label className={labelCls}>SMTP Port</label>
+              <label className={labelCls} htmlFor="smtpPort">SMTP Port</label>
               <input
+                id="smtpPort"
                 type="number"
                 min={1}
                 max={65535}
@@ -426,8 +436,9 @@ export function SuperAdminPlatformPage() {
               />
             </div>
             <div className="sm:col-span-2">
-              <label className={labelCls}>SMTP User (Sender Identity)</label>
+              <label className={labelCls} htmlFor="smtpUser">SMTP User (Sender Identity)</label>
               <input
+                id="smtpUser"
                 type="text"
                 value={form.smtpUser}
                 onChange={(e) => update('smtpUser', e.target.value)}
@@ -444,11 +455,12 @@ export function SuperAdminPlatformPage() {
               />
             </div>
             <div className="sm:col-span-2">
-              <label className={labelCls}>Sender Email</label>
-              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }} mb-1>
+              <label className={labelCls} htmlFor="smtpSenderEmail">Sender Email</label>
+              <p className="text-xs mb-1" style={{ color: 'var(--color-text-muted)' }}>
                 The email address from which system notifications are sent (uses Support Email)
               </p>
               <input
+                id="smtpSenderEmail"
                 type="email"
                 value={form.supportEmail}
                 onChange={(e) => update('supportEmail', e.target.value)}
@@ -516,11 +528,12 @@ export function SuperAdminPlatformPage() {
             )}
 
             <div className="mt-4">
-              <label className={labelCls}>Maintenance Message</label>
-              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }} mb-1>
+              <label className={labelCls} htmlFor="maintenanceMessage">Maintenance Message</label>
+              <p className="text-xs mb-1" style={{ color: 'var(--color-text-muted)' }}>
                 Message shown to users while maintenance mode is active
               </p>
               <textarea
+                id="maintenanceMessage"
                 value={form.maintenanceMessage}
                 onChange={(e) => update('maintenanceMessage', e.target.value)}
                 className={inputCls}
@@ -625,6 +638,7 @@ export function SuperAdminPlatformPage() {
                 onClick={() => loadSettings()}
                 className="btn btn-sm btn-ghost transition-transform duration-200 hover:scale-110"
                 style={{ color: 'var(--color-text-muted)' }}
+                aria-label="Reload settings"
               >
                 <RefreshCw size={16} />
               </button>
@@ -653,7 +667,7 @@ export function SuperAdminPlatformPage() {
               <AlertTriangle size={16} />
               {loadError}
             </span>
-            <button onClick={() => loadSettings()} className="btn btn-sm btn-ghost" style={{ color: '#dc2626' }}>
+            <button onClick={() => loadSettings()} className="btn btn-sm btn-ghost" style={{ color: '#dc2626' }} aria-label="Retry">
               <RefreshCw size={16} />
             </button>
           </div>
@@ -679,12 +693,13 @@ export function SuperAdminPlatformPage() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-200"
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
                       style={{
                         backgroundColor: isActive ? 'var(--color-accent-pale)' : 'transparent',
                         color: isActive ? 'var(--color-accent)' : 'var(--color-text-muted)',
                         borderBottom: isActive ? '2px solid var(--color-accent)' : 'transparent',
                       }}
+                      aria-pressed={isActive}
                     >
                       {tab.icon}
                       {tab.label}
@@ -806,18 +821,23 @@ function ToggleRow({
       </div>
       <button
         type="button"
+        role="switch"
+        aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className="relative flex-shrink-0 w-44 h-24 rounded-full transition-all duration-200 focus:outline-none"
+        className="relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
         style={{
           backgroundColor: checked ? 'var(--color-accent)' : 'var(--color-border)',
           cursor: 'pointer',
         }}
+        aria-label={title}
       >
-        {checked ? (
-          <ToggleRight size={20} style={{ position: 'absolute', right: '4px', top: '2px', color: 'white' }} />
-        ) : (
-          <ToggleLeft size={20} style={{ position: 'absolute', left: '4px', top: '2px', color: 'var(--color-text-muted)' }} />
-        )}
+        <span
+          className="inline-block h-5 w-5 transform rounded-full bg-white shadow"
+          style={{
+            translate: checked ? '104% 0' : '-4% 0',
+            transition: 'transform 0.2s ease',
+          }}
+        />
       </button>
     </div>
   )

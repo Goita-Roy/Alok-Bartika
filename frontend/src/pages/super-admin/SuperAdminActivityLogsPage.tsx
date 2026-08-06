@@ -273,6 +273,7 @@ export function SuperAdminActivityLogsPage() {
               className="btn btn-sm btn-ghost transition-transform duration-200 hover:scale-110"
               style={{ color: 'var(--color-text-muted)' }}
               title="Refresh"
+              aria-label="Refresh"
             >
               <RefreshCw size={16} />
             </button>
@@ -325,6 +326,7 @@ export function SuperAdminActivityLogsPage() {
                   type="text"
                   className="input input-sm w-full pl-9"
                   placeholder="Search action, category, resource..."
+                  aria-label="Search activity logs"
                   value={searchRaw}
                   onChange={(e) => setSearchRaw(e.target.value)}
                   style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
@@ -337,6 +339,7 @@ export function SuperAdminActivityLogsPage() {
                   className="select select-sm select-bordered w-full"
                   value={actionFilter}
                   onChange={(e) => { setActionFilter(e.target.value); resetPage() }}
+                  aria-label="Action filter"
                   style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
                   disabled={summaryLoading || !summary}
                 >
@@ -354,6 +357,7 @@ export function SuperAdminActivityLogsPage() {
                   type="text"
                   className="input input-sm w-full pl-9"
                   placeholder="Actor name, email, or role..."
+                  aria-label="Filter by actor"
                   value={userFilter}
                   onChange={(e) => setUserFilter(e.target.value)}
                   style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
@@ -368,6 +372,7 @@ export function SuperAdminActivityLogsPage() {
                     className="input input-sm"
                     value={startDate}
                     onChange={(e) => { setStartDate(e.target.value); resetPage() }}
+                    aria-label="Start date"
                     style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
                   />
                 </div>
@@ -378,6 +383,7 @@ export function SuperAdminActivityLogsPage() {
                     className="input input-sm"
                     value={endDate}
                     onChange={(e) => { setEndDate(e.target.value); resetPage() }}
+                    aria-label="End date"
                     style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
                   />
                 </div>
@@ -400,6 +406,7 @@ export function SuperAdminActivityLogsPage() {
                         color: active ? activeColor : 'var(--color-text-muted)',
                         fontWeight: active ? 600 : 400,
                       }}
+                      aria-pressed={active}
                     >
                       {opt.label}
                     </button>
@@ -588,6 +595,7 @@ export function SuperAdminActivityLogsPage() {
                               className="btn btn-ghost btn-xs"
                               style={{ color: 'var(--color-accent)' }}
                               title="View details"
+                              aria-label={`View details of ${log.action || 'activity'}`}
                             >
                               <Eye size={14} />
                             </button>
@@ -628,6 +636,7 @@ export function SuperAdminActivityLogsPage() {
                           className="btn btn-ghost btn-xs"
                           style={{ color: 'var(--color-accent)' }}
                           title="View details"
+                          aria-label={`View details of ${log.action || 'activity'}`}
                         >
                           <Eye size={14} />
                         </button>
@@ -661,6 +670,7 @@ export function SuperAdminActivityLogsPage() {
                     className="select select-sm select-bordered"
                     value={pageSize}
                     onChange={(e) => { setPageSize(Number(e.target.value)); resetPage() }}
+                    aria-label="Rows per page"
                     style={{
                       backgroundColor: 'var(--color-surface)',
                       borderColor: 'var(--color-border)',
@@ -681,6 +691,7 @@ export function SuperAdminActivityLogsPage() {
                     disabled={currentPage === 1}
                     className="btn btn-ghost btn-xs"
                     style={{ color: 'var(--color-text-muted)' }}
+                    aria-label="Previous page"
                   >
                     <ChevronLeft size={14} />
                   </button>
@@ -692,6 +703,7 @@ export function SuperAdminActivityLogsPage() {
                     disabled={currentPage >= pages}
                     className="btn btn-ghost btn-xs"
                     style={{ color: 'var(--color-text-muted)' }}
+                    aria-label="Next page"
                   >
                     <ChevronRight size={14} />
                   </button>
@@ -719,6 +731,7 @@ export function SuperAdminActivityLogsPage() {
                 onClick={() => setActiveLog(null)}
                 className="btn btn-ghost btn-xs"
                 style={{ color: 'var(--color-text-muted)' }}
+                aria-label="Close"
               >
                 <X size={18} />
               </button>

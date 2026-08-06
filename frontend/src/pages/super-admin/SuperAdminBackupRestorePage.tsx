@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import type { AxiosError } from 'axios'
@@ -94,6 +94,10 @@ interface BackupSummary {
 }
 
 const DEFAULT_LIMIT = 20
+
+// Safety cap for the creation-poll loop (~5 minutes at 2s intervals) so a
+// backup that never appears in the list cannot trigger an infinite poll.
+const MAX_POLL_ATTEMPTS = 150
 
 // ── Status / type presentation metadata ─────────────────────────────────────
 const STATUS_META: Record<string, { label: string; color: string; bg: string; border: string }> = {
@@ -236,6 +240,12 @@ export function SuperAdminBackupRestorePage() {
   const [deleteTarget, setDeleteTarget] = useState<BackupRecord | null>(null)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
+  // Tracks the backup that is currently being created in the background so the
+  // polling loop can stop once it reaches a terminal state.
+  const createdBackupIdRef = useRef<string | null>(null)
+  const pollAttemptsRef = useRef(0)
+  const pollTimerRef = useRef<number | null>(null)
+
   const debouncedSearch = useDebouncedValue(search, 400)
 
   const showToast = (message: string, type: 'success' | 'error') => {
@@ -280,26 +290,60 @@ export function SuperAdminBackupRestorePage() {
   })
 
   // While a backup is being created in the background, poll the list so the
-  // new row flips from pending → running → completed/failed.
+  // new row flips from pending → running → completed/failed. Polling stops as
+  // soon as the created backup reaches a terminal state (or the attempt cap).
   useEffect(() => {
     if (!creating) return
-    const timer = setTimeout(() => {
-      void listQuery.refetch()
+    pollAttemptsRef.current = 0
+    let cancelled = false
+
+    const poll = async () => {
+      pollAttemptsRef.current += 1
+      if (pollAttemptsRef.current > MAX_POLL_ATTEMPTS) {
+        setCreating(false)
+        return
+      }
+      try {
+        const result = await listQuery.refetch()
+        if (cancelled) return
+        const createdId = createdBackupIdRef.current
+        const record = result.data?.data?.find((b) => b.id === createdId)
+        if (createdId && record && (record.status === 'completed' || record.status === 'failed' || record.status === 'deleted')) {
+          createdBackupIdRef.current = null
+          setCreating(false)
+          return
+        }
+      } catch {
+        if (cancelled) return
+      }
+      pollTimerRef.current = window.setTimeout(() => {
+        void poll()
+      }, 2000)
+    }
+
+    pollTimerRef.current = window.setTimeout(() => {
+      void poll()
     }, 2000)
-    return () => clearTimeout(timer)
-  }, [creating, listQuery])
+    return () => {
+      cancelled = true
+      if (pollTimerRef.current) window.clearTimeout(pollTimerRef.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [creating])
 
   const createMutation = useMutation({
     mutationFn: async (notes: string) => {
       const { data } = await api.post<{ success: boolean; message: string; data: BackupRecord }>('/backup', { notes })
       return data
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      createdBackupIdRef.current = result?.data?.id ?? null
       setCreating(true)
       void summaryQuery.refetch()
       showToast('Backup started. It will appear in the history below when ready.', 'success')
     },
     onError: (err: unknown) => {
+      createdBackupIdRef.current = null
       showToast(toFriendlyError(err, 'Failed to start backup').message, 'error')
     },
   })
@@ -497,7 +541,7 @@ export function SuperAdminBackupRestorePage() {
                 }}
                 className="btn btn-sm btn-ghost btn-square transition-transform duration-200 hover:scale-110"
                 style={{ color: 'var(--color-text-muted)' }}
-                title="Refresh"
+                aria-label="Refresh"
               >
                 <RefreshCw size={16} />
               </button>
@@ -610,17 +654,18 @@ export function SuperAdminBackupRestorePage() {
                 value={search}
                 onChange={handleSearchChange}
                 placeholder="Search by name…"
+                aria-label="Search backups"
                 style={{ ...inputStyle, paddingLeft: '36px' }}
               />
             </label>
-            <select value={status} onChange={handleStatusChange} style={{ ...inputStyle, width: '160px' }}>
+            <select value={status} onChange={handleStatusChange} style={{ ...inputStyle, width: '160px' }} aria-label="Filter by status">
               <option value="">All statuses</option>
               <option value="completed">Success</option>
               <option value="running">Running</option>
               <option value="pending">Pending</option>
               <option value="failed">Failed</option>
             </select>
-            <select value={type} onChange={handleTypeChange} style={{ ...inputStyle, width: '140px' }}>
+            <select value={type} onChange={handleTypeChange} style={{ ...inputStyle, width: '140px' }} aria-label="Filter by type">
               <option value="">All types</option>
               <option value="manual">Manual</option>
               <option value="scheduled">Auto</option>
@@ -628,11 +673,11 @@ export function SuperAdminBackupRestorePage() {
             </select>
             <label className="relative block">
               <Calendar size={14} className="absolute left-2 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }} />
-              <input type="date" value={startDate} onChange={handleStartDate} style={{ ...inputStyle, paddingLeft: '32px', width: '150px' }} />
+              <input type="date" value={startDate} onChange={handleStartDate} aria-label="Start date" style={{ ...inputStyle, paddingLeft: '32px', width: '150px' }} />
             </label>
             <label className="relative block">
               <Calendar size={14} className="absolute left-2 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }} />
-              <input type="date" value={endDate} onChange={handleEndDate} style={{ ...inputStyle, paddingLeft: '32px', width: '150px' }} />
+              <input type="date" value={endDate} onChange={handleEndDate} aria-label="End date" style={{ ...inputStyle, paddingLeft: '32px', width: '150px' }} />
             </label>
             {hasFilters && (
               <button onClick={clearFilters} className="btn btn-sm btn-ghost gap-1" style={{ color: 'var(--color-text-muted)' }}>
@@ -774,7 +819,7 @@ export function SuperAdminBackupRestorePage() {
                           <td style={{ ...tdStyle, textAlign: 'center' }}>
                             <div className="flex items-center justify-center gap-1">
                               <button
-                                title="Download"
+                                aria-label={`Download ${backup.originalName}`}
                                 onClick={() => void downloadBackup(backup)}
                                 disabled={!isCompleted}
                                 className="btn btn-xs btn-ghost btn-square transition-transform duration-200 hover:scale-110"
@@ -783,7 +828,7 @@ export function SuperAdminBackupRestorePage() {
                                 <Download size={14} />
                               </button>
                               <button
-                                title="Restore"
+                                aria-label={`Restore ${backup.originalName}`}
                                 onClick={() => openRestore(backup)}
                                 disabled={!isCompleted}
                                 className="btn btn-xs btn-ghost btn-square transition-transform duration-200 hover:scale-110"
@@ -792,7 +837,7 @@ export function SuperAdminBackupRestorePage() {
                                 <Upload size={14} />
                               </button>
                               <button
-                                title="Delete"
+                                aria-label={`Delete ${backup.originalName}`}
                                 onClick={() => setDeleteTarget(backup)}
                                 disabled={!isCompleted}
                                 className="btn btn-xs btn-ghost btn-square transition-transform duration-200 hover:scale-110"
@@ -842,13 +887,13 @@ export function SuperAdminBackupRestorePage() {
                           <span className="flex items-center gap-1">{formatTimeOnly(backup.createdAt)}</span>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
-                          <button title="Download" onClick={() => void downloadBackup(backup)} disabled={!isCompleted} className="btn btn-xs btn-ghost btn-square" style={{ color: actionColor }}>
+                          <button aria-label={`Download ${backup.originalName}`} onClick={() => void downloadBackup(backup)} disabled={!isCompleted} className="btn btn-xs btn-ghost btn-square" style={{ color: actionColor }}>
                             <Download size={14} />
                           </button>
-                          <button title="Restore" onClick={() => openRestore(backup)} disabled={!isCompleted} className="btn btn-xs btn-ghost btn-square" style={{ color: actionColor }}>
+                          <button aria-label={`Restore ${backup.originalName}`} onClick={() => openRestore(backup)} disabled={!isCompleted} className="btn btn-xs btn-ghost btn-square" style={{ color: actionColor }}>
                             <Upload size={14} />
                           </button>
-                          <button title="Delete" onClick={() => setDeleteTarget(backup)} disabled={!isCompleted} className="btn btn-xs btn-ghost btn-square" style={{ color: actionColor }}>
+                          <button aria-label={`Delete ${backup.originalName}`} onClick={() => setDeleteTarget(backup)} disabled={!isCompleted} className="btn btn-xs btn-ghost btn-square" style={{ color: actionColor }}>
                             <Trash2 size={14} />
                           </button>
                         </div>
@@ -881,6 +926,7 @@ export function SuperAdminBackupRestorePage() {
                     <button
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={page <= 1}
+                      aria-label="Previous page"
                       className="btn btn-sm btn-ghost btn-square"
                       style={{ color: page <= 1 ? 'var(--color-border)' : 'var(--color-text)' }}
                     >
@@ -892,6 +938,7 @@ export function SuperAdminBackupRestorePage() {
                     <button
                       onClick={() => setPage((p) => Math.min(pages, p + 1))}
                       disabled={page >= pages}
+                      aria-label="Next page"
                       className="btn btn-sm btn-ghost btn-square"
                       style={{ color: page >= pages ? 'var(--color-border)' : 'var(--color-text)' }}
                     >
@@ -983,7 +1030,7 @@ function RestoreModal({
             </div>
             <h3 className="text-base font-semibold" style={{ color: 'var(--color-text)' }}>Restore Backup</h3>
           </div>
-          <button onClick={onClose} className="btn btn-sm btn-ghost btn-square" style={{ color: 'var(--color-text-muted)' }}>
+          <button onClick={onClose} aria-label="Close" className="btn btn-sm btn-ghost btn-square" style={{ color: 'var(--color-text-muted)' }}>
             <X size={18} />
           </button>
         </div>

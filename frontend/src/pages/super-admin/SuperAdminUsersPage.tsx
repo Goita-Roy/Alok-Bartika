@@ -197,6 +197,7 @@ export function SuperAdminUsersPage() {
                 className="btn btn-sm btn-ghost"
                 style={{ color: 'var(--color-text-muted)' }}
                 title="Refresh"
+                aria-label="Refresh"
               >
                 <RefreshCw size={16} />
               </button>
@@ -215,6 +216,7 @@ export function SuperAdminUsersPage() {
                 type="text"
                 className="input input-sm w-full pl-9"
                 placeholder="Search by name, email, phone, role, or username..."
+                aria-label="Search users"
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value)
@@ -245,6 +247,7 @@ export function SuperAdminUsersPage() {
                     style={{
                       color: active ? 'var(--color-accent)' : 'var(--color-text-muted)',
                     }}
+                    aria-pressed={active}
                   >
                     {opt.label}
                   </button>
@@ -269,6 +272,7 @@ export function SuperAdminUsersPage() {
                     style={{
                       color: active ? 'var(--color-accent)' : 'var(--color-text-muted)',
                     }}
+                    aria-pressed={active}
                   >
                     {opt.label}
                   </button>
@@ -507,6 +511,7 @@ export function SuperAdminUsersPage() {
                               className="btn btn-ghost btn-xs"
                               style={{ color: 'var(--color-accent)' }}
                               title="View"
+                              aria-label={`View ${user.fullName}`}
                             >
                               <Eye size={14} />
                             </button>
@@ -515,6 +520,7 @@ export function SuperAdminUsersPage() {
                               className="btn btn-ghost btn-xs"
                               style={{ color: 'var(--color-error)' }}
                               title="Delete"
+                              aria-label={`Delete ${user.fullName}`}
                             >
                               <Trash2 size={14} />
                             </button>
@@ -581,6 +587,7 @@ export function SuperAdminUsersPage() {
                         className="btn btn-ghost btn-xs"
                         style={{ color: 'var(--color-accent)' }}
                         title="View"
+                        aria-label={`View ${user.fullName}`}
                       >
                         <Eye size={13} />
                       </button>
@@ -589,6 +596,7 @@ export function SuperAdminUsersPage() {
                         className="btn btn-ghost btn-xs"
                         style={{ color: 'var(--color-error)' }}
                         title="Delete"
+                        aria-label={`Delete ${user.fullName}`}
                       >
                         <Trash2 size={13} />
                       </button>
@@ -611,6 +619,7 @@ export function SuperAdminUsersPage() {
                       setPageSize(Number(e.target.value))
                       setCurrentPage(1)
                     }}
+                    aria-label="Rows per page"
                     style={{
                       backgroundColor: 'var(--color-surface)',
                       borderColor: 'var(--color-border)',
@@ -635,6 +644,7 @@ export function SuperAdminUsersPage() {
                     disabled={activePage === 1}
                     className="btn btn-ghost btn-xs"
                     style={{ color: 'var(--color-text-muted)' }}
+                    aria-label="Previous page"
                   >
                     <ChevronLeft size={14} />
                   </button>
@@ -646,6 +656,7 @@ export function SuperAdminUsersPage() {
                     disabled={activePage === totalPages}
                     className="btn btn-ghost btn-xs"
                     style={{ color: 'var(--color-text-muted)' }}
+                    aria-label="Next page"
                   >
                     <ChevronRight size={14} />
                   </button>
@@ -678,6 +689,7 @@ export function SuperAdminUsersPage() {
                   onClick={() => setViewTarget(null)}
                   className="btn btn-ghost btn-xs"
                   style={{ color: 'var(--color-text-muted)' }}
+                  aria-label="Close"
                 >
                   <X size={18} />
                 </button>

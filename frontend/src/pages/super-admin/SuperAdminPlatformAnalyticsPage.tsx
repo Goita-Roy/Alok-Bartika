@@ -270,12 +270,13 @@ export function SuperAdminPlatformAnalyticsPage() {
             </div>
 
             <button
-              onClick={refresh}
-              className="btn btn-sm btn-ghost transition-transform duration-200 hover:scale-110"
-              style={{ color: 'var(--color-text-muted)' }}
-            >
-              <RefreshCw size={16} />
-            </button>
+                onClick={refresh}
+                className="btn btn-sm btn-ghost transition-transform duration-200 hover:scale-110"
+                style={{ color: 'var(--color-text-muted)' }}
+                aria-label="Refresh"
+              >
+                <RefreshCw size={16} />
+              </button>
           </div>
         </div>
 
@@ -354,10 +355,11 @@ export function SuperAdminPlatformAnalyticsPage() {
                       </div>
                     </div>
                     <button onClick={loadPlatformAnalytics}
-                      className="btn btn-sm btn-ghost"
-                      style={{ color: 'var(--color-text-muted)' }}>
-                      <RefreshCw size={14} />
-                    </button>
+                        className="btn btn-sm btn-ghost"
+                        style={{ color: 'var(--color-text-muted)' }}
+                        aria-label="Refresh">
+                        <RefreshCw size={14} />
+                      </button>
                   </div>
 
                   {distributionData.length === 0 ? (
@@ -425,10 +427,11 @@ export function SuperAdminPlatformAnalyticsPage() {
                       </div>
                     </div>
                     <button onClick={loadPlatformAnalytics}
-                      className="btn btn-sm btn-ghost"
-                      style={{ color: 'var(--color-text-muted)' }}>
-                      <RefreshCw size={14} />
-                    </button>
+                        className="btn btn-sm btn-ghost"
+                        style={{ color: 'var(--color-text-muted)' }}
+                        aria-label="Refresh">
+                        <RefreshCw size={14} />
+                      </button>
                   </div>
 
                   {monthlyGrowthData.length === 0 ? (
@@ -513,10 +516,11 @@ export function SuperAdminPlatformAnalyticsPage() {
                       </div>
                     </div>
                     <button onClick={loadPlatformAnalytics}
-                      className="btn btn-sm btn-ghost"
-                      style={{ color: 'var(--color-text-muted)' }}>
-                      <RefreshCw size={14} />
-                    </button>
+                        className="btn btn-sm btn-ghost"
+                        style={{ color: 'var(--color-text-muted)' }}
+                        aria-label="Refresh">
+                        <RefreshCw size={14} />
+                      </button>
                   </div>
 
                   {activityData.length === 0 ? (
@@ -580,10 +584,11 @@ export function SuperAdminPlatformAnalyticsPage() {
                       </div>
                     </div>
                     <button onClick={loadPlatformAnalytics}
-                      className="btn btn-sm btn-ghost"
-                      style={{ color: 'var(--color-text-muted)' }}>
-                      <RefreshCw size={14} />
-                    </button>
+                        className="btn btn-sm btn-ghost"
+                        style={{ color: 'var(--color-text-muted)' }}
+                        aria-label="Refresh">
+                        <RefreshCw size={14} />
+                      </button>
                   </div>
 
                   {registrationByRoleData.length === 0 ? (
@@ -648,10 +653,11 @@ export function SuperAdminPlatformAnalyticsPage() {
                     </div>
                   </div>
                   <button onClick={loadPlatformAnalytics}
-                    className="btn btn-sm btn-ghost"
-                    style={{ color: 'var(--color-text-muted)' }}>
-                    <RefreshCw size={14} />
-                  </button>
+                      className="btn btn-sm btn-ghost"
+                      style={{ color: 'var(--color-text-muted)' }}
+                      aria-label="Refresh">
+                      <RefreshCw size={14} />
+                    </button>
                 </div>
 
                 <div className="mt-4 rounded-xl p-4" style={{ background: 'rgba(37,99,235,0.06)', border: '1px solid rgba(37,99,235,0.15)' }}>

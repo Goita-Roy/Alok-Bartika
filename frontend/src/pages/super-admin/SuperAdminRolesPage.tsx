@@ -159,10 +159,9 @@ export function SuperAdminRolesPage() {
       showToast('Permissions saved successfully', 'success')
     } catch (e: unknown) {
       // Dynamic permission management is not available — show the info banner.
+      // The page stays in the unsaved state: savedRef is NOT updated on failure.
       const msg = e instanceof Error ? e.message : 'Failed to save permissions'
       if (msg.includes('404') || msg.includes('not available') || msg.includes('Failed to save')) {
-        savedRef.current = JSON.parse(JSON.stringify(permissions))
-        setSaved(true)
         showToast('Dynamic role permissions are not available in the current backend.', 'error')
       } else {
         showToast(msg, 'error')
@@ -232,7 +231,7 @@ export function SuperAdminRolesPage() {
 
   return (
     <SuperAdminLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 pb-20">
 
         {/* ── Premium Hero Header ── */}
         <div
@@ -272,6 +271,7 @@ export function SuperAdminRolesPage() {
                 onClick={loadRoles}
                 className="btn btn-sm btn-ghost transition-transform duration-200 hover:scale-110"
                 style={{ color: 'var(--color-text-muted)' }}
+                aria-label="Refresh"
               >
                 <RefreshCw size={16} />
               </button>
@@ -384,12 +384,13 @@ export function SuperAdminRolesPage() {
                     <button
                       key={role.id}
                       onClick={() => setActiveRole(role.id)}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-200"
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
                       style={{
                         backgroundColor: isActive ? 'var(--color-accent-pale)' : 'transparent',
                         color: isActive ? 'var(--color-accent)' : 'var(--color-text-muted)',
                         borderBottom: isActive ? '2px solid var(--color-accent)' : 'transparent',
                       }}
+                      aria-pressed={isActive}
                     >
                       <span
                         className="w-8 h-8 rounded-lg flex items-center justify-center"
@@ -420,6 +421,7 @@ export function SuperAdminRolesPage() {
                   <input
                     type="text"
                     placeholder="Search modules or permissions..."
+                    aria-label="Search modules or permissions"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full rounded-xl border bg-[var(--color-bg)] pl-10 pr-3 py-2 text-sm text-[var(--color-text)] placeholder-[var(--color-text-muted)]/50 outline-none transition-all duration-200 focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)]/15"
@@ -497,14 +499,17 @@ export function SuperAdminRolesPage() {
                             >
                               <button
                                 type="button"
+                                role="switch"
+                                aria-checked={isChecked}
                                 onClick={() => togglePermission(activeRole, key, !isChecked)}
-                                className="mx-auto flex items-center justify-center w-6 h-6 rounded-lg transition-all duration-200 focus:outline-none"
+                                className="mx-auto flex items-center justify-center w-6 h-6 rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
                                 style={{
                                   backgroundColor: isChecked ? 'var(--color-accent)' : 'transparent',
                                   border: isChecked ? 'none' : '1px solid var(--color-border)',
                                   cursor: 'pointer',
                                 }}
                                 title={`${isChecked ? 'Revoke' : 'Grant'} ${module} → ${action}`}
+                                aria-label={`${isChecked ? 'Revoke' : 'Grant'} ${module} ${action}`}
                               >
                                 {isChecked ? (
                                   <Check size={14} color="white" strokeWidth={3} />

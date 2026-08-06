@@ -83,10 +83,10 @@ const inputStyle: React.CSSProperties = {
   color: 'var(--color-text)',
 }
 
-function FieldRow({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+function FieldRow({ label, hint, htmlFor, children }: { label: string; hint?: string; htmlFor?: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>{label}</label>
+      <label htmlFor={htmlFor} className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>{label}</label>
       {hint && <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{hint}</p>}
       {children}
     </div>
@@ -116,11 +116,13 @@ function ToggleRow({
       <button
         type="button"
         onClick={() => onChange(!checked)}
-        className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none"
+        className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-accent)]"
         style={{
           backgroundColor: checked ? 'var(--color-accent)' : 'var(--color-border)',
           cursor: 'pointer',
         }}
+        role="switch"
+        aria-checked={checked}
         aria-label={title}
       >
         <span
@@ -299,7 +301,7 @@ export function SuperAdminSettingsPage() {
                 onClick={() => loadSettings()}
                 className="btn btn-sm btn-ghost"
                 style={{ color: 'var(--color-text-muted)' }}
-                title="Refresh"
+                aria-label="Refresh"
               >
                 <RefreshCw size={16} />
               </button>
@@ -321,7 +323,7 @@ export function SuperAdminSettingsPage() {
               <AlertTriangle size={16} />
               {loadError}
             </span>
-            <button onClick={() => loadSettings()} className="btn btn-sm btn-ghost" style={{ color: 'var(--color-error)' }}>
+            <button onClick={() => loadSettings()} className="btn btn-sm btn-ghost" style={{ color: 'var(--color-error)' }} aria-label="Retry">
               <RefreshCw size={16} />
             </button>
           </div>
@@ -358,8 +360,9 @@ export function SuperAdminSettingsPage() {
             >
               <SectionHeader icon={<Globe size={18} style={{ color: 'var(--color-accent)' }} />} title="Platform" />
               <div className="p-5 space-y-4">
-                <FieldRow label="Platform Name" hint="The public name of your platform shown to all users">
+                <FieldRow label="Platform Name" hint="The public name of your platform shown to all users" htmlFor="platformName">
                   <input
+                    id="platformName"
                     type="text"
                     className={inputCls}
                     style={inputStyle}
@@ -367,8 +370,9 @@ export function SuperAdminSettingsPage() {
                     onChange={(e) => update('platformName', e.target.value)}
                   />
                 </FieldRow>
-                <FieldRow label="Platform Description" hint="Short description shown on the platform">
+                <FieldRow label="Platform Description" hint="Short description shown on the platform" htmlFor="platformDescription">
                   <textarea
+                    id="platformDescription"
                     className="textarea textarea-sm w-full resize-y"
                     style={inputStyle}
                     rows={3}
@@ -376,8 +380,9 @@ export function SuperAdminSettingsPage() {
                     onChange={(e) => update('platformDescription', e.target.value)}
                   />
                 </FieldRow>
-                <FieldRow label="Logo URL" hint="URL of the platform logo">
+                <FieldRow label="Logo URL" hint="URL of the platform logo" htmlFor="logo">
                   <input
+                    id="logo"
                     type="url"
                     className={inputCls}
                     style={inputStyle}
@@ -386,8 +391,9 @@ export function SuperAdminSettingsPage() {
                     onChange={(e) => update('logo', e.target.value)}
                   />
                 </FieldRow>
-                <FieldRow label="Favicon URL" hint="URL of the platform favicon">
+                <FieldRow label="Favicon URL" hint="URL of the platform favicon" htmlFor="favicon">
                   <input
+                    id="favicon"
                     type="url"
                     className={inputCls}
                     style={inputStyle}
@@ -402,8 +408,9 @@ export function SuperAdminSettingsPage() {
                   checked={form.maintenanceMode}
                   onChange={(v) => update('maintenanceMode', v)}
                 />
-                <FieldRow label="Maintenance Message" hint="Message shown to users while maintenance mode is active">
+                <FieldRow label="Maintenance Message" hint="Message shown to users while maintenance mode is active" htmlFor="maintenanceMessage">
                   <textarea
+                    id="maintenanceMessage"
                     className="textarea textarea-sm w-full resize-y"
                     style={inputStyle}
                     rows={2}
@@ -440,8 +447,9 @@ export function SuperAdminSettingsPage() {
                   checked={form.otpEnabled}
                   onChange={(v) => update('otpEnabled', v)}
                 />
-                <FieldRow label="Maximum Login Attempts" hint="Lock an account after this many failed login attempts">
+                <FieldRow label="Maximum Login Attempts" hint="Lock an account after this many failed login attempts" htmlFor="maxLoginAttempts">
                   <input
+                    id="maxLoginAttempts"
                     type="number"
                     min={1}
                     max={100}
@@ -451,8 +459,9 @@ export function SuperAdminSettingsPage() {
                     onChange={updateNumber('maxLoginAttempts')}
                   />
                 </FieldRow>
-                <FieldRow label="Session Timeout (minutes)" hint="Inactive sessions are logged out after this many minutes">
+                <FieldRow label="Session Timeout (minutes)" hint="Inactive sessions are logged out after this many minutes" htmlFor="sessionTimeout">
                   <input
+                    id="sessionTimeout"
                     type="number"
                     min={5}
                     max={1440}
@@ -472,8 +481,9 @@ export function SuperAdminSettingsPage() {
             >
               <SectionHeader icon={<Mail size={18} style={{ color: 'var(--color-accent)' }} />} title="Email" />
               <div className="p-5 space-y-4">
-                <FieldRow label="Support Email" hint="Contact email for support inquiries and system notifications">
+                <FieldRow label="Support Email" hint="Contact email for support inquiries and system notifications" htmlFor="supportEmail">
                   <input
+                    id="supportEmail"
                     type="email"
                     className={inputCls}
                     style={inputStyle}
@@ -481,8 +491,9 @@ export function SuperAdminSettingsPage() {
                     onChange={(e) => update('supportEmail', e.target.value)}
                   />
                 </FieldRow>
-                <FieldRow label="Support Phone" hint="Contact phone number for support inquiries">
+                <FieldRow label="Support Phone" hint="Contact phone number for support inquiries" htmlFor="supportPhone">
                   <input
+                    id="supportPhone"
                     type="tel"
                     className={inputCls}
                     style={inputStyle}
@@ -491,8 +502,9 @@ export function SuperAdminSettingsPage() {
                     onChange={(e) => update('supportPhone', e.target.value)}
                   />
                 </FieldRow>
-                <FieldRow label="SMTP Host" hint="Outgoing mail server hostname">
+                <FieldRow label="SMTP Host" hint="Outgoing mail server hostname" htmlFor="smtpHost">
                   <input
+                    id="smtpHost"
                     type="text"
                     className={inputCls}
                     style={inputStyle}
@@ -501,8 +513,9 @@ export function SuperAdminSettingsPage() {
                     onChange={(e) => update('smtpHost', e.target.value)}
                   />
                 </FieldRow>
-                <FieldRow label="SMTP Port" hint="Outgoing mail server port (1–65535)">
+                <FieldRow label="SMTP Port" hint="Outgoing mail server port (1–65535)" htmlFor="smtpPort">
                   <input
+                    id="smtpPort"
                     type="number"
                     min={1}
                     max={65535}
@@ -512,8 +525,9 @@ export function SuperAdminSettingsPage() {
                     onChange={updateNumber('smtpPort')}
                   />
                 </FieldRow>
-                <FieldRow label="SMTP User" hint="Username for SMTP authentication">
+                <FieldRow label="SMTP User" hint="Username for SMTP authentication" htmlFor="smtpUser">
                   <input
+                    id="smtpUser"
                     type="text"
                     className={inputCls}
                     style={inputStyle}

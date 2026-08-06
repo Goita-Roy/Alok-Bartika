@@ -350,7 +350,7 @@ export function SuperAdminSystemHealthPage() {
                   border: '1px solid transparent',
                   borderColor: autoRefresh ? 'var(--color-border)' : 'transparent',
                 }}
-                title="Toggle Auto Refresh (every 30s)"
+                aria-pressed={autoRefresh}
               >
                 <span
                   className="relative inline-flex w-7 h-4 rounded-full transition-colors duration-200"
@@ -378,7 +378,7 @@ export function SuperAdminSystemHealthPage() {
                 onClick={() => void doRefresh()}
                 className="btn btn-sm btn-ghost px-2.5 transition-transform duration-200 hover:scale-110"
                 style={{ color: 'var(--color-text-muted)' }}
-                title="Refresh now"
+                aria-label="Refresh"
                 disabled={refreshing}
               >
                 <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />

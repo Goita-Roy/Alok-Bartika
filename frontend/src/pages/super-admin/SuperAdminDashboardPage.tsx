@@ -40,7 +40,7 @@ export function SuperAdminDashboardPage() {
           fetch(`${API_BASE_URL}/admin/dashboard`, { headers }),
         ])
 
-        if (!adminsRes.ok || !usersRes.ok) {
+        if (!adminsRes.ok || !usersRes.ok || !feedbackRes.ok) {
           throw new Error('Failed to fetch dashboard data')
         }
 

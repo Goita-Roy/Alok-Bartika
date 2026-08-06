@@ -374,6 +374,11 @@ export function SuperAdminAuditLogsPage() {
 
   const hasLoadedRef = useRef(false)
   const toastTimerRef = useRef<number | null>(null)
+  const lastFilterKeyRef = useRef('')
+  const logAbortRef = useRef<AbortController | null>(null)
+  const logSeqRef = useRef(0)
+  const summaryAbortRef = useRef<AbortController | null>(null)
+  const summarySeqRef = useRef(0)
 
   const showToast = (message: string) => {
     setToast(message)
@@ -386,18 +391,26 @@ export function SuperAdminAuditLogsPage() {
 
   const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
 
-  const loadSummary = async () => {
+  const loadSummary = async (seq: number = ++summarySeqRef.current) => {
+    summaryAbortRef.current?.abort()
+    const controller = new AbortController()
+    summaryAbortRef.current = controller
     try {
       setSummaryLoading(true)
       setSummaryError(null)
-      const res = await fetch(`${API_BASE_URL}/audit/summary`, { headers })
+      const res = await fetch(`${API_BASE_URL}/audit/summary`, { headers, signal: controller.signal })
       if (!res.ok) throw new Error('Failed to load audit summary')
       const json = await res.json()
+      if (seq !== summarySeqRef.current) return
       setSummary(json.data ?? null)
     } catch (e: unknown) {
+      if (e instanceof DOMException && e.name === 'AbortError') return
+      if (seq !== summarySeqRef.current) return
       setSummaryError(e instanceof Error ? e.message : 'Failed to load audit summary')
     } finally {
-      setSummaryLoading(false)
+      if (seq === summarySeqRef.current) {
+        setSummaryLoading(false)
+      }
     }
   }
 
@@ -415,21 +428,29 @@ export function SuperAdminAuditLogsPage() {
     return params.toString()
   }
 
-  const loadLogs = async () => {
+  const loadLogs = async (seq: number = ++logSeqRef.current) => {
+    logAbortRef.current?.abort()
+    const controller = new AbortController()
+    logAbortRef.current = controller
     try {
       setLoading(true)
       setError(null)
-      const res = await fetch(`${API_BASE_URL}/audit?${buildQuery()}`, { headers })
+      const res = await fetch(`${API_BASE_URL}/audit?${buildQuery()}`, { headers, signal: controller.signal })
       if (!res.ok) throw new Error('Failed to load audit logs')
       const json = await res.json()
+      if (seq !== logSeqRef.current) return
       setLogs(json.data || [])
       setTotal(json.total ?? 0)
       setPages(json.pages ?? 1)
     } catch (e: unknown) {
+      if (e instanceof DOMException && e.name === 'AbortError') return
+      if (seq !== logSeqRef.current) return
       setError(e instanceof Error ? e.message : 'Failed to load audit logs')
     } finally {
-      setLoading(false)
-      hasLoadedRef.current = true
+      if (seq === logSeqRef.current) {
+        setLoading(false)
+        hasLoadedRef.current = true
+      }
     }
   }
 
@@ -443,16 +464,17 @@ export function SuperAdminAuditLogsPage() {
 
   useEffect(() => {
     if (!token) return
-    setCurrentPage(1)
+    const filterKey = [search, user, actionFilter, resourceFilter, statusFilter, startDate, endDate].join('|')
+    if (filterKey !== lastFilterKeyRef.current && currentPage !== 1) {
+      lastFilterKeyRef.current = filterKey
+      setCurrentPage(1)
+      return
+    }
+    lastFilterKeyRef.current = filterKey
     void loadLogs()
+    return () => logAbortRef.current?.abort()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, search, user, actionFilter, resourceFilter, statusFilter, startDate, endDate])
-
-  useEffect(() => {
-    if (!token) return
-    void loadLogs()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, pageSize])
+  }, [token, search, user, actionFilter, resourceFilter, statusFilter, startDate, endDate, currentPage, pageSize])
 
   useEffect(() => {
     if (token) void loadSummary()
@@ -620,7 +642,9 @@ export function SuperAdminAuditLogsPage() {
               <div className="inline-flex items-center gap-2 rounded-xl px-1.5 py-1.5 transition-all duration-200" style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
                 <button
                   onClick={() => setAutoRefresh((v) => !v)}
-                  className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all duration-200 ${autoRefresh ? 'bg-white' : ''}`}
+                  role="switch"
+                  aria-checked={autoRefresh}
+                  className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] ${autoRefresh ? 'bg-white' : ''}`}
                   style={{
                     color: autoRefresh ? 'var(--color-accent)' : 'var(--color-text-muted)',
                     boxShadow: autoRefresh ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
@@ -628,6 +652,7 @@ export function SuperAdminAuditLogsPage() {
                     borderColor: autoRefresh ? 'var(--color-border)' : 'transparent',
                   }}
                   title="Toggle Auto Refresh (every 60s)"
+                  aria-label="Toggle Auto Refresh (every 60s)"
                 >
                   <span
                     className="relative inline-flex w-7 h-4 rounded-full transition-colors duration-200"
@@ -654,6 +679,7 @@ export function SuperAdminAuditLogsPage() {
                   className="btn btn-sm btn-ghost px-2.5 transition-transform duration-200 hover:scale-110"
                   style={{ color: 'var(--color-text-muted)' }}
                   title="Refresh now"
+                  aria-label="Refresh now"
                   disabled={refreshing}
                 >
                   <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
@@ -715,6 +741,7 @@ export function SuperAdminAuditLogsPage() {
                   type="text"
                   className="input input-sm w-full pl-9"
                   placeholder="Search action, resource…"
+                  aria-label="Search audit logs"
                   value={searchRaw}
                   onChange={(e) => setSearchRaw(e.target.value)}
                   style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
@@ -726,6 +753,7 @@ export function SuperAdminAuditLogsPage() {
                   type="text"
                   className="input input-sm w-full pl-9"
                   placeholder="User (name or email)"
+                  aria-label="Search by user"
                   value={userRaw}
                   onChange={(e) => setUserRaw(e.target.value)}
                   style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
@@ -735,6 +763,7 @@ export function SuperAdminAuditLogsPage() {
                 className="select select-sm select-bordered w-full"
                 value={actionFilter}
                 onChange={(e) => setActionFilter(e.target.value)}
+                aria-label="Action filter"
                 style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
               >
                 <option value="">All Actions</option>
@@ -746,6 +775,7 @@ export function SuperAdminAuditLogsPage() {
                 className="select select-sm select-bordered w-full"
                 value={resourceFilter}
                 onChange={(e) => setResourceFilter(e.target.value)}
+                aria-label="Resource filter"
                 style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
               >
                 <option value="">All Resources</option>
@@ -757,6 +787,7 @@ export function SuperAdminAuditLogsPage() {
                 className="select select-sm select-bordered w-full"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
+                aria-label="Status filter"
                 style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
               >
                 <option value="">All Statuses</option>
@@ -771,13 +802,14 @@ export function SuperAdminAuditLogsPage() {
                       <button
                         key={qf.key}
                         onClick={() => applyQuickFilter(qf.key)}
-                        className="px-2.5 py-1 rounded-xl text-xs font-semibold transition-all duration-200 whitespace-nowrap"
+                        className="px-2.5 py-1 rounded-xl text-xs font-semibold transition-all duration-200 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
                         style={{
                           backgroundColor: active ? 'var(--color-accent)' : 'var(--color-bg)',
                           color: active ? '#fff' : 'var(--color-text-muted)',
                           border: `1px solid ${active ? 'var(--color-accent)' : 'var(--color-border)'}`,
                           boxShadow: active ? '0 2px 8px rgba(124,58,237,0.25)' : 'none',
                         }}
+                        aria-pressed={active}
                         onMouseEnter={(e) => {
                           if (!active) {
                             e.currentTarget.style.backgroundColor = 'var(--color-accent-pale)'
@@ -804,6 +836,7 @@ export function SuperAdminAuditLogsPage() {
                     onChange={(e) => { setStartDate(e.target.value); setQuickFilter(null); setCurrentPage(1) }}
                     style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
                     title="Start date"
+                    aria-label="Start date"
                   />
                   <span className="text-xs pb-2.5" style={{ color: 'var(--color-text-muted)' }}>to</span>
                   <input
@@ -813,6 +846,7 @@ export function SuperAdminAuditLogsPage() {
                     onChange={(e) => { setEndDate(e.target.value); setQuickFilter(null); setCurrentPage(1) }}
                     style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
                     title="End date"
+                    aria-label="End date"
                   />
                 </div>
               </div>
@@ -843,6 +877,8 @@ export function SuperAdminAuditLogsPage() {
                   disabled={exporting !== null || logs.length === 0}
                   className="btn btn-sm btn-ghost gap-1.5"
                   style={{ color: 'var(--color-text-muted)' }}
+                  aria-haspopup="menu"
+                  aria-expanded={exportOpen}
                 >
                   {exporting !== null ? (
                     <>
@@ -980,9 +1016,10 @@ export function SuperAdminAuditLogsPage() {
                           {h.sortable ? (
                             <button
                               onClick={() => toggleSort(h.key as SortKey)}
-                              className="inline-flex items-center gap-1 uppercase tracking-wider text-xs font-semibold cursor-pointer select-none"
+                              className="inline-flex items-center gap-1 uppercase tracking-wider text-xs font-semibold cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] rounded"
                               style={{ color: isActive ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
                               title={`Sort by ${h.label}`}
+                              aria-label={`Sort by ${h.label}`}
                             >
                               {h.label}
                               {isActive ? (
@@ -1060,6 +1097,7 @@ export function SuperAdminAuditLogsPage() {
                             className="btn btn-ghost btn-xs"
                             style={{ color: 'var(--color-accent)' }}
                             title="View details"
+                            aria-label={`View details of ${humanizeAction(log.action)}`}
                           >
                             <Eye size={14} />
                           </button>
@@ -1103,6 +1141,7 @@ export function SuperAdminAuditLogsPage() {
                         className="btn btn-ghost btn-xs"
                         style={{ color: 'var(--color-accent)' }}
                         title="View details"
+                        aria-label={`View details of ${humanizeAction(log.action)}`}
                       >
                         <Eye size={14} />
                       </button>
@@ -1122,6 +1161,7 @@ export function SuperAdminAuditLogsPage() {
                     className="select select-sm select-bordered"
                     value={pageSize}
                     onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1) }}
+                    aria-label="Rows per page"
                     style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
                   >
                     {PAGE_SIZE_OPTIONS.map((s) => (
@@ -1138,6 +1178,7 @@ export function SuperAdminAuditLogsPage() {
                     disabled={currentPage === 1}
                     className="btn btn-ghost btn-xs"
                     style={{ color: currentPage === 1 ? 'var(--color-border)' : 'var(--color-text-muted)' }}
+                    aria-label="Previous page"
                   >
                     <ChevronLeft size={14} />
                   </button>
@@ -1149,6 +1190,7 @@ export function SuperAdminAuditLogsPage() {
                     disabled={currentPage >= pages}
                     className="btn btn-ghost btn-xs"
                     style={{ color: currentPage >= pages ? 'var(--color-border)' : 'var(--color-text-muted)' }}
+                    aria-label="Next page"
                   >
                     <ChevronRight size={14} />
                   </button>
@@ -1182,7 +1224,7 @@ export function SuperAdminAuditLogsPage() {
                   </p>
                 </div>
               </div>
-              <button onClick={() => setActiveLog(null)} className="btn btn-sm btn-ghost btn-square" style={{ color: 'var(--color-text-muted)' }}>
+              <button onClick={() => setActiveLog(null)} className="btn btn-sm btn-ghost btn-square" style={{ color: 'var(--color-text-muted)' }} aria-label="Close inspector">
                 <X size={18} />
               </button>
             </div>

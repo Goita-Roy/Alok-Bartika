@@ -499,8 +499,9 @@ export function SuperAdminProfilePage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {/* Full Name */}
                 <div>
-                  <label style={labelStyle}>Full Name *</label>
+                  <label htmlFor="fullName" style={labelStyle}>Full Name *</label>
                   <input
+                    id="fullName"
                     type="text"
                     value={fullName}
                     onChange={(e) => {
@@ -515,8 +516,9 @@ export function SuperAdminProfilePage() {
 
                 {/* Username */}
                 <div>
-                  <label style={labelStyle}>Username *</label>
+                  <label htmlFor="username" style={labelStyle}>Username *</label>
                   <input
+                    id="username"
                     type="text"
                     value={username}
                     onChange={(e) => {
@@ -531,8 +533,9 @@ export function SuperAdminProfilePage() {
 
                 {/* Email (Read-Only) */}
                 <div>
-                  <label style={labelStyle}>Email Address (Read-Only)</label>
+                  <label htmlFor="email" style={labelStyle}>Email Address (Read-Only)</label>
                   <input
+                    id="email"
                     type="email"
                     value={displayEmail}
                     disabled
@@ -545,8 +548,9 @@ export function SuperAdminProfilePage() {
 
                 {/* Phone */}
                 <div>
-                  <label style={labelStyle}>Phone Number</label>
+                  <label htmlFor="phone" style={labelStyle}>Phone Number</label>
                   <input
+                    id="phone"
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
@@ -557,8 +561,9 @@ export function SuperAdminProfilePage() {
 
                 {/* Role (Read-Only) */}
                 <div>
-                  <label style={labelStyle}>Role (Read-Only)</label>
+                  <label htmlFor="role" style={labelStyle}>Role (Read-Only)</label>
                   <input
+                    id="role"
                     type="text"
                     value={displayRole}
                     disabled
@@ -568,8 +573,9 @@ export function SuperAdminProfilePage() {
 
                 {/* Avatar Image URL */}
                 <div>
-                  <label style={labelStyle}>Avatar URL / Image Data</label>
+                  <label htmlFor="avatar" style={labelStyle}>Avatar URL / Image Data</label>
                   <input
+                    id="avatar"
                     type="text"
                     value={avatar}
                     onChange={(e) => setAvatar(e.target.value)}
@@ -580,8 +586,9 @@ export function SuperAdminProfilePage() {
 
                 {/* Created Date (Read-Only) */}
                 <div>
-                  <label style={labelStyle}>Created Date (Read-Only)</label>
+                  <label htmlFor="createdAt" style={labelStyle}>Created Date (Read-Only)</label>
                   <input
+                    id="createdAt"
                     type="text"
                     value={profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'N/A'}
                     disabled
@@ -673,9 +680,10 @@ export function SuperAdminProfilePage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 {/* Current Password */}
                 <div>
-                  <label style={labelStyle}>Current Password *</label>
+                  <label htmlFor="currentPassword" style={labelStyle}>Current Password *</label>
                   <div style={{ position: 'relative' }}>
                     <input
+                      id="currentPassword"
                       type={showCurrent ? 'text' : 'password'}
                       value={currentPassword}
                       onChange={(e) => {
@@ -688,6 +696,8 @@ export function SuperAdminProfilePage() {
                     <button
                       type="button"
                       onClick={() => setShowCurrent(!showCurrent)}
+                      aria-label={showCurrent ? 'Hide current password' : 'Show current password'}
+                      aria-pressed={showCurrent}
                       style={toggleButtonStyle}
                     >
                       {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -700,9 +710,10 @@ export function SuperAdminProfilePage() {
 
                 {/* New Password */}
                 <div>
-                  <label style={labelStyle}>New Password *</label>
+                  <label htmlFor="newPassword" style={labelStyle}>New Password *</label>
                   <div style={{ position: 'relative' }}>
                     <input
+                      id="newPassword"
                       type={showNew ? 'text' : 'password'}
                       value={newPassword}
                       onChange={(e) => {
@@ -715,6 +726,8 @@ export function SuperAdminProfilePage() {
                     <button
                       type="button"
                       onClick={() => setShowNew(!showNew)}
+                      aria-label={showNew ? 'Hide new password' : 'Show new password'}
+                      aria-pressed={showNew}
                       style={toggleButtonStyle}
                     >
                       {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -744,9 +757,10 @@ export function SuperAdminProfilePage() {
 
                 {/* Confirm New Password */}
                 <div>
-                  <label style={labelStyle}>Confirm New Password *</label>
+                  <label htmlFor="confirmPassword" style={labelStyle}>Confirm New Password *</label>
                   <div style={{ position: 'relative' }}>
                     <input
+                      id="confirmPassword"
                       type={showConfirm ? 'text' : 'password'}
                       value={confirmPassword}
                       onChange={(e) => {
@@ -759,6 +773,8 @@ export function SuperAdminProfilePage() {
                     <button
                       type="button"
                       onClick={() => setShowConfirm(!showConfirm)}
+                      aria-label={showConfirm ? 'Hide confirm password' : 'Show confirm password'}
+                      aria-pressed={showConfirm}
                       style={toggleButtonStyle}
                     >
                       {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}

@@ -316,6 +316,7 @@ export function SuperAdminAdminsPage() {
                 className="btn btn-sm btn-ghost"
                 style={{ color: 'var(--color-text-muted)' }}
                 title="Refresh"
+                aria-label="Refresh"
               >
                 <RefreshCw size={16} />
               </button>
@@ -356,6 +357,7 @@ export function SuperAdminAdminsPage() {
                     style={{
                       color: active ? 'var(--color-accent)' : 'var(--color-text-muted)',
                     }}
+                    aria-pressed={active}
                   >
                     {opt.label}
                   </button>
@@ -501,6 +503,7 @@ export function SuperAdminAdminsPage() {
                               className="btn btn-ghost btn-xs"
                               style={{ color: 'var(--color-accent)' }}
                               title="View"
+                              aria-label={`View ${admin.fullName}`}
                             >
                               <Eye size={14} />
                             </button>
@@ -509,6 +512,7 @@ export function SuperAdminAdminsPage() {
                               className="btn btn-ghost btn-xs"
                               style={{ color: 'var(--color-accent)' }}
                               title="Edit"
+                              aria-label={`Edit ${admin.fullName}`}
                             >
                               <Pencil size={14} />
                             </button>
@@ -517,6 +521,7 @@ export function SuperAdminAdminsPage() {
                               className="btn btn-ghost btn-xs"
                               style={{ color: admin.isActive ? 'var(--color-warning, #f59e0b)' : '#22c55e' }}
                               title={admin.isActive ? 'Suspend' : 'Reactivate'}
+                              aria-label={admin.isActive ? `Suspend ${admin.fullName}` : `Reactivate ${admin.fullName}`}
                             >
                               {admin.isActive ? <UserX size={14} /> : <UserCheck size={14} />}
                             </button>
@@ -525,6 +530,7 @@ export function SuperAdminAdminsPage() {
                               className="btn btn-ghost btn-xs"
                               style={{ color: 'var(--color-warning, #f59e0b)' }}
                               title="Reset password"
+                              aria-label={`Reset password for ${admin.fullName}`}
                             >
                               <Key size={14} />
                             </button>
@@ -533,6 +539,7 @@ export function SuperAdminAdminsPage() {
                               className="btn btn-ghost btn-xs"
                               style={{ color: 'var(--color-error)' }}
                               title="Delete"
+                              aria-label={`Delete ${admin.fullName}`}
                             >
                               <Trash2 size={14} />
                             </button>
@@ -593,6 +600,7 @@ export function SuperAdminAdminsPage() {
                         className="btn btn-ghost btn-xs"
                         style={{ color: 'var(--color-accent)' }}
                         title="View"
+                        aria-label={`View ${admin.fullName}`}
                       >
                         <Eye size={13} />
                       </button>
@@ -601,6 +609,7 @@ export function SuperAdminAdminsPage() {
                         className="btn btn-ghost btn-xs"
                         style={{ color: 'var(--color-accent)' }}
                         title="Edit"
+                        aria-label={`Edit ${admin.fullName}`}
                       >
                         <Pencil size={13} />
                       </button>
@@ -609,6 +618,7 @@ export function SuperAdminAdminsPage() {
                         className="btn btn-ghost btn-xs"
                         style={{ color: admin.isActive ? 'var(--color-warning, #f59e0b)' : '#22c55e' }}
                         title={admin.isActive ? 'Suspend' : 'Reactivate'}
+                        aria-label={admin.isActive ? `Suspend ${admin.fullName}` : `Reactivate ${admin.fullName}`}
                       >
                         {admin.isActive ? <UserX size={13} /> : <UserCheck size={13} />}
                       </button>
@@ -617,6 +627,7 @@ export function SuperAdminAdminsPage() {
                         className="btn btn-ghost btn-xs"
                         style={{ color: 'var(--color-warning, #f59e0b)' }}
                         title="Reset password"
+                        aria-label={`Reset password for ${admin.fullName}`}
                       >
                         <Key size={13} />
                       </button>
@@ -625,6 +636,7 @@ export function SuperAdminAdminsPage() {
                         className="btn btn-ghost btn-xs"
                         style={{ color: 'var(--color-error)' }}
                         title="Delete"
+                        aria-label={`Delete ${admin.fullName}`}
                       >
                         <Trash2 size={13} />
                       </button>
@@ -644,6 +656,7 @@ export function SuperAdminAdminsPage() {
                     className="select select-sm select-bordered"
                     value={pageSize}
                     onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1) }}
+                    aria-label="Rows per page"
                     style={{
                       backgroundColor: 'var(--color-surface)',
                       borderColor: 'var(--color-border)',
@@ -666,6 +679,7 @@ export function SuperAdminAdminsPage() {
                     disabled={activePage === 1}
                     className="btn btn-ghost btn-xs"
                     style={{ color: 'var(--color-text-muted)' }}
+                    aria-label="Previous page"
                   >
                     <ChevronLeft size={14} />
                   </button>
@@ -677,6 +691,7 @@ export function SuperAdminAdminsPage() {
                     disabled={activePage === totalPages}
                     className="btn btn-ghost btn-xs"
                     style={{ color: 'var(--color-text-muted)' }}
+                    aria-label="Next page"
                   >
                     <ChevronRight size={14} />
                   </button>
@@ -710,6 +725,7 @@ export function SuperAdminAdminsPage() {
                   onClick={() => setModalOpen(false)}
                   className="btn btn-ghost btn-xs"
                   style={{ color: 'var(--color-text-muted)' }}
+                  aria-label="Close"
                 >
                   <X size={18} />
                 </button>
@@ -781,9 +797,11 @@ export function SuperAdminAdminsPage() {
                     />
                     <button
                       type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] rounded-md"
                       style={{ color: 'var(--color-text-muted)' }}
                       onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      aria-pressed={showPassword}
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -869,6 +887,7 @@ export function SuperAdminAdminsPage() {
                   onClick={() => setViewTarget(null)}
                   className="btn btn-ghost btn-xs"
                   style={{ color: 'var(--color-text-muted)' }}
+                  aria-label="Close"
                 >
                   <X size={18} />
                 </button>
@@ -935,6 +954,7 @@ export function SuperAdminAdminsPage() {
                   className="btn btn-ghost btn-xs"
                   style={{ color: 'var(--color-text-muted)' }}
                   disabled={resetting}
+                  aria-label="Close"
                 >
                   <X size={16} />
                 </button>
@@ -968,9 +988,11 @@ export function SuperAdminAdminsPage() {
                     />
                     <button
                       type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] rounded-md"
                       style={{ color: 'var(--color-text-muted)' }}
                       onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      aria-pressed={showPassword}
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>

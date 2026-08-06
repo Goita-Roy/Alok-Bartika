@@ -31,6 +31,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
   const { user, logout } = useAuth()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}>
@@ -41,6 +42,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
           className="fixed inset-0 z-40 lg:hidden"
           style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
           onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
         />
       )}
 
@@ -53,11 +55,12 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
         style={{ backgroundColor: 'var(--color-sidebar)', borderRight: '1px solid var(--color-border)' }}
+        aria-label="Super Admin navigation"
       >
         {/* Sidebar header */}
         <div className="flex items-center justify-between h-16 px-5 shrink-0"
           style={{ borderBottom: '1px solid var(--color-border)' }}>
-          <Link to="/super-admin/dashboard" className="flex items-center gap-2.5">
+          <Link to="/super-admin/dashboard" className="flex items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] rounded-xl">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center"
               style={{ background: 'linear-gradient(135deg, #7C3AED, #A78BFA)',
                        boxShadow: '0 2px 10px rgba(124,58,237,0.30)' }}>
@@ -67,14 +70,16 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
               Super Admin
             </span>
           </Link>
-          <button className="lg:hidden p-1 rounded-lg" style={{ color: 'var(--color-text-muted)' }}
-            onClick={() => setSidebarOpen(false)}>
+          <button className="lg:hidden p-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
+            style={{ color: 'var(--color-text-muted)' }}
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close sidebar">
             <X size={20} />
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1" aria-label="Primary">
           {navItems.map(item => {
             const Icon = item.icon
             const active = location.pathname === item.to || location.pathname.startsWith(item.to + '/')
@@ -83,7 +88,8 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
                 key={item.to}
                 to={item.to}
                 onClick={() => setSidebarOpen(false)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200"
+                aria-current={active ? 'page' : undefined}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
                 style={{
                   color: active ? 'var(--color-accent)' : 'var(--color-text-muted)',
                   backgroundColor: active ? 'var(--color-accent-pale)' : 'transparent',
@@ -112,7 +118,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
         <div className="px-3 py-3 shrink-0" style={{ borderTop: '1px solid var(--color-border)' }}>
           <button
             onClick={logout}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold w-full transition-all duration-200"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold w-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
             style={{ color: 'var(--color-text-muted)' }}
             onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'var(--color-accent-pale)'; e.currentTarget.style.color = 'var(--color-error)' }}
             onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)' }}
@@ -137,9 +143,10 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
         >
           <div className="flex items-center gap-3">
             <button
-              className="lg:hidden p-2 rounded-xl"
+              className="lg:hidden p-2 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
               style={{ color: 'var(--color-text-muted)' }}
               onClick={() => setSidebarOpen(true)}
+              aria-label="Open sidebar"
             >
               <Menu size={20} />
             </button>
@@ -151,20 +158,30 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
           <div className="flex items-center gap-2">
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-xl transition-all duration-200"
+              className="p-2 rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
               style={{ color: 'var(--color-text-muted)' }}
               onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'var(--color-accent-pale)'; e.currentTarget.style.color = 'var(--color-accent)' }}
               onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)' }}
+              aria-label="Toggle dark mode"
+              aria-pressed={resolvedTheme === 'dark'}
             >
               {resolvedTheme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
 
             {user && (
-              <div className="dropdown dropdown-end">
+              <div
+                className="dropdown dropdown-end"
+                onBlur={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) setUserMenuOpen(false)
+                }}
+              >
                 <div
                   tabIndex={0}
                   role="button"
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer"
+                  aria-haspopup="menu"
+                  aria-expanded={userMenuOpen}
+                  onFocus={() => setUserMenuOpen(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
                   style={{ color: 'var(--color-text-muted)' }}
                   onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'var(--color-accent-pale)'; e.currentTarget.style.color = 'var(--color-accent)' }}
                   onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)' }}
