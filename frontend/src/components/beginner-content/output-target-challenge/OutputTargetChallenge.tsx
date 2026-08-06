@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Target, Star, RefreshCw, ArrowRight, Zap, ShieldCheck, ShieldX, Gamepad2, Crosshair } from "lucide-react";
+import { Target, Star, RefreshCw, ArrowRight, Zap, ShieldCheck, ShieldX, Gamepad2, Crosshair, Volume2, VolumeX } from "lucide-react";
 import SectionWrapper from "../SectionWrapper";
+import outputMusic from "../../../assets/audio/output.mp3";
 
 type GameState = "intro" | "playing" | "gameOver";
 
@@ -260,10 +261,18 @@ interface TargetRingProps {
   disabled: boolean;
   shaking: boolean;
   idleBob: number;
+  hoveredTarget: TargetData | null;
 }
 
-function TargetRing({ target, onClick, disabled, shaking, idleBob }: TargetRingProps) {
-  const size = TARGET_BASE_SIZE * target.scale;
+function TargetRing({ target, onClick, disabled, shaking, idleBob, hoveredTarget }: TargetRingProps) {
+  const size = 80;
+  const isOutput = target.device.isOutput;
+  const isHovered = hoveredTarget?.id === target.id;
+  const isWrong = hoveredTarget && !hoveredTarget.device.isOutput;
+  const isCorrect = hoveredTarget && hoveredTarget.device.isOutput;
+  const ringColor = isCorrect ? "#00E5FF" : isWrong ? "#FF1744" : "#00E5FF";
+  const ringGlow = isCorrect ? "rgba(0,229,255,0.7)" : isWrong ? "rgba(255,23,68,0.7)" : "rgba(0,229,255,0.4)";
+  const ringGlowStrong = isCorrect ? "rgba(0,229,255,0.9)" : isWrong ? "rgba(255,23,68,0.9)" : "rgba(0,229,255,0.5)";
 
   return (
     <motion.button
@@ -271,14 +280,14 @@ function TargetRing({ target, onClick, disabled, shaking, idleBob }: TargetRingP
       animate={{
         scale: 1,
         opacity: 1,
-        y: shaking ? [0, -5, 5, -4, 4, -2, 2, 0] : idleBob,
+        y: shaking ? [0, -6, 6, -5, 5, -3, 3, -1, 1, 0] : idleBob,
         x: shaking
-          ? [0, 4, -4, 3, -3, 2, -2, 0]
+          ? [0, 5, -5, 4, -4, 3, -3, 2, -2, 0]
           : target.swayAmount
-          ? [null, target.swayAmount * 0.6, -target.swayAmount * 0.6, target.swayAmount * 0.3, 0]
+          ? [null, target.swayAmount * 0.7, -target.swayAmount * 0.7, target.swayAmount * 0.4, 0]
           : 0,
       }}
-      exit={{ scale: [1, 1.4, 0], opacity: [1, 0.5, 0] }}
+      exit={{ scale: [1, 1.5, 0], opacity: [1, 0.5, 0] }}
       transition={{
         scale: { duration: 0.35, ease: "easeOut" },
         opacity: { duration: 0.3 },
@@ -288,27 +297,70 @@ function TargetRing({ target, onClick, disabled, shaking, idleBob }: TargetRingP
       onClick={(e) => { e.stopPropagation(); if (!disabled) onClick(target); }}
       disabled={disabled}
       tabIndex={disabled ? -1 : 0}
-      className="absolute focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 cursor-pointer drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]"
+      className="absolute focus:outline-none cursor-pointer"
       style={{
         left: `${target.x}%`,
         top: `${target.y}%`,
         width: size, height: size,
         transform: "translate(-50%, -50%)",
-        filter: `drop-shadow(0 0 ${6 + target.scale * 4}px rgba(0,0,0,0.4))`,
+        filter: `drop-shadow(0 4px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 ${isHovered ? 20 : 10}px ${ringGlow})`,
       }}
     >
       <svg viewBox="0 0 100 100" width={size} height={size}>
-        <circle cx="50" cy="50" r="48" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="2" />
-        <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="3" />
-        <circle cx="50" cy="50" r="32" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="3" />
-        <circle cx="50" cy="50" r="24" fill="rgba(255,255,255,0.08)" stroke={target.device.isOutput ? "rgba(52,211,153,0.4)" : "rgba(248,113,113,0.4)"} strokeWidth="3" />
-        <circle cx="50" cy="50" r="16" fill={target.device.isOutput ? "rgba(52,211,153,0.2)" : "rgba(248,113,113,0.2)"} />
-        <circle cx="50" cy="50" r="10" fill={target.device.isOutput ? "rgba(52,211,153,0.1)" : "rgba(248,113,113,0.1)"} />
+        <defs>
+          <filter id={`arcade-glow-${target.id}`} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <filter id={`arcade-shadow-${target.id}`} x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#1a3a6c" floodOpacity="0.5" />
+          </filter>
+          <radialGradient id={`arcade-bg-${target.id}`} cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#000000" />
+            <stop offset="100%" stopColor="#000000" />
+          </radialGradient>
+        </defs>
+        <circle cx="50" cy="50" r="48" fill="url(#arcade-bg-${target.id})" stroke={ringColor} strokeWidth="3" filter={`url(#arcade-shadow-${target.id})`} />
+        <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(0,229,255,0.15)" strokeWidth="0.5" />
+        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1" strokeDasharray="3 3">
+          <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="6s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="50" cy="50" r="38" fill="none" stroke={ringColor} strokeWidth="2" opacity="0.7" filter={`url(#arcade-glow-${target.id})`}>
+          <animate attributeName="opacity" values="0.7;1;0.7" dur="1.5s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="50" cy="50" r="34" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
+        <circle cx="50" cy="50" r="30" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1" strokeDasharray="4 4">
+          <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="-360 50 50" dur="8s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="50" cy="50" r="26" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
+        <circle cx="50" cy="50" r="22" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" />
+        <line x1="50" y1="6" x2="50" y2="94" stroke="rgba(255,255,255,0.35)" strokeWidth="1">
+          <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="7s" repeatCount="indefinite" />
+        </line>
+        <line x1="6" y1="50" x2="94" y2="50" stroke="rgba(255,255,255,0.35)" strokeWidth="1">
+          <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="7s" repeatCount="indefinite" />
+        </line>
+        <line x1="20" y1="20" x2="80" y2="80" stroke="rgba(255,255,255,0.2)" strokeWidth="0.7">
+          <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="5s" repeatCount="indefinite" />
+        </line>
+        <line x1="80" y1="20" x2="20" y2="80" stroke="rgba(255,255,255,0.2)" strokeWidth="0.7">
+          <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="5s" repeatCount="indefinite" />
+        </line>
+        <circle cx="50" cy="50" r="5" fill="#00E5FF" opacity="0.9" filter={`url(#arcade-glow-${target.id})`}>
+          <animate attributeName="r" values="4;6;4" dur="1.5s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.9;1;0.9" dur="1.5s" repeatCount="indefinite" />
+        </circle>
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style={{ padding: size * 0.05 }}>
-        <span style={{ fontSize: size * 0.28, lineHeight: 1, filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.6))" }}>{target.device.emoji}</span>
-        <span style={{ fontSize: size * 0.1, lineHeight: 1.1, marginTop: size * 0.02 }} className="font-semibold text-white/95 text-center leading-tight drop-shadow-sm">
-          {target.device.nameBn}
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style={{ padding: size * 0.06 }}>
+        <div className="flex items-center justify-center" style={{ width: size * 0.65, height: size * 0.65, borderRadius: "50%", background: "rgba(0,0,0,0.7)", boxShadow: `0 0 20px ${ringGlow}, inset 0 0 12px rgba(0,0,0,0.6)`, border: `2px solid ${ringColor}` }}>
+          <span style={{ fontSize: size * 0.45, lineHeight: 1, filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.9))" }}>{target.device.emoji}</span>
+        </div>
+        <span style={{ fontSize: size * 0.12, lineHeight: 1.2, marginTop: size * 0.05, fontWeight: 800, color: "#ffffff", textShadow: "0 1px 6px rgba(0,0,0,1), 0 0 10px rgba(0,0,0,0.8)" }} className="text-center leading-tight">
+          {target.device.name}
         </span>
       </div>
     </motion.button>
@@ -584,6 +636,7 @@ export default function OutputTargetChallenge() {
   const [hitEffects, setHitEffects] = useState<HitEffect[]>([]);
   const [sparkles, setSparkles] = useState<SparkleParticle[]>([]);
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
+  const [hoveredTarget, setHoveredTarget] = useState<TargetData | null>(null);
   const [totalShots, setTotalShots] = useState(0);
   const [shakingTargets, setShakingTargets] = useState<Record<number, boolean>>({});
   const [feedback, setFeedback] = useState<FeedbackToast | null>(null);
@@ -594,6 +647,7 @@ export default function OutputTargetChallenge() {
   const [cameraShake, setCameraShake] = useState(0);
   const [dustParticles, setDustParticles] = useState<DustParticle[]>([]);
   const [birds, setBirds] = useState<Bird[]>([]);
+  const [musicOn, setMusicOn] = useState(true);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef(true);
@@ -602,21 +656,47 @@ export default function OutputTargetChallenge() {
   const sparkleIdRef = useRef(0);
   const xpFloatIdRef = useRef(0);
   const arrowIdRef = useRef(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    const particles: DustParticle[] = [];
-    for (let i = 0; i < 12; i++) {
-      particles.push({
-        id: i,
-        x: random(5, 95),
-        y: random(40, 85),
-        size: random(1, 3),
-        duration: random(4, 10),
-        delay: random(0, 8),
-      });
-    }
-    setDustParticles(particles);
+    const audio = new Audio(outputMusic);
+    audio.loop = true;
+    audio.volume = 0;
+    audioRef.current = audio;
+
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+      audioRef.current = null;
+    };
   }, []);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (gameState === "gameOver") {
+      let fadeOutInterval: ReturnType<typeof setInterval> | null = null;
+      const fadeStep = 0.02;
+
+      fadeOutInterval = setInterval(() => {
+        audio.volume = Math.max(0, audio.volume - fadeStep);
+        if (audio.volume <= 0) {
+          if (fadeOutInterval) clearInterval(fadeOutInterval);
+          fadeOutInterval = null;
+          audio.pause();
+          audio.currentTime = 0;
+        }
+      }, 50);
+
+      return () => {
+        if (fadeOutInterval) clearInterval(fadeOutInterval);
+        audio.pause();
+        audio.currentTime = 0;
+        audio.volume = 0;
+      };
+    }
+  }, [gameState]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -635,7 +715,16 @@ export default function OutputTargetChallenge() {
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     setMousePos({ x, y });
-  }, []);
+
+    const hitTarget = targets.find((t) => {
+      const size = TARGET_BASE_SIZE * t.scale;
+      const dx = x - t.x;
+      const dy = y - t.y;
+      const radius = (size / rect.width) * 100 * 1.2;
+      return Math.sqrt(dx * dx + dy * dy) < radius;
+    });
+    setHoveredTarget(hitTarget || null);
+  }, [targets]);
 
   const spawnTarget = useCallback(() => {
     if (!activeRef.current) return;
@@ -793,7 +882,20 @@ export default function OutputTargetChallenge() {
     setTotalShots(0); setFeedback(null); setXpFloats([]);
     setBowState("idle"); setCameraShake(0);
     setGameState("playing");
-  }, []);
+    const audio = audioRef.current;
+    if (audio && musicOn) {
+      audio.currentTime = 0;
+      audio.volume = 0;
+      audio.play().catch(() => {});
+      const fadeInterval = setInterval(() => {
+        if (audio.volume < 0.15) {
+          audio.volume = Math.min(0.15, audio.volume + 0.01);
+        } else {
+          clearInterval(fadeInterval);
+        }
+      }, 50);
+    }
+  }, [musicOn]);
 
   useEffect(() => {
     if (gameState !== "playing" || !activeRef.current) return;
@@ -891,7 +993,7 @@ export default function OutputTargetChallenge() {
                 onClick={handleContainerClick}
                 className="relative w-full h-[400px] md:h-[480px] overflow-hidden rounded-xl cursor-none select-none"
                 style={{
-                  background: "linear-gradient(180deg, #38bdf8 0%, #7dd3fc 25%, #bae6fd 50%, #86efac 75%, #4ade80 85%, #22c55e 100%)",
+                  background: "linear-gradient(180deg, #1a5a8a 0%, #3a7db4 25%, #6aadc8 50%, #4a8a5a 75%, #227a32 85%, #145a1e 100%)",
                 }}
               >
                 {/* Sky gradient overlay */}
@@ -979,7 +1081,7 @@ export default function OutputTargetChallenge() {
                 {/* Targets */}
                 <AnimatePresence>
                   {targets.map((t) => (
-                    <TargetRing key={t.id} target={t} onClick={handleTargetClick} disabled={false} shaking={!!shakingTargets[t.id]} idleBob={Math.sin(Date.now() / 1000 + t.swayOffset) * (0.3 + t.scale * 0.4)} />
+                    <TargetRing key={t.id} target={t} onClick={handleTargetClick} disabled={false} shaking={!!shakingTargets[t.id]} idleBob={Math.sin(Date.now() / 1000 + t.swayOffset) * (0.3 + t.scale * 0.4)} hoveredTarget={hoveredTarget} />
                   ))}
                 </AnimatePresence>
 
@@ -1098,13 +1200,26 @@ export default function OutputTargetChallenge() {
                   style={{ left: `${mousePos.x}%`, top: `${mousePos.y}%`, transform: "translate(-50%, -50%)" }}
                 >
                   <svg width="34" height="34" viewBox="0 0 34 34">
-                    <circle cx="17" cy="17" r="15" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="0.8" strokeDasharray="3 3" />
-                    <circle cx="17" cy="17" r="4" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
-                    <circle cx="17" cy="17" r="1" fill="rgba(52,211,153,0.6)" />
-                    <line x1="17" y1="0" x2="17" y2="5" stroke="rgba(255,255,255,0.3)" strokeWidth="0.8" />
-                    <line x1="17" y1="29" x2="17" y2="34" stroke="rgba(255,255,255,0.3)" strokeWidth="0.8" />
-                    <line x1="0" y1="17" x2="5" y2="17" stroke="rgba(255,255,255,0.3)" strokeWidth="0.8" />
-                    <line x1="29" y1="17" x2="34" y2="17" stroke="rgba(255,255,255,0.3)" strokeWidth="0.8" />
+                    <circle
+                      cx="17" cy="17" r="15"
+                      fill="none"
+                      stroke={hoveredTarget ? (hoveredTarget.device.isOutput ? "rgba(52,211,153,0.6)" : "rgba(248,113,113,0.6)") : "rgba(255,255,255,0.25)"}
+                      strokeWidth="1" strokeDasharray="3 3"
+                    />
+                    <circle
+                      cx="17" cy="17" r="4"
+                      fill="none"
+                      stroke={hoveredTarget ? (hoveredTarget.device.isOutput ? "rgba(52,211,153,0.8)" : "rgba(248,113,113,0.8)") : "rgba(255,255,255,0.4)"}
+                      strokeWidth="1"
+                    />
+                    <circle
+                      cx="17" cy="17" r="1.5"
+                      fill={hoveredTarget ? (hoveredTarget.device.isOutput ? "#34d399" : "#f87171") : "rgba(52,211,153,0.6)"}
+                    />
+                    <line x1="17" y1="0" x2="17" y2="5" stroke={hoveredTarget ? (hoveredTarget.device.isOutput ? "rgba(52,211,153,0.7)" : "rgba(248,113,113,0.7)") : "rgba(255,255,255,0.3)"} strokeWidth="1" />
+                    <line x1="17" y1="29" x2="17" y2="34" stroke={hoveredTarget ? (hoveredTarget.device.isOutput ? "rgba(52,211,153,0.7)" : "rgba(248,113,113,0.7)") : "rgba(255,255,255,0.3)"} strokeWidth="1" />
+                    <line x1="0" y1="17" x2="5" y2="17" stroke={hoveredTarget ? (hoveredTarget.device.isOutput ? "rgba(52,211,153,0.7)" : "rgba(248,113,113,0.7)") : "rgba(255,255,255,0.3)"} strokeWidth="1" />
+                    <line x1="29" y1="17" x2="34" y2="17" stroke={hoveredTarget ? (hoveredTarget.device.isOutput ? "rgba(52,211,153,0.7)" : "rgba(248,113,113,0.7)") : "rgba(255,255,255,0.3)"} strokeWidth="1" />
                   </svg>
                 </motion.div>
 
