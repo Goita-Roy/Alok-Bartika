@@ -23,20 +23,25 @@ import {
   ChevronUp,
   ChevronDown,
   PanelBottom,
+  Flag,
+  Zap,
+  Clock,
 } from 'lucide-react'
 import type { IDELessonClass } from '../../data/ideLessonData'
 import { LANGUAGE_LABELS, type SupportedLanguage } from '../../data/ideLessonData'
 import type { IDEFile, IDETheme } from '../../hooks/useIDEWorkspace'
 import type { ExecutionStatus } from '../../utils/codeRunner'
 import type { CodeErrorDetail } from '../../utils/codeAnalyzer'
-import { AIAssistantPanel } from './AIAssistantPanel'
+import type { Practice } from '../../data/advancedPracticeData'
 import { IDECodeEditor } from './IDECodeEditor'
 import { ErrorAnalysisPanel } from './ErrorAnalysisPanel'
 import { IDEConsole } from './IDEConsole'
+import { AIAssistantPanel } from './AIAssistantPanel'
 import { IDEStatusBar } from './IDEStatusBar'
 
 type WorkspacePanelProps = {
   lesson: IDELessonClass | null
+  selectedPractice: Practice | null
   files: IDEFile[]
   activeFile: IDEFile
   openTabIds: string[]
@@ -99,6 +104,7 @@ function getFileIcon(name: string) {
 
 export function WorkspacePanel({
   lesson,
+  selectedPractice,
   files,
   activeFile,
   openTabIds,
@@ -138,19 +144,23 @@ export function WorkspacePanel({
   onScrollChange,
   onEditorMount,
 }: WorkspacePanelProps) {
+
   const isDark = theme === 'dark'
+  const borderCls = isDark ? 'border-[#2d2a3f]' : 'border-slate-200'
+  const panelCls = isDark ? 'bg-[#1b1928]' : 'bg-slate-50'
+  const shellCls = isDark ? 'text-slate-300' : 'text-slate-700'
+  const btnCls = isDark ? 'bg-[#1b1928] text-slate-300 hover:bg-[#252236]' : 'bg-white text-slate-700 border hover:bg-slate-50'
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const [newLang, setNewLang] = useState<SupportedLanguage>('python')
   const [copied, setCopied] = useState(false)
   const [previewTab, setPreviewTab] = useState<'console' | 'preview'>('console')
   const [consoleExpanded, setConsoleExpanded] = useState(false)
-  const [cursorLine, setCursorLine] = useState(1)
-  const [cursorColumn, setCursorColumn] = useState(1)
   const [showExplorer, setShowExplorer] = useState(true)
   const [showErrors, setShowErrors] = useState(true)
-  const [showStdin, setShowStdin] = useState(true)
-  const rootRef = useRef<HTMLDivElement>(null)
+  const [showStdin, setShowStdin] = useState(false)
+  const [cursorLine, setCursorLine] = useState(1)
+  const [cursorColumn, setCursorColumn] = useState(1)
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
 
   useEffect(() => {
@@ -161,12 +171,92 @@ export function WorkspacePanel({
     if (hasRun) setConsoleExpanded(true)
   }, [hasRun])
 
-  const shellCls = isDark ? 'bg-[#0e0c13] text-slate-200' : 'bg-white text-slate-900'
-  const borderCls = isDark ? 'border-[#2d2a3f]' : 'border-slate-200'
-  const panelCls = isDark ? 'bg-[#14121c]' : 'bg-slate-50'
-  const btnCls = isDark
-    ? 'bg-[#1b1928] hover:bg-[#252236] border-[#2d2a3f] text-slate-300'
-    : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
+  const renderPracticeInfo = () => {
+    if (!selectedPractice) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center p-6 rounded-lg border ${borderCls} ${panelCls}">
+            <Flag size={32} className="mx-auto mb-3 opacity-40" />
+            <p className="text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}">
+              একটি প্র্যাকটিস নির্বাচন করুন
+            </p>
+            <p className="text-xs opacity-50 mt-1">বাম প্যানেল থেকে প্র্যাকটিস বেছে নিন</p>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="p-4 space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap mb-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-violet-400">
+                ক্লাস {selectedPractice.classNumber} · প্র্যাকটিস {selectedPractice.practiceNumber}
+              </span>
+              <h3 className={`font-black text-base truncate ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{selectedPractice.title}</h3>
+            </div>
+            <div className="flex items-center gap-3 flex-wrap text-[11px] font-medium">
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded ${selectedPractice.difficulty === 'Easy' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : selectedPractice.difficulty === 'Medium' ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30' : 'bg-red-500/15 text-red-400 border border-red-500/30'}`}>
+                <span className="text-[9px] font-bold">{selectedPractice.difficulty}</span>
+              </span>
+              <span className={`inline-flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                <Zap size={11} /> {selectedPractice.xp} XP
+              </span>
+              <span className={`inline-flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                <Clock size={11} /> {selectedPractice.estimatedTime} মিনিট
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className={`space-y-3 p-4 rounded-lg ${panelCls} ${borderCls}`}>          
+          <div>
+            <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-300' : 'text-slate-700'} mb-1`}>সমস্যা বিবরণ</div>
+            <p className={`text-xs leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{selectedPractice.problemStatement}</p>
+          </div>
+
+          <div>
+            <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-300' : 'text-slate-700'} mb-1`}>ইনপুট</div>
+            <p className={`text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{selectedPractice.input}</p>
+          </div>
+
+          <div>
+            <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-300' : 'text-slate-700'} mb-1`}>আউটপুট</div>
+            <p className={`text-xs font-mono ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{selectedPractice.output}</p>
+          </div>
+
+          {selectedPractice.constraints.length > 0 && (
+            <div>
+              <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-300' : 'text-slate-700'} mb-1`}>সীমাবদ্ধতা</div>
+              <ul className="space-y-1">
+                {selectedPractice.constraints.map((c, i) => (
+                  <li key={i} className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'} flex items-start gap-2`}>
+                    <span className="mt-0.5">•</span>
+                    <span>{c}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div>
+            <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-300' : 'text-slate-700'} mb-1`}>উদাহরণ</div>
+            <div className={`grid grid-cols-1 md:grid-cols-2 gap-3 ${isDark ? 'bg-[#0e0c13]' : 'bg-slate-100'} rounded-lg p-3 ${borderCls}`}>
+              <div>
+                <div className={`text-[9px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-600'} mb-1`}>নমুনা ইনপুট</div>
+                <pre className={`text-xs font-mono whitespace-pre-wrap ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{selectedPractice.sampleInput}</pre>
+              </div>
+              <div>
+                <div className={`text-[9px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-600'} mb-1`}>নমুনা আউটপুট</div>
+                <pre className={`text-xs font-mono whitespace-pre-wrap ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{selectedPractice.sampleOutput}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const statusBadge = () => {
     if (executionStatus === 'running') {
@@ -239,7 +329,7 @@ export function WorkspacePanel({
   }
 
   return (
-    <div ref={rootRef} className={`flex flex-col h-full overflow-hidden ${shellCls}`}>
+    <div className={`flex flex-col h-full overflow-hidden ${shellCls}`}>
       {/* Toolbar */}
       <div className={`flex flex-wrap items-center gap-1.5 px-3 py-2 border-b shrink-0 ${borderCls}`}>
         <button
@@ -283,7 +373,7 @@ export function WorkspacePanel({
 
         <button
           type="button"
-          onClick={() => setShowExplorer((v) => !v)}
+          onClick={() => setShowExplorer((v: boolean) => !v)}
           className={`p-1.5 rounded-lg border transition ${btnCls} ${showExplorer ? 'ring-1 ring-violet-500/30' : ''}`}
           title="ফাইল এক্সপ্লোরার টগল করুন"
         >
@@ -456,8 +546,8 @@ export function WorkspacePanel({
                 errors={errors}
                 highlightLine={focusedErrorLine}
                 onChange={(v) => onUpdateContent(activeFile.id, v)}
-                onEditorMount={(ed) => { editorRef.current = ed; onEditorMount?.(ed) }}
-                onCursorChange={(line, col) => { setCursorLine(line); setCursorColumn(col); onCursorChange?.(line, col) }}
+                onEditorMount={(ed) => { onEditorMount?.(ed) }}
+                onCursorChange={(line, col) => { onCursorChange?.(line, col) }}
                 onScrollChange={(scrollTop) => { onScrollChange?.(scrollTop) }}
               />
             </div>
@@ -467,7 +557,7 @@ export function WorkspacePanel({
               <div className={`border-t shrink-0 ${borderCls}`}>
                 <button
                   type="button"
-                  onClick={() => setShowErrors((v) => !v)}
+                  onClick={() => setShowErrors((v: boolean) => !v)}
                   className={`w-full flex items-center gap-2 px-3 py-1.5 text-[10px] font-bold uppercase transition ${
                     isDark ? 'bg-red-500/5 text-red-300 hover:bg-red-500/10' : 'bg-red-50 text-red-600 hover:bg-red-100'
                   }`}
@@ -497,7 +587,7 @@ export function WorkspacePanel({
               <div className={`border-t shrink-0 ${borderCls}`}>
                 <button
                   type="button"
-                  onClick={() => setShowStdin((v) => !v)}
+                  onClick={() => setShowStdin((v: boolean) => !v)}
                   className={`w-full flex items-center gap-2 px-3 py-1.5 text-[10px] font-bold uppercase transition ${
                     isDark ? 'hover:bg-[#1b1928] text-slate-400' : 'hover:bg-slate-100 text-slate-500'
                   }`}

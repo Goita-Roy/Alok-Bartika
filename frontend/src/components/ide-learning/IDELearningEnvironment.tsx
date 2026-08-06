@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { BookOpen, PenTool, Cpu } from 'lucide-react'
 import { ideLessonClasses, type IDELessonClass, type SupportedLanguage } from '../../data/ideLessonData'
+import { class1Practices, type Practice as PracticeData } from '../../data/advancedPracticeData'
 import { useIDEWorkspace } from '../../hooks/useIDEWorkspace'
 import { useIDEProgress } from '../../hooks/useIDEProgress'
 import { usePracticePersistence, type RestoredPractice } from '../../hooks/usePracticePersistence'
@@ -13,6 +14,10 @@ import { API_BASE_URL } from '../../config/api'
 import { useProgressContext } from '../../context/ProgressContext'
 import type { editor } from 'monaco-editor'
 
+const LEFT_PANEL_MIN_WIDTH = 280;
+const LEFT_PANEL_MAX_WIDTH = 520;
+const LEFT_PANEL_DEFAULT_WIDTH = 384;
+
 type IDELearningEnvironmentProps = {
   mode?: 'learning' | 'sandbox'
   practiceKey?: string
@@ -21,6 +26,9 @@ type IDELearningEnvironmentProps = {
 export function IDELearningEnvironment({ mode: initialMode = 'learning', practiceKey }: IDELearningEnvironmentProps) {
   const [mode, setMode] = useState<'learning' | 'sandbox'>(initialMode)
   const [activeClassId, setActiveClassId] = useState(ideLessonClasses[0].id)
+  const [selectedPractice, setSelectedPractice] = useState<PracticeData | null>(null);
+  const [leftPanelWidth, setLeftPanelWidth] = useState(LEFT_PANEL_DEFAULT_WIDTH)
+  const [isResizing, setIsResizing] = useState(false);
   const [searchParams] = useSearchParams()
   const lessonIdParam = searchParams.get('lessonId')
   const courseIdParam = searchParams.get('courseId')
@@ -29,6 +37,45 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
   const [isLoadingDynamic, setIsLoadingDynamic] = useState(!!lessonIdParam)
   
   const { completedClassIds: contextCompletedIds, markClassComplete: contextMarkComplete } = useProgressContext()
+
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsResizing(true)
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+  }
+
+  const handleSelectPractice = (practice: PracticeData) => {
+    setSelectedPractice(practice)
+  }
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing || !containerRef.current) return
+      const containerRect = containerRef.current.getBoundingClientRect()
+      let newWidth = e.clientX - containerRect.left
+      newWidth = Math.max(LEFT_PANEL_MIN_WIDTH, Math.min(LEFT_PANEL_MAX_WIDTH, newWidth))
+      setLeftPanelWidth(newWidth)
+    }
+
+    const handleMouseUp = () => {
+      setIsResizing(false)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+
+    if (isResizing) {
+      window.addEventListener('mousemove', handleMouseMove)
+      window.addEventListener('mouseup', handleMouseUp)
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isResizing])
 
   useEffect(() => {
     if (!lessonIdParam) return
@@ -89,6 +136,25 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
     if (dynamicClass) return dynamicClass
     return ideLessonClasses.find((c) => c.id === activeClassId) ?? ideLessonClasses[0]
   }, [dynamicClass, activeClassId])
+
+  // Auto-select Class 1 → Practice 1 if no practice is selected
+  useEffect(() => {
+    if (!selectedPractice) {
+      setSelectedPractice(class1Practices[0]);
+    }
+  }, [selectedPractice])
+
+  // Build class-to-practices mapping (only Class 1 has practice data currently)
+  const classPractices = useMemo(() => {
+    const map: Record<string, PracticeData[]> = {}
+    // Map by class number for now
+    ideLessonClasses.forEach((cls) => {
+      if (cls.classNumber === 1) {
+        map[cls.id] = class1Practices
+      }
+    })
+    return map
+  }, [])
 
   // ── Practice persistence (MongoDB is source of truth) ────────────────────────
   // Key: a canonical lesson slug when this is a course lesson, otherwise a
@@ -171,6 +237,13 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
 
   const activeContent = workspace.activeFile?.content ?? ''
   const activeLanguage = workspace.activeFile?.language ?? 'python'
+
+  const isDark = workspace.theme === 'dark'
+  const bgCls = isDark ? 'bg-[#0e0c13]' : 'bg-white'
+  const borderCls = isDark ? 'border-[#2d2a3f]' : 'border-slate-200'
+  const panelCls = isDark ? 'bg-[#1b1928]' : 'bg-slate-50'
+  const shellCls = isDark ? 'text-slate-300' : 'text-slate-700'
+  const btnCls = isDark ? 'bg-[#1b1928] text-slate-300 hover:bg-[#252236]' : 'bg-white text-slate-700 border hover:bg-slate-50'
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -302,8 +375,6 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
     )
   }
 
-  const isDark = workspace.theme === 'dark'
-
   return (
     <div
       className={`flex flex-col h-full overflow-hidden rounded-2xl border shadow-2xl ${
@@ -348,23 +419,43 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
         </div>
       </header>
 
-      <div className="flex flex-1 min-h-0 flex-col lg:flex-row">
+      <div className="flex flex-1 min-h-0 flex-col lg:flex-row" ref={containerRef}>
         {mode === 'learning' ? (
-          <div className="w-full lg:w-[42%] xl:w-[38%] min-h-[320px] lg:min-h-0 border-b lg:border-b-0 lg:border-r border-inherit shrink-0">
-            <LessonPanel
-              classes={activeClass.isCourseLesson ? [activeClass] : ideLessonClasses}
-              activeClass={activeClass}
-              onSelectClass={setActiveClassId}
-              completedClassIds={activeClass.isCourseLesson ? contextCompletedIds : completedClassIds}
-              overallPercent={activeClass.isCourseLesson ? (contextCompletedIds.includes(activeClass.id) ? 100 : 0) : overallPercent}
-              theme={workspace.theme}
-            />
-          </div>
+          <>
+            <div
+              className="border-b lg:border-b-0 lg:border-r border-inherit shrink-0 flex flex-col"
+              style={{ width: leftPanelWidth, maxWidth: leftPanelWidth, minWidth: LEFT_PANEL_MIN_WIDTH }}
+            >
+              <LessonPanel
+                classes={activeClass.isCourseLesson ? [activeClass] : ideLessonClasses}
+                activeClass={activeClass}
+                onSelectClass={setActiveClassId}
+                completedClassIds={activeClass.isCourseLesson ? contextCompletedIds : completedClassIds}
+                overallPercent={activeClass.isCourseLesson ? (contextCompletedIds.includes(activeClass.id) ? 100 : 0) : overallPercent}
+                theme={workspace.theme}
+                classPractices={classPractices}
+                activePracticeId={selectedPractice?.id}
+                onSelectPractice={handleSelectPractice}
+              />
+            </div>
+
+            <div
+              onMouseDown={handleMouseDown}
+              className="w-1.5 flex-shrink-0 cursor-col-resize group transition-colors"
+              title="ড্র্যাগ করে আকার পরিবর্তন করুন"
+              aria-label="Resize sidebar"
+            >
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="w-0.5 h-16 rounded bg-slate-500/30 group-hover:bg-violet-500/50 transition-colors" />
+              </div>
+            </div>
+          </>
         ) : null}
 
         <div className="flex-1 min-h-[480px] lg:min-h-0">
           <WorkspacePanel
             lesson={mode === 'learning' ? activeClass : null}
+            selectedPractice={selectedPractice}
             files={workspace.files}
             activeFile={workspace.activeFile}
             openTabIds={workspace.openTabIds}
