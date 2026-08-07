@@ -7,6 +7,7 @@ import { useIDEWorkspace } from '../../hooks/useIDEWorkspace'
 import { useIDEProgress } from '../../hooks/useIDEProgress'
 import { usePracticePersistence, type RestoredPractice } from '../../hooks/usePracticePersistence'
 import { LessonPanel } from './LessonPanel'
+import { SelfPracticeSidebar } from './SelfPracticeSidebar'
 import { WorkspacePanel } from './WorkspacePanel'
 import { runWorkspaceCode, validateAgainstExpected, type ExecutionStatus } from '../../utils/codeRunner'
 import { analyzeCode, mergeErrors, parseRuntimeError, type CodeErrorDetail } from '../../utils/codeAnalyzer'
@@ -55,46 +56,21 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
   }, [dynamicClass, activeClassId])
 
   const storageKey = mode === 'sandbox' ? 'sandbox' : activeClass.id
+  // Self Practice IDE (opened from the Course page via /development with no
+  // lesson route params) has no course/lesson plumbing.
+  const isSelfPractice = mode === 'learning' && !lessonIdParam && !courseIdParam
+  const ignoreRestoredState = mode === 'sandbox' || isSelfPractice // open blank
   const workspace = useIDEWorkspace(
     storageKey,
-    mode === 'learning' ? activeClass.starterFiles : undefined,
+    mode === 'learning' && !isSelfPractice ? activeClass.starterFiles : undefined,
+    { disableStorageRestore: mode === 'sandbox' || isSelfPractice },
   )
 
-  const loadPracticeQuestion = useCallback(
-    (title: string, difficulty: string, problemStatement: string, sampleOutput: string) => {
-      const difficultyLabels = { Easy: '🟢 Easy', Medium: '🟡 Medium', Hard: '🔴 Hard' }
-      const difficultyDisplay = difficultyLabels[difficulty as keyof typeof difficultyLabels] || difficulty
-      
-      const problemContent = `=======================================\n${title}\n\nDifficulty: ${difficultyDisplay}\n\nProblem Statement:\n${problemStatement}\n\nSample Output:\n${sampleOutput}\n\n----------------------------------------\nWrite your solution below\n----------------------------------------\n\n`
-      
-      workspace.updateFileContent(workspace.activeFileId, problemContent)
-      
-      // Position cursor after the "Write your solution below" section
-      setTimeout(() => {
-        if (editorRef.current) {
-          const model = editorRef.current.getModel()
-          if (model) {
-            const lineCount = model.getLineCount()
-            // Find the "Write your solution below" line
-            for (let i = 1; i <= lineCount; i++) {
-              const line = model.getLineContent(i)
-              if (line.includes('Write your solution below')) {
-                editorRef.current.setPosition({ lineNumber: i + 1, column: 1 })
-                editorRef.current.revealLineInCenter(i + 1)
-                editorRef.current.focus()
-                break
-              }
-            }
-          }
-        }
-      }, 100)
-    },
-    [workspace],
-  )
-
-  const handleSelectPractice = useCallback((practice: PracticeData) => {
-    loadPracticeQuestion(practice.title, practice.difficulty, practice.problemStatement, practice.sampleOutput)
-  }, [loadPracticeQuestion])
+  // Editor is intentionally blank. Selecting a practice does not inject any
+  // template or problem statement into the Monaco editor.
+  const handleSelectPractice = useCallback((_practice: PracticeData) => {
+    // no-op
+  }, [])
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -219,6 +195,7 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
   const applyRestored = useCallback((state: RestoredPractice) => {
     if (restoredAppliedRef.current) return
     restoredAppliedRef.current = true
+    if (ignoreRestoredState) return // Advanced Practice: never restore saved code
     if (state.files && state.files.length) {
       workspace.loadStarterFiles(state.files.map((f) => ({
         name: f.name,
@@ -463,17 +440,21 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
               className="border-b lg:border-b-0 lg:border-r border-inherit shrink-0 flex flex-col"
               style={{ width: leftPanelWidth, maxWidth: leftPanelWidth, minWidth: LEFT_PANEL_MIN_WIDTH }}
             >
-              <LessonPanel
-                classes={activeClass.isCourseLesson ? [activeClass] : ideLessonClasses}
-                activeClass={activeClass}
-                onSelectClass={setActiveClassId}
-                completedClassIds={activeClass.isCourseLesson ? contextCompletedIds : completedClassIds}
-                overallPercent={activeClass.isCourseLesson ? (contextCompletedIds.includes(activeClass.id) ? 100 : 0) : overallPercent}
-                theme={workspace.theme}
-                classPractices={classPractices}
-                activePracticeId={selectedPractice?.id}
-                onSelectPractice={handleSelectPractice}
-              />
+              {isSelfPractice ? (
+                <SelfPracticeSidebar theme={workspace.theme} />
+              ) : (
+                <LessonPanel
+                  classes={activeClass.isCourseLesson ? [activeClass] : ideLessonClasses}
+                  activeClass={activeClass}
+                  onSelectClass={setActiveClassId}
+                  completedClassIds={activeClass.isCourseLesson ? contextCompletedIds : completedClassIds}
+                  overallPercent={activeClass.isCourseLesson ? (contextCompletedIds.includes(activeClass.id) ? 100 : 0) : overallPercent}
+                  theme={workspace.theme}
+                  classPractices={classPractices}
+                  activePracticeId={selectedPractice?.id}
+                  onSelectPractice={handleSelectPractice}
+                />
+              )}
             </div>
 
             <div

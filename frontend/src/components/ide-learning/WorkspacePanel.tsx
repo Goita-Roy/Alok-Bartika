@@ -23,9 +23,6 @@ import {
   ChevronUp,
   ChevronDown,
   PanelBottom,
-  Flag,
-  Zap,
-  Clock,
 } from 'lucide-react'
 import type { IDELessonClass } from '../../data/ideLessonData'
 import { LANGUAGE_LABELS, type SupportedLanguage } from '../../data/ideLessonData'
@@ -81,8 +78,6 @@ type WorkspacePanelProps = {
   onScrollChange?: (scrollTop: number) => void
   onEditorMount?: (ed: editor.IStandaloneCodeEditor) => void
 }
-
-type PracticeDetails = Practice & { objective?: string; hint?: string }
 
 const LANG_OPTIONS: SupportedLanguage[] = ['python', 'html', 'css', 'javascript', 'c', 'cpp', 'java']
 
@@ -163,7 +158,6 @@ export function WorkspacePanel({
   const [showStdin, setShowStdin] = useState(false)
   const [cursorLine, setCursorLine] = useState(1)
   const [cursorColumn, setCursorColumn] = useState(1)
-  const [showPracticeDetails, setShowPracticeDetails] = useState(true)
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
 
   useEffect(() => {
@@ -173,109 +167,6 @@ export function WorkspacePanel({
   useEffect(() => {
     if (hasRun) setConsoleExpanded(true)
   }, [hasRun])
-
-  const renderPracticeInfo = () => {
-    if (!selectedPractice) {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center p-6 rounded-lg border ${borderCls} ${panelCls}">
-            <Flag size={32} className="mx-auto mb-3 opacity-40" />
-            <p className="text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}">
-              একটি প্র্যাকটিস নির্বাচন করুন
-            </p>
-            <p className="text-xs opacity-50 mt-1">বাম প্যানেল থেকে প্র্যাকটিস বেছে নিন</p>
-          </div>
-        </div>
-      )
-    }
-
-    const practice = selectedPractice as PracticeDetails
-
-    return (
-      <div className="p-4 space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-violet-400">
-                ক্লাস {selectedPractice.classNumber} · প্র্যাকটিস {selectedPractice.practiceNumber}
-              </span>
-              <h3 className={`font-black text-base truncate ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{selectedPractice.title}</h3>
-            </div>
-            <div className="flex items-center gap-3 flex-wrap text-[11px] font-medium">
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded ${selectedPractice.difficulty === 'Easy' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : selectedPractice.difficulty === 'Medium' ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30' : 'bg-red-500/15 text-red-400 border border-red-500/30'}`}>
-                <span className="text-[9px] font-bold">{selectedPractice.difficulty}</span>
-              </span>
-              <span className={`inline-flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                <Zap size={11} /> {selectedPractice.xp} XP
-              </span>
-              <span className={`inline-flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                <Clock size={11} /> {selectedPractice.estimatedTime} মিনিট
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className={`space-y-3 p-4 rounded-lg ${panelCls} ${borderCls}`}>          
-          <div>
-            <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-300' : 'text-slate-700'} mb-1`}>সমস্যা বিবরণ</div>
-            <p className={`text-xs leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{selectedPractice.problemStatement}</p>
-          </div>
-
-          {practice.objective ? (
-            <div>
-              <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-300' : 'text-slate-700'} mb-1`}>উদ্দেশ্য</div>
-              <p className={`text-xs leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{practice.objective}</p>
-            </div>
-          ) : null}
-
-          <div>
-            <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-300' : 'text-slate-700'} mb-1`}>ইনপুট</div>
-            <p className={`text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{selectedPractice.input}</p>
-          </div>
-
-          <div>
-            <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-300' : 'text-slate-700'} mb-1`}>আউটপুট</div>
-            <p className={`text-xs font-mono ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{selectedPractice.output}</p>
-          </div>
-
-          {selectedPractice.constraints.length > 0 && (
-            <div>
-              <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-300' : 'text-slate-700'} mb-1`}>সীমাবদ্ধতা</div>
-              <ul className="space-y-1">
-                {selectedPractice.constraints.map((c, i) => (
-                  <li key={i} className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'} flex items-start gap-2`}>
-                    <span className="mt-0.5">•</span>
-                    <span>{c}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <div>
-            <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-300' : 'text-slate-700'} mb-1`}>উদাহরণ</div>
-            <div className={`grid grid-cols-1 md:grid-cols-2 gap-3 ${isDark ? 'bg-[#0e0c13]' : 'bg-slate-100'} rounded-lg p-3 ${borderCls}`}>
-              <div>
-                <div className={`text-[9px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-600'} mb-1`}>নমুনা ইনপুট</div>
-                <pre className={`text-xs font-mono whitespace-pre-wrap ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{selectedPractice.sampleInput}</pre>
-              </div>
-              <div>
-                <div className={`text-[9px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-600'} mb-1`}>নমুনা আউটপুট</div>
-                <pre className={`text-xs font-mono whitespace-pre-wrap ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{selectedPractice.sampleOutput}</pre>
-              </div>
-            </div>
-          </div>
-
-          {practice.hint ? (
-            <div>
-              <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-300' : 'text-slate-700'} mb-1`}>ইঙ্গিত</div>
-              <p className={`text-xs italic ${isDark ? 'text-amber-300/90' : 'text-amber-700'}`}>{practice.hint}</p>
-            </div>
-          ) : null}
-        </div>
-      </div>
-    );
-  }
 
   const statusBadge = () => {
     if (executionStatus === 'running') {
@@ -555,31 +446,6 @@ export function WorkspacePanel({
 
           {/* Main content: editor + console (flex proportions) */}
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            {/* Practice Details — collapsible, independently scrollable, above Monaco */}
-            {selectedPractice && (
-              <div className={`shrink-0 border-b ${borderCls}`}>
-                <button
-                  type="button"
-                  onClick={() => setShowPracticeDetails((v) => !v)}
-                  className={`w-full flex items-center gap-2 px-3 py-1.5 text-[10px] font-bold uppercase transition ${
-                    isDark ? 'text-violet-300 hover:bg-[#1b1928]' : 'text-indigo-700 hover:bg-slate-100'
-                  }`}
-                >
-                  <Flag size={12} />
-                  প্র্যাকটিস বিবরণ
-                  <span className="ml-auto flex items-center gap-1">
-                    {showPracticeDetails ? 'Hide Problem' : 'Show Problem'}
-                    <span className={`transition ${showPracticeDetails ? 'rotate-180' : ''}`}>▼</span>
-                  </span>
-                </button>
-                {showPracticeDetails && (
-                  <div className="max-h-[45vh] overflow-y-auto">
-                    {renderPracticeInfo()}
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* Monaco editor — flex-1 takes most space */}
             <div className="flex-1 min-h-[200px] relative">
               <IDECodeEditor

@@ -23,7 +23,7 @@ function defaultSandboxFiles(): IDEFile[] {
       id: fileId(),
       name: 'main.py',
       language: 'python',
-      content: '# Free Practice Mode\nprint("Hello, Alokbartika!")\n',
+      content: '',
     },
   ]
 }
@@ -40,7 +40,9 @@ function starterToFiles(starter: { name: string; language: SupportedLanguage; co
 export function useIDEWorkspace(
   storageKey = 'sandbox',
   initialFiles?: { name: string; language: SupportedLanguage; content: string }[],
+  opts?: { disableStorageRestore?: boolean },
 ) {
+  const disableStorageRestore = opts?.disableStorageRestore ?? false
   const storageId = `${WORKSPACE_STORAGE_PREFIX}${storageKey}`
 
   const [files, setFiles] = useState<IDEFile[]>(() =>
@@ -53,6 +55,10 @@ export function useIDEWorkspace(
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
+    if (disableStorageRestore) {
+      setHydrated(true)
+      return
+    }
     const raw = window.localStorage.getItem(storageId)
     if (raw) {
       try {

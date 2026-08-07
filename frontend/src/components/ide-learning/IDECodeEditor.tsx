@@ -33,6 +33,8 @@ export function IDECodeEditor({
   const decorationsRef = useRef<string[]>([])
   const [localValue, setLocalValue] = useState(value)
 
+  console.log("Editor Initial Value:", JSON.stringify(value))
+
   useEffect(() => {
     setLocalValue(value)
   }, [fileId])
