@@ -1,6 +1,5 @@
 import { Moon, Menu, RefreshCw, Settings, Sun } from 'lucide-react'
 import { useTheme } from '../../context/ThemeContext'
-import { MODEL_NAME, MODEL_PROVIDER } from './utils'
 
 interface TopBarProps {
   title: string
@@ -59,9 +58,6 @@ export function TopBar({ title, loading, online, userInitial, userFullName, onTo
               </span>
             </>
           )}
-          <span className="hidden text-[10px] font-medium sm:inline" style={{ color: 'var(--color-text-muted)' }}>
-            · {MODEL_PROVIDER} · {MODEL_NAME}
-          </span>
         </div>
       </div>
 

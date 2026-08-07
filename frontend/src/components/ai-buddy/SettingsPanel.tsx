@@ -1,8 +1,7 @@
 import { useEffect } from 'react'
-import { Bot, Monitor, RotateCcw, Sun, Moon, Wifi, WifiOff, X } from 'lucide-react'
+import { Monitor, RotateCcw, Sun, Moon, Wifi, WifiOff, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTheme } from '../../context/ThemeContext'
-import { MODEL_NAME, MODEL_PROVIDER } from './utils'
 import { usePrefs } from './usePrefs'
 import type { FontSize } from './usePrefs'
 import { useSpeech } from './useSpeech'
@@ -154,14 +153,6 @@ export function SettingsPanel({ open, online, onClose, onClearAll }: SettingsPan
 
         <div className="min-h-0 flex-1 overflow-y-auto py-3">
           <Row
-            icon={<Bot size={16} />}
-            label="বর্তমান মডেল"
-          >
-            <p className="truncate text-[11px] font-medium" style={{ color: 'var(--color-text-muted)' }}>
-              {MODEL_NAME} · {MODEL_PROVIDER}
-            </p>
-          </Row>
-          <Row
             icon={online ? <Wifi size={16} /> : <WifiOff size={16} />}
             label="সংযোগ"
           >
@@ -169,7 +160,7 @@ export function SettingsPanel({ open, online, onClose, onClearAll }: SettingsPan
               className="text-[11px] font-semibold"
               style={{ color: online ? '#22c55e' : 'var(--color-error)' }}
             >
-              {online ? 'অনলাইন' : 'অফলাইন'} · {MODEL_PROVIDER} API
+              {online ? 'অনলাইন' : 'অফলাইন'}
             </p>
           </Row>
 
