@@ -102,6 +102,7 @@ export function IDECodeEditor({
       tabSize: 4,
       insertSpaces: true,
       automaticLayout: true,
+      placeholder: '',
       fontSize: 14,
       minimap: { enabled: false },
       wordWrap: 'on',
@@ -173,6 +174,7 @@ export function IDECodeEditor({
           readOnly: false,
           domReadOnly: false,
           automaticLayout: true,
+          placeholder: '',
         }}
       />
     </div>

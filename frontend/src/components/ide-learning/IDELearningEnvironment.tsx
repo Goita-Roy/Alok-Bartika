@@ -402,11 +402,14 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
       >
         <div className="flex items-center gap-3">
           <div>
-            <h1 className="text-sm font-black flex items-center gap-2">
-              <Cpu size={16} className="text-violet-400" />
+            <h1
+              className={`flex items-center gap-2 font-black leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}
+              style={{ fontSize: '18px' }}
+            >
+              <Cpu size={18} className="text-violet-400" />
               {mode === 'learning' ? 'ডেভেলপমেন্ট ও প্র্যাকটিস IDE' : 'নিজস্ব প্র্যাকটিস স্যান্ডবক্স'}
             </h1>
-            <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">
+            <p className={`text-[11px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
               ইন্টারঅ্যাকটিভ লার্নিং এনভায়রনমেন্ট
             </p>
           </div>
