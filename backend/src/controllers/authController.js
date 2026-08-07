@@ -292,6 +292,9 @@ const firebaseLogin = async (req, res) => {
       console.log('[auth][firebase] new user created:', user._id, 'username:', username)
     }
 
+    user.lastLogin = new Date()
+    await user.save()
+
     const response = userResponse(user)
     auditService.logLogin(user, req, 'firebase')
     res.json(response)
@@ -335,6 +338,8 @@ const adminLogin = async (req, res) => {
     }
 
     auditService.logLogin(user, req, 'admin')
+    user.lastLogin = new Date()
+    await user.save()
     res.json(userResponse(user))
   } catch (error) {
     res.status(500).json({ message: error.message })
@@ -375,6 +380,8 @@ const superAdminLogin = async (req, res) => {
     }
 
     auditService.logLogin(user, req, 'super-admin')
+    user.lastLogin = new Date()
+    await user.save()
     res.json(userResponse(user))
   } catch (error) {
     res.status(500).json({ message: error.message })

@@ -278,14 +278,14 @@ const getStudentDropoutProgress = async (_req, res) => {
       })
       const completedBeginner = completedLevels.includes('beginner')
 
-      // Active: last login within the last 2 days.
-      // At Risk: last login more than 2 days ago, up to 7 days.
-      // Dropout: last login more than 7 days ago, or registered more than 14
-      // days ago without completing the Beginner level.
-      if (daysSinceSeen <= 2) {
-        active += 1
-      } else if (daysSinceSeen > 7 || (daysSinceReg > 14 && !completedBeginner)) {
+      // Active: last seen within the last 7 days.
+      // At Risk: last seen 8-30 days ago, or registered more than 14 days ago
+      //          without completing the Beginner level.
+      // Dropout: not seen for more than 30 days.
+      if (daysSinceSeen > 30) {
         dropout += 1
+      } else if (daysSinceSeen <= 7 && (completedBeginner || daysSinceReg <= 14)) {
+        active += 1
       } else {
         atRisk += 1
       }
