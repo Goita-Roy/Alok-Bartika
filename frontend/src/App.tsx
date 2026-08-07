@@ -22,6 +22,7 @@ import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage'
 import { AdminExamMonitoringPage } from './pages/admin/AdminExamMonitoringPage'
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage'
 import { SuperAdminLoginPage } from './pages/super-admin/SuperAdminLoginPage'
+import { SuperAdminSetupPage } from './pages/super-admin/SuperAdminSetupPage'
 import { SuperAdminDashboardPage } from './pages/super-admin/SuperAdminDashboardPage'
 import { SuperAdminAdminsPage } from './pages/super-admin/SuperAdminAdminsPage'
 import { SuperAdminUsersPage } from './pages/super-admin/SuperAdminUsersPage'
@@ -277,6 +278,8 @@ export default function App() {
         </Route>
 
         {/* Super admin routes - standalone, no student/admin Layout wrapper */}
+        {/* Hidden first-time setup — not linked anywhere, reachable only by URL */}
+        <Route path="/super-admin/setup" element={<SuperAdminSetupPage />} />
         <Route path="/super-admin/login" element={<SuperAdminLoginPage />} />
         <Route path="/super-admin/dashboard" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminDashboardPage /></ProtectedRoute>} />
         <Route path="/super-admin/admins" element={<ProtectedRoute allowedRoles={['super-admin']} redirectTo="/super-admin/login"><SuperAdminAdminsPage /></ProtectedRoute>} />

@@ -1,7 +1,8 @@
 const express = require('express')
 const router = express.Router()
 const {
-  checkAvailability, registerUser, loginUser, firebaseLogin, adminLogin, superAdminLogin, getMe,
+  checkAvailability, registerUser, loginUser, firebaseLogin, adminLogin, superAdminLogin,
+  superAdminSetup, superAdminSetupStatus, getMe,
   forgotPassword, verifyOtp, resetPassword,
   sendSignupOtp, resendSignupOtp, verifySignupOtp,
 } = require('../controllers/authController')
@@ -16,6 +17,8 @@ router.post('/login', loginLimiter, loginUser)
 router.post('/firebase', firebaseLogin)
 router.post('/admin-login', loginLimiter, adminLogin)
 router.post('/super-admin-login', loginLimiter, superAdminLogin)
+router.get('/super-admin/setup-status', superAdminSetupStatus)
+router.post('/super-admin/setup', loginLimiter, superAdminSetup)
 router.post('/send-otp', otpSendLimiter, sendSignupOtp)
 router.post('/resend-otp', otpSendLimiter, resendSignupOtp)
 router.post('/verify-otp-signup', otpVerifyLimiter, verifySignupOtp)

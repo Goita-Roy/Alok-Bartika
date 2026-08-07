@@ -388,6 +388,80 @@ const superAdminLogin = async (req, res) => {
   }
 }
 
+// @desc    One-time Super Admin setup — create the FIRST super admin only
+// @route   POST /api/auth/super-admin/setup
+// SECURITY: This endpoint permanently self-disables. Once any super-admin
+// exists, every request is rejected so a second super admin can never be
+// created through the normal signup flow. The check below is authoritative —
+// the frontend alone never decides whether setup is allowed.
+const superAdminSetup = async (req, res) => {
+  try {
+    const existingSuperAdmin = await User.findOne({ role: 'super-admin' })
+    if (existingSuperAdmin) {
+      return res.status(409).json({
+        code: 'SUPER_ADMIN_CONFIGURED',
+        message: 'Super Admin has already been configured.',
+      })
+    }
+
+    const { fullName, email, password } = req.body || {}
+
+    const trimmedFullName = fullName?.trim()
+    const trimmedEmail = email?.trim()?.toLowerCase()
+
+    const validationErrors = []
+    if (!trimmedFullName) validationErrors.push('Full name is required')
+    if (!trimmedEmail) validationErrors.push('Email is required')
+    if (!password || password.length < 6) validationErrors.push('Password must be at least 6 characters')
+
+    if (validationErrors.length > 0) {
+      return res.status(400).json({ message: validationErrors.join('. ') })
+    }
+
+    const existingUser = await User.findOne({ email: trimmedEmail })
+    if (existingUser) {
+      return res.status(409).json({ message: 'Email already exists', code: 'EMAIL_EXISTS' })
+    }
+
+    const base = trimmedEmail.split('@')[0].replace(/[^a-z0-9_]/g, '') || 'superadmin'
+    const username = await generateUniqueUsername(base)
+
+    const user = await User.create({
+      fullName: trimmedFullName,
+      username,
+      email: trimmedEmail,
+      password,
+      role: 'super-admin',
+      termsAccepted: true,
+      isVerified: true,
+      emailVerified: true,
+    })
+
+    console.log('[auth] super admin created via first-time setup:', user._id)
+    res.status(201).json(userResponse(user))
+  } catch (error) {
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0]
+      return res.status(400).json({ message: `${field} already exists` })
+    }
+    res.status(500).json({ message: error.message })
+  }
+}
+
+// @desc    Check whether a Super Admin has already been configured
+// @route   GET /api/auth/super-admin/setup-status
+// Informational only — lets the hidden setup page decide what to render.
+// The authoritative gate remains the POST handler above; the frontend can
+// never allow a second signup on its own.
+const superAdminSetupStatus = async (_req, res) => {
+  try {
+    const existingSuperAdmin = await User.findOne({ role: 'super-admin' })
+    res.json({ configured: !!existingSuperAdmin })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
 // @desc    Get user profile
 // @route   GET /api/auth/me
 // ── Auto-recover pendingFeedback state ─────────────────────────────────────
@@ -685,6 +759,8 @@ module.exports = {
   firebaseLogin,
   adminLogin,
   superAdminLogin,
+  superAdminSetup,
+  superAdminSetupStatus,
   getMe,
   forgotPassword,
   verifyOtp,
