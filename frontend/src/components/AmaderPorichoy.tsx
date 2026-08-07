@@ -87,7 +87,7 @@ const AmaderPorichoy: React.FC = () => {
               { val: '৬–৮', label: 'টার্গেট শ্রেণি স্তর' },
               { val: '৩', label: 'কারিকুলাম (লজিক → ভিজুয়াল → পাইথন)' },
               { val: 'AI', label: 'রিয়েল-টাইম বাংলা নির্দেশনা' },
-              { val: 'SDG ৪', label: 'UN গুণগত শিক্ষা লক্ষ্য' },
+              { val: 'টেকসই উন্নয়ন লক্ষ্যমাত্রা ৪', label: 'UN গুণগত শিক্ষা লক্ষ্য' },
             ].map((stat, i) => (
               <div
                 key={i}
@@ -100,7 +100,7 @@ const AmaderPorichoy: React.FC = () => {
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 28px rgba(14,124,102,0.12)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 12px rgba(14,124,102,0.06), 0 1px 4px rgba(0,0,0,0.03)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)' }}
               >
-                <h3 className="text-4xl font-black mb-2 group-hover:scale-110 transition-transform"
+                <h3 className="text-2xl font-black mb-2 group-hover:scale-110 transition-transform"
                   style={{ color: 'var(--color-accent)' }}>{stat.val}</h3>
                 <p className="text-sm leading-tight" style={{ color: 'var(--color-home-accent-dark)' }}>{stat.label}</p>
               </div>
@@ -133,6 +133,52 @@ const AmaderPorichoy: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* 4. Developed By & Academic Supervisor */}
+      <section className="px-4 max-w-5xl mx-auto pb-24">
+        <h2 className="text-2xl md:text-3xl font-black mb-8 text-center"
+          style={{ color: 'var(--color-home-accent-dark)' }}>
+          Developed By
+        </h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+          {['Goita Roy', 'Noyon Chandra Sarker'].map((name) => (
+            <div
+              key={name}
+              className="rounded-2xl px-6 py-5 text-center"
+              style={{
+                backgroundColor: 'var(--color-home-surface)',
+                border: '1px solid var(--color-home-card-border)',
+                boxShadow: '0 2px 12px rgba(14,124,102,0.06)',
+              }}
+            >
+              <p className="font-black text-lg" style={{ color: 'var(--color-home-accent-dark)' }}>{name}</p>
+            </div>
+          ))}
+        </div>
+
+        <div
+          className="rounded-2xl px-6 py-6 text-center"
+          style={{
+            backgroundColor: 'var(--color-home-surface)',
+            border: '1px solid var(--color-home-card-border)',
+            boxShadow: '0 2px 12px rgba(14,124,102,0.06)',
+          }}
+        >
+          <p className="text-xs font-bold uppercase tracking-widest mb-3"
+            style={{ color: 'var(--color-accent)' }}>
+            Academic Supervisor
+          </p>
+          <p className="font-black text-lg" style={{ color: 'var(--color-home-accent-dark)' }}>Md. Ashrafuzzaman</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--color-home-text-body)' }}>Assistant Professor</p>
+          <p className="text-sm" style={{ color: 'var(--color-home-text-body)' }}>
+            Department of Educational Technology and Engineering
+          </p>
+          <p className="text-sm" style={{ color: 'var(--color-home-text-body)' }}>
+            University of Frontier Technology Bangladesh
+          </p>
         </div>
       </section>
 
