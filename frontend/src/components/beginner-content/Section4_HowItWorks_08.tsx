@@ -48,6 +48,7 @@ export default function Section4_HowItWorks_08() {
       id="os-how-it-works"
       title="যেভাবে কাজ করে"
       icon={<Cpu className="w-5 h-5" />}
+      background="#ECFDF5"
     >
       <div className="space-y-6">
         <motion.div

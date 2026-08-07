@@ -33,6 +33,7 @@ export default function Section1_Definition_07() {
       id="software-definition"
       title="সংজ্ঞা"
       icon={<Code2 className="w-5 h-5" />}
+      background="#F7F3FF"
     >
       <div className="relative">
         {floatingIcons.map(({ Icon, x, y, delay, color }, i) => (

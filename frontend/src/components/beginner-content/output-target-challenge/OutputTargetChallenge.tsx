@@ -941,6 +941,7 @@ export default function OutputTargetChallenge() {
       id="output-target-challenge"
       title="🎯 আউটপুট টার্গেট চ্যালেঞ্জ"
       icon={<Gamepad2 className="w-5 h-5" />}
+      background="#F0F9FF"
     >
       <div className="glass rounded-2xl p-4 md:p-8 relative overflow-hidden">
         <AnimatePresence mode="wait">

@@ -19,6 +19,7 @@ export default function Section3_RealLife() {
       id="real-life"
       title="রিয়েল-লাইফ অ্যাপ্লাই"
       icon={<Globe className="w-5 h-5" />}
+      background="#EFFDF9"
     >
       {/* Main Content Grid */}
       <div className="grid md:grid-cols-2 gap-6 items-center">

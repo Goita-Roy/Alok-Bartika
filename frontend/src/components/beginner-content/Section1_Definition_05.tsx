@@ -33,6 +33,7 @@ export default function Section1_Definition_05() {
       id="input-definition"
       title="সংজ্ঞা"
       icon={<Keyboard className="w-5 h-5" />}
+      background="#F2FBFF"
     >
       <div className="relative">
         {floatingIcons.map(({ Icon, x, y, delay, color }, i) => (

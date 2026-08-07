@@ -73,6 +73,7 @@ export default function Section5_Timeline() {
       id="timeline"
       title="অ্যানিমেশন আইডিয়া"
       icon={<Timer className="w-5 h-5" />}
+      background="#FEF2F6"
     >
       <div ref={containerRef} className="relative">
         {/* Original Educational Text - preserved exactly */}

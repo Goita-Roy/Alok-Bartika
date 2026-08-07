@@ -24,6 +24,7 @@ export default function Section1_Definition_03() {
       id="ram-definition"
       title="সংজ্ঞা"
       icon={<MemoryStick className="w-5 h-5" />}
+      background="#F2F8FF"
     >
       <div className="relative">
         {floatingIcons.map(({ Icon, x, y, delay, color }, i) => (

@@ -24,6 +24,7 @@ export default function Section1_Definition() {
       id="definition"
       title="সংজ্ঞা"
       icon={<Cpu className="w-5 h-5" />}
+      background="#FBF4FC"
     >
       <div className="relative">
         {/* Floating Icons */}

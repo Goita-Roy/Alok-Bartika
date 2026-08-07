@@ -40,6 +40,7 @@ export default function Section4_HowItWorks_03() {
       id="ram-how-it-works"
       title="যেভাবে কাজ করে"
       icon={<MemoryStick className="w-5 h-5" />}
+      background="#EFFDF9"
     >
       <div className="space-y-6">
         <motion.div

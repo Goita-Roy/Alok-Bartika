@@ -38,6 +38,7 @@ export default function Section4_HowItWorks_10() {
       id="security-how-it-works"
       title="যেভাবে কাজ করে"
       icon={<Shield className="w-5 h-5" />}
+      background="#ECFDF5"
     >
       <div className="space-y-6">
         <motion.div

@@ -475,6 +475,7 @@ export default function Section6_Game_07() {
       id="loop-game"
       title="গ্যামিফিকেশন লার্নিং"
       icon={<Gamepad2 className="w-5 h-5" />}
+      background="#F5F3FF"
     >
       <div className="glass rounded-2xl p-3 md:p-6 relative overflow-hidden">
         <button

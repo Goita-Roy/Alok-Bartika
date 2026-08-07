@@ -34,6 +34,7 @@ export default function Section3_RealLife_07() {
       id="software-real-life"
       title="রিয়েল-লাইফ অ্যাপ্লাই"
       icon={<Smartphone className="w-5 h-5" />}
+      background="#FFF7ED"
     >
       <div className="grid md:grid-cols-2 gap-6 items-center">
         <motion.div

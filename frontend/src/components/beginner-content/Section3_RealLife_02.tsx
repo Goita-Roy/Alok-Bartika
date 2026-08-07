@@ -33,6 +33,7 @@ export default function Section3_RealLife_02() {
       id="cpu-real-life"
       title="রিয়েল-লাইফ অ্যাপ্লাই"
       icon={<Gamepad2 className="w-5 h-5" />}
+      background="#F2FFF8"
     >
       <div className="grid md:grid-cols-2 gap-6 items-center">
         {/* Left: Story & Game Interaction */}

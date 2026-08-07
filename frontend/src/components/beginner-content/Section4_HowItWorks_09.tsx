@@ -49,6 +49,7 @@ export default function Section4_HowItWorks_09() {
       id="internet-how-it-works"
       title="যেভাবে কাজ করে"
       icon={<Globe className="w-5 h-5" />}
+      background="#ECFDF5"
     >
       <div className="space-y-6">
         <motion.div

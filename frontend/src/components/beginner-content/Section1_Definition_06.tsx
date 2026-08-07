@@ -33,6 +33,7 @@ export default function Section1_Definition_06() {
       id="output-definition"
       title="সংজ্ঞা"
       icon={<Monitor className="w-5 h-5" />}
+      background="#FDF2F8"
     >
       <div className="relative">
         {floatingIcons.map(({ Icon, x, y, delay, color }, i) => (

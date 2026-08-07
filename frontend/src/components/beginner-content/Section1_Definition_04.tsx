@@ -24,6 +24,7 @@ export default function Section1_Definition_04() {
       id="storage-definition"
       title="সংজ্ঞা"
       icon={<HardDrive className="w-5 h-5" />}
+      background="#F0F9FF"
     >
       <div className="relative">
         {floatingIcons.map(({ Icon, x, y, delay, color }, i) => (
