@@ -110,6 +110,7 @@ export default function Section6_Game_02() {
       id="cpu-game"
       title="গ্যামিফিকেশন লার্নিং"
       icon={<Gamepad2 className="w-5 h-5" />}
+      background="#F7F3FF"
     >
       <div className="glass rounded-2xl p-6 md:p-10 relative overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-500/10 rounded-full blur-3xl" />

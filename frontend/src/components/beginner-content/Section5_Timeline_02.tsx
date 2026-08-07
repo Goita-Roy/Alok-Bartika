@@ -53,6 +53,7 @@ export default function Section5_Timeline_02() {
       id="cpu-animation"
       title="অ্যানিমেশন আইডিয়া"
       icon={<Factory className="w-5 h-5" />}
+      background="#FEF2F6"
     >
       <div className="glass rounded-2xl p-6 md:p-10 relative overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl" />

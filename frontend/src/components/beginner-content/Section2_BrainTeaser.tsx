@@ -29,6 +29,7 @@ export default function Section2_BrainTeaser() {
       id="brain-teaser"
       title="একটি মজার প্রশ্ন"
       icon={<Brain className="w-5 h-5" />}
+      background="#FFFAEB"
     >
       <div className="relative">
         {/* Confetti */}

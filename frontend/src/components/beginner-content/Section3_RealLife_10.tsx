@@ -34,6 +34,7 @@ export default function Section3_RealLife_10() {
       id="security-real-life"
       title="রিয়েল-লাইফ অ্যাপ্লাই"
       icon={<Shield className="w-5 h-5" />}
+      background="#F0FFF7"
     >
       <div className="grid md:grid-cols-2 gap-6 items-center">
         <motion.div

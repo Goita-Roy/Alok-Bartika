@@ -25,6 +25,7 @@ export default function Section2_BrainTeaser_08() {
       id="os-brain-teaser"
       title="একটি মজার প্রশ্ন"
       icon={<Brain className="w-5 h-5" />}
+      background="#EEF6FF"
     >
       <div className="relative">
         <AnimatePresence>

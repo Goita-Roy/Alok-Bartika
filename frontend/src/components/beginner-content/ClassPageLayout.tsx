@@ -251,7 +251,10 @@ export default function ClassPageLayout({ currentClassId, children }: Props) {
       </nav>
 
       {/* Hero Section */}
-      <section className="beginner-lesson-hero relative z-10 flex min-h-[460px] flex-col items-center justify-center px-4 pt-16 text-center sm:min-h-[520px]">
+      <section 
+        className="beginner-lesson-hero relative z-10 flex min-h-[460px] flex-col items-center justify-center px-4 pt-16 text-center sm:min-h-[520px]"
+        style={{ background: currentClassId === "class-01" ? "#FFFAEB" : currentClassId === "class-02" ? "#FFF9E8" : undefined }}
+      >
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}

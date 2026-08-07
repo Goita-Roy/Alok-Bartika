@@ -759,6 +759,7 @@ export default function Section6_Game_08() {
       id="os-game"
       title="গ্যামিফিকেশন লার্নিং"
       icon={<Gamepad2 className="w-5 h-5" />}
+      background="#FFF7ED"
     >
       <div className="glass rounded-2xl p-3 md:p-4 relative overflow-hidden">
         <BackgroundEffects />

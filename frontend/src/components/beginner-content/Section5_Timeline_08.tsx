@@ -119,6 +119,7 @@ export default function Section5_Timeline_08() {
       id="os-animation"
       title="অ্যানিমেশন আইডিয়া"
       icon={<Monitor className="w-5 h-5" />}
+      background="#F5F3FF"
     >
       <div className="glass rounded-2xl p-6 md:p-10 relative overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl" />

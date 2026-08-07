@@ -33,6 +33,7 @@ export default function Section1_Definition_10() {
       id="security-definition"
       title="সংজ্ঞা"
       icon={<Shield className="w-5 h-5" />}
+      background="#F3F7FF"
     >
       <div className="relative">
         {floatingIcons.map(({ Icon, x, y, delay, color }, i) => (

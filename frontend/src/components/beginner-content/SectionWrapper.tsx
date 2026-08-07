@@ -9,10 +9,11 @@ interface Props {
   id: string;
   title: string;
   icon: ReactNode;
+  background?: string;
   children: ReactNode;
 }
 
-export default function SectionWrapper({ id, title, icon, children }: Props) {
+export default function SectionWrapper({ id, title, icon, background, children }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const container = useScrollContainer();
   const { scrollYProgress } = useScroll({
@@ -32,7 +33,10 @@ export default function SectionWrapper({ id, title, icon, children }: Props) {
       style={{ y }}
       className="beginner-lesson-section relative z-10 mx-auto w-full py-10 sm:py-12 lg:py-16"
     >
-      <div className="beginner-lesson-section__inner w-full">
+      <div
+        className="beginner-lesson-section__inner w-full"
+        style={background ? { background } : undefined}
+      >
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}

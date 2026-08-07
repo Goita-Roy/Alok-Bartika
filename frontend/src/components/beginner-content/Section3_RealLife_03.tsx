@@ -37,6 +37,7 @@ export default function Section3_RealLife_03() {
       id="ram-real-life"
       title="রিয়েল-লাইফ অ্যাপ্লাই"
       icon={<Smartphone className="w-5 h-5" />}
+      background="#F3FFF8"
     >
       <div className="grid md:grid-cols-2 gap-6 items-center">
         <motion.div

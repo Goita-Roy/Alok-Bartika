@@ -79,6 +79,7 @@ export default function Section4_HowItWorks_02() {
       id="cpu-how-it-works"
       title="যেভাবে কাজ করে"
       icon={<Cpu className="w-5 h-5" />}
+      background="#EFFDF9"
     >
       <div className="space-y-6">
         {/* Introduction */}
