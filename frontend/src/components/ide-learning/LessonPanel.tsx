@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle2, ChevronRight } from 'lucide-react'
+import { CheckCircle2, ChevronRight, Zap } from 'lucide-react'
 import type { IDELessonClass } from '../../data/ideLessonData'
 import type { Practice } from '../../data/advancedPracticeData'
 
@@ -139,11 +139,16 @@ export function LessonPanel({
                           }`}>
                             {isActivePractice ? '✓' : '•'}
                           </span>
-                          <span>
+                          <span className="flex-1 min-w-0 truncate">
                             প্র্যাক্টিস {practice.practiceNumber}: {practice.title}
                           </span>
+                          {typeof practice.xp === 'number' ? (
+                            <span className={`shrink-0 flex items-center gap-0.5 text-[9px] font-bold ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+                              <Zap size={9} /> {practice.xp} XP
+                            </span>
+                          ) : null}
                           {practice.difficulty && (
-                            <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${
+                            <span className={`shrink-0 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${
                               practice.difficulty === 'Easy'
                                 ? 'bg-emerald-500/15 text-emerald-400'
                                 : practice.difficulty === 'Medium'

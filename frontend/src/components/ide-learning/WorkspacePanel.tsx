@@ -82,6 +82,8 @@ type WorkspacePanelProps = {
   onEditorMount?: (ed: editor.IStandaloneCodeEditor) => void
 }
 
+type PracticeDetails = Practice & { objective?: string; hint?: string }
+
 const LANG_OPTIONS: SupportedLanguage[] = ['python', 'html', 'css', 'javascript', 'c', 'cpp', 'java']
 
 const fileIcons: Record<string, typeof FileCode> = {
@@ -161,6 +163,7 @@ export function WorkspacePanel({
   const [showStdin, setShowStdin] = useState(false)
   const [cursorLine, setCursorLine] = useState(1)
   const [cursorColumn, setCursorColumn] = useState(1)
+  const [showPracticeDetails, setShowPracticeDetails] = useState(true)
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
 
   useEffect(() => {
@@ -185,6 +188,8 @@ export function WorkspacePanel({
         </div>
       )
     }
+
+    const practice = selectedPractice as PracticeDetails
 
     return (
       <div className="p-4 space-y-4">
@@ -215,6 +220,13 @@ export function WorkspacePanel({
             <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-300' : 'text-slate-700'} mb-1`}>সমস্যা বিবরণ</div>
             <p className={`text-xs leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{selectedPractice.problemStatement}</p>
           </div>
+
+          {practice.objective ? (
+            <div>
+              <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-300' : 'text-slate-700'} mb-1`}>উদ্দেশ্য</div>
+              <p className={`text-xs leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{practice.objective}</p>
+            </div>
+          ) : null}
 
           <div>
             <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-300' : 'text-slate-700'} mb-1`}>ইনপুট</div>
@@ -253,6 +265,13 @@ export function WorkspacePanel({
               </div>
             </div>
           </div>
+
+          {practice.hint ? (
+            <div>
+              <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-300' : 'text-slate-700'} mb-1`}>ইঙ্গিত</div>
+              <p className={`text-xs italic ${isDark ? 'text-amber-300/90' : 'text-amber-700'}`}>{practice.hint}</p>
+            </div>
+          ) : null}
         </div>
       </div>
     );
@@ -536,6 +555,31 @@ export function WorkspacePanel({
 
           {/* Main content: editor + console (flex proportions) */}
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            {/* Practice Details — collapsible, independently scrollable, above Monaco */}
+            {selectedPractice && (
+              <div className={`shrink-0 border-b ${borderCls}`}>
+                <button
+                  type="button"
+                  onClick={() => setShowPracticeDetails((v) => !v)}
+                  className={`w-full flex items-center gap-2 px-3 py-1.5 text-[10px] font-bold uppercase transition ${
+                    isDark ? 'text-violet-300 hover:bg-[#1b1928]' : 'text-indigo-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <Flag size={12} />
+                  প্র্যাকটিস বিবরণ
+                  <span className="ml-auto flex items-center gap-1">
+                    {showPracticeDetails ? 'Hide Problem' : 'Show Problem'}
+                    <span className={`transition ${showPracticeDetails ? 'rotate-180' : ''}`}>▼</span>
+                  </span>
+                </button>
+                {showPracticeDetails && (
+                  <div className="max-h-[45vh] overflow-y-auto">
+                    {renderPracticeInfo()}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Monaco editor — flex-1 takes most space */}
             <div className="flex-1 min-h-[200px] relative">
               <IDECodeEditor

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { BookOpen, PenTool, Cpu } from 'lucide-react'
 import { ideLessonClasses, type IDELessonClass, type SupportedLanguage } from '../../data/ideLessonData'
-import { class1Practices, type Practice as PracticeData } from '../../data/advancedPracticeData'
+import { class1Practices, class2Practices, type Practice as PracticeData } from '../../data/advancedPracticeData'
 import { useIDEWorkspace } from '../../hooks/useIDEWorkspace'
 import { useIDEProgress } from '../../hooks/useIDEProgress'
 import { usePracticePersistence, type RestoredPractice } from '../../hooks/usePracticePersistence'
@@ -48,9 +48,53 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
     document.body.style.userSelect = 'none'
   }
 
-  const handleSelectPractice = (practice: PracticeData) => {
-    setSelectedPractice(practice)
-  }
+   
+  const activeClass = useMemo(() => {
+    if (dynamicClass) return dynamicClass
+    return ideLessonClasses.find((c) => c.id === activeClassId) ?? ideLessonClasses[0]
+  }, [dynamicClass, activeClassId])
+
+  const storageKey = mode === 'sandbox' ? 'sandbox' : activeClass.id
+  const workspace = useIDEWorkspace(
+    storageKey,
+    mode === 'learning' ? activeClass.starterFiles : undefined,
+  )
+
+  const loadPracticeQuestion = useCallback(
+    (title: string, difficulty: string, problemStatement: string, sampleOutput: string) => {
+      const difficultyLabels = { Easy: '🟢 Easy', Medium: '🟡 Medium', Hard: '🔴 Hard' }
+      const difficultyDisplay = difficultyLabels[difficulty as keyof typeof difficultyLabels] || difficulty
+      
+      const problemContent = `=======================================\n${title}\n\nDifficulty: ${difficultyDisplay}\n\nProblem Statement:\n${problemStatement}\n\nSample Output:\n${sampleOutput}\n\n----------------------------------------\nWrite your solution below\n----------------------------------------\n\n`
+      
+      workspace.updateFileContent(workspace.activeFileId, problemContent)
+      
+      // Position cursor after the "Write your solution below" section
+      setTimeout(() => {
+        if (editorRef.current) {
+          const model = editorRef.current.getModel()
+          if (model) {
+            const lineCount = model.getLineCount()
+            // Find the "Write your solution below" line
+            for (let i = 1; i <= lineCount; i++) {
+              const line = model.getLineContent(i)
+              if (line.includes('Write your solution below')) {
+                editorRef.current.setPosition({ lineNumber: i + 1, column: 1 })
+                editorRef.current.revealLineInCenter(i + 1)
+                editorRef.current.focus()
+                break
+              }
+            }
+          }
+        }
+      }, 100)
+    },
+    [workspace],
+  )
+
+  const handleSelectPractice = useCallback((practice: PracticeData) => {
+    loadPracticeQuestion(practice.title, practice.difficulty, practice.problemStatement, practice.sampleOutput)
+  }, [loadPracticeQuestion])
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -132,11 +176,6 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
       })
   }, [lessonIdParam])
 
-  const activeClass = useMemo(() => {
-    if (dynamicClass) return dynamicClass
-    return ideLessonClasses.find((c) => c.id === activeClassId) ?? ideLessonClasses[0]
-  }, [dynamicClass, activeClassId])
-
   // Auto-select Class 1 → Practice 1 if no practice is selected
   useEffect(() => {
     if (!selectedPractice) {
@@ -151,6 +190,9 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
     ideLessonClasses.forEach((cls) => {
       if (cls.classNumber === 1) {
         map[cls.id] = class1Practices
+      }
+      if (cls.classNumber === 2) {
+        map[cls.id] = class2Practices
       }
     })
     return map
@@ -170,11 +212,6 @@ export function IDELearningEnvironment({ mode: initialMode = 'learning', practic
   const scrollRef = useRef<number>(0)
   const restoredAppliedRef = useRef(false)
 
-  const storageKey = mode === 'sandbox' ? 'sandbox' : activeClass.id
-  const workspace = useIDEWorkspace(
-    storageKey,
-    mode === 'learning' ? activeClass.starterFiles : undefined,
-  )
   const { completedClassIds, overallPercent, markClassComplete, isClassComplete } = useIDEProgress(
     ideLessonClasses.length,
   )
